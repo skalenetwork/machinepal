@@ -9,6 +9,7 @@
 #include <wangle/ssl/SSLContextConfig.h>
 #include <folly/init/Init.h>
 
+#include "InitLibs.h"
 
 
 using namespace proxygen;
@@ -27,18 +28,10 @@ public:
 
 
 int main(int argc, char* argv[]) {
-
-    FLAGS_logtostderr = 1;              // send logs to stderr (console)
-    FLAGS_minloglevel = google::GLOG_INFO;
-    folly::Init init(&argc, &argv);
-
+    InitLibs::initAll(argc, argv);
     std::string bindIP = "0.0.0.0";
     uint64_t bindPort = 8080;
-
     auto serverObject = ServerFactory::createServerInstance(bindIP, bindPort);
-
     serverObject->start();
-
-    google::ShutdownGoogleLogging();
     return 0;
 }

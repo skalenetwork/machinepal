@@ -2,20 +2,20 @@
 #define BOOST_TEST_MODULE X402HandlerSelfTest
 
 #include "common.h"
-
+#include "InitLibs.h"
+#include "ServerFactory.h"
 #include <boost/test/included/unit_test.hpp> // or <boost/test/unit_test.hpp> if using dynamic link
-
-#include <folly/init/Init.h>
 #include <folly/SocketAddress.h>
-#include <folly/init/Init.h>
 #include <proxygen/httpserver/HTTPServer.h>
 
-#include "ServerFactory.h"
+
 #include "X402Client.h"
+
 
 // ---- libcurl helper ---------------------------------------------------------
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
+
 
 #include "../datastructures/PaymentRequirements.h"
 #include "../examples/PaymentExamples.h"
@@ -26,14 +26,19 @@ const std::string CONNECT_HOST = "localhost";
 constexpr uint32_t DEFAULT_TEST_PORT = 8080;
 
 
+bool init_unit_test(int argc, char* argv[]) {
+    try {
+        InitLibs::initAll(argc, argv);
+    } catch (std::exception &e) {
+        std::cerr << "InitLibs::initAll failed: " << e.what() << std::endl;
+        return false;
+    }
+    return true;
+}
+
 // ---- Test fixture that starts/stops the proxygen server ---------------------
 struct X402ServerFixture {
     X402ServerFixture() {
-        int argc = 1;
-        char *arg_array[] = {const_cast<char *>("X402HandlerBoostTest"), nullptr};
-        char **argv = arg_array;
-        FLAGS_logtostderr = 1;
-        static folly::Init follyInit(&argc, &argv, {});
 
         server = ServerFactory().createServerInstance(BIND_IP, DEFAULT_TEST_PORT);
 

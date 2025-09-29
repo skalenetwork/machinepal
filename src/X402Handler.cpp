@@ -70,7 +70,7 @@ bool X402Handler::hasValidPaymentHeader(const HTTPMessage* _req, std::string& _p
     if (payment.empty()) return false;
 
     if (payment == "demo-ok") {
-        _paymentInfo = R"({"txHash":"0xabc123...","amount":"0.25","asset":"USDC","network":"base-mainnet"})";
+        _paymentInfo = R"({"txHash":"0xabc123...","amount":"0.25","asset":"USDC","network":"base-1net"})";
         return true;
     }
     return false;
