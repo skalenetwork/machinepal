@@ -1,18 +1,10 @@
 #pragma once
 
-#include <exception>
+#include "BackendException.h"
 #include <string>
 
-class ForbiddenException : public std::exception {
+class ForbiddenException : public BackendException {
 public:
-    explicit ForbiddenException(const std::string& _message)
-        : message_(_message) {}
-
-    const char* what() const noexcept override {
-        return message_.c_str();
-    }
-
-private:
-    std::string message_;
+    explicit ForbiddenException(const std::string& message)
+        : BackendException(message) {}
 };
-

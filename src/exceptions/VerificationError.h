@@ -1,18 +1,11 @@
 #pragma once
 
-#include <exception>
+#include "BackendException.h"
 #include <string>
 
 
-class VerificationError : public std::exception {
+class VerificationError : public BackendException {
 public:
-    explicit VerificationError(const std::string& _message)
-        : message(_message) {}
-
-    const char* what() const noexcept override {
-        return message.c_str();
-    }
-
-private:
-    std::string message;
+    explicit VerificationError(const std::string& message)
+        : BackendException(message) {}
 };
