@@ -1,0 +1,11 @@
+httpEnabled: true
+httpsEnabled: false
+httpPort: 8080
+httpsPort: 8443
+
+httpsCertFile: certs/proxy.crt
+httpsKeyFile: certs/proxy.key
+httpsKeyPasswordFile: secrets/key_password
+
+coinbaseAPIURL: https://api.coinbase.com/v2
+coinbaseAPIKeyFile: /etc/proxy/secrets/coinbase_api_key
