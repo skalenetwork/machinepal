@@ -6,5 +6,5 @@
 class ForbiddenException : public BackendException {
 public:
     explicit ForbiddenException(const std::string& message)
-        : BackendException(message) {}
+        : BackendException("ForbiddenException", message) {}
 };

@@ -5,7 +5,16 @@
 #include <mutex>
 #include <curl/curl.h>
 
+
 #include "exceptions/VerificationError.h"
+#include "exceptions/UnauthorizedException.h"
+#include "exceptions/ForbiddenException.h"
+#include "exceptions/ServiceUnavailableException.h"
+#include "exceptions/UnknownServerErrorException.h"
+#include "exceptions/BadGatewayException.h"
+#include "exceptions/NotFoundException.h"
+#include "exceptions/TooManyRequestsException.h"
+#include "exceptions/GatewayTimeoutException.h"
 
 CBFacilitatorClient::CBFacilitatorClient(
     std::string _base_url,
@@ -95,7 +104,7 @@ nlohmann::json CBFacilitatorClient::settle(const nlohmann::json &_paymentInstruc
     return postJson("/settle", body);
 }
 
-std::string CBFacilitatorClient::extractInvalidReason(std::string &_responseData) const {
+std::string CBFacilitatorClient::extractCBInvalidReason(std::string &_responseData) const {
     try {
         auto errJson = nlohmann::json::parse(_responseData);
         if (errJson.contains("reason") && errJson["reason"].is_string()) {
@@ -105,6 +114,55 @@ std::string CBFacilitatorClient::extractInvalidReason(std::string &_responseData
         // Ignore JSON parse errors here
     }
     return {};
+}
+
+void CBFacilitatorClient::checkForGenericHttpError(const std::string url, std::string payload, std::string responseData, long httpCode) const {
+    if (httpCode < 200 || httpCode >= 300) {
+        std::string errorExplanationForUser;
+        switch (httpCode) {
+            case 400: {
+                errorExplanationForUser = "Bad Request";
+                std::string invalidReason = extractCBInvalidReason(responseData);
+                errorExplanationForUser += ":" + invalidReason;
+                break;
+            }
+            case 401: errorExplanationForUser = "Unauthorized";
+                break;
+            case 403: errorExplanationForUser = "Forbidden";
+                break;
+            case 404: errorExplanationForUser = "Not Found";
+                break;
+            case 429: errorExplanationForUser = "Too Many Requests";
+                break;
+            case 500: errorExplanationForUser = "Internal Server Error";
+                break;
+            case 502: errorExplanationForUser = "Bad Gateway";
+                break;
+            case 503: errorExplanationForUser = "Service Unavailable";
+                break;
+            case 504: errorExplanationForUser = "Gateway Timeout";
+                break;
+            default: errorExplanationForUser = "Unknown Error";
+                break;
+        }
+
+        std::string errorString = ("HTTP " + std::to_string(httpCode) + " (" + errorExplanationForUser + ") error at "
+                                   + url + ": " + responseData + "\n | Payload: " + payload);
+
+        LOG(ERROR) << errorString;
+
+        switch (httpCode) {
+            case 401: throw UnauthorizedException(errorExplanationForUser);
+            case 403: throw ForbiddenException(errorExplanationForUser);
+            case 404: throw NotFoundException(errorExplanationForUser);
+            case 429: throw TooManyRequestsException(errorExplanationForUser);
+            case 500: throw UnknownServerErrorException(errorExplanationForUser);
+            case 502: throw BadGatewayException(errorExplanationForUser);
+            case 503: throw ServiceUnavailableException(errorExplanationForUser);
+            case 504: throw GatewayTimeoutException(errorExplanationForUser);
+            default: throw UnknownServerErrorException(errorExplanationForUser);
+        }
+    }
 }
 
 nlohmann::json CBFacilitatorClient::postJson(const std::string &_path, const nlohmann::json &_body) const {
@@ -161,35 +219,17 @@ nlohmann::json CBFacilitatorClient::postJson(const std::string &_path, const nlo
         throw std::runtime_error(std::string("CURL error: ") + curl_easy_strerror(res));
     }
 
+    if (httpCode == 400) {
+        std::string errorExplanationForUser = "Bad Request";
+        std::string invalidReason = extractCBInvalidReason(responseData);
+        errorExplanationForUser += ":" + invalidReason;
+        LOG(WARNING) << "CB verification error at " << url << ": " << responseData;
+        throw VerificationError(errorExplanationForUser);
+    }
 
-    if (httpCode < 200 || httpCode >= 300) {
-        std::string errorExplanation;
-        switch (httpCode) {
-            case 400: {
-                errorExplanation = "Bad Request";
-                std::string invalidReason = extractInvalidReason(responseData);
-                errorExplanation += ":" + invalidReason;
-                throw VerificationError(errorExplanation);
-                break;
-            }
-            case 401: errorExplanation = "Unauthorized";
-                break;
-            case 403: errorExplanation = "Forbidden";
-                break;
-            case 404: errorExplanation = "Not Found";
-                break;
-            case 500: errorExplanation = "Internal Server Error";
-                break;
-            case 502: errorExplanation = "Bad Gateway";
-                break;
-            case 503: errorExplanation = "Service Unavailable";
-                break;
-            default: errorExplanation = "Unknown Error";
-                break;
-        }
-        LOG(ERROR);
-        throw std::runtime_error("HTTP " + std::to_string(httpCode) + " (" + errorExplanation + ") error at "
-                                 + url + ": " + responseData + "\n | Payload: " + payload);
+    {
+    checkForGenericHttpError(url, payload, responseData, httpCode);
+
     }
 
     if (responseData.empty()) {

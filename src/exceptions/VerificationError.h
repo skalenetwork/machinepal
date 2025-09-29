@@ -7,5 +7,5 @@
 class VerificationError : public BackendException {
 public:
     explicit VerificationError(const std::string& message)
-        : BackendException(message) {}
+        : BackendException("VerificationError", message) {}
 };

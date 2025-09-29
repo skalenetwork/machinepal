@@ -6,5 +6,5 @@
 class BadGatewayException : public BackendException {
 public:
     explicit BadGatewayException(const std::string& message)
-        : BackendException(message) {}
+        : BackendException("BadGatewayException", message) {}
 };

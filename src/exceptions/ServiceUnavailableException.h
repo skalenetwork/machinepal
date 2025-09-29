@@ -6,5 +6,5 @@
 class ServiceUnavailableException : public BackendException {
 public:
     explicit ServiceUnavailableException(const std::string& message)
-        : BackendException(message) {}
+        : BackendException("ServiceUnavailableException", message) {}
 };

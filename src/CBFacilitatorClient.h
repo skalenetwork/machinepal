@@ -26,7 +26,9 @@ public:
     nlohmann::json settle(const nlohmann::json& _paymentInstruction,
                           const nlohmann::json& _paymentPayload) const;
 
-    std::string extractInvalidReason(std::string& _responseData) const;
+    std::string extractCBInvalidReason(std::string& _responseData) const;
+
+    void checkForGenericHttpError(std::string url, std::string payload, std::string responseData, long httpCode) const;
 
 private:
     static void ensureCurlGlobalInit();

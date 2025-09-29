@@ -2,6 +2,25 @@
 #include "CBFacilitatorClient.h"
 
 #include <iostream>
+#include <glog/logging.h>
+
+#include "exceptions/VerificationError.h"
+
+
+// Google Logging initialization fixture
+struct GoogleLoggingFixture {
+    GoogleLoggingFixture() {
+        static bool initialized = false;
+        if (!initialized) {
+            google::InitGoogleLogging("CBFacilitatorTest");
+            initialized = true;
+        }
+    }
+};
+
+
+// Use the fixture for all tests in this suite
+BOOST_FIXTURE_TEST_SUITE(CBFacilitatorSuite, GoogleLoggingFixture)
 
 // This test suite uses a safe hardcoded "test stub" payload.
 // The signature/address values are dummy values — the real facilitator will reject them,
@@ -31,6 +50,7 @@ static nlohmann::json makePayload() {
 }
 
 BOOST_AUTO_TEST_CASE(verify_call_real_server_invalid_sig) {
+    GoogleLoggingFixture glog_fixture;
     CBFacilitatorClient client; // defaults to https://x402.org/facilitator
 
     auto instruction = makeInstruction();
@@ -44,6 +64,8 @@ BOOST_AUTO_TEST_CASE(verify_call_real_server_invalid_sig) {
         // Contains "valid" (bool) for some facilitator implementations or "error" for rejected payloads.
         BOOST_TEST((res.contains("valid") || res.contains("error") || res.contains("message")));
         BOOST_TEST_MESSAGE("verify response: " + res.dump());
+    } catch (VerificationError & e) {
+        BOOST_TEST_MESSAGE(std::string("verify threw VerificationError (expected with dummy signature): ") + e.what());
     } catch (const std::exception& e) {
         // Network or HTTP-level errors should fail the test — record message for debugging.
         BOOST_FAIL(std::string("verify threw exception: ") + e.what());
@@ -51,6 +73,7 @@ BOOST_AUTO_TEST_CASE(verify_call_real_server_invalid_sig) {
 }
 
 BOOST_AUTO_TEST_CASE(settle_call_real_server_stub) {
+    GoogleLoggingFixture glog_fixture;
     CBFacilitatorClient client;
 
     auto instruction = makeInstruction();
@@ -69,3 +92,5 @@ BOOST_AUTO_TEST_CASE(settle_call_real_server_stub) {
         BOOST_TEST_MESSAGE(std::string("settle threw exception (expected with dummy signature): ") + e.what());
     }
 }
+
+BOOST_AUTO_TEST_SUITE_END()

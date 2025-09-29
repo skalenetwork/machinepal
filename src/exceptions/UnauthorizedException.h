@@ -6,5 +6,5 @@
 class UnauthorizedException : public BackendException {
 public:
     explicit UnauthorizedException(const std::string& message)
-        : BackendException(message) {}
+        : BackendException("UnauthorizedException", message) {}
 };
