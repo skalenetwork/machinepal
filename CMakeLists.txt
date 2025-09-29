@@ -11,7 +11,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # Gather all source files except test sources
-file(GLOB APP_SRC_FILES src/*.cpp src/*.h src/datastructures/*.cpp src/datastructures/*.h)
+file(GLOB APP_SRC_FILES src/*.cpp src/*.h src/datastructures/*.cpp src/datastructures/*.h
+        src/exceptions/*.cpp src/exceptions/*.h)
 list(FILTER APP_SRC_FILES EXCLUDE REGEX "src/tests/.*")
 
 # Gather test source files

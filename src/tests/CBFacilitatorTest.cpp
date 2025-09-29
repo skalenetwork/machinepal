@@ -30,7 +30,7 @@ static nlohmann::json makePayload() {
     };
 }
 
-BOOST_AUTO_TEST_CASE(verify_call_real_server_stub) {
+BOOST_AUTO_TEST_CASE(verify_call_real_server_invalid_sig) {
     CBFacilitatorClient client; // defaults to https://x402.org/facilitator
 
     auto instruction = makeInstruction();

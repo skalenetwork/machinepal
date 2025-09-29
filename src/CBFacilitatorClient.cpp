@@ -5,15 +5,17 @@
 #include <mutex>
 #include <curl/curl.h>
 
+#include "exceptions/VerificationError.h"
+
 CBFacilitatorClient::CBFacilitatorClient(
-    std::string _baseUrl,
+    std::string _base_url,
     std::string _auth,
-    long _connectTimeoutMs,
-    long _totalTimeoutMs)
-    : baseUrl(std::move(_baseUrl)),
+    long _connect_timeout_ms,
+    long _total_timeout_ms)
+    : base_url(std::move(_base_url)),
       authHeaderValue(std::move(_auth)),
-      connectTimeoutMs(_connectTimeoutMs),
-      totalTimeoutMs(_totalTimeoutMs) {
+      connect_timeout_ms(_connect_timeout_ms),
+      total_timeout_ms(_total_timeout_ms) {
     ensureCurlGlobalInit();
 }
 
@@ -24,14 +26,14 @@ void CBFacilitatorClient::ensureCurlGlobalInit() {
     });
 }
 
-size_t CBFacilitatorClient::writeCallback(char* _ptr, size_t _size, size_t _nmemb, void* _userdata) {
+size_t CBFacilitatorClient::writeCallback(char * _ptr, size_t _size, size_t _nmemb, void * _userdata) {
     const size_t real_size = _size * _nmemb;
     auto *buf = static_cast<std::string *>(_userdata);
     buf->append(_ptr, real_size);
     return real_size;
 }
 
-std::string CBFacilitatorClient::joinUrl(const std::string& _base, const std::string& _path) {
+std::string CBFacilitatorClient::joinUrl(const std::string &_base, const std::string &_path) {
     if (_base.empty()) return _path;
     if (_path.empty()) return _base;
     const bool b = _base.back() == '/';
@@ -77,23 +79,23 @@ const std::string VERIFY_PAYLOAD_EXAMPLE = R"JSON(
 )JSON";
 
 
-nlohmann::json CBFacilitatorClient::verify(const nlohmann::json& _paymentInstruction,
-                                           const nlohmann::json& _paymentPayload) const {
+nlohmann::json CBFacilitatorClient::verify(const nlohmann::json &_paymentInstruction,
+                                           const nlohmann::json &_paymentPayload) const {
     nlohmann::json body;
     body["paymentInstruction"] = _paymentInstruction;
     body["paymentPayload"] = _paymentPayload;
     return postJson("/verify", body);
 }
 
-nlohmann::json CBFacilitatorClient::settle(const nlohmann::json& _paymentInstruction,
-                                           const nlohmann::json& _paymentPayload) const {
+nlohmann::json CBFacilitatorClient::settle(const nlohmann::json &_paymentInstruction,
+                                           const nlohmann::json &_paymentPayload) const {
     nlohmann::json body;
     body["paymentInstruction"] = _paymentInstruction;
     body["paymentPayload"] = _paymentPayload;
     return postJson("/settle", body);
 }
 
-std::string CBFacilitatorClient::extractInvalidReason(std::string& _responseData) const {
+std::string CBFacilitatorClient::extractInvalidReason(std::string &_responseData) const {
     try {
         auto errJson = nlohmann::json::parse(_responseData);
         if (errJson.contains("reason") && errJson["reason"].is_string()) {
@@ -105,8 +107,8 @@ std::string CBFacilitatorClient::extractInvalidReason(std::string& _responseData
     return {};
 }
 
-nlohmann::json CBFacilitatorClient::postJson(const std::string& _path, const nlohmann::json& _body) const {
-    const std::string url = joinUrl(baseUrl, _path);
+nlohmann::json CBFacilitatorClient::postJson(const std::string &_path, const nlohmann::json &_body) const {
+    const std::string url = joinUrl(base_url, _path);
     std::string payload = _body.dump();
 
     payload = VERIFY_PAYLOAD_EXAMPLE;
@@ -137,8 +139,8 @@ nlohmann::json CBFacilitatorClient::postJson(const std::string& _path, const nlo
     curl_easy_setopt(curl, CURLOPT_USERAGENT, "CBFacilitatorClient/1.0");
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &CBFacilitatorClient::writeCallback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &responseData);
-    curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT_MS, connectTimeoutMs);
-    curl_easy_setopt(curl, CURLOPT_TIMEOUT_MS, totalTimeoutMs);
+    curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT_MS, connect_timeout_ms);
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT_MS, total_timeout_ms);
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
     if (!proxyUrl.empty()) {
         curl_easy_setopt(curl, CURLOPT_PROXY, proxyUrl.c_str());
@@ -167,6 +169,7 @@ nlohmann::json CBFacilitatorClient::postJson(const std::string& _path, const nlo
                 errorExplanation = "Bad Request";
                 std::string invalidReason = extractInvalidReason(responseData);
                 errorExplanation += ":" + invalidReason;
+                throw VerificationError(errorExplanation);
                 break;
             }
             case 401: errorExplanation = "Unauthorized";
