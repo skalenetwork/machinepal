@@ -48,6 +48,7 @@ set (PROXY_COMMON_LIBS
         Boost::thread
         Boost::headers
         yaml-cpp::yaml-cpp
+        nlohmann_json_schema_validator
 )
 
 target_link_libraries(x402proxy

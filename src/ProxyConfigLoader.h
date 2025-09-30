@@ -20,6 +20,8 @@ public:
     // Helper: convert YAML (yaml-cpp node) to nlohmann::json
     static nlohmann::json yamlToJson(const std::string& yaml_path);
 
+    static bool asBool(const std::string& s);
+
 private:
     static void applyEnvOverrides(nlohmann::json& j);
     static void resolveSecrets(nlohmann::json& j);

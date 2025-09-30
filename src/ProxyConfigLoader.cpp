@@ -1,15 +1,22 @@
+
+#include "ProxyConfigLoader.h"
+#include "ProxyConfig.h"
 #include <yaml-cpp/yaml.h>
 #include <fstream>
 #include <sstream>
 #include <cstdlib>
 #include <nlohmann/json-schema.hpp>
-#include "ProxyConfig.h"
-#include "ProxyConfigLoader.h"
+#include <nlohmann/json.hpp>
+#include <string>
+#include <optional>
 
 
 
 using nlohmann::json;
-using nlohmann::json_schema::json_validator;
+using nlohmann::json_schema::json_validator;;
+using namespace nlohmann::literals; // Enables the _json_pointer literal
+
+// --- Helper Functions ---
 
 // ---------- tiny utils ----------
 std::optional<std::string> ProxyConfigLoader::getenvOpt(const char* key) {
@@ -53,21 +60,74 @@ json ProxyConfigLoader::yamlToJson(const std::string& yaml_path) {
   return yamlNodeToJson(root);
 }
 
-// ---------- ENV overlay (pick high-value knobs) ----------
-void ProxyConfigLoader::applyEnvOverrides(json& j) {
-  // Server
-  if (auto v = getenvOpt("SERVER_HOST")) j["server"]["host"] = *v;
-  if (auto v = getenvOpt("SERVER_PORT")) j["server"]["port"] = std::stoi(*v);
 
-  // Database scalars
-  if (auto v = getenvOpt("DATABASE_HOST")) j["database"]["host"] = *v;
-  if (auto v = getenvOpt("DATABASE_PORT")) j["database"]["port"] = std::stoi(*v);
-  if (auto v = getenvOpt("DATABASE_USER")) j["database"]["user"] = *v;
 
-  // Secret *file* paths (do not pass raw secrets in env if you can avoid it)
-  if (auto v = getenvOpt("DATABASE_PASSWORD_FILE")) j["database"]["passwordFile"] = *v;
-  if (auto v = getenvOpt("JWT_SECRET_FILE")) j["jwt"]["secretFile"] = *v;
+bool ProxyConfigLoader::asBool(const std::string& s)  {
+  return s == "1" || s == "true" || s == "TRUE" || s == "yes" || s == "on";
+};
+
+
+// Assuming getenvOpt and asBool are defined as in your example
+std::optional<std::string> getenvOpt(const char* name);
+bool asBool(const std::string& s);
+
+
+
+/**
+ * @brief Applies an environment variable as a string to a JSON object at a given path.
+ */
+void applyStringEnv(json& j, const json::json_pointer& path, const char* envVar) {
+    if (auto v = getenvOpt(envVar)) {
+        j[path] = *v;
+    }
 }
+
+/**
+ * @brief Applies an environment variable as a boolean to a JSON object at a given path.
+ */
+void applyBoolEnv(json& j, const json::json_pointer& path, const char* envVar) {
+    if (auto v = getenvOpt(envVar)) {
+        j[path] = asBool(*v);
+    }
+}
+
+/**
+ * @brief Applies an environment variable as an integer to a JSON object at a given path.
+ */
+void applyIntEnv(json& j, const json::json_pointer& path, const char* envVar) {
+    if (auto v = getenvOpt(envVar)) {
+        try {
+            j[path] = std::stoi(*v);
+        } catch (const std::exception& e) {
+            // Optional: Add logging for invalid integer values
+            // std::cerr << "Warning: Could not parse env var '" << envVar << "' as integer: " << *v << std::endl;
+        }
+    }
+}
+
+
+// --- Refactored applyEnvOverrides Function ---
+
+void ProxyConfigLoader::applyEnvOverrides(json& j) {
+    // ---------- frontend ----------
+    applyBoolEnv(j, "/frontend/enable_http"_json_pointer,   "FRONTEND_ENABLE_HTTP");
+    applyBoolEnv(j, "/frontend/enable_https"_json_pointer,  "FRONTEND_ENABLE_HTTPS");
+    applyIntEnv( j, "/frontend/http_listen_port"_json_pointer, "FRONTEND_HTTP_PORT");
+    applyIntEnv( j, "/frontend/https_listen_port"_json_pointer,"FRONTEND_HTTPS_PORT");
+
+    // ---------- frontend.tls ----------
+    applyStringEnv(j, "/frontend/tls/cert_file"_json_pointer,    "FRONTEND_TLS_CERT_FILE");
+    applyStringEnv(j, "/frontend/tls/key_file"_json_pointer,     "FRONTEND_TLS_KEY_FILE");
+    applyStringEnv(j, "/frontend/tls/key_pass_file"_json_pointer,"FRONTEND_TLS_KEY_PASS_FILE");
+    applyStringEnv(j, "/frontend/tls/ca_file"_json_pointer,      "FRONTEND_TLS_CA_FILE");
+
+    // ---------- facilitator ----------
+    applyStringEnv(j, "/facilitator/type"_json_pointer,        "FACILITATOR_TYPE");
+    applyStringEnv(j, "/facilitator/base_url"_json_pointer,    "FACILITATOR_BASE_URL");
+    applyStringEnv(j, "/facilitator/api_key_file"_json_pointer,"FACILITATOR_API_KEY_FILE");
+}
+
+
 
 // ---------- Resolve secret files to actual values ----------
 void ProxyConfigLoader::resolveSecrets(json& j) {
