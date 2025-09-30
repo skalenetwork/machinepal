@@ -27,6 +27,9 @@ find_package(Wangle   REQUIRED CONFIG)
 find_package(Proxygen REQUIRED CONFIG)
 find_package(Boost REQUIRED CONFIG COMPONENTS unit_test_framework system thread)
 find_package(CURL  REQUIRED)
+find_package(nlohmann_json_schema_validator CONFIG REQUIRED)
+find_package(yaml-cpp CONFIG REQUIRED)
+
 
 # ---- App target ----
 add_executable(x402proxy
@@ -34,13 +37,22 @@ add_executable(x402proxy
         ${APP_SRC_FILES}
 )
 target_include_directories(x402proxy PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
-target_link_libraries(x402proxy
-        PRIVATE
+
+set (PROXY_COMMON_LIBS
         CURL::libcurl
         proxygen::proxygenhttpserver
-        proxygen::proxygen
         wangle::wangle
         Folly::folly
+        Boost::boost
+        Boost::system
+        Boost::thread
+        Boost::headers
+        yaml-cpp::yaml-cpp
+)
+
+target_link_libraries(x402proxy
+        PRIVATE
+        ${PROXY_COMMON_LIBS}
 )
 
 option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
@@ -64,18 +76,12 @@ if(BUILD_TESTING)
             ${CMAKE_CURRENT_SOURCE_DIR}/tests
     )
 
+
+
     target_link_libraries(x402_boost_test
             PRIVATE
-            CURL::libcurl
-            proxygen::proxygenhttpserver
-            proxygen::proxygen
-            wangle::wangle
-            Folly::folly
+            ${PROXY_COMMON_LIBS}
             Boost::unit_test_framework
-            Boost::boost
-            Boost::system
-            Boost::thread
-            Boost::headers
     )
 
     if(ENABLE_ASAN)

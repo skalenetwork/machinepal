@@ -1,15 +1,31 @@
-network:
-  enableHTTP: true
-  enableHTTPS: false
-  httpListenPort: 8080
-  httpsListenPort: 8443
-
-tls:
-  certPath: certs/proxy.crt
-  keyPath: certs/proxy.key
-  keyPassPath: secrets/key_password
+# Proxy server configuration. May be overridden by environment variables.
+frontend:
+  # Enable or disable HTTP. Override: FRONTEND_ENABLE_HTTP
+  enable_http: true
+  # Enable or disable HTTPS. Override: FRONTEND_ENABLE_HTTPS
+  enable_https: false
+  # Ports for HTTP/HTTPS. Override: FRONTEND_HTTP_PORT / FRONTEND_HTTPS_PORT
+  http_listen_port: 8080
+  https_listen_port: 8443
+  # This section sets up TLS for HTTPS frontend.
+  tls:
+    # TLS certificate file. Override: FRONTEND_TLS_CERT_FILE
+    cert_file: certs/proxy.crt
+    # TLS key file. Override: FRONTEND_TLS_KEY_FILE
+    key_file: certs/proxy.key
+    # TLS key password file. Override: FRONTEND_TLS_KEY_PASS_FILE
+    key_pass_file: secrets/key_password
+    # Optional CA file. Override: FRONTEND_TLS_CA_FILE. System CA used if not set.
+    ca_file: certs/ca.crt
 
 facilitator:
-  type: coinbase
-  baseURL: https://api.coinbase.com/v2
-  apiKeyPath: /etc/proxy/secrets/coinbase_api_key
+  # Facilitator type. Override: FACILITATOR_TYPE
+  # Facilitator types:
+  # cdp - Coinbase Developer Platform. You need to set base_url and api_key_file.
+  # x402 - generic x402-compatible API. You need to set base_url
+
+  type: cdp
+  # Facilitator base URL. Override: FACILITATOR_BASE_URL
+  base_url: https://api.coinbase.com/v2
+    # Facilitator API key file. Override: FACILITATOR_API_KEY_FILE
+  api_key_file: secrets/coinbase_api_key

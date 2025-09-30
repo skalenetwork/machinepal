@@ -1,6 +1,8 @@
 #pragma once
 
+
 #include "ProxyConfig.h"
+#include "nlohmann/json.hpp"
 
 // Source-of-truth loader:
 // 1) Load YAML from file.

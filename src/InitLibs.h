@@ -1,6 +1,7 @@
 #pragma once
 #include <curl/curl.h>
 #include <folly/init/Init.h>
+#include <glog/logging.h>
 #include <mutex>
 
 class InitLibs {

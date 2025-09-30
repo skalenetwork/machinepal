@@ -1,23 +1,23 @@
-#include "ProxiConfigLoader.h"
-
-#include "config/config.hpp"
-
 #include <yaml-cpp/yaml.h>
 #include <fstream>
 #include <sstream>
 #include <cstdlib>
-
 #include <nlohmann/json-schema.hpp>
+#include "ProxyConfig.h"
+#include "ProxyConfigLoader.h"
+
+
+
 using nlohmann::json;
 using nlohmann::json_schema::json_validator;
 
 // ---------- tiny utils ----------
-std::optional<std::string> ConfigLoader::getenvOpt(const char* key) {
+std::optional<std::string> ProxyConfigLoader::getenvOpt(const char* key) {
   if (const char* v = std::getenv(key)) return std::string(v);
   return std::nullopt;
 }
 
-std::string ConfigLoader::readFileFirstLine(const std::string& path,
+std::string ProxyConfigLoader::readFileFirstLine(const std::string& path,
                                             const std::string& fallback) {
   std::ifstream f(path);
   if (!f.is_open()) return fallback;
@@ -48,13 +48,13 @@ static json yamlNodeToJson(const YAML::Node& node) {
   }
 }
 
-json ConfigLoader::yamlToJson(const std::string& yaml_path) {
+json ProxyConfigLoader::yamlToJson(const std::string& yaml_path) {
   YAML::Node root = YAML::LoadFile(yaml_path);
   return yamlNodeToJson(root);
 }
 
 // ---------- ENV overlay (pick high-value knobs) ----------
-void ConfigLoader::applyEnvOverrides(json& j) {
+void ProxyConfigLoader::applyEnvOverrides(json& j) {
   // Server
   if (auto v = getenvOpt("SERVER_HOST")) j["server"]["host"] = *v;
   if (auto v = getenvOpt("SERVER_PORT")) j["server"]["port"] = std::stoi(*v);
@@ -70,7 +70,7 @@ void ConfigLoader::applyEnvOverrides(json& j) {
 }
 
 // ---------- Resolve secret files to actual values ----------
-void ConfigLoader::resolveSecrets(json& j) {
+void ProxyConfigLoader::resolveSecrets(json& j) {
   const std::string dbFile = j["database"].value("passwordFile", "");
   const std::string jwtFile = j["jwt"].value("secretFile", "");
 
@@ -79,7 +79,7 @@ void ConfigLoader::resolveSecrets(json& j) {
 }
 
 // ---------- JSON Schema validation ----------
-void ConfigLoader::validateJson(const json& j, const std::string& schema_path) {
+void ProxyConfigLoader::validateJson(const json& j, const std::string& schema_path) {
   std::ifstream sf(schema_path);
   if (!sf.is_open()) throw std::runtime_error("Cannot open schema file: " + schema_path);
   json schema = json::parse(sf);
@@ -89,27 +89,13 @@ void ConfigLoader::validateJson(const json& j, const std::string& schema_path) {
   validator.validate(j);             // throws on validation error
 }
 
-// ---------- Materialize strongly-typed config ----------
-AppConfig ConfigLoader::toAppConfig(const json& j) {
-  AppConfig cfg{};
-  cfg.server_host = j["server"].value("host", "0.0.0.0");
-  cfg.server_port = j["server"].value("port", 8080);
-
-  cfg.db_host = j["database"].value("host", "localhost");
-  cfg.db_port = j["database"].value("port", 5432);
-  cfg.db_user = j["database"].value("user", "appuser");
-  cfg.db_password = j["database"].value("password", "");
-  cfg.jwt_secret = j["jwt"].value("secret", "");
-
-  return cfg;
-}
 
 // ---------- Orchestrator ----------
-AppConfig ConfigLoader::load(const std::string& yaml_path,
+ProxyConfig ProxyConfigLoader::load(const std::string& yaml_path,
                              const std::string& schema_path) {
   json j = yamlToJson(yaml_path);
   applyEnvOverrides(j);
   resolveSecrets(j);
   validateJson(j, schema_path);
-  return toAppConfig(j);
+  return toProxyConfig(j);
 }
