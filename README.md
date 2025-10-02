@@ -42,7 +42,7 @@ Here’s the process step by step:
 
 Clone project, install and build dependencies
 
-```
+```bash
 git clone --recursive git@github.com:skalenetwork/x402proxy.git 
 cd x402proxy/external/vcpkg
 ./bootstrap-vcpkg.sh 
