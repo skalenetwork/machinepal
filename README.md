@@ -40,22 +40,28 @@ Here’s the process step by step:
 
 # Build instructions
 
-Clone project, install and build dependencies
+Clone project
 
 ```bash
 git clone --recursive git@github.com:skalenetwork/x402proxy.git 
-cd x402proxy/external/vcpkg
+```
+
+Instal and build dependencies
+
+```bash
+cd x402proxy/external/vcpkg 
 ./bootstrap-vcpkg.sh 
 export PATH=$PATH:$PWD 
-cd ../..
+cd ../.. 
 external/vcpkg/vcpkg install
 ```
 
 Build the project
 
 ```
-cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=external/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_FEATURE_FLAGS=manifests
-cmake --build build --parallel
+cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=external/vcpkg/scripts/buildsystems/vcpkg.cmake \
+-DVCPKG_FEATURE_FLAGS=manifests
+cmake --build build -j
 ```
 
 
