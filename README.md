@@ -44,11 +44,9 @@ Clone project, install and build dependencies
 
 ```bash
 git clone --recursive git@github.com:skalenetwork/x402proxy.git 
-cd x402proxy/external/vcpkg
-./bootstrap-vcpkg.sh 
+cd x402proxy/external/vcpkg && ./bootstrap-vcpkg.sh 
 export PATH=$PATH:$PWD 
-cd ../..
-external/vcpkg/vcpkg install
+cd ../.. && external/vcpkg/vcpkg install
 ```
 
 Build the project
