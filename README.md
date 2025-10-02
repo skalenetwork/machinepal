@@ -1,62 +1,53 @@
-**Why use x402proxy?**
+# 🚀 x402proxy: The Payment Gatekeeper for the Web
 
-- It instantly adds x402 payments to existing websites and web APIs.
-- It is fully x402 compliant.
-- It is easy to deploy and configure.
-- It is a high performance C++ based implementation, supporting large number of concurrent connections.
-- It supports both Base and SKALE networks.
-- It supports flexible payment models and x402 options.
-- It provides detailed logging and monitoring.
-- It is open source and free to use.
+Instantly add **crypto payments** to any website or API using the [x402 protocol](https://docs.cdp.coinbase.com/x402/docs/welcome).
 
-## How the x402proxy Reverse Proxy Architecture Works
+---
 
-Think of x402proxy as a toll booth on the internet. Instead of connecting to a website directly, your request goes through x402proxy, which verifies payment before allowing access to the destination.  
+## ✨ Why use x402proxy?
 
-x402proxy uses the [**x402 protocol by Coinbase**](https://docs.cdp.coinbase.com/x402/docs/welcome) to charge for access to web resources. It supports payments on both **Base** and **SKALE** networks, making it compatible with multiple blockchains.  
+- ⚡ **Plug & play** — add x402 payments to existing websites & APIs in minutes
+- 🔒 **Fully x402 compliant** — built on the Coinbase standard
+- 🛠️ **Easy to deploy & configure** — no complex setup
+- 🚀 **High performance C++** — scales to thousands of concurrent connections
+- 🌉 **Multi-chain support** — works with both **Base** and **SKALE**
+- 💸 **Flexible payment models** — subscriptions, pay-per-request, metered access
+- 📊 **Deep logging & monitoring** — full visibility of payment traffic
+- 💯 **Open source & free** — community-driven
 
-Here’s the process step by step:  
+---
 
-1. **You send a request**  
-   You try to access a webpage or resource.  
+## 🏗️ How it Works (The Toll Booth Analogy)
 
-2. **x402proxy intercepts the request**  
-   Your request doesn’t go straight to the website. Instead, it first reaches x402proxy, which checks whether payment has been included. If not, x402proxy prompts you to pay before proceeding.  
+Think of **x402proxy** as a **toll booth for the internet**.  
+Instead of reaching a website directly, requests first pass through the proxy:
 
-3. **Payment verification**  
-   Once payment is confirmed via the x402 protocol, x402proxy authorizes the request.  
+1. **🔗 You send a request** → try to access a resource
+2. **🚦 x402proxy intercepts** → checks if payment is included
+3. **💳 Payment verified** → confirmed via the x402 protocol
+4. **📡 Proxy forwards request** → to the real website
+5. **🖥️ Website responds** → returns content
+6. **📬 Proxy delivers to you** → completing the paid access loop
 
-4. **x402proxy forwards the request**  
-   The proxy relays your request to the actual website on your behalf.  
+✅ Result: Websites instantly monetize access while staying secure and compliant.
 
-5. **The website responds**  
-   The destination website sends its response back to x402proxy.  
+---
 
-6. **x402proxy delivers the response to you**  
-   Finally, x402proxy returns the website’s response, completing the paid transaction loop.  
-
-   x402proxy takes the website's response and passes it back to you.
-
-
-# Build instructions
-
-Clone project, install and build dependencies
+## ⚡ Build Instructions
 
 ```bash
-git clone --recursive git@github.com:skalenetwork/x402proxy.git 
-cd x402proxy/external/vcpkg
-./bootstrap-vcpkg.sh 
-export PATH=$PATH:$PWD 
-cd ../..
-external/vcpkg/vcpkg install
-```
+# Clone with dependencies
+git clone --recursive https://github.com/skalenetwork/x402proxy.git
+cd x402proxy
 
-Build the project
+# Bootstrap vcpkg
+./external/vcpkg/bootstrap-vcpkg.sh
+./external/vcpkg/vcpkg install
 
-```
-cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=external/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_FEATURE_FLAGS=manifests
-cmake --build build --parallel
-```
+# Build
+cmake -S . -B build \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_TOOLCHAIN_FILE=external/vcpkg/scripts/buildsystems/vcpkg.cmake \
+  -DVCPKG_FEATURE_FLAGS=manifests
 
-
-
+cmake --build build -j
