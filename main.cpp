@@ -1,5 +1,5 @@
-#include "src/X402Handler.h"
-#include "src/ServerFactory.h"
+#include "src/x402_server/X402Handler.h"
+#include "src/x402_server/ServerFactory.h"
 
 #include <proxygen/httpserver/HTTPServer.h>
 #include <proxygen/httpserver/RequestHandler.h>
