@@ -9,8 +9,6 @@
     "curl",
     "nlohmann-json",
     "json-schema-validator",
-    "boost-beast",
-    "gsl-lite",
-    "yaml-cpp"
+    "boost-beast"
   ]
 }

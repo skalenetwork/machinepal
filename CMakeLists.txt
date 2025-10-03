@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 project(x402proxy LANGUAGES CXX)
 
 add_subdirectory(json-schema-validator)
+add_subdirectory(yaml-cpp)
 
 # Acknowledge removal of FindBoost; use BoostConfig instead (vcpkg provides it).
 if(POLICY CMP0167)
@@ -49,13 +50,13 @@ set (PROXY_COMMON_LIBS
         Boost::system
         Boost::thread
         Boost::headers
-        yaml-cpp
         nlohmann_json_schema_validator
 )
 
 target_link_libraries(x402proxy
         PRIVATE
         ${PROXY_COMMON_LIBS}
+        yaml-cpp
 )
 
 option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
@@ -85,6 +86,7 @@ if(BUILD_TESTING)
             PRIVATE
             ${PROXY_COMMON_LIBS}
             Boost::unit_test_framework
+            yaml-cpp
     )
 
     if(ENABLE_ASAN)
