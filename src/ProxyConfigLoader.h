@@ -38,6 +38,6 @@ private:
 
     static void applyIntEnv(nlohmann::json &j, const nlohmann::json_pointer<std::string> &path, const char *envVar);
 
-    static std::string readFileFirstLine(const std::string& path,
+    static std::string readSecretFileFirstLine(const std::string& path,
                                          const std::string& fallback = "");
 };

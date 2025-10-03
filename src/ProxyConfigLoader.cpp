@@ -23,13 +23,17 @@ std::optional<std::string> ProxyConfigLoader::getenvOpt(const char *key) {
     return std::nullopt;
 }
 
-std::string ProxyConfigLoader::readFileFirstLine(const std::string &path,
+std::string ProxyConfigLoader::readSecretFileFirstLine(const std::string &path,
                                                  const std::string &fallback) {
-    std::ifstream f(path);
-    if (!f.is_open()) return fallback;
-    std::string line;
-    std::getline(f, line);
-    return line;
+    try {
+        std::ifstream f(path);
+        if (!f.is_open()) return fallback;
+        std::string line;
+        std::getline(f, line);
+        return line;
+    } catch (const std::exception &ex) {
+        LOG_AND_RETHROW_NESTED("ProxyConfigLoader::readSecretFileFirstLine failed: ", ex);
+    }
 }
 
 // ---------- YAML -> JSON (recursive) ----------
@@ -75,8 +79,12 @@ bool ProxyConfigLoader::asBool(const std::string &s) {
  * @brief Applies an environment variable as a string to a JSON object at a given path.
  */
 void ProxyConfigLoader::applyStringEnv(json &j, const json::json_pointer &path, const char *envVar) {
-    if (auto v = getenvOpt(envVar)) {
-        j[path] = *v;
+    try {
+        if (auto v = getenvOpt(envVar)) {
+            j[path] = *v;
+        }
+    } catch (const std::exception &ex) {
+        LOG_AND_RETHROW_NESTED("ProxyConfigLoader::applyStringEnv failed: ", ex);
     }
 }
 
@@ -84,8 +92,12 @@ void ProxyConfigLoader::applyStringEnv(json &j, const json::json_pointer &path, 
  * @brief Applies an environment variable as a boolean to a JSON object at a given path.
  */
 void ProxyConfigLoader::applyBoolEnv(json &j, const json::json_pointer &path, const char *envVar) {
-    if (auto v = getenvOpt(envVar)) {
-        j[path] = asBool(*v);
+    try {
+        if (auto v = getenvOpt(envVar)) {
+            j[path] = asBool(*v);
+        }
+    } catch (const std::exception &ex) {
+        LOG_AND_RETHROW_NESTED("ProxyConfigLoader::applyBoolEnv failed: ", ex);
     }
 }
 
@@ -93,13 +105,12 @@ void ProxyConfigLoader::applyBoolEnv(json &j, const json::json_pointer &path, co
  * @brief Applies an environment variable as an integer to a JSON object at a given path.
  */
 void ProxyConfigLoader::applyIntEnv(json &j, const json::json_pointer &path, const char *envVar) {
-    if (auto v = getenvOpt(envVar)) {
-        try {
+    try {
+        if (auto v = getenvOpt(envVar)) {
             j[path] = std::stoi(*v);
-        } catch (const std::exception &e) {
-            // Optional: Add logging for invalid integer values
-            // std::cerr << "Warning: Could not parse env var '" << envVar << "' as integer: " << *v << std::endl;
         }
+    } catch (const std::exception &ex) {
+        LOG_AND_RETHROW_NESTED("ProxyConfigLoader::applyIntEnv failed: ", ex);
     }
 }
 
@@ -133,11 +144,11 @@ void ProxyConfigLoader::applyEnvOverrides(json &j) {
 // ---------- Resolve secret files to actual values ----------
 void ProxyConfigLoader::resolveSecrets(json &j) {
     try {
-        const std::string dbFile = j["database"].value("passwordFile", "");
-        const std::string jwtFile = j["jwt"].value("secretFile", "");
-
-        j["database"]["password"] = readFileFirstLine(dbFile, /*fallback*/ "");
-        j["jwt"]["secret"] = readFileFirstLine(jwtFile, /*fallback*/ "");
+        if (j.contains("database") && j["database"].is_object()) {
+            const std::string dbFile = j["database"].value("passwordFile", "");
+            j["database"]["password"] = readSecretFileFirstLine(dbFile, /*fallback*/ "");
+        }
+        // Only resolve password in db, not jwt
     } catch (const std::exception &ex) {
         LOG_AND_RETHROW_NESTED("ProxyConfigLoader::resolveSecrets failed: ", ex);
     }
