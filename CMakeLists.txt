@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.16)
 project(x402proxy LANGUAGES CXX)
 
+add_subdirectory(json-schema-validator)
+
 # Acknowledge removal of FindBoost; use BoostConfig instead (vcpkg provides it).
 if(POLICY CMP0167)
     cmake_policy(SET CMP0167 NEW)
@@ -47,7 +49,7 @@ set (PROXY_COMMON_LIBS
         Boost::system
         Boost::thread
         Boost::headers
-        yaml-cpp::yaml-cpp
+        yaml-cpp
         nlohmann_json_schema_validator
 )
 

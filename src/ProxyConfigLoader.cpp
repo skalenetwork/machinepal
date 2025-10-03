@@ -1,4 +1,3 @@
-
 #include "ProxyConfigLoader.h"
 #include "ProxyConfig.h"
 #include <yaml-cpp/yaml.h>
@@ -67,16 +66,10 @@ bool ProxyConfigLoader::asBool(const std::string& s)  {
 };
 
 
-// Assuming getenvOpt and asBool are defined as in your example
-std::optional<std::string> getenvOpt(const char* name);
-bool asBool(const std::string& s);
-
-
-
 /**
  * @brief Applies an environment variable as a string to a JSON object at a given path.
  */
-void applyStringEnv(json& j, const json::json_pointer& path, const char* envVar) {
+void ProxyConfigLoader::applyStringEnv(json& j, const json::json_pointer& path, const char* envVar) {
     if (auto v = getenvOpt(envVar)) {
         j[path] = *v;
     }
@@ -85,7 +78,7 @@ void applyStringEnv(json& j, const json::json_pointer& path, const char* envVar)
 /**
  * @brief Applies an environment variable as a boolean to a JSON object at a given path.
  */
-void applyBoolEnv(json& j, const json::json_pointer& path, const char* envVar) {
+void ProxyConfigLoader::applyBoolEnv(json& j, const json::json_pointer& path, const char* envVar) {
     if (auto v = getenvOpt(envVar)) {
         j[path] = asBool(*v);
     }
@@ -94,7 +87,7 @@ void applyBoolEnv(json& j, const json::json_pointer& path, const char* envVar) {
 /**
  * @brief Applies an environment variable as an integer to a JSON object at a given path.
  */
-void applyIntEnv(json& j, const json::json_pointer& path, const char* envVar) {
+void ProxyConfigLoader::applyIntEnv(json& j, const json::json_pointer& path, const char* envVar) {
     if (auto v = getenvOpt(envVar)) {
         try {
             j[path] = std::stoi(*v);
@@ -158,4 +151,33 @@ ProxyConfig ProxyConfigLoader::load(const std::string& yaml_path,
   resolveSecrets(j);
   validateJson(j, schema_path);
   return toProxyConfig(j);
+}
+
+ProxyConfig ProxyConfigLoader::toProxyConfig(const nlohmann::json& j) {
+    ProxyConfig config;
+    // FrontEndConfig
+    const auto& jf = j.at("frontend");
+    config.frontEnd.httpEnabled = jf.at("enable_http").get<bool>();
+    config.frontEnd.httpsEnabled = jf.at("enable_https").get<bool>();
+    config.frontEnd.httpPort = jf.at("http_listen_port").get<uint16_t>();
+    config.frontEnd.httpsPort = jf.at("https_listen_port").get<uint16_t>();
+    const auto& jt = jf.at("tls");
+    config.frontEnd.tls.certFile = jt.at("cert_file").get<std::string>();
+    config.frontEnd.tls.keyFile = jt.at("key_file").get<std::string>();
+    config.frontEnd.tls.keyPassFile = jt.at("key_pass_file").get<std::string>();
+    if (jt.contains("ca_file") && !jt.at("ca_file").is_null())
+        config.frontEnd.tls.caFile = jt.at("ca_file").get<std::string>();
+    else
+        config.frontEnd.tls.caFile = std::nullopt;
+
+    // FacilitatorConfig
+    const auto& jfaci = j.at("facilitator");
+    config.facilitator.type = jfaci.at("type").get<std::string>();
+    config.facilitator.baseUrl = jfaci.at("base_url").get<std::string>();
+    if (jfaci.contains("api_key_file") && !jfaci.at("api_key_file").is_null())
+        config.facilitator.apiKeyFile = jfaci.at("api_key_file").get<std::string>();
+    else
+        config.facilitator.apiKeyFile = std::nullopt;
+
+    return config;
 }

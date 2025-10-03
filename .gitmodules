@@ -1,3 +1,6 @@
 [submodule "external/vcpkg"]
 	path = external/vcpkg
 	url = https://github.com/microsoft/vcpkg.git
+[submodule "json-schema-validator"]
+	path = json-schema-validator
+	url = https://github.com/pboettch/json-schema-validator.git

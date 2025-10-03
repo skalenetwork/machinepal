@@ -31,6 +31,13 @@ private:
 
     // Utility helpers
     static std::optional<std::string> getenvOpt(const char* key);
+
+    static void applyStringEnv(nlohmann::json &j, const nlohmann::json_pointer<std::string> &path, const char *envVar);
+
+    static void applyBoolEnv(nlohmann::json &j, const nlohmann::json_pointer<std::string> &path, const char *envVar);
+
+    static void applyIntEnv(nlohmann::json &j, const nlohmann::json_pointer<std::string> &path, const char *envVar);
+
     static std::string readFileFirstLine(const std::string& path,
                                          const std::string& fallback = "");
 };
