@@ -2,6 +2,7 @@
 #include "ProxyConfigLoader.h"
 #include "ProxyConfig.h"
 #include "config/proxyConfigSchema.h"
+#include "init/InitLibs.h"
 #include <yaml-cpp/yaml.h>
 #include <fstream>
 #include <sstream>
@@ -188,6 +189,7 @@ void ProxyConfigLoader::validateJson(const json &j, const std::string &schema_pa
         std::string errorMsg = std::string("ProxyConfigLoader::validateJson Invalid config file : "
                                            "failed to validate config against schema:\n") +
                                                errHandler.errorMessage;
+        CHECK_STATE(InitLibs::isInited());
         LOG_AND_RETHROW_NESTED(errorMsg, ex);
     }
 }

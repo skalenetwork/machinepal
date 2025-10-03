@@ -10,5 +10,5 @@ public:
     static void initAll(int _argc, char* _argv[]);
     static bool isInited();
 private:
-    static std::atomic<bool> initialized_;
+    static std::atomic<bool> inited_;
 };

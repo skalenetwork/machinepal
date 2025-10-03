@@ -4,10 +4,10 @@
 
 #include "InitLibs.h"
 
-std::atomic<bool> InitLibs::initialized_{false};
+std::atomic<bool> InitLibs::inited_{false};
 
 void InitLibs::initAll(int _argc, char* _argv[]) {
-    if (!initialized_.exchange(true)) {
+    if (!inited_.exchange(true)) {
         curl_global_init(CURL_GLOBAL_DEFAULT);
         FLAGS_logtostderr = 1;
         FLAGS_minloglevel = google::GLOG_INFO;
@@ -17,5 +17,5 @@ void InitLibs::initAll(int _argc, char* _argv[]) {
 }
 
 bool InitLibs::isInited() {
-    return initialized_;
+    return inited_;
 }
