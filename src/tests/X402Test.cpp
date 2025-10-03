@@ -2,14 +2,14 @@
 #define BOOST_TEST_MODULE X402HandlerSelfTest
 
 #include "common.h"
-#include "InitLibs.h"
-#include "ServerFactory.h"
+#include "init/InitLibs.h"
+#include "x402_server/ServerFactory.h"
 #include <boost/test/included/unit_test.hpp> // or <boost/test/unit_test.hpp> if using dynamic link
 #include <folly/SocketAddress.h>
 #include <proxygen/httpserver/HTTPServer.h>
 
 
-#include "X402Client.h"
+#include "x402_client/X402Client.h"
 
 
 // ---- libcurl helper ---------------------------------------------------------

@@ -9,7 +9,7 @@
 #include <wangle/ssl/SSLContextConfig.h>
 #include <folly/init/Init.h>
 
-#include "InitLibs.h"
+#include "init/InitLibs.h"
 
 
 using namespace proxygen;
