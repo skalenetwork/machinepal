@@ -1,4 +1,4 @@
-#include "../ProxyConfigLoader.h"
+#include "../config/ProxyConfigLoader.h"
 #include <boost/test/unit_test.hpp>
 #include <string>
 #include "nlohmann/json.hpp"

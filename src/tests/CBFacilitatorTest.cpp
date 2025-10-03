@@ -1,5 +1,5 @@
 #include <boost/test/unit_test.hpp>
-#include "CBFacilitatorClient.h"
+#include "facilitator_clients/CBFacilitatorClient.h"
 
 #include <iostream>
 #include <glog/logging.h>

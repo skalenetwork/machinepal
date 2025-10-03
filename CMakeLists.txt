@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION 3.16)
 project(x402proxy LANGUAGES CXX)
 
-add_subdirectory(external/json-schema-validator)
-add_subdirectory(external/yaml-cpp)
+foreach(submod json-schema-validator yaml-cpp)
+    add_subdirectory(external/${submod})
+endforeach()
 
 # Acknowledge removal of FindBoost; use BoostConfig instead (vcpkg provides it).
 if(POLICY CMP0167)
@@ -14,8 +15,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # Gather all source files except test sources
-file(GLOB APP_SRC_FILES src/*.cpp src/*.h src/datastructures/*.cpp src/datastructures/*.h
-        src/exceptions/*.cpp src/exceptions/*.h)
+set(APP_SRC_DIRS . datastructures exceptions config facilitator_clients)
+
+set(APP_SRC_FILES)
+foreach(dir ${APP_SRC_DIRS})
+    file(GLOB APP_SRC_TMP src/${dir}/*.cpp ${dir}/*.h)
+    list(APPEND APP_SRC_FILES ${APP_SRC_TMP})
+endforeach()
+
 list(FILTER APP_SRC_FILES EXCLUDE REGEX "src/tests/.*")
 
 # Gather test source files
@@ -24,14 +31,13 @@ file(GLOB TEST_SRC_FILES src/tests/*.cpp)
 # Gather all source files needed for tests (implementation + tests)
 set(TEST_ALL_SRC_FILES ${APP_SRC_FILES} ${TEST_SRC_FILES})
 
-# ---- Proxygen / Folly / Wangle ----
-find_package(folly    REQUIRED CONFIG)
-find_package(Wangle   REQUIRED CONFIG)
-find_package(Proxygen REQUIRED CONFIG)
+
+# ---- Dependencies ----
+foreach(pkg folly Wangle Proxygen CURL nlohmann_json_schema_validator yaml-cpp)
+    find_package(${pkg} REQUIRED CONFIG)
+endforeach()
+
 find_package(Boost REQUIRED CONFIG COMPONENTS unit_test_framework system thread)
-find_package(CURL  REQUIRED)
-find_package(nlohmann_json_schema_validator CONFIG REQUIRED)
-find_package(yaml-cpp CONFIG REQUIRED)
 
 
 # ---- App target ----
@@ -51,12 +57,12 @@ set (PROXY_COMMON_LIBS
         Boost::thread
         Boost::headers
         nlohmann_json_schema_validator
+        yaml-cpp
 )
 
 target_link_libraries(x402proxy
         PRIVATE
         ${PROXY_COMMON_LIBS}
-        yaml-cpp
 )
 
 option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
@@ -81,12 +87,10 @@ if(BUILD_TESTING)
     )
 
 
-
     target_link_libraries(x402_boost_test
             PRIVATE
             ${PROXY_COMMON_LIBS}
             Boost::unit_test_framework
-            yaml-cpp
     )
 
     if(ENABLE_ASAN)
