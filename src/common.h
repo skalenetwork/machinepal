@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cassert>
+#include <iostream>
 #include <string>
 
 #if defined(__cpp_exceptions) || defined(__EXCEPTIONS) || defined(_CPPUNWIND)
@@ -29,6 +30,17 @@ static_assert(exceptions_enabled, "Exceptions must be enabled!");
 inline std::string stripSpaces(std::string _s) {
     _s.erase(std::remove_if(_s.begin(), _s.end(), ::isspace), _s.end());
     return _s;
+}
+
+inline void printException(const std::exception& e, int level = 0) {
+    std::cerr << std::string(level, ' ') << "Exception: " << e.what() << std::endl;
+    try {
+        std::rethrow_if_nested(e);
+    } catch (const std::exception& nested) {
+        printException(nested, level + 2);
+    } catch (...) {
+        // Non-std::exception nested
+    }
 }
 
 #include <glog/logging.h>
