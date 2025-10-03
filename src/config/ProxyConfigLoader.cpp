@@ -156,6 +156,20 @@ void ProxyConfigLoader::resolveSecrets(json &j) {
 }
 
 // ---------- JSON Schema validation ----------
+struct SchemaValidationErrorHandler : public nlohmann::json_schema::error_handler {
+
+    std::string errorMessage;
+
+    void error(const nlohmann::json_pointer<std::string>& ptr, const json& instance, const std::string& message) override {
+        std::ostringstream oss;
+        oss << "[SCHEMA VALIDATION ERROR] at: " << ptr.to_string() << "\n"
+            << "  Instance: " << instance.dump(2) << "\n"
+            << "  Instance type: " << instance.type_name() << "\n"
+            << "  Error:    " << message << "\n";
+        errorMessage += oss.str();
+    }
+};
+
 void ProxyConfigLoader::validateJson(const json &j, const std::string &schema_path) {
     json schema;
     try {
@@ -164,13 +178,16 @@ void ProxyConfigLoader::validateJson(const json &j, const std::string &schema_pa
         LOG_AND_RETHROW_NESTED("ProxyConfigLoader::validateJson failed to parse schema: ", ex);
     }
 
+    SchemaValidationErrorHandler errHandler;
     try {
         json_validator validator;
         validator.set_root_schema(schema); // throws on invalid schema
-        validator.validate(j); // throws on validation error
+
+        validator.validate(j, errHandler); // throws on validation error
     } catch (const std::exception &ex) {
-        std::string errorMsg = std::string("ProxyConfigLoader::validateJson Invalid config file : failed to validate config against schema:\n") +
-             + "\nError: " + ex.what();
+        std::string errorMsg = std::string("ProxyConfigLoader::validateJson Invalid config file : "
+                                           "failed to validate config against schema:\n") +
+                                               errHandler.errorMessage;
         LOG_AND_RETHROW_NESTED(errorMsg, ex);
     }
 }
