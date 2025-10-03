@@ -191,6 +191,13 @@ void ProxyConfigLoader::validateJson(const json &j, const std::string &schema_pa
                                                errHandler.errorMessage;
         CHECK_STATE(InitLibs::isInited());
         LOG_AND_RETHROW_NESTED(errorMsg, ex);
+    } catch (...) {
+        std::string errorMsg = std::string("ProxyConfigLoader::validateJson Invalid config file : "
+                                           "failed to validate config against schema:\n") +
+                                               errHandler.errorMessage;
+        CHECK_STATE(InitLibs::isInited());
+        LOG(ERROR) << errorMsg;
+        throw std::runtime_error(errorMsg);
     }
 }
 

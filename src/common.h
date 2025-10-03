@@ -54,5 +54,6 @@ inline void printException(const std::exception& e, int level = 0) {
 #define LOG_AND_RETHROW_NESTED(msg, ex) \
     do { \
         LOG(ERROR) << msg << ex.what(); \
+        google::FlushLogFiles(google::GLOG_ERROR); \
         std::throw_with_nested(std::runtime_error(std::string(msg) + ex.what())); \
     } while(0)
