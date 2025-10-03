@@ -1,6 +1,7 @@
 #include "common.h"
 #include "ProxyConfigLoader.h"
 #include "ProxyConfig.h"
+#include "config/proxyConfigSchema.h"
 #include <yaml-cpp/yaml.h>
 #include <fstream>
 #include <sstream>
@@ -157,10 +158,8 @@ void ProxyConfigLoader::resolveSecrets(json &j) {
 // ---------- JSON Schema validation ----------
 void ProxyConfigLoader::validateJson(const json &j, const std::string &schema_path) {
     try {
-        std::ifstream sf(schema_path);
-        if (!sf.is_open()) throw std::runtime_error("Cannot open schema file: " + schema_path);
-        json schema = json::parse(sf);
-
+        // Use in-memory schema from proxyConfigSchema.h
+        json schema = json::parse(proxyConfigSchemaJson);
         json_validator validator;
         validator.set_root_schema(schema); // throws on invalid schema
         validator.validate(j); // throws on validation error
