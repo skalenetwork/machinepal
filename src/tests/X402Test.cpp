@@ -25,20 +25,30 @@ const std::string BIND_IP = "0.0.0.0";
 const std::string CONNECT_HOST = "localhost";
 constexpr uint32_t DEFAULT_TEST_PORT = 8080;
 
-
-bool init_unit_test(int argc, char* argv[]) {
-    try {
-        InitLibs::initAll(argc, argv);
-    } catch (std::exception &e) {
-        std::cerr << "InitLibs::initAll failed: " << e.what() << std::endl;
-        return false;
+// ---- Global fixture that initializes glog, folly, curl -----------------------
+struct X402GlobalFixture {
+    X402GlobalFixture() {
+        std::vector<std::string> args;
+        args.push_back("x402test"); // program name
+        int fake_argc = static_cast<int>(args.size());
+        std::vector<char*> fake_argv;
+        for (auto& s : args) {
+            fake_argv.push_back(const_cast<char*>(s.c_str()));
+        }
+        InitLibs::initAll(fake_argc, fake_argv.data());
     }
-    return true;
-}
+    ~X402GlobalFixture() {}
+};
+
+BOOST_GLOBAL_FIXTURE(X402GlobalFixture);
+
+
+
 
 // ---- Test fixture that starts/stops the proxygen server ---------------------
 struct X402ServerFixture {
     X402ServerFixture() {
+
 
         server = ServerFactory().createServerInstance(BIND_IP, DEFAULT_TEST_PORT);
 

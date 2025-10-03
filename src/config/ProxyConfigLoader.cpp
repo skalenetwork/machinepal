@@ -163,11 +163,12 @@ struct SchemaValidationErrorHandler : public nlohmann::json_schema::error_handle
 
     void error(const nlohmann::json_pointer<std::string>& ptr, const json& instance, const std::string& message) override {
         std::ostringstream oss;
-        oss << "[SCHEMA VALIDATION ERROR] at: " << ptr.to_string() << "\n"
-            << "  Instance: " << instance.dump(2) << "\n"
+        oss << "ERROR IN CONFIG FILE at path: " << ptr.to_string() << "\n"
+            << "  Value: " << instance.dump(2) << "\n"
             << "  Instance type: " << instance.type_name() << "\n"
             << "  Error:    " << message << "\n";
-        errorMessage += oss.str();
+        errorMessage = oss.str();
+        throw std::runtime_error(errorMessage);
     }
 };
 
@@ -189,15 +190,7 @@ void ProxyConfigLoader::validateJson(const json &j, const std::string &schema_pa
         std::string errorMsg = std::string("ProxyConfigLoader::validateJson Invalid config file : "
                                            "failed to validate config against schema:\n") +
                                                errHandler.errorMessage;
-        CHECK_STATE(InitLibs::isInited());
         LOG_AND_RETHROW_NESTED(errorMsg, ex);
-    } catch (...) {
-        std::string errorMsg = std::string("ProxyConfigLoader::validateJson Invalid config file : "
-                                           "failed to validate config against schema:\n") +
-                                               errHandler.errorMessage;
-        CHECK_STATE(InitLibs::isInited());
-        LOG(ERROR) << errorMsg;
-        throw std::runtime_error(errorMsg);
     }
 }
 
