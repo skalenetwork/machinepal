@@ -107,54 +107,70 @@ void ProxyConfigLoader::applyIntEnv(json &j, const json::json_pointer &path, con
 // --- Refactored applyEnvOverrides Function ---
 
 void ProxyConfigLoader::applyEnvOverrides(json &j) {
-    // ---------- frontend ----------
-    applyBoolEnv(j, "/frontend/enable_http"_json_pointer, "FRONTEND_ENABLE_HTTP");
-    applyBoolEnv(j, "/frontend/enable_https"_json_pointer, "FRONTEND_ENABLE_HTTPS");
-    applyIntEnv(j, "/frontend/http_listen_port"_json_pointer, "FRONTEND_HTTP_PORT");
-    applyIntEnv(j, "/frontend/https_listen_port"_json_pointer, "FRONTEND_HTTPS_PORT");
+    try {
+        // ---------- frontend ----------
+        applyBoolEnv(j, "/frontend/enable_http"_json_pointer, "FRONTEND_ENABLE_HTTP");
+        applyBoolEnv(j, "/frontend/enable_https"_json_pointer, "FRONTEND_ENABLE_HTTPS");
+        applyIntEnv(j, "/frontend/http_listen_port"_json_pointer, "FRONTEND_HTTP_PORT");
+        applyIntEnv(j, "/frontend/https_listen_port"_json_pointer, "FRONTEND_HTTPS_PORT");
 
-    // ---------- frontend.tls ----------
-    applyStringEnv(j, "/frontend/tls/cert_file"_json_pointer, "FRONTEND_TLS_CERT_FILE");
-    applyStringEnv(j, "/frontend/tls/key_file"_json_pointer, "FRONTEND_TLS_KEY_FILE");
-    applyStringEnv(j, "/frontend/tls/key_pass_file"_json_pointer, "FRONTEND_TLS_KEY_PASS_FILE");
-    applyStringEnv(j, "/frontend/tls/ca_file"_json_pointer, "FRONTEND_TLS_CA_FILE");
+        // ---------- frontend.tls ----------
+        applyStringEnv(j, "/frontend/tls/cert_file"_json_pointer, "FRONTEND_TLS_CERT_FILE");
+        applyStringEnv(j, "/frontend/tls/key_file"_json_pointer, "FRONTEND_TLS_KEY_FILE");
+        applyStringEnv(j, "/frontend/tls/key_pass_file"_json_pointer, "FRONTEND_TLS_KEY_PASS_FILE");
+        applyStringEnv(j, "/frontend/tls/ca_file"_json_pointer, "FRONTEND_TLS_CA_FILE");
 
-    // ---------- facilitator ----------
-    applyStringEnv(j, "/facilitator/type"_json_pointer, "FACILITATOR_TYPE");
-    applyStringEnv(j, "/facilitator/base_url"_json_pointer, "FACILITATOR_BASE_URL");
-    applyStringEnv(j, "/facilitator/api_key_file"_json_pointer, "FACILITATOR_API_KEY_FILE");
+        // ---------- facilitator ----------
+        applyStringEnv(j, "/facilitator/type"_json_pointer, "FACILITATOR_TYPE");
+        applyStringEnv(j, "/facilitator/base_url"_json_pointer, "FACILITATOR_BASE_URL");
+        applyStringEnv(j, "/facilitator/api_key_file"_json_pointer, "FACILITATOR_API_KEY_FILE");
+    } catch (const std::exception &ex) {
+        LOG_AND_RETHROW_NESTED("ProxyConfigLoader::applyEnvOverrides failed: ", ex);
+    }
 }
 
 
 // ---------- Resolve secret files to actual values ----------
 void ProxyConfigLoader::resolveSecrets(json &j) {
-    const std::string dbFile = j["database"].value("passwordFile", "");
-    const std::string jwtFile = j["jwt"].value("secretFile", "");
+    try {
+        const std::string dbFile = j["database"].value("passwordFile", "");
+        const std::string jwtFile = j["jwt"].value("secretFile", "");
 
-    j["database"]["password"] = readFileFirstLine(dbFile, /*fallback*/ "");
-    j["jwt"]["secret"] = readFileFirstLine(jwtFile, /*fallback*/ "");
+        j["database"]["password"] = readFileFirstLine(dbFile, /*fallback*/ "");
+        j["jwt"]["secret"] = readFileFirstLine(jwtFile, /*fallback*/ "");
+    } catch (const std::exception &ex) {
+        LOG_AND_RETHROW_NESTED("ProxyConfigLoader::resolveSecrets failed: ", ex);
+    }
 }
 
 // ---------- JSON Schema validation ----------
 void ProxyConfigLoader::validateJson(const json &j, const std::string &schema_path) {
-    std::ifstream sf(schema_path);
-    if (!sf.is_open()) throw std::runtime_error("Cannot open schema file: " + schema_path);
-    json schema = json::parse(sf);
+    try {
+        std::ifstream sf(schema_path);
+        if (!sf.is_open()) throw std::runtime_error("Cannot open schema file: " + schema_path);
+        json schema = json::parse(sf);
 
-    json_validator validator;
-    validator.set_root_schema(schema); // throws on invalid schema
-    validator.validate(j); // throws on validation error
+        json_validator validator;
+        validator.set_root_schema(schema); // throws on invalid schema
+        validator.validate(j); // throws on validation error
+    } catch (const std::exception &ex) {
+        LOG_AND_RETHROW_NESTED("ProxyConfigLoader::validateJson failed: ", ex);
+    }
 }
 
 
 // ---------- Orchestrator ----------
 ProxyConfig ProxyConfigLoader::load(const std::string &yaml_path,
                                     const std::string &schema_path) {
-    json j = yamlToJson(yaml_path);
-    applyEnvOverrides(j);
-    resolveSecrets(j);
-    validateJson(j, schema_path);
-    return toProxyConfig(j);
+    try {
+        json j = yamlToJson(yaml_path);
+        applyEnvOverrides(j);
+        resolveSecrets(j);
+        validateJson(j, schema_path);
+        return toProxyConfig(j);
+    } catch (const std::exception &ex) {
+        LOG_AND_RETHROW_NESTED("ProxyConfigLoader::load failed: ", ex);
+    }
 }
 
 ProxyConfig ProxyConfigLoader::toProxyConfig(const nlohmann::json &j) {
