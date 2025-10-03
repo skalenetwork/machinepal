@@ -159,22 +159,19 @@ void ProxyConfigLoader::resolveSecrets(json &j) {
 void ProxyConfigLoader::validateJson(const json &j, const std::string &schema_path) {
     json schema;
     try {
-        // Use in-memory schema from proxyConfigSchema.h
-        json schema = json::parse(proxyConfigSchemaJson);
+        schema = json::parse(proxyConfigSchemaJson);
     } catch (const std::exception &ex) {
-        LOG_AND_RETHROW_NESTED("ProxyConfigLoader::validateJson failed to parse schama: ", ex);
+        LOG_AND_RETHROW_NESTED("ProxyConfigLoader::validateJson failed to parse schema: ", ex);
     }
-
 
     try {
         json_validator validator;
         validator.set_root_schema(schema); // throws on invalid schema
         validator.validate(j); // throws on validation error
     } catch (const std::exception &ex) {
-        LOG_AND_RETHROW_NESTED(
-            "ProxyConfigLoader::validateJson Invalid config file : failed to validate config against schema: \n"
-            + j.dump() + "\n",
-            ex);
+        std::string errorMsg = std::string("ProxyConfigLoader::validateJson Invalid config file : failed to validate config against schema:\n") +
+             + "\nError: " + ex.what();
+        LOG_AND_RETHROW_NESTED(errorMsg, ex);
     }
 }
 
