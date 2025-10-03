@@ -11,6 +11,7 @@
 #include <nlohmann/json.hpp>
 #include <string>
 #include <optional>
+#include <unordered_set>
 
 
 using nlohmann::json;
@@ -38,25 +39,104 @@ std::string ProxyConfigLoader::readSecretFileFirstLine(const std::string &path,
     }
 }
 
-// ---------- YAML -> JSON (recursive) ----------
-static json yamlNodeToJson(const YAML::Node &node) {
+
+static inline bool yamlTagIs(const YAML::Node& node, std::string_view shortTag /* like "!!bool" */) {
+    const std::string& tag = node.Tag(); // may be "", "!!str", or canonical "tag:yaml.org,2002:str"
+    if (tag.empty()) return false;
+    if (tag == shortTag) return true;
+    // Map "!!foo" -> "tag:yaml.org,2002:foo"
+    if (shortTag.rfind("!!", 0) == 0) {
+        std::string canon = "tag:yaml.org,2002:" + std::string(shortTag.substr(2));
+        return tag == canon;
+    }
+    return false;
+}
+
+
+static json yamlNodeToJson(const YAML::Node& node) {
     using Type = YAML::NodeType::value;
+
     switch (node.Type()) {
-        case Type::Null: return nullptr;
-        case Type::Scalar: return node.as<std::string>();
+        case Type::Null:
+            return nullptr;
+
+        case Type::Scalar: {
+            const std::string s = node.Scalar();
+
+            // Explicit tags first
+            if (yamlTagIs(node, "!!bool")) {
+                return node.as<bool>();
+            }
+            if (yamlTagIs(node, "!!int")) {
+                try { return node.as<int64_t>(); }
+                catch (const YAML::BadConversion&) {}
+                try { return node.as<uint64_t>(); }
+                catch (const YAML::BadConversion&) {}
+                return s;
+            }
+            if (yamlTagIs(node, "!!float")) {
+                try {
+                    double d = node.as<double>();
+                    if (std::isfinite(d)) return d;
+                    return s;
+                } catch (const YAML::BadConversion&) { return s; }
+            }
+            if (yamlTagIs(node, "!!str")) {
+                return s;
+            }
+
+            // --- No tag: try implicit types ---
+            // Try bool first
+            try {
+                return node.as<bool>();
+            } catch (const YAML::BadConversion&) {}
+
+            // Try int64
+            try {
+                return node.as<int64_t>();
+            } catch (const YAML::BadConversion&) {}
+
+            // Try uint64
+            try {
+                return node.as<uint64_t>();
+            } catch (const YAML::BadConversion&) {}
+
+            // Try double
+            try {
+                double d = node.as<double>();
+                if (std::isfinite(d)) return d;
+            } catch (const YAML::BadConversion&) {}
+
+            // Fallback: string
+            return s;
+        }
+
         case Type::Sequence: {
             json arr = json::array();
-            for (auto &&it: node) arr.push_back(yamlNodeToJson(it));
+            for (const auto& it : node) {
+                arr.push_back(yamlNodeToJson(it));
+            }
             return arr;
         }
+
         case Type::Map: {
             json obj = json::object();
             for (auto it = node.begin(); it != node.end(); ++it) {
-                obj[it->first.as<std::string>()] = yamlNodeToJson(it->second);
+                std::string keyStr;
+                if (it->first.Type() == Type::Scalar &&
+                    (it->first.Tag().empty() || yamlTagIs(it->first, "!!str"))) {
+                    keyStr = it->first.Scalar();
+                } else {
+                    keyStr = YAML::Dump(it->first);
+                }
+                obj[keyStr] = yamlNodeToJson(it->second);
             }
             return obj;
         }
-        default: return nullptr;
+
+        case Type::Undefined:
+        default:
+            return nullptr;
     }
 }
 
