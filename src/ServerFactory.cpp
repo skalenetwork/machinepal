@@ -9,7 +9,7 @@
 
 using namespace proxygen;
 
-std::shared_ptr<HTTPServer> ServerFactory::createServerInstance(std::string _bindIP, uint64_t _bindPort) {
+std::shared_ptr<HTTPServer> ServerFactory::createServerInstance(std::string bindIP, uint64_t bindPort) {
 
     // Initialize libcurl once, for the whole process
 
@@ -23,7 +23,7 @@ std::shared_ptr<HTTPServer> ServerFactory::createServerInstance(std::string _bin
     CHECK_STATE2(rc == CURLE_OK, "curl_global_init failed");
 
     HTTPServer::IPConfig ipConfig(
-        folly::SocketAddress(_bindIP, _bindPort, true), HTTPServer::Protocol::HTTP);
+        folly::SocketAddress(bindIP, bindPort, true), HTTPServer::Protocol::HTTP);
 
     HTTPServerOptions options;
     LOG(INFO) << "Creating server instance ...";

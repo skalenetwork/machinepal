@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.16)
 project(x402proxy LANGUAGES CXX)
 
-add_subdirectory(json-schema-validator)
-add_subdirectory(yaml-cpp)
+add_subdirectory(external/json-schema-validator)
+add_subdirectory(external/yaml-cpp)
 
 # Acknowledge removal of FindBoost; use BoostConfig instead (vcpkg provides it).
 if(POLICY CMP0167)

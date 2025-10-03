@@ -2,8 +2,8 @@
 	path = external/vcpkg
 	url = https://github.com/microsoft/vcpkg.git
 [submodule "json-schema-validator"]
-	path = json-schema-validator
+	path = external/json-schema-validator
 	url = https://github.com/pboettch/json-schema-validator.git
 [submodule "yaml-cpp"]
-	path = yaml-cpp
+	path = external/yaml-cpp
 	url = https://github.com/jbeder/yaml-cpp.git
