@@ -19,15 +19,15 @@ Instantly add **crypto payments** to any website or API using the [x402 protocol
 
 ## 🏗️ How it Works (The Toll Booth Analogy)
 
-Think of **x402proxy** as a **toll booth for the internet**.  
+Think of **MachinePay** as a **toll booth for the internet**.  
 Instead of reaching a website directly, requests first pass through the proxy:
 
 1. **🔗 You send a request** → try to access a resource
-2. **🚦 x402proxy intercepts** → checks if payment is included
+2. **🚦 MachinePay proxy intercepts** → checks if payment is included
 3. **💳 Payment verified** → confirmed via the x402 protocol
-4. **📡 Proxy forwards request** → to the real website
+4. **📡 MachinePay proxy forwards request** → to the real website
 5. **🖥️ Website responds** → returns content
-6. **📬 Proxy delivers to you** → completing the paid access loop
+6. **📬 MachinePay proxy delivers to you** → completing the paid access loop
 
 ✅ Result: Websites instantly monetize access while staying secure and compliant.
 
