@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="machinepay.png" alt="MachinePay" width="50%">
+  <img src="machinepay.png" alt="MachinePay" width="30%">
 </div>
 
 
