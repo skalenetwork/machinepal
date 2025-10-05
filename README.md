@@ -1,4 +1,4 @@
-![MachinePay](machinepay.png)
+<img src="machinepay.png" alt="MachinePay" width="50%">
 
 # 🚀 MachinePay: The  x402 Payment Gatekeeper for the Web
 
