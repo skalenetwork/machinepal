@@ -1,4 +1,7 @@
-<img src="machinepay.png" alt="MachinePay" width="50%">
+<div align="center">
+  <img src="machinepay.png" alt="MachinePay" width="50%">
+</div>
+
 
 # 🚀 MachinePay: The  x402 Payment Gatekeeper for the Web
 
