@@ -1,3 +1,5 @@
+![MachinePay](machinepay.png)
+
 # 🚀 MachinePay: The  x402 Payment Gatekeeper for the Web
 
 Instantly add **crypto payments** to any website or API using the [x402 protocol](https://docs.cdp.coinbase.com/x402/docs/welcome).
