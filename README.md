@@ -1,10 +1,10 @@
-# 🚀 x402proxy: The Payment Gatekeeper for the Web
+# 🚀 MachinePay: The  x402 Payment Gatekeeper for the Web
 
 Instantly add **crypto payments** to any website or API using the [x402 protocol](https://docs.cdp.coinbase.com/x402/docs/welcome).
 
 ---
 
-## ✨ Why use x402proxy?
+## ✨ Why use MachinePay?
 
 - ⚡ **Plug & play** — add x402 payments to existing websites & APIs in minutes
 - 🔒 **Fully x402 compliant** — built on the Coinbase standard
