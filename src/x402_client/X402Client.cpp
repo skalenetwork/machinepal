@@ -37,11 +37,11 @@ X402Client::sendRequestAndParseResult(std::string _location, const std::vector<s
     auto headersVector = resp.headers;
     std::map<std::string, std::string> headersMap;
     auto statusLine = parseStatusLineAndHeaders(headersVector, headersMap);
-    LOG(INFO) << "STATUS::" << statusLine;
+    spdlog::info("STATUS::{}", statusLine);
     for (const auto &[key, value]: headersMap) {
-        LOG(INFO) << key << ": " << value;
+        spdlog::info("{}: {}", key, value);
     }
-    LOG(INFO) << "BODY::" << resp.body;
+    spdlog::info("BODY::{}", resp.body);
     return {headersMap, statusLine, resp};
 }
 

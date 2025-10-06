@@ -91,10 +91,11 @@ int parseCommandLine(int argc, char **argv) {
         checkExistsAndReadable(configFile);
         MachinePayConfigManager::loadConfig(configFile);
     } catch (const std::exception &ex) {
-        std::cerr << "Error lading config: " << ex.what();
+        spdlog::critical("Error loading config: {}", ex.what());
+        printNestedException(ex);
         exit(1);
     } catch (...) {
-        std::cerr << "Unknown error loading config";
+        spdlog::critical("Unknown error loading config.");
         exit(1);
     }
 

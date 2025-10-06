@@ -26,7 +26,7 @@ std::shared_ptr<HTTPServer> ServerFactory::createServerInstance(const ServerConf
         folly::SocketAddress(serverConfig.bindIp(), serverConfig.httpPort().value(), true), HTTPServer::Protocol::HTTP);
 
     HTTPServerOptions options;
-    LOG(INFO) << "Creating server instance ...";
+    spdlog::info("Creating server instance ...");
     options.threads = static_cast<size_t>(std::thread::hardware_concurrency());
     options.idleTimeout = std::chrono::milliseconds(60000);
     options.shutdownOn = {SIGINT, SIGTERM};
@@ -35,8 +35,8 @@ std::shared_ptr<HTTPServer> ServerFactory::createServerInstance(const ServerConf
             .build();
 
     auto server = std::make_shared<HTTPServer>(std::move(options));
-    LOG(INFO) << "Binding server to address...";
+    spdlog::info("Binding server to address...");
     server->bind({ipConfig});
-    LOG(INFO) << "Server instance created and bound successfully.";
+    spdlog::info("Server instance created and bound successfully.");
     return server;
 }
