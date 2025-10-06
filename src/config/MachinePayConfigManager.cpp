@@ -22,21 +22,12 @@ using nlohmann::json;
 using nlohmann::json_schema::json_validator;;
 using namespace nlohmann::literals; // Enables the _json_pointer literal
 
-
-
-// ---------- Orchestrator ----------
-std::shared_mutex MachinePayConfigManager::latestConfigMutex_;
-std::shared_ptr<MachinePayConfig> MachinePayConfigManager::latestConfig_ = nullptr;
-std::chrono::system_clock::time_point MachinePayConfigManager::latestConfigMTime_ = {};
-std::string MachinePayConfigManager::latestConfigSha256_ = "";
-
-namespace {
-std::string computeSha256(const std::string& filePath) {
+std::string MachinePayConfigManager::computeBlakeHash(const std::string& filePath) {
     std::ifstream file(filePath, std::ios::binary);
     if (!file) return "";
     EVP_MD_CTX* ctx = EVP_MD_CTX_new();
     if (!ctx) return "";
-    const EVP_MD* md = EVP_sha256();
+    const EVP_MD* md = EVP_blake2b512();
     if (EVP_DigestInit_ex(ctx, md, nullptr) != 1) {
         EVP_MD_CTX_free(ctx);
         return "";
@@ -57,30 +48,39 @@ std::string computeSha256(const std::string& filePath) {
         oss << std::hex << std::setw(2) << std::setfill('0') << (int)hash[i];
     return oss.str();
 }
-}
 
-void MachinePayConfigManager::loadConfig(const std::string &yaml_path) {
-    namespace fs = std::filesystem;
-    std::unique_lock<std::shared_mutex> lock(latestConfigMutex_);
-    auto hash = computeSha256(yaml_path);
+void MachinePayConfigManager::reloadConfigUnsafe() {
+    CHECK_STATE(!configPath_.empty())
+    auto hash = computeBlakeHash(configPath_);
 
-    if (hash == latestConfigSha256_) {
+    if (hash == latestConfigHash_) {
         return;
     }
-    latestConfig_ = MachinePayConfigLoader::loadConfig(yaml_path);
+    latestConfig_ = MachinePayConfigLoader::loadConfig(configPath_);
     // Record last modified time
     try {
-        auto ftime = fs::last_write_time(yaml_path);
-        latestConfigMTime_ = std::chrono::system_clock::time_point(
+        auto ftime = std::filesystem::last_write_time(configPath_);
+        latestConfigModificationTime_ = std::chrono::system_clock::time_point(
             std::chrono::duration_cast<std::chrono::system_clock::duration>(
                 ftime.time_since_epoch()
             )
         );
     } catch (...) {
-        latestConfigMTime_ = std::chrono::system_clock::time_point{};
+        latestConfigModificationTime_ = std::chrono::system_clock::time_point{};
     }
-    // Record SHA256
+}
 
+void MachinePayConfigManager::loadConfig(const std::string &yamlPath) {
+    namespace fs = std::filesystem;
+    std::unique_lock<std::shared_mutex> lock(latestConfigMutex_);
+    configPath_ = yamlPath;
+    reloadConfigUnsafe();
+
+}
+
+void MachinePayConfigManager::reloadConfig() {
+    std::unique_lock<std::shared_mutex> lock(latestConfigMutex_);
+    reloadConfigUnsafe();
 }
 
 
@@ -91,12 +91,19 @@ std::shared_ptr<MachinePayConfig> MachinePayConfigManager::latestConfig() {
 
 std::chrono::system_clock::time_point MachinePayConfigManager::latestConfigMTime() {
     std::shared_lock<std::shared_mutex> lock(latestConfigMutex_);
-    return latestConfigMTime_;
+    return latestConfigModificationTime_;
 }
 
 const std::string& MachinePayConfigManager::latestConfigSha256() {
     std::shared_lock<std::shared_mutex> lock(latestConfigMutex_);
-    return latestConfigSha256_;
+    return latestConfigHash_;
 }
 
 // Definition of the static member
+
+
+std::shared_mutex MachinePayConfigManager::latestConfigMutex_;
+std::shared_ptr<MachinePayConfig> MachinePayConfigManager::latestConfig_ = nullptr;
+std::chrono::system_clock::time_point MachinePayConfigManager::latestConfigModificationTime_ = {};
+std::string MachinePayConfigManager::latestConfigHash_ = "";
+std::string MachinePayConfigManager::configPath_ = "";
