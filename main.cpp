@@ -66,29 +66,32 @@ void checkExistsAndReadable(std::string configFile) {
 
 int parseCommandLine(int argc, char **argv) {
     // Use CLI11 to parse command line
-
-    std::cout << "CLI11 version: " << CLI11_VERSION_MAJOR << "."
-          << CLI11_VERSION_MINOR << "."
-          << CLI11_VERSION_PATCH << std::endl;
-
     std::string configFile = "machinepay.yml";
     CLI::App app{"machinepay"};
-    app.add_option("-c,--config", configFile, "Path to config file")->default_val("machinepay.yml");
-    CLI11_PARSE(app, argc, argv);
+    app.add_option("-c,--config", configFile,
+        "Path to config file. Default is ./machinepay.yml")->default_val("machinepay.yml");
+    std::cout << "CLI11 version: " << CLI11_VERSION_MAJOR << "."
+              << CLI11_VERSION_MINOR << "."
+              << CLI11_VERSION_PATCH << std::endl;
+    try {
+        app.parse(argc, argv);
+    } catch (const CLI::ParseError &e) {
+        auto code = app.exit(e);
+        exit(code);
+    }
     checkExistsAndReadable(configFile);
     MachinePayConfigManager::loadConfig(configFile);
     return 0;
 }
 
 int main(int argc, char *argv[]) {
+
+
+    parseCommandLine(argc, argv);
+
     try {
-        InitLibs::initAll(argc, argv);
+        InitLibs::initAll(1, argv);
 
-        auto result = parseCommandLine(argc, argv);
-
-        if (result != 0) {
-            return result;
-        }
 
         auto serverConfig = MachinePayConfigManager::latestConfig()->server();
         auto serverObject = ServerFactory::createServerInstance(*serverConfig);
