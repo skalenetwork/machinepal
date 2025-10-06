@@ -37,9 +37,9 @@ public:
     bool httpEnabled; // required
     bool httpsEnabled; // required
     std::optional<uint16_t> httpPort;
-    std::optional<uint16_t>  httpsPort;
+    std::optional<uint16_t> httpsPort;
     std::string bindIp; // default to INADDR_ANY
-    std::optional<TlsConfig> tls;                    // nested struct for clarity
+    std::optional<TlsConfig> tls; // nested struct for clarity
 
     ServerConfig(bool httpEnabled,
                  bool httpsEnabled,
@@ -50,31 +50,31 @@ public:
         : httpEnabled(httpEnabled), httpsEnabled(httpsEnabled),
           httpPort(httpPort), httpsPort(httpsPort),
           bindIp(bindIp), tls(tls) {
-        // Basic validation
+
+        if (!httpEnabled && !httpsEnabled) {
+            throw std::invalid_argument("At least one protocol (HTTP or HTTPS) must be enabled in the server configuration.");
+        }
+
         if (httpEnabled && !httpPort) {
-            throw std::invalid_argument("HTTP is enabled but httpPort is not set");
+            throw std::invalid_argument("HTTP is enabled but httpPort is not set.");
         }
-
-        if (httpPort == 0) {
-            throw std::invalid_argument("HTTP ports is set to zero");
+        if (httpPort && *httpPort == 0) {
+            throw std::invalid_argument("HTTP port is set to zero, which is invalid.");
         }
-
         if (httpsEnabled && !httpsPort) {
-            throw std::invalid_argument("HTTPS is enabled but httpsPort is not set");
+            throw std::invalid_argument("HTTPS is enabled but httpsPort is not set.");
         }
-
-        if (httpPort == 0) {
-            throw std::invalid_argument("HTTP port is set to zero");
+        if (httpsPort && *httpsPort == 0) {
+            throw std::invalid_argument("HTTPS port is set to zero, which is invalid.");
         }
-
         if (bindIp.empty()) {
-            throw std::invalid_argument("bindIp cannot be empty");
+            throw std::invalid_argument("bindIp cannot be empty.");
         }
         // Validate bindIp is a valid IPv4 or IPv6 address
         static const std::regex ipv4_regex(R"(^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$)");
         static const std::regex ipv6_regex(R"(^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$)");
         if (!std::regex_match(bindIp, ipv4_regex) && !std::regex_match(bindIp, ipv6_regex) && bindIp != "0.0.0.0" && bindIp != "::") {
-            throw std::invalid_argument("bindIp is not a valid IPv4 or IPv6 address");
+            throw std::invalid_argument("bindIp is not a valid IPv4 or IPv6 address.");
         }
     }
 };
