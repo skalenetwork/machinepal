@@ -67,15 +67,25 @@ void checkExistsAndReadable(std::string configFile) {
 int parseCommandLine(int argc, char **argv) {
     // Use CLI11 to parse command line
     std::string configFile = "machinepay.yml";
+    // Check for environment variable override
+
     CLI::App app{"machinepay"};
     app.add_option("-c,--config", configFile,
-        "Path to config file. Default is ./machinepay.yml")->default_val("machinepay.yml");
+        "Path to the config file. Default is ./machinepay.yml. "
+        "Can be overwritten by MACHINEPAY_CONFIG environment variable.")
+        ->default_val(configFile)
+        ->type_name("FILE");
     try {
         app.parse(argc, argv);
     } catch (const CLI::ParseError &e) {
         auto code = app.exit(e);
         exit(code);
     }
+
+    if(const char* envConfig = std::getenv("MACHINEPAY_CONFIG")) {
+        configFile = envConfig;
+    }
+
     checkExistsAndReadable(configFile);
     MachinePayConfigManager::loadConfig(configFile);
     return 0;
