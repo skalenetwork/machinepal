@@ -5,7 +5,7 @@
 
 BOOST_AUTO_TEST_CASE(deserialize_basic_proxy_config) {
     // Path to the test config file
-    std::string configPath = "src/tests/configs/basic/mpserver.yml";
+    std::string configPath = "src/tests/configs/basic/machinepay.yml";
     std::string schemaPath = ""; // Provide schema path if needed, or leave empty if not used in test
 
     // Load config
@@ -16,8 +16,8 @@ BOOST_AUTO_TEST_CASE(deserialize_basic_proxy_config) {
     BOOST_TEST(config.frontEnd.httpsEnabled == false);
     BOOST_TEST(config.frontEnd.httpPort == 8080);
     BOOST_TEST(config.frontEnd.httpsPort == 8443);
-    BOOST_TEST(config.frontEnd.tls.certFile == "certs/mpserver.crt");
-    BOOST_TEST(config.frontEnd.tls.keyFile == "certs/mpserver.key");
+    BOOST_TEST(config.frontEnd.tls.certFile == "certs/machinepay.crt");
+    BOOST_TEST(config.frontEnd.tls.keyFile == "certs/machinepay.key");
     BOOST_TEST(config.frontEnd.tls.keyPassFile == "secrets/key_password");
     BOOST_TEST(config.frontEnd.tls.caFile.has_value());
     BOOST_TEST(config.frontEnd.tls.caFile.value() == "certs/ca.crt");

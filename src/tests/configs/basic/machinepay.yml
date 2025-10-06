@@ -10,9 +10,9 @@ frontend:
   # This section sets up TLS for HTTPS frontend.
   tls:
     # TLS certificate file. Override: FRONTEND_TLS_CERT_FILE
-    cert_file: certs/proxy.crt
+    cert_file: certs/machinepay.crt
     # TLS key file. Override: FRONTEND_TLS_KEY_FILE
-    key_file: certs/proxy.key
+    key_file: certs/machinepay.key
     # TLS key password file. Override: FRONTEND_TLS_KEY_PASS_FILE
     key_pass_file: secrets/key_password
     # Optional CA file. Override: FRONTEND_TLS_CA_FILE. System CA used if not set.

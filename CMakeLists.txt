@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(mpserver LANGUAGES CXX)
+project(machinepay LANGUAGES CXX)
 
 foreach(submod json-schema-validator yaml-cpp)
     add_subdirectory(external/${submod})
@@ -41,11 +41,11 @@ find_package(Boost REQUIRED CONFIG COMPONENTS unit_test_framework system thread)
 
 
 # ---- App target ----
-add_executable(mpserver
+add_executable(machinepay
         main.cpp
         ${APP_SRC_FILES}
 )
-target_include_directories(mpserver PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_include_directories(machinepay PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 set (PROXY_COMMON_LIBS
         CURL::libcurl
@@ -60,15 +60,15 @@ set (PROXY_COMMON_LIBS
         yaml-cpp
 )
 
-target_link_libraries(mpserver
+target_link_libraries(machinepay
         PRIVATE
         ${PROXY_COMMON_LIBS}
 )
 
 option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
 if(ENABLE_ASAN)
-    target_compile_options(mpserver PRIVATE -fsanitize=address -fno-omit-frame-pointer)
-    target_link_options(mpserver PRIVATE -fsanitize=address)
+    target_compile_options(machinepay PRIVATE -fsanitize=address -fno-omit-frame-pointer)
+    target_link_options(machinepay PRIVATE -fsanitize=address)
 endif()
 
 # ---- Tests: Boost.Test + libcurl ----
