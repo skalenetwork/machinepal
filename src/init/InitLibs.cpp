@@ -10,8 +10,9 @@ void InitLibs::initAll(int _argc, char* _argv[]) {
     if (!inited_.exchange(true)) {
         curl_global_init(CURL_GLOBAL_DEFAULT);
         FLAGS_logtostderr = 1;
-        FLAGS_minloglevel = google::GLOG_INFO;
+        FLAGS_minloglevel = google::INFO;
         static folly::Init init(&_argc, &_argv);  // Static to preserve lifetime, pass by pointer
+        LOG(INFO) << "Libraries initialized";
     }
 }
 
