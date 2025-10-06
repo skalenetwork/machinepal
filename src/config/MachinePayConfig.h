@@ -95,11 +95,15 @@ public:
     MachinePayConfig(const ptr<ServerConfig>& server,
                      const ptr<FacilitatorConfig>& facilitator)
         : server_(server), facilitator_(facilitator) {
-        CHECK_STATE(server);
-        CHECK_STATE(facilitator);
+        CHECK_STATE(server_);
+        CHECK_STATE(facilitator_);
     }
     const ptr<ServerConfig>& server() const {
+        CHECK_STATE(server_);
         return server_;
     }
-    const ptr<FacilitatorConfig>& facilitator() const { return facilitator_; }
+    const ptr<FacilitatorConfig>& facilitator() const {
+        CHECK_STATE(facilitator_);
+        return facilitator_;
+    }
 };
