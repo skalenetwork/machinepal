@@ -1,9 +1,12 @@
 #pragma once
 
 
+#include "config/MachinePayConfig.h"
 #include <string>
 #include <cstdint>
 #include <memory>
+
+
 
 namespace proxygen {
     class HTTPServer;
@@ -12,5 +15,5 @@ namespace proxygen {
 class ServerFactory {
 public:
     static std::shared_ptr<proxygen::HTTPServer> createServerInstance(
-        std::string _bindIP, uint64_t _bindPort);
+        ServerConfig& serverConfig );
 };

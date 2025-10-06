@@ -17,15 +17,16 @@ struct FacilitatorConfig {
     std::optional<std::string> apiKeyFile; // optional (secret file path)
 };
 
-struct FrontEndConfig {
-    bool httpEnabled;
-    bool httpsEnabled;
+struct ServerConfig {
+    bool httpEnabled; // required
+    bool httpsEnabled; // required
     uint16_t httpPort;
     uint16_t httpsPort;
+    std::string bindIp; // default to INADDR_ANY
     TlsConfig tls;                    // nested struct for clarity
 };
 
 struct MachinePayConfig {
-    FrontEndConfig frontEnd;
+    ServerConfig server;
     FacilitatorConfig facilitator;
 };

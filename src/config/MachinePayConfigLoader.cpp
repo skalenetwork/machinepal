@@ -201,17 +201,17 @@ void MachinePayConfigLoader::applyIntEnv(json &j, const json::json_pointer &path
 
 void MachinePayConfigLoader::applyEnvOverrides(json &j) {
     try {
-        // ---------- frontend ----------
-        applyBoolEnv(j, "/frontend/enable_http"_json_pointer, "FRONTEND_ENABLE_HTTP");
-        applyBoolEnv(j, "/frontend/enable_https"_json_pointer, "FRONTEND_ENABLE_HTTPS");
-        applyIntEnv(j, "/frontend/http_listen_port"_json_pointer, "FRONTEND_HTTP_PORT");
-        applyIntEnv(j, "/frontend/https_listen_port"_json_pointer, "FRONTEND_HTTPS_PORT");
+        // ---------- server ----------
+        applyBoolEnv(j, "/server/enable_http"_json_pointer, "SERVER_ENABLE_HTTP");
+        applyBoolEnv(j, "/server/enable_https"_json_pointer, "SERVER_ENABLE_HTTPS");
+        applyIntEnv(j, "/server/http_listen_port"_json_pointer, "SERVER_HTTP_PORT");
+        applyIntEnv(j, "/server/https_listen_port"_json_pointer, "SERVER_HTTPS_PORT");
 
-        // ---------- frontend.tls ----------
-        applyStringEnv(j, "/frontend/tls/cert_file"_json_pointer, "FRONTEND_TLS_CERT_FILE");
-        applyStringEnv(j, "/frontend/tls/key_file"_json_pointer, "FRONTEND_TLS_KEY_FILE");
-        applyStringEnv(j, "/frontend/tls/key_pass_file"_json_pointer, "FRONTEND_TLS_KEY_PASS_FILE");
-        applyStringEnv(j, "/frontend/tls/ca_file"_json_pointer, "FRONTEND_TLS_CA_FILE");
+        // ---------- server.tls ----------
+        applyStringEnv(j, "/server/tls/cert_file"_json_pointer, "SERVER_TLS_CERT_FILE");
+        applyStringEnv(j, "/server/tls/key_file"_json_pointer, "SERVER_TLS_KEY_FILE");
+        applyStringEnv(j, "/server/tls/key_pass_file"_json_pointer, "SERVER_TLS_KEY_PASS_FILE");
+        applyStringEnv(j, "/server/tls/ca_file"_json_pointer, "SERVER_TLS_CA_FILE");
 
         // ---------- facilitator ----------
         applyStringEnv(j, "/facilitator/type"_json_pointer, "FACILITATOR_TYPE");
@@ -291,25 +291,26 @@ MachinePayConfig MachinePayConfigLoader::load(const std::string &yaml_path,
 
 MachinePayConfig MachinePayConfigLoader::toMachinePayConfig(const nlohmann::json &j) {
     MachinePayConfig config;
-    // FrontEndConfig
-    const auto &jf = j.at("frontend");
-    config.frontEnd.httpEnabled = jf.at("enable_http").get<bool>();
-    config.frontEnd.httpsEnabled = jf.at("enable_https").get<bool>();
-    config.frontEnd.httpPort = jf.at("http_listen_port").get<uint16_t>();
-    config.frontEnd.httpsPort = jf.at("https_listen_port").get<uint16_t>();
-    const auto &jt = jf.at("tls");
-    config.frontEnd.tls.certFile = jt.at("cert_file").get<std::string>();
-    config.frontEnd.tls.keyFile = jt.at("key_file").get<std::string>();
-    config.frontEnd.tls.keyPassFile = jt.at("key_pass_file").get<std::string>();
+    // serverConfig
+    const auto &js = j.at("server");
+    config.server.httpEnabled = js.at("enable_http").get<bool>();
+    config.server.httpsEnabled = js.at("enable_https").get<bool>();
+    config.server.httpPort = js.at("http_listen_port").get<uint16_t>();
+    config.server.httpsPort = js.at("https_listen_port").get<uint16_t>();
+    const auto &jt = js.at("tls");
+    config.server.tls.certFile = jt.at("cert_file").get<std::string>();
+    config.server.tls.keyFile = jt.at("key_file").get<std::string>();
+    config.server.tls.keyPassFile = jt.at("key_pass_file").get<std::string>();
     if (jt.contains("ca_file") && !jt.at("ca_file").is_null())
-        config.frontEnd.tls.caFile = jt.at("ca_file").get<std::string>();
+        config.server.tls.caFile = jt.at("ca_file").get<std::string>();
     else
-        config.frontEnd.tls.caFile = std::nullopt;
+        config.server.tls.caFile = std::nullopt;
 
     // FacilitatorConfig
     const auto &jfaci = j.at("facilitator");
     config.facilitator.type = jfaci.at("type").get<std::string>();
     config.facilitator.baseUrl = jfaci.at("base_url").get<std::string>();
+
     if (jfaci.contains("api_key_file") && !jfaci.at("api_key_file").is_null())
         config.facilitator.apiKeyFile = jfaci.at("api_key_file").get<std::string>();
     else

@@ -19,6 +19,7 @@
 
 #include "../datastructures/PaymentRequirements.h"
 #include "../examples/PaymentExamples.h"
+#include "config/MachinePayConfigLoader.h"
 
 
 const std::string BIND_IP = "0.0.0.0";
@@ -50,9 +51,12 @@ struct X402ServerFixture {
     X402ServerFixture() {
 
 
-        server = ServerFactory().createServerInstance(BIND_IP, DEFAULT_TEST_PORT);
+        auto config = MachinePayConfigLoader::load("src/tests/configs/basic/machinepay.yml", "");
 
-        client = std::make_shared<X402Client>(CONNECT_HOST, DEFAULT_TEST_PORT);
+
+        server = ServerFactory().createServerInstance(config.server);
+
+        client = std::make_shared<X402Client>(config.server.bindIp, config.server.httpPort);
 
         srvThread = std::thread([this] {
             server->start(); //

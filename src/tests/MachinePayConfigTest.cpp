@@ -12,15 +12,15 @@ BOOST_AUTO_TEST_CASE(deserialize_basic_proxy_config) {
     MachinePayConfig config = MachinePayConfigLoader::load(configPath, schemaPath);
 
     // Check frontend
-    BOOST_TEST(config.frontEnd.httpEnabled == true);
-    BOOST_TEST(config.frontEnd.httpsEnabled == false);
-    BOOST_TEST(config.frontEnd.httpPort == 8080);
-    BOOST_TEST(config.frontEnd.httpsPort == 8443);
-    BOOST_TEST(config.frontEnd.tls.certFile == "certs/machinepay.crt");
-    BOOST_TEST(config.frontEnd.tls.keyFile == "certs/machinepay.key");
-    BOOST_TEST(config.frontEnd.tls.keyPassFile == "secrets/key_password");
-    BOOST_TEST(config.frontEnd.tls.caFile.has_value());
-    BOOST_TEST(config.frontEnd.tls.caFile.value() == "certs/ca.crt");
+    BOOST_TEST(config.server.httpEnabled == true);
+    BOOST_TEST(config.server.httpsEnabled == false);
+    BOOST_TEST(config.server.httpPort == 8080);
+    BOOST_TEST(config.server.httpsPort == 8443);
+    BOOST_TEST(config.server.tls.certFile == "certs/machinepay.crt");
+    BOOST_TEST(config.server.tls.keyFile == "certs/machinepay.key");
+    BOOST_TEST(config.server.tls.keyPassFile == "secrets/key_password");
+    BOOST_TEST(config.server.tls.caFile.has_value());
+    BOOST_TEST(config.server.tls.caFile.value() == "certs/ca.crt");
 
     // Check facilitator
     BOOST_TEST(config.facilitator.type == "cdp");

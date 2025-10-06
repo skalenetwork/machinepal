@@ -7,6 +7,7 @@ constexpr const char* MachinePayConfigSchemaJson = R"({
     "server": {
       "type": "object",
       "properties": {
+        "bind_ip": { "type": "string" },
         "enable_http": { "type": "boolean" },
         "enable_https": { "type": "boolean" },
         "http_listen_port": { "type": "integer" },
@@ -22,7 +23,7 @@ constexpr const char* MachinePayConfigSchemaJson = R"({
           "required": ["cert_file", "key_file", "key_pass_file"]
         }
       },
-      "required": ["enable_http", "enable_https", "http_listen_port", "https_listen_port", "tls"]
+      "required": ["enable_http", "enable_https"]
     },
     "facilitator": {
       "type": "object",
@@ -34,6 +35,6 @@ constexpr const char* MachinePayConfigSchemaJson = R"({
       "required": ["type", "base_url"]
     }
   },
-  "required": ["frontend", "facilitator"]
+  "required": ["server", "facilitator"]
 })";
 

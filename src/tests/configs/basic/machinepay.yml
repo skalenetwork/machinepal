@@ -1,5 +1,5 @@
-# Proxy server configuration. May be overridden by environment variables.
-frontend:
+# Machinepay server configuration. May be overridden by environment variables.
+server:
   # Enable or disable HTTP. Override: FRONTEND_ENABLE_HTTP
   enable_http: true
   # Enable or disable HTTPS. Override: FRONTEND_ENABLE_HTTPS
