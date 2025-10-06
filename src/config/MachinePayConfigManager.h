@@ -2,10 +2,9 @@
 
 
 #include "MachinePayConfig.h"
+#include <mutex>
 
 class MachinePayConfigManager {
-
-
 public:
 
     static void loadConfig(const std::string& yaml_path);
@@ -15,5 +14,6 @@ public:
 private:
 
     static std::shared_ptr<MachinePayConfig> latestConfig_;
+    static std::mutex latestConfigMutex_;
 
 };
