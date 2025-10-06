@@ -105,10 +105,12 @@ int parseCommandLine(int argc, char **argv) {
 int main(int argc, char *argv[]) {
 
 
-    parseCommandLine(argc, argv);
+
 
     try {
         InitLibs::initAll(1, argv);
+
+        parseCommandLine(argc, argv);
 
 
         auto serverConfig = MachinePayConfigManager::latestConfig()->server();

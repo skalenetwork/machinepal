@@ -13,6 +13,7 @@
 #include <optional>
 #include <unordered_set>
 #include <mutex>
+#include <boost/test/tools/detail/fwd.hpp>
 
 
 using nlohmann::json;
@@ -255,11 +256,16 @@ struct SchemaValidationErrorHandler : public nlohmann::json_schema::error_handle
 
 void MachinePayConfigLoader::validateJson(const json &j) {
     json schema;
+
+    CHECK_STATE2(!j.empty(), "Empty config file");
+
     try {
         schema = json::parse(MachinePayConfigSchemaJson);
     } catch (const std::exception &ex) {
         LOG_AND_RETHROW_NESTED("MachinePayConfigLoader::validateJson failed to parse schema: ", ex);
     }
+
+
 
     SchemaValidationErrorHandler errHandler;
     try {
@@ -277,12 +283,15 @@ void MachinePayConfigLoader::validateJson(const json &j) {
 
 
 // ---------- Orchestrator ----------
-std::shared_ptr<MachinePayConfig> MachinePayConfigLoader::load(const std::string &yaml_path) {
+std::shared_ptr<MachinePayConfig> MachinePayConfigLoader::load(const std::string &yamlPath) {
     try {
-        json j = yamlToJson(yaml_path);
+        LOG(INFO) << "Parsing config file";
+        json j = yamlToJson(yamlPath);
         applyEnvOverrides(j);
         resolveSecrets(j);
+        LOG(INFO) << "Validating config file against schema: " << yamlPath;
         validateJson(j);
+        LOG(INFO) << "Validated config file against schema";
         return toMachinePayConfig(j);
     } catch (const std::exception &ex) {
         LOG_AND_RETHROW_NESTED("MachinePayConfigLoader::load failed: ", ex);
