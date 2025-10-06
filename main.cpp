@@ -30,6 +30,32 @@ public:
 };
 
 
+void checkExistsAndReadable(std::string configFile) {
+    char cwd[4096];
+    if (!getcwd(cwd, sizeof(cwd))) {
+        throw std::runtime_error("Config file '" + configFile + "' does not exist. Failed to get current working directory.");
+    }
+
+    // Check that configFile exists
+    if (!std::filesystem::exists(configFile)) {
+        throw std::runtime_error("Config file '" + configFile + "' does not exist. Current working directory: " + std::string(cwd));
+    }
+    // Check that configFile is not a directory
+    if (std::filesystem::is_directory(configFile)) {
+        throw std::runtime_error("Config file '" + configFile + "' is a directory, not a file. Current working directory: " + std::string(cwd));
+    }
+    // Check that configFile is readable
+    std::ifstream configTest(configFile);
+    if (!configTest.good()) {
+        char cwd2[4096];
+        if (!getcwd(cwd2, sizeof(cwd2))) {
+            throw std::runtime_error("Config file '" + configFile + "' is not readable. Failed to get current working directory.");
+        }
+        throw std::runtime_error("Config file '" + configFile + "' is not readable. Current working directory: " + std::string(cwd2));
+    }
+    configTest.close();
+}
+
 int main(int argc, char* argv[]) {
     InitLibs::initAll(argc, argv);
 
@@ -39,6 +65,9 @@ int main(int argc, char* argv[]) {
         CLI::App app{"machinepay"};
         app.add_option("-c,--config", configFile, "Path to config file")->default_val("machinepay.yml");
         CLI11_PARSE(app, argc, argv);
+
+        checkExistsAndReadable(configFile);
+
         MachinePayConfigManager::loadConfig(configFile);
         auto serverConfig = MachinePayConfigManager::latestConfig()->server();
         auto serverObject = ServerFactory::createServerInstance(*serverConfig);

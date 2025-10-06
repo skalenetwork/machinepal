@@ -15,7 +15,7 @@ public:
 
     static std::shared_ptr<MachinePayConfig> latestConfig();
 
-    static std::chrono::system_clock::time_point latestConfigMTime();
+    static std::chrono::system_clock::time_point latestConfigModificationTime();
 
     static const std::string& latestConfigSha256();
 

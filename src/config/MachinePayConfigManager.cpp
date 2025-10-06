@@ -24,24 +24,38 @@ using namespace nlohmann::literals; // Enables the _json_pointer literal
 
 std::string MachinePayConfigManager::computeBlakeHash(const std::string &filePath) {
     std::ifstream file(filePath, std::ios::binary);
-    if (!file) return "";
+    if (!file) throw std::runtime_error("Failed to open file for hashing: " + filePath);
     EVP_MD_CTX *ctx = EVP_MD_CTX_new();
-    if (!ctx) return "";
+    if (!ctx) throw std::runtime_error("Failed to create EVP_MD_CTX");
     const EVP_MD *md = EVP_blake2b512();
+    if (!md) {
+        EVP_MD_CTX_free(ctx);
+        throw std::runtime_error("Failed to get BLAKE2b-512 digest method");
+    }
     if (EVP_DigestInit_ex(ctx, md, nullptr) != 1) {
         EVP_MD_CTX_free(ctx);
-        return "";
+        throw std::runtime_error("EVP_DigestInit_ex failed");
     }
     char buf[4096];
     while (file.good()) {
         file.read(buf, sizeof(buf));
+        if (file.bad()) {
+            EVP_MD_CTX_free(ctx);
+            throw std::runtime_error("Error reading file during hashing: " + filePath);
+        }
         if (file.gcount() > 0) {
-            EVP_DigestUpdate(ctx, buf, file.gcount());
+            if (EVP_DigestUpdate(ctx, buf, file.gcount()) != 1) {
+                EVP_MD_CTX_free(ctx);
+                throw std::runtime_error("EVP_DigestUpdate failed");
+            }
         }
     }
     unsigned char hash[EVP_MAX_MD_SIZE];
     unsigned int hash_len = 0;
-    EVP_DigestFinal_ex(ctx, hash, &hash_len);
+    if (EVP_DigestFinal_ex(ctx, hash, &hash_len) != 1) {
+        EVP_MD_CTX_free(ctx);
+        throw std::runtime_error("EVP_DigestFinal_ex failed");
+    }
     EVP_MD_CTX_free(ctx);
     std::ostringstream oss;
     for (unsigned int i = 0; i < hash_len; ++i)
@@ -55,6 +69,7 @@ void MachinePayConfigManager::reloadConfigUnsafe() {
         auto hash = computeBlakeHash(configPath_);
 
         if (hash == latestConfigHash_) {
+            CHECK_STATE(latestConfig_);
             return;
         }
         latestConfig_ = MachinePayConfigLoader::loadConfig(configPath_);
@@ -77,11 +92,13 @@ void MachinePayConfigManager::loadConfig(const std::string &yamlPath) {
     std::unique_lock<std::shared_mutex> lock(latestConfigMutex_);
     configPath_ = yamlPath;
     reloadConfigUnsafe();
+    CHECK_STATE(latestConfig_);
 }
 
 void MachinePayConfigManager::reloadConfig() {
     std::unique_lock<std::shared_mutex> lock(latestConfigMutex_);
     reloadConfigUnsafe();
+    CHECK_STATE(latestConfig_);
 }
 
 
@@ -91,7 +108,7 @@ std::shared_ptr<MachinePayConfig> MachinePayConfigManager::latestConfig() {
     return latestConfig_;
 }
 
-std::chrono::system_clock::time_point MachinePayConfigManager::latestConfigMTime() {
+std::chrono::system_clock::time_point MachinePayConfigManager::latestConfigModificationTime() {
     std::shared_lock<std::shared_mutex> lock(latestConfigMutex_);
     return latestConfigModificationTime_;
 }
