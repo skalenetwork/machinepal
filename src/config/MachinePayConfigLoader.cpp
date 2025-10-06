@@ -294,9 +294,9 @@ MachinePayConfig MachinePayConfigLoader::toMachinePayConfig(const nlohmann::json
     const auto &js = j.at("server");
     const auto &jt = js.at("tls");
     TlsConfig tlsConfig(
-        MachinePayConfig::getStringWitHDefault(jt, "cert_file", ""),
-        MachinePayConfig::getStringWitHDefault(jt, "key_file", ""),
-        MachinePayConfig::getStringWitHDefault(jt, "key_pass_file", ""),
+        MachinePayConfig::getStringWithDefault(jt, "cert_file", ""),
+        MachinePayConfig::getStringWithDefault(jt, "key_file", ""),
+        MachinePayConfig::getStringWithDefault(jt, "key_pass_file", ""),
         (jt.contains("ca_file") && !jt.at("ca_file").is_null()) ? std::optional<std::string>(jt.at("ca_file").get<std::string>()) : std::nullopt
     );
     ServerConfig serverConfig(
@@ -304,15 +304,15 @@ MachinePayConfig MachinePayConfigLoader::toMachinePayConfig(const nlohmann::json
         js.at("enable_https").get<bool>(),
         js.at("http_listen_port").get<uint16_t>(),
         js.at("https_listen_port").get<uint16_t>(),
-        MachinePayConfig::getStringWitHDefault(js, "bind_ip", "0.0.0.0"),
+        MachinePayConfig::getStringWithDefault(js, "bind_ip", "0.0.0.0"),
         tlsConfig
     );
 
     // FacilitatorConfig
     const auto &jfaci = j.at("facilitator");
     FacilitatorConfig facilitatorConfig(
-        MachinePayConfig::getStringWitHDefault(jfaci, "type", ""),
-        MachinePayConfig::getStringWitHDefault(jfaci, "base_url", ""),
+        MachinePayConfig::getStringWithDefault(jfaci, "type", ""),
+        MachinePayConfig::getStringWithDefault(jfaci, "base_url", ""),
         (jfaci.contains("api_key_file") && !jfaci.at("api_key_file").is_null()) ? std::optional<std::string>(jfaci.at("api_key_file").get<std::string>()) : std::nullopt
     );
 
@@ -320,7 +320,7 @@ MachinePayConfig MachinePayConfigLoader::toMachinePayConfig(const nlohmann::json
 }
 
 // Helper to get a string from a json object with a default value
-std::string MachinePayConfig::getStringWitHDefault(const nlohmann::json& j, const std::string& key, const std::string& defaultValue) {
+std::string MachinePayConfig::getStringWithDefault(const nlohmann::json& j, const std::string& key, const std::string& defaultValue) {
     if (j.contains(key) && !j.at(key).is_null()) {
         return j.at(key).get<std::string>();
     }

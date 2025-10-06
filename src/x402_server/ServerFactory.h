@@ -15,5 +15,5 @@ namespace proxygen {
 class ServerFactory {
 public:
     static std::shared_ptr<proxygen::HTTPServer> createServerInstance(
-        ServerConfig& serverConfig );
+        const ServerConfig& serverConfig );
 };
