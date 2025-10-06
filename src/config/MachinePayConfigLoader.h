@@ -3,6 +3,7 @@
 
 #include "MachinePayConfig.h"
 #include "nlohmann/json.hpp"
+#include <mutex>
 
 // Source-of-truth loader:
 // 1) Load YAML from file.
@@ -16,29 +17,24 @@ class MachinePayConfigLoader {
 
 
 public:
-    // paths: YAML and JSON schema files
-    static void load(const std::string& yaml_path,
-                          const std::string& schema_path);
 
     // Helper: convert YAML (yaml-cpp node) to nlohmann::json
     static nlohmann::json yamlToJson(const std::string& yaml_path);
 
     static bool asBool(const std::string& s);
 
-    static std::shared_ptr<MachinePayConfig> latestConfig();
-
 
     static std::string getStringWithDefault(
         const nlohmann::json &j, const std::string &key, const std::string &defaultValue);
 
-private:
+    std::shared_ptr<MachinePayConfig> loadConfig(const std::string &yaml_path);
 
-    static std::shared_ptr<MachinePayConfig> latestConfig_;
+private:
 
     static void applyEnvOverrides(nlohmann::json& j);
     static void resolveSecrets(nlohmann::json& j);
     static void validateJson(const nlohmann::json& j);
-    static void toMachinePayConfig(const nlohmann::json& j);
+    static std::shared_ptr<MachinePayConfig> toMachinePayConfig(const nlohmann::json& j);
 
     // Utility helpers
     static std::optional<std::string> getenvOpt(const char* key);
@@ -51,6 +47,8 @@ private:
 
     static std::string readSecretFileFirstLine(const std::string& path,
                                          const std::string& fallback = "");
+
+    std::shared_ptr<MachinePayConfig> load(const std::string& yaml_path);
 
 
 };

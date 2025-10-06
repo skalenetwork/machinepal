@@ -12,6 +12,7 @@
 #include <string>
 #include <optional>
 #include <unordered_set>
+#include <mutex>
 
 
 using nlohmann::json;
@@ -276,20 +277,19 @@ void MachinePayConfigLoader::validateJson(const json &j) {
 
 
 // ---------- Orchestrator ----------
-void MachinePayConfigLoader::load(const std::string &yaml_path,
-                                    const std::string &schema_path) {
+std::shared_ptr<MachinePayConfig> MachinePayConfigLoader::load(const std::string &yaml_path) {
     try {
         json j = yamlToJson(yaml_path);
         applyEnvOverrides(j);
         resolveSecrets(j);
         validateJson(j);
-        toMachinePayConfig(j);
+        return toMachinePayConfig(j);
     } catch (const std::exception &ex) {
         LOG_AND_RETHROW_NESTED("MachinePayConfigLoader::load failed: ", ex);
     }
 }
 
-void MachinePayConfigLoader:: toMachinePayConfig(const nlohmann::json &j) {
+std::shared_ptr<MachinePayConfig> MachinePayConfigLoader:: toMachinePayConfig(const nlohmann::json &j) {
     // serverConfig
     const auto &js = j.at("server");
     const auto &jt = js.at("tls");
@@ -316,8 +316,10 @@ void MachinePayConfigLoader:: toMachinePayConfig(const nlohmann::json &j) {
         (jfaci.contains("api_key_file") && !jfaci.at("api_key_file").is_null()) ? std::optional<std::string>(jfaci.at("api_key_file").get<std::string>()) : std::nullopt
     );
 
-    latestConfig_ = std::make_shared<MachinePayConfig>(serverConfig, facilitatorConfig);
+
+    return std::make_shared<MachinePayConfig>(serverConfig, facilitatorConfig);
 }
+
 
 // Helper to get a string from a json object with a default value
 std::string MachinePayConfigLoader::getStringWithDefault(const nlohmann::json& j, const std::string& key, const std::string& defaultValue) {
@@ -327,11 +329,16 @@ std::string MachinePayConfigLoader::getStringWithDefault(const nlohmann::json& j
     return defaultValue;
 }
 
-std::shared_ptr<MachinePayConfig> MachinePayConfigLoader::latestConfig() {
-    CHECK_STATE(latestConfig_);
-    return latestConfig_;
+
+
+std::shared_ptr<MachinePayConfig> MachinePayConfigLoader::loadConfig(const std::string &yaml_path) {
+    try {
+        json j = yamlToJson(yaml_path);
+        applyEnvOverrides(j);
+        resolveSecrets(j);
+        validateJson(j);
+        return toMachinePayConfig(j);
+    } catch (const std::exception &ex) {
+        LOG_AND_RETHROW_NESTED("MachinePayConfigLoader::load failed: ", ex);
+    }
 }
-
-// Definition of the static member
-std::shared_ptr<MachinePayConfig> MachinePayConfigLoader::latestConfig_ = nullptr;
-

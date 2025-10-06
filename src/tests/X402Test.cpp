@@ -20,6 +20,7 @@
 #include "../datastructures/PaymentRequirements.h"
 #include "../examples/PaymentExamples.h"
 #include "config/MachinePayConfigLoader.h"
+#include "config/MachinePayConfigManager.h"
 
 
 const std::string BIND_IP = "0.0.0.0";
@@ -51,9 +52,9 @@ struct X402ServerFixture {
     X402ServerFixture() {
 
 
-        MachinePayConfigLoader::load("src/tests/configs/basic/machinepay.yml", "");
+        MachinePayConfigManager::loadConfig("src/tests/configs/basic/machinepay.yml");
 
-        auto config = MachinePayConfigLoader::latestConfig();
+        auto config = MachinePayConfigManager::latestConfig();
 
 
         server = ServerFactory().createServerInstance(config->server());

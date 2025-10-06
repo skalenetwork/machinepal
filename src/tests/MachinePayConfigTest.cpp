@@ -1,17 +1,18 @@
 #include "../config/MachinePayConfigLoader.h"
 #include <boost/test/unit_test.hpp>
 #include <string>
+
+#include "config/MachinePayConfigManager.h"
 #include "nlohmann/json.hpp"
 
 BOOST_AUTO_TEST_CASE(deserialize_basic_proxy_config) {
     // Path to the test config file
     std::string configPath = "src/tests/configs/basic/machinepay.yml";
-    std::string schemaPath; // Provide schema path if needed, or leave empty if not used in test
 
     // Load config
-    MachinePayConfigLoader::load(configPath, schemaPath);
+    MachinePayConfigManager::loadConfig(configPath);
 
-    auto config = MachinePayConfigLoader::latestConfig();
+    auto config = MachinePayConfigManager::latestConfig();
 
     // Check frontend
     BOOST_TEST(config->server().httpEnabled() == true);
