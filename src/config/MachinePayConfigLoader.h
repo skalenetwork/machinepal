@@ -25,8 +25,7 @@ public:
 private:
     static void applyEnvOverrides(nlohmann::json& j);
     static void resolveSecrets(nlohmann::json& j);
-    static void validateJson(const nlohmann::json& j,
-                             const std::string& schema_path);
+    static void validateJson(const nlohmann::json& j);
     static MachinePayConfig toMachinePayConfig(const nlohmann::json& j);
 
     // Utility helpers

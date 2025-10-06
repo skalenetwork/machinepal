@@ -252,7 +252,7 @@ struct SchemaValidationErrorHandler : public nlohmann::json_schema::error_handle
     }
 };
 
-void MachinePayConfigLoader::validateJson(const json &j, const std::string &schema_path) {
+void MachinePayConfigLoader::validateJson(const json &j) {
     json schema;
     try {
         schema = json::parse(MachinePayConfigSchemaJson);
@@ -282,7 +282,7 @@ MachinePayConfig MachinePayConfigLoader::load(const std::string &yaml_path,
         json j = yamlToJson(yaml_path);
         applyEnvOverrides(j);
         resolveSecrets(j);
-        validateJson(j, schema_path);
+        validateJson(j);
         return toMachinePayConfig(j);
     } catch (const std::exception &ex) {
         LOG_AND_RETHROW_NESTED("MachinePayConfigLoader::load failed: ", ex);
@@ -290,31 +290,39 @@ MachinePayConfig MachinePayConfigLoader::load(const std::string &yaml_path,
 }
 
 MachinePayConfig MachinePayConfigLoader::toMachinePayConfig(const nlohmann::json &j) {
-    MachinePayConfig config;
     // serverConfig
     const auto &js = j.at("server");
-    config.server.httpEnabled = js.at("enable_http").get<bool>();
-    config.server.httpsEnabled = js.at("enable_https").get<bool>();
-    config.server.httpPort = js.at("http_listen_port").get<uint16_t>();
-    config.server.httpsPort = js.at("https_listen_port").get<uint16_t>();
     const auto &jt = js.at("tls");
-    config.server.tls.certFile = jt.at("cert_file").get<std::string>();
-    config.server.tls.keyFile = jt.at("key_file").get<std::string>();
-    config.server.tls.keyPassFile = jt.at("key_pass_file").get<std::string>();
-    if (jt.contains("ca_file") && !jt.at("ca_file").is_null())
-        config.server.tls.caFile = jt.at("ca_file").get<std::string>();
-    else
-        config.server.tls.caFile = std::nullopt;
+    TlsConfig tlsConfig(
+        MachinePayConfig::getStringWitHDefault(jt, "cert_file", ""),
+        MachinePayConfig::getStringWitHDefault(jt, "key_file", ""),
+        MachinePayConfig::getStringWitHDefault(jt, "key_pass_file", ""),
+        (jt.contains("ca_file") && !jt.at("ca_file").is_null()) ? std::optional<std::string>(jt.at("ca_file").get<std::string>()) : std::nullopt
+    );
+    ServerConfig serverConfig(
+        js.at("enable_http").get<bool>(),
+        js.at("enable_https").get<bool>(),
+        js.at("http_listen_port").get<uint16_t>(),
+        js.at("https_listen_port").get<uint16_t>(),
+        MachinePayConfig::getStringWitHDefault(js, "bind_ip", "0.0.0.0"),
+        tlsConfig
+    );
 
     // FacilitatorConfig
     const auto &jfaci = j.at("facilitator");
-    config.facilitator.type = jfaci.at("type").get<std::string>();
-    config.facilitator.baseUrl = jfaci.at("base_url").get<std::string>();
+    FacilitatorConfig facilitatorConfig(
+        MachinePayConfig::getStringWitHDefault(jfaci, "type", ""),
+        MachinePayConfig::getStringWitHDefault(jfaci, "base_url", ""),
+        (jfaci.contains("api_key_file") && !jfaci.at("api_key_file").is_null()) ? std::optional<std::string>(jfaci.at("api_key_file").get<std::string>()) : std::nullopt
+    );
 
-    if (jfaci.contains("api_key_file") && !jfaci.at("api_key_file").is_null())
-        config.facilitator.apiKeyFile = jfaci.at("api_key_file").get<std::string>();
-    else
-        config.facilitator.apiKeyFile = std::nullopt;
+    return MachinePayConfig(serverConfig, facilitatorConfig);
+}
 
-    return config;
+// Helper to get a string from a json object with a default value
+std::string MachinePayConfig::getStringWitHDefault(const nlohmann::json& j, const std::string& key, const std::string& defaultValue) {
+    if (j.contains(key) && !j.at(key).is_null()) {
+        return j.at(key).get<std::string>();
+    }
+    return defaultValue;
 }

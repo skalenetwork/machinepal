@@ -56,7 +56,7 @@ struct X402ServerFixture {
 
         server = ServerFactory().createServerInstance(config.server);
 
-        client = std::make_shared<X402Client>(config.server.bindIp, config.server.httpPort);
+        client = std::make_shared<X402Client>(config.server.bindIp, config.server.httpPort.value());
 
         srvThread = std::thread([this] {
             server->start(); //
