@@ -33,7 +33,7 @@ set(TEST_ALL_SRC_FILES ${APP_SRC_FILES} ${TEST_SRC_FILES})
 
 
 # ---- Dependencies ----
-foreach(pkg folly Wangle Proxygen CURL nlohmann_json_schema_validator yaml-cpp CLI11)
+foreach(pkg folly Wangle Proxygen CURL nlohmann_json_schema_validator yaml-cpp CLI11 spdlog)
     find_package(${pkg} REQUIRED CONFIG)
 endforeach()
 
@@ -60,6 +60,7 @@ set (PROXY_COMMON_LIBS
         Boost::headers
         nlohmann_json_schema_validator
         yaml-cpp
+        spdlog::spdlog
 )
 
 target_link_libraries(machinepay

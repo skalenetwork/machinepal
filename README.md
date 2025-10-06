@@ -53,6 +53,6 @@ cd x402proxy
 cmake -S . -B build \
   -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_TOOLCHAIN_FILE=external/vcpkg/scripts/buildsystems/vcpkg.cmake \
-  -DVCPKG_FEATURE_FLAGS=manifests
+  -DVCPKG_FEATURE_FLAGS=manifests   -DVCPKG_TARGET_TRIPLET=x64-linux 
 
 cmake --build build -j

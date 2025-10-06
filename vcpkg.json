@@ -10,6 +10,7 @@
     "nlohmann-json",
     "json-schema-validator",
     "boost-beast",
-    "cli11"
+    "cli11",
+    "spdlog"
   ]
 }
