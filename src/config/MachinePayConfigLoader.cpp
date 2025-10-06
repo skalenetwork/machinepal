@@ -276,27 +276,27 @@ void MachinePayConfigLoader::validateJson(const json &j) {
 
 
 // ---------- Orchestrator ----------
-MachinePayConfig MachinePayConfigLoader::load(const std::string &yaml_path,
+void MachinePayConfigLoader::load(const std::string &yaml_path,
                                     const std::string &schema_path) {
     try {
         json j = yamlToJson(yaml_path);
         applyEnvOverrides(j);
         resolveSecrets(j);
         validateJson(j);
-        return toMachinePayConfig(j);
+        toMachinePayConfig(j);
     } catch (const std::exception &ex) {
         LOG_AND_RETHROW_NESTED("MachinePayConfigLoader::load failed: ", ex);
     }
 }
 
-MachinePayConfig MachinePayConfigLoader::toMachinePayConfig(const nlohmann::json &j) {
+void MachinePayConfigLoader:: toMachinePayConfig(const nlohmann::json &j) {
     // serverConfig
     const auto &js = j.at("server");
     const auto &jt = js.at("tls");
     TlsConfig tlsConfig(
-        MachinePayConfig::getStringWithDefault(jt, "cert_file", ""),
-        MachinePayConfig::getStringWithDefault(jt, "key_file", ""),
-        MachinePayConfig::getStringWithDefault(jt, "key_pass_file", ""),
+        MachinePayConfigLoader::getStringWithDefault(jt, "cert_file", ""),
+        MachinePayConfigLoader::getStringWithDefault(jt, "key_file", ""),
+        MachinePayConfigLoader::getStringWithDefault(jt, "key_pass_file", ""),
         (jt.contains("ca_file") && !jt.at("ca_file").is_null()) ? std::optional<std::string>(jt.at("ca_file").get<std::string>()) : std::nullopt
     );
     ServerConfig serverConfig(
@@ -304,25 +304,34 @@ MachinePayConfig MachinePayConfigLoader::toMachinePayConfig(const nlohmann::json
         js.at("enable_https").get<bool>(),
         js.at("http_listen_port").get<uint16_t>(),
         js.at("https_listen_port").get<uint16_t>(),
-        MachinePayConfig::getStringWithDefault(js, "bind_ip", "0.0.0.0"),
+        MachinePayConfigLoader::getStringWithDefault(js, "bind_ip", "0.0.0.0"),
         tlsConfig
     );
 
     // FacilitatorConfig
     const auto &jfaci = j.at("facilitator");
     FacilitatorConfig facilitatorConfig(
-        MachinePayConfig::getStringWithDefault(jfaci, "type", ""),
-        MachinePayConfig::getStringWithDefault(jfaci, "base_url", ""),
+        MachinePayConfigLoader::getStringWithDefault(jfaci, "type", ""),
+        MachinePayConfigLoader::getStringWithDefault(jfaci, "base_url", ""),
         (jfaci.contains("api_key_file") && !jfaci.at("api_key_file").is_null()) ? std::optional<std::string>(jfaci.at("api_key_file").get<std::string>()) : std::nullopt
     );
 
-    return MachinePayConfig(serverConfig, facilitatorConfig);
+    latestConfig_ = std::make_shared<MachinePayConfig>(serverConfig, facilitatorConfig);
 }
 
 // Helper to get a string from a json object with a default value
-std::string MachinePayConfig::getStringWithDefault(const nlohmann::json& j, const std::string& key, const std::string& defaultValue) {
+std::string MachinePayConfigLoader::getStringWithDefault(const nlohmann::json& j, const std::string& key, const std::string& defaultValue) {
     if (j.contains(key) && !j.at(key).is_null()) {
         return j.at(key).get<std::string>();
     }
     return defaultValue;
 }
+
+std::shared_ptr<MachinePayConfig> MachinePayConfigLoader::latestConfig() {
+    CHECK_STATE(latestConfig_);
+    return latestConfig_;
+}
+
+// Definition of the static member
+std::shared_ptr<MachinePayConfig> MachinePayConfigLoader::latestConfig_ = nullptr;
+

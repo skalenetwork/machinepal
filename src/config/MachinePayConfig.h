@@ -95,5 +95,4 @@ public:
         : server_(server), facilitator_(facilitator) {}
     const ServerConfig& server() const { return server_; }
     const FacilitatorConfig& facilitator() const { return facilitator_; }
-    static std::string getStringWithDefault(const nlohmann::json &j, const std::string &key, const std::string &defaultValue);
 };

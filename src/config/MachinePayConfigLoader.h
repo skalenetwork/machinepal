@@ -12,9 +12,12 @@
 // 5) Validate against JSON Schema.
 // 6) Materialize AppConfig.
 class MachinePayConfigLoader {
+
+
+
 public:
     // paths: YAML and JSON schema files
-    static MachinePayConfig load(const std::string& yaml_path,
+    static void load(const std::string& yaml_path,
                           const std::string& schema_path);
 
     // Helper: convert YAML (yaml-cpp node) to nlohmann::json
@@ -22,11 +25,20 @@ public:
 
     static bool asBool(const std::string& s);
 
+    static std::shared_ptr<MachinePayConfig> latestConfig();
+
+
+    static std::string getStringWithDefault(
+        const nlohmann::json &j, const std::string &key, const std::string &defaultValue);
+
 private:
+
+    static std::shared_ptr<MachinePayConfig> latestConfig_;
+
     static void applyEnvOverrides(nlohmann::json& j);
     static void resolveSecrets(nlohmann::json& j);
     static void validateJson(const nlohmann::json& j);
-    static MachinePayConfig toMachinePayConfig(const nlohmann::json& j);
+    static void toMachinePayConfig(const nlohmann::json& j);
 
     // Utility helpers
     static std::optional<std::string> getenvOpt(const char* key);
@@ -39,4 +51,6 @@ private:
 
     static std::string readSecretFileFirstLine(const std::string& path,
                                          const std::string& fallback = "");
+
+
 };
