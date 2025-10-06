@@ -2,7 +2,9 @@
 
 
 #include "MachinePayConfig.h"
-#include <mutex>
+#include <shared_mutex>
+#include <atomic>
+#include <chrono>
 
 class MachinePayConfigManager {
 public:
@@ -11,9 +13,15 @@ public:
 
     static std::shared_ptr<MachinePayConfig> latestConfig();
 
+    static std::chrono::system_clock::time_point latestConfigMTime();
+
+    static const std::string& latestConfigSha256();
+
 private:
 
     static std::shared_ptr<MachinePayConfig> latestConfig_;
-    static std::mutex latestConfigMutex_;
+    static std::shared_mutex latestConfigMutex_;
+    static std::chrono::system_clock::time_point latestConfigMTime_;
+    static std::string latestConfigSha256_;
 
 };
