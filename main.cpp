@@ -70,9 +70,6 @@ int parseCommandLine(int argc, char **argv) {
     CLI::App app{"machinepay"};
     app.add_option("-c,--config", configFile,
         "Path to config file. Default is ./machinepay.yml")->default_val("machinepay.yml");
-    std::cout << "CLI11 version: " << CLI11_VERSION_MAJOR << "."
-              << CLI11_VERSION_MINOR << "."
-              << CLI11_VERSION_PATCH << std::endl;
     try {
         app.parse(argc, argv);
     } catch (const CLI::ParseError &e) {
