@@ -75,7 +75,6 @@ void MachinePayConfigManager::loadConfig(const std::string &yamlPath) {
     std::unique_lock<std::shared_mutex> lock(latestConfigMutex_);
     configPath_ = yamlPath;
     reloadConfigUnsafe();
-
 }
 
 void MachinePayConfigManager::reloadConfig() {

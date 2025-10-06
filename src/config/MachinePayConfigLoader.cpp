@@ -299,7 +299,7 @@ std::shared_ptr<MachinePayConfig> MachinePayConfigLoader:: toMachinePayConfig(co
         MachinePayConfigLoader::getStringWithDefault(jt, "key_pass_file", ""),
         (jt.contains("ca_file") && !jt.at("ca_file").is_null()) ? std::optional<std::string>(jt.at("ca_file").get<std::string>()) : std::nullopt
     );
-    ServerConfig serverConfig(
+    auto serverConfig = std::make_shared<ServerConfig>(
         js.at("enable_http").get<bool>(),
         js.at("enable_https").get<bool>(),
         js.at("http_listen_port").get<uint16_t>(),
@@ -310,7 +310,7 @@ std::shared_ptr<MachinePayConfig> MachinePayConfigLoader:: toMachinePayConfig(co
 
     // FacilitatorConfig
     const auto &jfaci = j.at("facilitator");
-    FacilitatorConfig facilitatorConfig(
+    auto facilitatorConfig = std::make_shared<FacilitatorConfig>(
         MachinePayConfigLoader::getStringWithDefault(jfaci, "type", ""),
         MachinePayConfigLoader::getStringWithDefault(jfaci, "base_url", ""),
         (jfaci.contains("api_key_file") && !jfaci.at("api_key_file").is_null()) ? std::optional<std::string>(jfaci.at("api_key_file").get<std::string>()) : std::nullopt

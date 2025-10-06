@@ -33,9 +33,10 @@ set(TEST_ALL_SRC_FILES ${APP_SRC_FILES} ${TEST_SRC_FILES})
 
 
 # ---- Dependencies ----
-foreach(pkg folly Wangle Proxygen CURL nlohmann_json_schema_validator yaml-cpp)
+foreach(pkg folly Wangle Proxygen CURL nlohmann_json_schema_validator yaml-cpp CLI11)
     find_package(${pkg} REQUIRED CONFIG)
 endforeach()
+
 
 find_package(Boost REQUIRED CONFIG COMPONENTS unit_test_framework system thread)
 
@@ -46,6 +47,7 @@ add_executable(machinepay
         ${APP_SRC_FILES}
 )
 target_include_directories(machinepay PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(machinepay PRIVATE CLI11::CLI11)
 
 set (PROXY_COMMON_LIBS
         CURL::libcurl

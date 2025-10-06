@@ -32,12 +32,12 @@ inline std::string stripSpaces(std::string _s) {
     return _s;
 }
 
-inline void printException(const std::exception& e, int level = 0) {
+inline void printNestedException(const std::exception& e, int level = 0) {
     std::cerr << std::string(level, ' ') << "Exception: " << e.what() << std::endl;
     try {
         std::rethrow_if_nested(e);
     } catch (const std::exception& nested) {
-        printException(nested, level + 2);
+        printNestedException(nested, level + 2);
     } catch (...) {
         // Non-std::exception nested
     }
@@ -57,3 +57,7 @@ inline void printException(const std::exception& e, int level = 0) {
         google::FlushLogFiles(google::GLOG_ERROR); \
         std::throw_with_nested(std::runtime_error(std::string(msg) + ex.what())); \
     } while(0)
+
+
+template<typename T>
+using ptr = std::shared_ptr<T>;

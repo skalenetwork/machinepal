@@ -6,6 +6,8 @@
 #include <regex>
 #include <nlohmann/json.hpp>
 
+#include "common.h"
+
 class TlsConfig {
     std::string certFile_;
     std::string keyFile_;
@@ -87,12 +89,17 @@ public:
 };
 
 class MachinePayConfig {
-    ServerConfig server_;
-    FacilitatorConfig facilitator_;
+    ptr<ServerConfig> server_;
+    ptr<FacilitatorConfig> facilitator_;
 public:
-    MachinePayConfig(const ServerConfig& server,
-                     const FacilitatorConfig& facilitator)
-        : server_(server), facilitator_(facilitator) {}
-    const ServerConfig& server() const { return server_; }
-    const FacilitatorConfig& facilitator() const { return facilitator_; }
+    MachinePayConfig(const ptr<ServerConfig>& server,
+                     const ptr<FacilitatorConfig>& facilitator)
+        : server_(server), facilitator_(facilitator) {
+        CHECK_STATE(server);
+        CHECK_STATE(facilitator);
+    }
+    const ptr<ServerConfig>& server() const {
+        return server_;
+    }
+    const ptr<FacilitatorConfig>& facilitator() const { return facilitator_; }
 };
