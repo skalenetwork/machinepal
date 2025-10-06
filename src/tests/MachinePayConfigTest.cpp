@@ -1,4 +1,4 @@
-#include "../config/ProxyConfigLoader.h"
+#include "../config/MachinePayConfigLoader.h"
 #include <boost/test/unit_test.hpp>
 #include <string>
 #include "nlohmann/json.hpp"
@@ -9,7 +9,7 @@ BOOST_AUTO_TEST_CASE(deserialize_basic_proxy_config) {
     std::string schemaPath = ""; // Provide schema path if needed, or leave empty if not used in test
 
     // Load config
-    ProxyConfig config = ProxyConfigLoader::load(configPath, schemaPath);
+    MachinePayConfig config = MachinePayConfigLoader::load(configPath, schemaPath);
 
     // Check frontend
     BOOST_TEST(config.frontEnd.httpEnabled == true);

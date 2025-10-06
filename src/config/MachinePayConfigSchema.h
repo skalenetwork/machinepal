@@ -1,10 +1,10 @@
 #pragma once
 
-constexpr const char* proxyConfigSchemaJson = R"({
+constexpr const char* MachinePayConfigSchemaJson = R"({
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "properties": {
-    "frontend": {
+    "server": {
       "type": "object",
       "properties": {
         "enable_http": { "type": "boolean" },

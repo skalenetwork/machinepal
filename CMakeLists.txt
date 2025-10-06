@@ -76,27 +76,27 @@ include(CTest)
 if(BUILD_TESTING)
     enable_testing()
 
-    add_executable(x402_boost_test
+    add_executable(mptest
             ${TEST_ALL_SRC_FILES}
     )
-    target_compile_features(x402_boost_test PRIVATE cxx_std_17)
-    target_include_directories(x402_boost_test
+    target_compile_features(mptest PRIVATE cxx_std_17)
+    target_include_directories(mptest
             PRIVATE
             ${CMAKE_CURRENT_SOURCE_DIR}/src
             ${CMAKE_CURRENT_SOURCE_DIR}/tests
     )
 
 
-    target_link_libraries(x402_boost_test
+    target_link_libraries(mptest
             PRIVATE
             ${PROXY_COMMON_LIBS}
             Boost::unit_test_framework
     )
 
     if(ENABLE_ASAN)
-        target_compile_options(x402_boost_test PRIVATE -fsanitize=address -fno-omit-frame-pointer)
-        target_link_options(x402_boost_test PRIVATE -fsanitize=address)
+        target_compile_options(machinepayt PRIVATE -fsanitize=address -fno-omit-frame-pointer)
+        target_link_options(machinepayt PRIVATE -fsanitize=address)
     endif()
 
-    add_test(NAME x402_boost_test COMMAND x402_boost_test)
+    add_test(NAME machinepayt COMMAND machinepayt)
 endif()

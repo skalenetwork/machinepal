@@ -1,7 +1,7 @@
 #include "common.h"
-#include "ProxyConfigLoader.h"
-#include "ProxyConfig.h"
-#include "config/proxyConfigSchema.h"
+#include "MachinePayConfigLoader.h"
+#include "MachinePayConfig.h"
+#include "config/MachinePayConfigSchema.h"
 #include "init/InitLibs.h"
 #include <yaml-cpp/yaml.h>
 #include <fstream>
@@ -21,12 +21,12 @@ using namespace nlohmann::literals; // Enables the _json_pointer literal
 // --- Helper Functions ---
 
 // ---------- tiny utils ----------
-std::optional<std::string> ProxyConfigLoader::getenvOpt(const char *key) {
+std::optional<std::string> MachinePayConfigLoader::getenvOpt(const char *key) {
     if (const char *v = std::getenv(key)) return std::string(v);
     return std::nullopt;
 }
 
-std::string ProxyConfigLoader::readSecretFileFirstLine(const std::string &path,
+std::string MachinePayConfigLoader::readSecretFileFirstLine(const std::string &path,
                                                  const std::string &fallback) {
     try {
         std::ifstream f(path);
@@ -35,7 +35,7 @@ std::string ProxyConfigLoader::readSecretFileFirstLine(const std::string &path,
         std::getline(f, line);
         return line;
     } catch (const std::exception &ex) {
-        LOG_AND_RETHROW_NESTED("ProxyConfigLoader::readSecretFileFirstLine failed: ", ex);
+        LOG_AND_RETHROW_NESTED("MachinePayConfigLoader::readSecretFileFirstLine failed: ", ex);
     }
 }
 
@@ -140,7 +140,7 @@ static json yamlNodeToJson(const YAML::Node& node) {
     }
 }
 
-json ProxyConfigLoader::yamlToJson(const std::string &yaml_path) {
+json MachinePayConfigLoader::yamlToJson(const std::string &yaml_path) {
     try {
         YAML::Node root = YAML::LoadFile(yaml_path);
         return yamlNodeToJson(root);
@@ -152,7 +152,7 @@ json ProxyConfigLoader::yamlToJson(const std::string &yaml_path) {
 }
 
 
-bool ProxyConfigLoader::asBool(const std::string &s) {
+bool MachinePayConfigLoader::asBool(const std::string &s) {
     return s == "1" || s == "true" || s == "TRUE" || s == "yes" || s == "on";
 };
 
@@ -160,46 +160,46 @@ bool ProxyConfigLoader::asBool(const std::string &s) {
 /**
  * @brief Applies an environment variable as a string to a JSON object at a given path.
  */
-void ProxyConfigLoader::applyStringEnv(json &j, const json::json_pointer &path, const char *envVar) {
+void MachinePayConfigLoader::applyStringEnv(json &j, const json::json_pointer &path, const char *envVar) {
     try {
         if (auto v = getenvOpt(envVar)) {
             j[path] = *v;
         }
     } catch (const std::exception &ex) {
-        LOG_AND_RETHROW_NESTED("ProxyConfigLoader::applyStringEnv failed: ", ex);
+        LOG_AND_RETHROW_NESTED("MachinePayConfigLoader::applyStringEnv failed: ", ex);
     }
 }
 
 /**
  * @brief Applies an environment variable as a boolean to a JSON object at a given path.
  */
-void ProxyConfigLoader::applyBoolEnv(json &j, const json::json_pointer &path, const char *envVar) {
+void MachinePayConfigLoader::applyBoolEnv(json &j, const json::json_pointer &path, const char *envVar) {
     try {
         if (auto v = getenvOpt(envVar)) {
             j[path] = asBool(*v);
         }
     } catch (const std::exception &ex) {
-        LOG_AND_RETHROW_NESTED("ProxyConfigLoader::applyBoolEnv failed: ", ex);
+        LOG_AND_RETHROW_NESTED("MachinePayConfigLoader::applyBoolEnv failed: ", ex);
     }
 }
 
 /**
  * @brief Applies an environment variable as an integer to a JSON object at a given path.
  */
-void ProxyConfigLoader::applyIntEnv(json &j, const json::json_pointer &path, const char *envVar) {
+void MachinePayConfigLoader::applyIntEnv(json &j, const json::json_pointer &path, const char *envVar) {
     try {
         if (auto v = getenvOpt(envVar)) {
             j[path] = std::stoi(*v);
         }
     } catch (const std::exception &ex) {
-        LOG_AND_RETHROW_NESTED("ProxyConfigLoader::applyIntEnv failed: ", ex);
+        LOG_AND_RETHROW_NESTED("MachinePayConfigLoader::applyIntEnv failed: ", ex);
     }
 }
 
 
 // --- Refactored applyEnvOverrides Function ---
 
-void ProxyConfigLoader::applyEnvOverrides(json &j) {
+void MachinePayConfigLoader::applyEnvOverrides(json &j) {
     try {
         // ---------- frontend ----------
         applyBoolEnv(j, "/frontend/enable_http"_json_pointer, "FRONTEND_ENABLE_HTTP");
@@ -218,13 +218,13 @@ void ProxyConfigLoader::applyEnvOverrides(json &j) {
         applyStringEnv(j, "/facilitator/base_url"_json_pointer, "FACILITATOR_BASE_URL");
         applyStringEnv(j, "/facilitator/api_key_file"_json_pointer, "FACILITATOR_API_KEY_FILE");
     } catch (const std::exception &ex) {
-        LOG_AND_RETHROW_NESTED("ProxyConfigLoader::applyEnvOverrides failed: ", ex);
+        LOG_AND_RETHROW_NESTED("MachinePayConfigLoader::applyEnvOverrides failed: ", ex);
     }
 }
 
 
 // ---------- Resolve secret files to actual values ----------
-void ProxyConfigLoader::resolveSecrets(json &j) {
+void MachinePayConfigLoader::resolveSecrets(json &j) {
     try {
         if (j.contains("database") && j["database"].is_object()) {
             const std::string dbFile = j["database"].value("passwordFile", "");
@@ -232,7 +232,7 @@ void ProxyConfigLoader::resolveSecrets(json &j) {
         }
         // Only resolve password in db, not jwt
     } catch (const std::exception &ex) {
-        LOG_AND_RETHROW_NESTED("ProxyConfigLoader::resolveSecrets failed: ", ex);
+        LOG_AND_RETHROW_NESTED("MachinePayConfigLoader::resolveSecrets failed: ", ex);
     }
 }
 
@@ -252,12 +252,12 @@ struct SchemaValidationErrorHandler : public nlohmann::json_schema::error_handle
     }
 };
 
-void ProxyConfigLoader::validateJson(const json &j, const std::string &schema_path) {
+void MachinePayConfigLoader::validateJson(const json &j, const std::string &schema_path) {
     json schema;
     try {
-        schema = json::parse(proxyConfigSchemaJson);
+        schema = json::parse(MachinePayConfigSchemaJson);
     } catch (const std::exception &ex) {
-        LOG_AND_RETHROW_NESTED("ProxyConfigLoader::validateJson failed to parse schema: ", ex);
+        LOG_AND_RETHROW_NESTED("MachinePayConfigLoader::validateJson failed to parse schema: ", ex);
     }
 
     SchemaValidationErrorHandler errHandler;
@@ -267,7 +267,7 @@ void ProxyConfigLoader::validateJson(const json &j, const std::string &schema_pa
 
         validator.validate(j, errHandler); // throws on validation error
     } catch (const std::exception &ex) {
-        std::string errorMsg = std::string("ProxyConfigLoader::validateJson Invalid config file : "
+        std::string errorMsg = std::string("MachinePayConfigLoader::validateJson Invalid config file : "
                                            "failed to validate config against schema:\n") +
                                                errHandler.errorMessage;
         LOG_AND_RETHROW_NESTED(errorMsg, ex);
@@ -276,21 +276,21 @@ void ProxyConfigLoader::validateJson(const json &j, const std::string &schema_pa
 
 
 // ---------- Orchestrator ----------
-ProxyConfig ProxyConfigLoader::load(const std::string &yaml_path,
+MachinePayConfig MachinePayConfigLoader::load(const std::string &yaml_path,
                                     const std::string &schema_path) {
     try {
         json j = yamlToJson(yaml_path);
         applyEnvOverrides(j);
         resolveSecrets(j);
         validateJson(j, schema_path);
-        return toProxyConfig(j);
+        return toMachinePayConfig(j);
     } catch (const std::exception &ex) {
-        LOG_AND_RETHROW_NESTED("ProxyConfigLoader::load failed: ", ex);
+        LOG_AND_RETHROW_NESTED("MachinePayConfigLoader::load failed: ", ex);
     }
 }
 
-ProxyConfig ProxyConfigLoader::toProxyConfig(const nlohmann::json &j) {
-    ProxyConfig config;
+MachinePayConfig MachinePayConfigLoader::toMachinePayConfig(const nlohmann::json &j) {
+    MachinePayConfig config;
     // FrontEndConfig
     const auto &jf = j.at("frontend");
     config.frontEnd.httpEnabled = jf.at("enable_http").get<bool>();

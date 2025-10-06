@@ -25,7 +25,7 @@ struct FrontEndConfig {
     TlsConfig tls;                    // nested struct for clarity
 };
 
-struct ProxyConfig {
+struct MachinePayConfig {
     FrontEndConfig frontEnd;
     FacilitatorConfig facilitator;
 };
