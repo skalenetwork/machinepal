@@ -15,8 +15,11 @@
 class MachinePayConfigLoader {
 
 
-
 public:
+
+    static std::shared_ptr<MachinePayConfig> loadConfig(const std::string &yaml_path);
+
+private:
 
     // Helper: convert YAML (yaml-cpp node) to nlohmann::json
     static nlohmann::json yamlToJson(const std::string& yaml_path);
@@ -27,9 +30,6 @@ public:
     static std::string getStringWithDefault(
         const nlohmann::json &j, const std::string &key, const std::string &defaultValue);
 
-    std::shared_ptr<MachinePayConfig> loadConfig(const std::string &yaml_path);
-
-private:
 
     static void applyEnvOverrides(nlohmann::json& j);
     static void resolveSecrets(nlohmann::json& j);

@@ -22,34 +22,17 @@ using namespace nlohmann::literals; // Enables the _json_pointer literal
 
 
 
-
-// ---------- Resolve secret files to actual values ----------
-void MachinePayConfigLoader::resolveSecrets(json &j) {
-    try {
-        if (j.contains("database") && j["database"].is_object()) {
-            const std::string dbFile = j["database"].value("passwordFile", "");
-            j["database"]["password"] = readSecretFileFirstLine(dbFile, /*fallback*/ "");
-        }
-        // Only resolve password in db, not jwt
-    } catch (const std::exception &ex) {
-        LOG_AND_RETHROW_NESTED("MachinePayConfigLoader::resolveSecrets failed: ", ex);
-    }
-}
-
-
-
-
 // ---------- Orchestrator ----------
 void MachinePayConfigManager::loadConfig(const std::string &yaml_path) {
     latestConfig_ = MachinePayConfigLoader::loadConfig(yaml_path);
 }
 
 
-std::shared_ptr<MachinePayConfig> MachinePayConfigLoader::latestConfig() {
+std::shared_ptr<MachinePayConfig> MachinePayConfigManager::latestConfig() {
     CHECK_STATE(latestConfig_);
     return latestConfig_;
 }
 
 // Definition of the static member
-std::shared_ptr<MachinePayConfig> MachinePayConfigLoader::latestConfig_ = nullptr;
+std::shared_ptr<MachinePayConfig> MachinePayConfigManager::latestConfig_ = nullptr;
 
