@@ -37,17 +37,17 @@ public:
 
 
 
-std::string parseCommandLine(int argc, char **argv) {
+std::string parseCommandLineAndEnvironmentOverloads(int argc, char **argv) {
     try {
         // Use CLI11 to parse command line
-        std::string configFile = "machinepay.yml";
+        std::string configFilePath = "machinepay.yml";
         // Check for environment variable override
 
         CLI::App app{"machinepay"};
-        app.add_option("-c,--config", configFile,
+        app.add_option("-c,--config", configFilePath,
             "Path to the config file. Default is ./machinepay.yml. "
             "Can be overwritten by MACHINEPAY_CONFIG environment variable.")
-            ->default_val(configFile)
+            ->default_val(configFilePath)
             ->type_name("FILE");
         try {
             app.parse(argc, argv);
@@ -57,13 +57,15 @@ std::string parseCommandLine(int argc, char **argv) {
         }
 
 
-        auto envVars = Init::getAllMachinePayEnvVars();
+        auto envOverloads = Init::getMachinePayEnvironmentOverloads();
 
-        if (envVars.contains("MACHINEPAY_CONFIG")) {
-            configFile = envVars["MACHINEPAY_CONFIG"];
+        auto it = envOverloads.find("CONFIG");
+        if (it != envOverloads.end()) {
+            configFilePath = it->second;
+            envOverloads.erase(it);
         }
 
-        return configFile;
+        return configFilePath;
 
     } catch (const std::exception &ex) {
         spdlog::critical("Error loading config: {}", ex.what());
@@ -83,7 +85,7 @@ int main(int argc, char *argv[]) {
     try {
         Init::initAllLibs(1, argv);
 
-        auto configFile = parseCommandLine(argc, argv);
+        auto configFile = parseCommandLineAndEnvironmentOverloads(argc, argv);
 
         MachinePayConfigManager::loadConfig(configFile);
         auto serverConfig = MachinePayConfigManager::latestConfig()->server();

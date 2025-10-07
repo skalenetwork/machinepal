@@ -9,7 +9,7 @@ class Init {
 public:
     static void initAllLibs(int _argc, char* _argv[]);
     static bool isInited();
-    static std::map<std::string, std::string> getAllMachinePayEnvVars();
+    static std::map<std::string, std::string> getMachinePayEnvironmentOverloads();
 
 private:
     static std::atomic<bool> inited_;

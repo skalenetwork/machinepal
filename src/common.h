@@ -63,3 +63,6 @@ inline void printNestedException(const std::exception& e, int level = 0) {
 
 template<typename T>
 using ptr = std::shared_ptr<T>;
+
+
+using namespace std;

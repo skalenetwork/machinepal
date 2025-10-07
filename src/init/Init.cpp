@@ -5,24 +5,24 @@
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_sinks.h>
 #include "Init.h"
+#include <boost/algorithm/string/predicate.hpp>
 
-#include <regex>
 
-std::atomic<bool> Init::inited_{false};
+atomic<bool> Init::inited_{false};
 
-void Init::initAllLibs(int _argc, char* _argv[]) {
+void Init::initAllLibs(int _argc, char *_argv[]) {
     if (!inited_.exchange(true)) {
         curl_global_init(CURL_GLOBAL_DEFAULT);
         FLAGS_logtostderr = 1;
         FLAGS_minloglevel = google::INFO;
-        static folly::Init init(&_argc, &_argv);  // Static to preserve lifetime, pass by pointer
+        static folly::Init init(&_argc, &_argv); // Static to preserve lifetime, pass by pointer
 
 
         auto logger = spdlog::stderr_logger_mt("machinepay");
         spdlog::set_default_logger(logger);
-        spdlog::set_level(spdlog::level::info);  // Set global log level to INFO
-       // spdlog::set_pattern(
-         //   R"({"ts":"%Y-%m-%dT%H:%M:%S.%e%z","level":"%l","logger":"%n","pid":%P,"tid":%t,"msg":"%v"})");
+        spdlog::set_level(spdlog::level::info); // Set global log level to INFO
+        // spdlog::set_pattern(
+        //   R"({"ts":"%Y-%m-%dT%H:%M:%S.%e%z","level":"%l","logger":"%n","pid":%P,"tid":%t,"msg":"%v"})");
         spdlog::info("Libraries initialized");
     }
 }
@@ -32,20 +32,28 @@ bool Init::isInited() {
 }
 
 
-std::map<std::string, std::string> Init::getAllMachinePayEnvVars() {
-    std::map<std::string, std::string> envVars;
+map<string, string> Init::getMachinePayEnvironmentOverloads() {
+    map<string, string> envOverloads;
     extern char **environ;
-    std::regex re("^MACHINE_PAY_");
+    const string prefix = "MACHINE_PAY_";
     for (char **env = environ; *env != nullptr; ++env) {
-        std::string entry(*env);
-        auto pos = entry.find('=');
-        if (pos != std::string::npos) {
-            std::string key = entry.substr(0, pos);
-            std::string value = entry.substr(pos + 1);
-            if (std::regex_search(key, re)) {
-                envVars[key] = value;
-            }
+        string environmentVariable(*env);
+        if (!environmentVariable.starts_with(prefix))
+            continue;
+        auto pos = environmentVariable.find('=');
+        if (pos == string::npos)
+            continue;
+        string key = environmentVariable.substr(0, pos);
+        string strippedKey = key.substr(prefix.size());
+
+        if (strippedKey.empty()) {
+            continue;
         }
+
+        if (envOverloads.contains(strippedKey) > 0) {
+            throw std::runtime_error("Duplicate environment variable: " + string(key));
+        }
+        envOverloads[strippedKey] = environmentVariable.substr(pos + 1);
     }
-    return envVars;
+    return envOverloads;
 }
