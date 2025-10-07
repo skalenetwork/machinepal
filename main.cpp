@@ -37,7 +37,7 @@ public:
 
 
 
-int parseCommandLine(int argc, char **argv) {
+std::string parseCommandLine(int argc, char **argv) {
     try {
         // Use CLI11 to parse command line
         std::string configFile = "machinepay.yml";
@@ -63,7 +63,8 @@ int parseCommandLine(int argc, char **argv) {
             configFile = envVars["MACHINEPAY_CONFIG"];
         }
 
-        MachinePayConfigManager::loadConfig(configFile);
+        return configFile;
+
     } catch (const std::exception &ex) {
         spdlog::critical("Error loading config: {}", ex.what());
         printNestedException(ex);
@@ -72,9 +73,6 @@ int parseCommandLine(int argc, char **argv) {
         spdlog::critical("Unknown error loading config.");
         exit(1);
     }
-
-
-    return 0;
 }
 
 
@@ -85,9 +83,9 @@ int main(int argc, char *argv[]) {
     try {
         Init::initAllLibs(1, argv);
 
-        parseCommandLine(argc, argv);
+        auto configFile = parseCommandLine(argc, argv);
 
-
+        MachinePayConfigManager::loadConfig(configFile);
         auto serverConfig = MachinePayConfigManager::latestConfig()->server();
         auto serverObject = ServerFactory::createServerInstance(*serverConfig);
         serverObject->start();
