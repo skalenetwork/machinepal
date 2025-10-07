@@ -56,8 +56,6 @@ public:
 };
 
 class ServerConfig {
-    std::optional<uint16_t> httpPort_;
-    std::optional<uint16_t> httpsPort_;
     std::string bindIp_;
     ptr<HTTPConfig> http_;
     ptr<HTTPSConfig> https_;
@@ -83,8 +81,6 @@ public:
         }
     }
 
-    const std::optional<uint16_t>& httpPort() const { return httpPort_; }
-    const std::optional<uint16_t>& httpsPort() const { return httpsPort_; }
     const std::string& bindIp() const { return bindIp_; }
     const ptr<HTTPConfig> http() const { return http_; }
     const ptr<HTTPSConfig> https() const { return https_; }

@@ -12,7 +12,10 @@ atomic<bool> Init::inited_{false};
 
 void Init::initAllLibs(int _argc, char *_argv[]) {
     if (!inited_.exchange(true)) {
-        curl_global_init(CURL_GLOBAL_DEFAULT);
+
+        auto rc = curl_global_init(CURL_GLOBAL_DEFAULT);
+        CHECK_STATE2(rc == CURLE_OK, "curl_global_init failed");
+
         FLAGS_logtostderr = 1;
         FLAGS_minloglevel = google::INFO;
         static folly::Init init(&_argc, &_argv); // Static to preserve lifetime, pass by pointer

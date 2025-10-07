@@ -11,32 +11,58 @@ using namespace proxygen;
 
 std::shared_ptr<HTTPServer> ServerFactory::createServerInstance(const ServerConfig& serverConfig) {
 
-    // Initialize libcurl once, for the whole process
 
-    static bool curl_initialized = false;
-    CURLcode rc = CURLE_OK;
-    if (!curl_initialized) {
-        rc = curl_global_init(CURL_GLOBAL_DEFAULT);
-        curl_initialized = true;
+
+    try {
+        std::vector<HTTPServer::IPConfig> ipConfigs;
+        if (serverConfig.http() && serverConfig.http()->isEnabled()) {
+            ipConfigs.emplace_back(
+                folly::SocketAddress(serverConfig.bindIp(), serverConfig.http()->port(), true),
+                HTTPServer::Protocol::HTTP
+            );
+        }
+
+
+
+        HTTPServerOptions options;
+        spdlog::info("Creating server instance ...");
+        options.threads = static_cast<size_t>(std::thread::hardware_concurrency());
+        options.idleTimeout = std::chrono::milliseconds(60000);
+        options.shutdownOn = {SIGINT, SIGTERM};
+        options.handlerFactories = RequestHandlerChain()
+                .addThen<X402HandlerFactory>()
+                .build();
+
+
+        if (auto https = serverConfig.https(); https && https->isEnabled()) {
+            wangle::SSLContextConfig sslCfg;
+            sslCfg.addCertificate(https->certFile(), https->keyFile(),
+                https->keyPassFile());
+            if (https->caFile() && !https->caFile()->empty()) {
+                sslCfg.clientCAFile = *https->caFile();
+            }
+            // If you have a chain file, set sslCfg.chainFile = ...;
+
+            HTTPServer::IPConfig config(
+                folly::SocketAddress(serverConfig.bindIp(), https->port(), true),
+                HTTPServer::Protocol::HTTP);
+
+            config.sslConfigs.push_back(sslCfg);
+
+            ipConfigs.emplace_back(config);
+
+
+        }
+
+
+        auto server = std::make_shared<HTTPServer>(std::move(options));
+        spdlog::info("Binding server to address(es)...");
+        server->bind(ipConfigs);
+        spdlog::info("Server instance created and bound successfully.");
+        return server;
+    } catch (const std::exception &ex) {
+        RETHROW_NESTED("ServerFactory::createServerInstance failed: ");
     }
-
-    CHECK_STATE2(rc == CURLE_OK, "curl_global_init failed");
-
-    HTTPServer::IPConfig ipConfig(
-        folly::SocketAddress(serverConfig.bindIp(), serverConfig.httpPort().value(), true), HTTPServer::Protocol::HTTP);
-
-    HTTPServerOptions options;
-    spdlog::info("Creating server instance ...");
-    options.threads = static_cast<size_t>(std::thread::hardware_concurrency());
-    options.idleTimeout = std::chrono::milliseconds(60000);
-    options.shutdownOn = {SIGINT, SIGTERM};
-    options.handlerFactories = RequestHandlerChain()
-            .addThen<X402HandlerFactory>()
-            .build();
-
-    auto server = std::make_shared<HTTPServer>(std::move(options));
-    spdlog::info("Binding server to address...");
-    server->bind({ipConfig});
-    spdlog::info("Server instance created and bound successfully.");
-    return server;
+    // make compiler happy
+    return nullptr;
 }
