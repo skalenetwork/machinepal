@@ -45,16 +45,18 @@ map<string, string>  parseCommandLineAndEnvironmentOverloads(int argc, char **ar
         // Use CLI11 to parse command line
         std::string configFilePathFromCli;
         std::string logLevel;
+        std::string logType;
         CLI::App app{"machinepay"};
         app.add_option("-c,--config", configFilePathFromCli,
-            "Path to the config file. Default is ./machinepay.yml. "
-            "Can be overwritten by MACHINEPAY_CONFIG environment variable.")
-            ->default_val(configFilePathFromCli)
+            "Path to the config file. Default is ./machinepay.yml.")
+            ->default_val("./machinepay.yml")
             ->type_name("FILE");
-        app.add_option("--log-level", logLevel,
-            "Log level: trace, debug, info, warn, error, critical")
-            ->default_val("info")
-            ->check(CLI::IsMember({"trace", "debug", "info", "warn", "error", "critical"}));
+        app.add_option("-l,--log-level", logLevel,
+            "Log level: trace, debug, info, warn, error, fatal")
+            ->check(CLI::IsMember({"trace", "debug", "info", "warn", "error", "fatal"}));
+        app.add_option("-t,--log-type", logType,
+            "Log type: plain, json")
+            ->check(CLI::IsMember({"plain", "json"}));
         try {
             app.parse(argc, argv);
         } catch (const CLI::ParseError &e) {
@@ -62,14 +64,16 @@ map<string, string>  parseCommandLineAndEnvironmentOverloads(int argc, char **ar
             exit(code);
         }
 
-
-
         if (!configFilePathFromCli.empty()) {
             envOverloads["CONFIG"] = configFilePathFromCli;
         };
 
         if (!logLevel.empty()) {
             envOverloads["LOG_LEVEL"] = logLevel;
+        }
+
+        if (!logType.empty()) {
+            envOverloads["LOG_TYPE"] = logType;
         }
 
         return envOverloads;

@@ -377,7 +377,7 @@ std::shared_ptr<MachinePayConfig> MachinePayConfigLoader:: toMachinePayConfig(co
     const auto &jlog = j.at("log");
     auto logConfig = std::make_shared<LogConfig>(
         MachinePayConfigLoader::getStringWithDefault(jlog, "level", "info"),
-        MachinePayConfigLoader::getStringWithDefault(jlog, "level", "info")
+        MachinePayConfigLoader::getStringWithDefault(jlog, "level", "plain")
     );
 
     return std::make_shared<MachinePayConfig>(serverConfig, facilitatorConfig, logConfig);
