@@ -11,16 +11,7 @@ using namespace proxygen;
 
 std::shared_ptr<HTTPServer> ServerFactory::createServerInstance(const ServerConfig& serverConfig) {
 
-    // Initialize libcurl once, for the whole process
 
-    static bool curl_initialized = false;
-    CURLcode rc = CURLE_OK;
-    if (!curl_initialized) {
-        rc = curl_global_init(CURL_GLOBAL_DEFAULT);
-        curl_initialized = true;
-    }
-
-    CHECK_STATE2(rc == CURLE_OK, "curl_global_init failed");
 
     HTTPServer::IPConfig ipConfig(
         folly::SocketAddress(serverConfig.bindIp(), serverConfig.httpPort().value(), true), HTTPServer::Protocol::HTTP);
