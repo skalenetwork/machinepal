@@ -8,22 +8,28 @@ constexpr const char* MachinePayConfigSchemaJson = R"({
       "type": "object",
       "properties": {
         "bind_ip": { "type": "string" },
-        "enable_http": { "type": "boolean" },
-        "enable_https": { "type": "boolean" },
-        "http_listen_port": { "type": "integer" },
-        "https_listen_port": { "type": "integer" },
-        "tls": {
+        "http": {
           "type": "object",
           "properties": {
+            "enabled": { "type": "boolean" },
+            "port": { "type": "integer" }
+          },
+          "required": ["port"]
+        },
+        "https": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "port": { "type": "integer" },
             "cert_file": { "type": "string" },
             "key_file": { "type": "string" },
             "key_pass_file": { "type": "string" },
             "ca_file": { "type": "string" }
           },
-          "required": ["cert_file", "key_file", "key_pass_file"]
+          "required": ["port", "cert_file", "key_file", "key_pass_file"]
         }
       },
-      "required": ["enable_http", "enable_https"]
+      "required": ["http", "https"]
     },
     "facilitator": {
       "type": "object",
@@ -40,12 +46,14 @@ constexpr const char* MachinePayConfigSchemaJson = R"({
         "level": {
           "type": "string",
           "enum": ["trace", "debug", "info", "warn", "error", "fatal"],
-          "description": "Log verbosity level. Default: info. Override: LOG_LEVEL."
+          "description": "Log verbosity level. Default: info. Override: LOG_LEVEL.",
+          "default": "info"
         },
         "type": {
           "type": "string",
           "enum": ["plain", "json"],
-          "description": "Type for logs. Default: plain. Override: LOG_TYPE."
+          "description": "Type for logs. Default: plain. Override: LOG_TYPE.",
+          "default": "plain"
         }
       },
       "description": "Optional logging configuration. Default log level is 'info' to stderr."
