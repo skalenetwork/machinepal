@@ -49,7 +49,6 @@ map<string, string>  parseCommandLineAndEnvironmentOverloads(int argc, char **ar
         CLI::App app{"machinepay"};
         app.add_option("-c,--config", configFilePathFromCli,
             "Path to the config file. Default is ./machinepay.yml.")
-            ->default_val("./machinepay.yml")
             ->type_name("FILE");
         app.add_option("-l,--log-level", logLevel,
             "Log level: trace, debug, info, warn, error, fatal")
@@ -76,6 +75,14 @@ map<string, string>  parseCommandLineAndEnvironmentOverloads(int argc, char **ar
             envOverloads["LOG_TYPE"] = logType;
         }
 
+        if (envOverloads.size() > 0) {
+            spdlog::info("Values set in command line and environment override "
+                         "the corresponding configuration file values."
+                         " Command line takes precedence over environment.");
+            for (const auto& kv : envOverloads) {
+                spdlog::info("{} = {}", kv.first, kv.second);
+            }
+        }
         return envOverloads;
 
     } catch (const std::exception &ex) {
