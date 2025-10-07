@@ -24,7 +24,9 @@ using namespace nlohmann::literals; // Enables the _json_pointer literal
 
 // ---------- tiny utils ----------
 std::optional<std::string> MachinePayConfigLoader::getenvOpt(const char *key) {
-    if (const char *v = std::getenv(key)) return std::string(v);
+    if (overrides_.count(key)) {
+        return overrides_.at(key);
+    }
     return std::nullopt;
 }
 

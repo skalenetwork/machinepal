@@ -27,6 +27,7 @@ private:
 
     static void setConfigValuesFromCliAndEnv(const std::map<std::string, std::string>& values) {
         std::unique_lock lock(latestConfigMutex_);
+        configValuesFromCliAndEnv_ = values;
         if (configValuesFromCliAndEnv_.contains("CONFIG")) {
             configPath_ = configValuesFromCliAndEnv_.at("CONFIG");
         } else {

@@ -115,7 +115,11 @@ void MachinePayConfigManager::reloadConfig() {
             CHECK_STATE(latestConfig_);
             return;
         }
-        latestConfig_ = MachinePayConfigLoader::loadConfig(configPath_);
+
+        MachinePayConfigLoader loader(MachinePayConfigManager::configValuesFromCliAndEnv_);
+
+        latestConfig_ = loader.loadConfig(configPath_);
+
         // Record last modified time
         auto ftime = std::filesystem::last_write_time(configPath_);
         latestConfigModificationTime_ = std::chrono::system_clock::time_point(
