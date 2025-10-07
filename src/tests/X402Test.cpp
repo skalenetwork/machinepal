@@ -51,6 +51,7 @@ BOOST_GLOBAL_FIXTURE(X402GlobalFixture);
 struct X402ServerFixture {
     X402ServerFixture() {
 
+
         try {
             MachinePayConfigManager::initManager({
                 {
@@ -73,12 +74,11 @@ struct X402ServerFixture {
             // tiny wait to ensure acceptors are ready (bind happened already)
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         } catch (const std::exception &ex) {
-            spdlog::critical("Error starting test server: {}", ex.what());
             printNestedException(ex);
-            throw;
+            BOOST_FAIL("Exception starting test server");
         } catch (...) {
             spdlog::critical("Unknown error starting test server.");
-            throw;
+            BOOST_FAIL("Exception starting test server");
         }
     }
 
