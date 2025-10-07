@@ -48,22 +48,25 @@ class ServerConfig {
     std::optional<uint16_t> httpPort_;
     std::optional<uint16_t> httpsPort_;
     std::string bindIp_;
-    std::optional<TlsConfig> tls_;
+    ptr<TlsConfig> tls_;
 public:
     ServerConfig(bool httpEnabled,
                  bool httpsEnabled,
                  std::optional<uint16_t> httpPort,
                  std::optional<uint16_t> httpsPort,
                  const std::string& bindIp,
-                 const TlsConfig& tls)
+                 ptr<TlsConfig> tls)
         : httpEnabled_(httpEnabled), httpsEnabled_(httpsEnabled),
           httpPort_(httpPort), httpsPort_(httpsPort),
           bindIp_(bindIp), tls_(tls) {
+        if (httpsEnabled) {
+            CHECK_STATE(tls);
+        }
         if (!httpEnabled_ && !httpsEnabled_) {
             throw std::invalid_argument("At least one protocol (HTTP or HTTPS) must be enabled in the server configuration.");
         }
         if (httpEnabled_ && !httpPort_) {
-            throw std::invalid_argument("HTTP is enabled but httpPort is not set.");
+            throw std::invalid_argument("HTTP is enabled but ht  tpPort is not set.");
         }
         if (httpPort_ && *httpPort_ == 0) {
             throw std::invalid_argument("HTTP port is set to zero, which is invalid.");
@@ -88,8 +91,7 @@ public:
     const std::optional<uint16_t>& httpPort() const { return httpPort_; }
     const std::optional<uint16_t>& httpsPort() const { return httpsPort_; }
     const std::string& bindIp() const { return bindIp_; }
-    const std::optional<TlsConfig>& tls() const { return tls_; }
-
+    const ptr<TlsConfig> tls() const { return tls_; }
     static ptr<ServerConfig> createFromJson(const nlohmann::json& j);
 };
 

@@ -48,14 +48,18 @@ ptr<MachinePayConfig> MachinePayConfig::createFromJson(const nlohmann::json& j) 
 ptr<ServerConfig> ServerConfig::createFromJson(const nlohmann::json& j) {
     CHECK_STATE(j.is_object());
 
-    const auto &jt = j.at("tls");
+    ptr<TlsConfig> tlsConfig = nullptr;
 
-    TlsConfig tlsConfig(
-        MachinePayConfigLoader::getStringWithDefault(jt, "cert_file", ""),
-        MachinePayConfigLoader::getStringWithDefault(jt, "key_file", ""),
-        MachinePayConfigLoader::getStringWithDefault(jt, "key_pass_file", ""),
-        (jt.contains("ca_file") && !jt.at("ca_file").is_null()) ? std::optional<std::string>(jt.at("ca_file").get<std::string>()) : std::nullopt
-    );
+    if (j.count("tls") > 0) {
+        CHECK_STATE(j.at("tls").is_object());
+        const auto &jt = j.at("tls");
+        tlsConfig = make_shared<TlsConfig>(
+            MachinePayConfigLoader::getStringWithDefault(jt, "cert_file", ""),
+            MachinePayConfigLoader::getStringWithDefault(jt, "key_file", ""),
+            MachinePayConfigLoader::getStringWithDefault(jt, "key_pass_file", ""),
+            (jt.contains("ca_file") && !jt.at("ca_file").is_null()) ? std::optional<std::string>(jt.at("ca_file").get<std::string>()) : std::nullopt
+        );
+    }
 
     return  std::make_shared<ServerConfig>(
         j.at("enable_http").get<bool>(),
