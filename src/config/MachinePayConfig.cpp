@@ -48,25 +48,47 @@ ptr<MachinePayConfig> MachinePayConfig::createFromJson(const nlohmann::json& j) 
 ptr<ServerConfig> ServerConfig::createFromJson(const nlohmann::json& j) {
     CHECK_STATE(j.is_object());
 
-    ptr<TlsConfig> tlsConfig = nullptr;
+    ptr<HTTPConfig> httpConfig = nullptr;
 
-    if (j.count("tls") > 0) {
-        CHECK_STATE(j.at("tls").is_object());
-        const auto &jt = j.at("tls");
-        tlsConfig = make_shared<TlsConfig>(
-            MachinePayConfigLoader::getStringWithDefault(jt, "cert_file", ""),
-            MachinePayConfigLoader::getStringWithDefault(jt, "key_file", ""),
-            MachinePayConfigLoader::getStringWithDefault(jt, "key_pass_file", ""),
-            (jt.contains("ca_file") && !jt.at("ca_file").is_null()) ? std::optional<std::string>(jt.at("ca_file").get<std::string>()) : std::nullopt
+    if (j.count("http") > 0) {
+        CHECK_STATE(j.at("http").is_object());
+        const auto &jt = j.at("http");
+        httpConfig = make_shared<HTTPConfig>(
+            MachinePayConfigLoader::getBoolWithDefault(jt, "enabled", true),
+            MachinePayConfigLoader::getUint16WithDefault(jt, "port",8080)
         );
     }
 
+
+
+    ptr<HTTPSConfig> httpsConfig = nullptr;
+
+
+    if (j.count("https") > 0) {
+        CHECK_STATE(j.at("https").is_object());
+        const auto &jt = j.at("https");
+
+        auto caFile = (jt.contains("ca_file") && !jt.at("ca_file").is_null()) ?
+            std::optional<std::string>(jt.at("ca_file").get<std::string>()) : std::nullopt;
+
+        httpConfig = make_shared<HTTPSConfig>(
+            MachinePayConfigLoader::getBoolWithDefault(jt, "enabled", true),
+            MachinePayConfigLoader::getUint16WithDefault(jt, "port",8080),
+            MachinePayConfigLoader::getStringWithDefault(jt, "cert_file", ""),
+                        MachinePayConfigLoader::getStringWithDefault(jt, "key_file", ""),
+                        MachinePayConfigLoader::getStringWithDefault(jt, "key_pass_file", ""),
+                        caFile);
+    }
+
+
+    if (!httpConfig && !httpsConfig) {
+        throw std::runtime_error("At least one of HTTP or HTTPS must be configured in server config");
+    }
+
+
     return  std::make_shared<ServerConfig>(
-        j.at("enable_http").get<bool>(),
-        j.at("enable_https").get<bool>(),
-        j.at("http_listen_port").get<uint16_t>(),
-        j.at("https_listen_port").get<uint16_t>(),
         MachinePayConfigLoader::getStringWithDefault(j, "bind_ip", "0.0.0.0"),
-        tlsConfig
+        httpConfig,
+        httpsConfig
     );
 }

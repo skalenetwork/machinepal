@@ -22,6 +22,13 @@ public:
     }
 
 
+    static bool getBoolWithDefault(
+            const nlohmann::json &j, const std::string &key, bool defaultValue);
+
+    static uint16_t getUint16WithDefault(const nlohmann::json &j, const std::string &key,
+                                                         uint16_t defaultValue);
+
+
     static std::string getStringWithDefault(
         const nlohmann::json &j, const std::string &key, const std::string &defaultValue);
 

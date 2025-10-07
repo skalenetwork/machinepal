@@ -8,17 +8,30 @@
 
 #include "common.h"
 
-class TlsConfig {
+
+class HTTPConfig {
+    bool isEnabled_;
+    uint16_t port_;
+public:
+    HTTPConfig(bool isEnabled, uint16_t port)
+        : isEnabled_(isEnabled), port_(port) {}
+    bool isEnabled() const { return isEnabled_; }
+    uint16_t port() const { return port_; }
+};
+
+
+
+class HTTPSConfig : public HTTPConfig {
     std::string certFile_;
     std::string keyFile_;
     std::string keyPassFile_;
     std::optional<std::string> caFile_;
 public:
-    TlsConfig(const std::string& certFile,
+    HTTPSConfig(bool isEnabled, uint16_t port, const std::string& certFile,
               const std::string& keyFile,
               const std::string& keyPassFile,
               const std::optional<std::string>& caFile)
-        : certFile_(certFile), keyFile_(keyFile), keyPassFile_(keyPassFile), caFile_(caFile) {}
+        : HTTPConfig(isEnabled, port), keyFile_(keyFile), keyPassFile_(keyPassFile), caFile_(caFile) {}
     const std::string& certFile() const { return certFile_; }
     const std::string& keyFile() const { return keyFile_; }
     const std::string& keyPassFile() const { return keyPassFile_; }
@@ -43,39 +56,22 @@ public:
 };
 
 class ServerConfig {
-    bool httpEnabled_;
-    bool httpsEnabled_;
     std::optional<uint16_t> httpPort_;
     std::optional<uint16_t> httpsPort_;
     std::string bindIp_;
-    ptr<TlsConfig> tls_;
+    ptr<HTTPConfig> http_;
+    ptr<HTTPSConfig> https_;
 public:
-    ServerConfig(bool httpEnabled,
-                 bool httpsEnabled,
-                 std::optional<uint16_t> httpPort,
-                 std::optional<uint16_t> httpsPort,
-                 const std::string& bindIp,
-                 ptr<TlsConfig> tls)
-        : httpEnabled_(httpEnabled), httpsEnabled_(httpsEnabled),
-          httpPort_(httpPort), httpsPort_(httpsPort),
-          bindIp_(bindIp), tls_(tls) {
-        if (httpsEnabled) {
-            CHECK_STATE(tls);
+    ServerConfig(const std::string& bindIp,
+                 ptr<HTTPConfig> http,
+                 ptr<HTTPSConfig> https)
+        :  bindIp_(bindIp), http_(http), https_(https) {
+
+        if (!http_ && !https_) {
+            throw std::invalid_argument("At least one of HTTP or HTTPS configuration must be provided.");
         }
-        if (!httpEnabled_ && !httpsEnabled_) {
+        if (!http->isEnabled() && !https->isEnabled()) {
             throw std::invalid_argument("At least one protocol (HTTP or HTTPS) must be enabled in the server configuration.");
-        }
-        if (httpEnabled_ && !httpPort_) {
-            throw std::invalid_argument("HTTP is enabled but ht  tpPort is not set.");
-        }
-        if (httpPort_ && *httpPort_ == 0) {
-            throw std::invalid_argument("HTTP port is set to zero, which is invalid.");
-        }
-        if (httpsEnabled_ && !httpsPort_) {
-            throw std::invalid_argument("HTTPS is enabled but httpsPort is not set.");
-        }
-        if (httpsPort_ && *httpsPort_ == 0) {
-            throw std::invalid_argument("HTTPS port is set to zero, which is invalid.");
         }
         if (bindIp_.empty()) {
             throw std::invalid_argument("bindIp cannot be empty.");
@@ -86,12 +82,12 @@ public:
             throw std::invalid_argument("bindIp is not a valid IPv4 or IPv6 address.");
         }
     }
-    bool httpEnabled() const { return httpEnabled_; }
-    bool httpsEnabled() const { return httpsEnabled_; }
+
     const std::optional<uint16_t>& httpPort() const { return httpPort_; }
     const std::optional<uint16_t>& httpsPort() const { return httpsPort_; }
     const std::string& bindIp() const { return bindIp_; }
-    const ptr<TlsConfig> tls() const { return tls_; }
+    const ptr<HTTPConfig> http() const { return http_; }
+    const ptr<HTTPSConfig> https() const { return https_; }
     static ptr<ServerConfig> createFromJson(const nlohmann::json& j);
 };
 

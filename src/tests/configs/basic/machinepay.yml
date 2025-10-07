@@ -1,32 +1,24 @@
 # Machinepay server configuration. May be overridden by environment variables.
 server:
-  # Enable or disable HTTP. Override: SERVER_ENABLE_HTTP
-  enable_http: true
-  # Enable or disable HTTPS. Override: SERVER_ENABLE_HTTPS
-  enable_https: false
-  # Ports for HTTP/HTTPS. Override: SERVER_HTTP_PORT / SERVER_HTTPS_PORT
-  http_listen_port: 8080
-  https_listen_port: 8443
-  # This section sets up TLS for HTTPS SERVER.
-  tls:
-    # TLS certificate file. Override: SERVER_TLS_CERT_FILE
+  http:
+    enable: true
+    port: 8080
+  https:
+    enable: false
+    port: 8443
     cert_file: certs/machinepay.crt
-    # TLS key file. Override: SERVER_TLS_KEY_FILE
     key_file: certs/machinepay.key
-    # TLS key password file. Override: SERVER_TLS_KEY_PASS_FILE
     key_pass_file: secrets/key_password
-    # Optional CA file. Override: SERVER_TLS_CA_FILE. System CA used if not set.
     ca_file: certs/ca.crt
 
 # Optional logging configuration. Default log level is "info" to stderr.
-##log:
+
+log:
   # Optional Log verbosity level — one of: trace, debug, info, warn, error, fatal
   # Override: LOG_LEVEL Default: info
-#  level: info
+  level: info
   # Json format for logs. Override: LOG_JSON Default: plain
-#  type: json
-
-
+  type: plain
 
 facilitator:
   # Facilitator type. Override: FACILITATOR_TYPE

@@ -31,7 +31,7 @@ std::optional<std::string> MachinePayConfigLoader::getenvOpt(const char *key) {
 }
 
 std::string MachinePayConfigLoader::readSecretFileFirstLine(const std::string &path,
-                                                 const std::string &fallback) {
+                                                            const std::string &fallback) {
     try {
         std::ifstream f(path);
         if (!f.is_open()) return fallback;
@@ -44,8 +44,8 @@ std::string MachinePayConfigLoader::readSecretFileFirstLine(const std::string &p
 }
 
 
-static inline bool yamlTagIs(const YAML::Node& node, std::string_view shortTag /* like "!!bool" */) {
-    const std::string& tag = node.Tag(); // may be "", "!!str", or canonical "tag:yaml.org,2002:str"
+static inline bool yamlTagIs(const YAML::Node &node, std::string_view shortTag /* like "!!bool" */) {
+    const std::string &tag = node.Tag(); // may be "", "!!str", or canonical "tag:yaml.org,2002:str"
     if (tag.empty()) return false;
     if (tag == shortTag) return true;
     // Map "!!foo" -> "tag:yaml.org,2002:foo"
@@ -57,7 +57,7 @@ static inline bool yamlTagIs(const YAML::Node& node, std::string_view shortTag /
 }
 
 
-static json yamlNodeToJson(const YAML::Node& node) {
+static json yamlNodeToJson(const YAML::Node &node) {
     using Type = YAML::NodeType::value;
 
     switch (node.Type()) {
@@ -72,10 +72,10 @@ static json yamlNodeToJson(const YAML::Node& node) {
                 return node.as<bool>();
             }
             if (yamlTagIs(node, "!!int")) {
-                try { return node.as<int64_t>(); }
-                catch (const YAML::BadConversion&) {}
-                try { return node.as<uint64_t>(); }
-                catch (const YAML::BadConversion&) {}
+                try { return node.as<int64_t>(); } catch (const YAML::BadConversion &) {
+                }
+                try { return node.as<uint64_t>(); } catch (const YAML::BadConversion &) {
+                }
                 return s;
             }
             if (yamlTagIs(node, "!!float")) {
@@ -83,7 +83,7 @@ static json yamlNodeToJson(const YAML::Node& node) {
                     double d = node.as<double>();
                     if (std::isfinite(d)) return d;
                     return s;
-                } catch (const YAML::BadConversion&) { return s; }
+                } catch (const YAML::BadConversion &) { return s; }
             }
             if (yamlTagIs(node, "!!str")) {
                 return s;
@@ -93,23 +93,27 @@ static json yamlNodeToJson(const YAML::Node& node) {
             // Try bool first
             try {
                 return node.as<bool>();
-            } catch (const YAML::BadConversion&) {}
+            } catch (const YAML::BadConversion &) {
+            }
 
             // Try int64
             try {
                 return node.as<int64_t>();
-            } catch (const YAML::BadConversion&) {}
+            } catch (const YAML::BadConversion &) {
+            }
 
             // Try uint64
             try {
                 return node.as<uint64_t>();
-            } catch (const YAML::BadConversion&) {}
+            } catch (const YAML::BadConversion &) {
+            }
 
             // Try double
             try {
                 double d = node.as<double>();
                 if (std::isfinite(d)) return d;
-            } catch (const YAML::BadConversion&) {}
+            } catch (const YAML::BadConversion &) {
+            }
 
             // Fallback: string
             return s;
@@ -117,7 +121,7 @@ static json yamlNodeToJson(const YAML::Node& node) {
 
         case Type::Sequence: {
             json arr = json::array();
-            for (const auto& it : node) {
+            for (const auto &it: node) {
                 arr.push_back(yamlNodeToJson(it));
             }
             return arr;
@@ -223,7 +227,6 @@ void MachinePayConfigLoader::applyEnvOverrides(json &j) {
         applyStringEnv(j, "/facilitator/api_key_file"_json_pointer, "FACILITATOR_API_KEY_FILE");
         applyStringEnv(j, "/log/level"_json_pointer, "LOG_LEVEL");
         applyStringEnv(j, "/log/json"_json_pointer, "LOG_JSON");
-
     } catch (const std::exception &ex) {
         RETHROW_NESTED("MachinePayConfigLoader::applyEnvOverrides failed: ");
     }
@@ -246,13 +249,15 @@ void MachinePayConfigLoader::resolveSecrets(json &j) {
 
 // ---------- JSON Schema validation ----------
 struct SchemaValidationErrorHandler : public nlohmann::json_schema::error_handler {
-    std::string  errorMessage_;
-    const json & parsedSchema_;
+    std::string errorMessage_;
+    const json &parsedSchema_;
 
-    SchemaValidationErrorHandler(const json& parsedSchema) : parsedSchema_(parsedSchema) {}
+    SchemaValidationErrorHandler(const json &parsedSchema) : parsedSchema_(parsedSchema) {
+    }
 
-    std::optional<std::string> getExpectedType(const nlohmann::json& schema, const nlohmann::json_pointer<std::string>& path) {
-        const nlohmann::json* node = &schema;
+    std::optional<std::string> getExpectedType(const nlohmann::json &schema,
+                                               const nlohmann::json_pointer<std::string> &path) {
+        const nlohmann::json *node = &schema;
         std::string pathStr = path.to_string();
         std::istringstream iss(pathStr);
         std::string segment;
@@ -271,11 +276,12 @@ struct SchemaValidationErrorHandler : public nlohmann::json_schema::error_handle
         return std::nullopt;
     }
 
-    void error(const nlohmann::json_pointer<std::string>& path, const json& instance, const std::string& message) override {
+    void error(const nlohmann::json_pointer<std::string> &path, const json &instance,
+               const std::string &message) override {
         std::ostringstream oss;
         auto fullMessage = message;
         if (message.find("instance not found in required enum") != std::string::npos) {
-            fullMessage = "Invalid parameter value for the configuration option " + path.to_string()  + "\n";
+            fullMessage = "Invalid parameter value for the configuration option " + path.to_string() + "\n";
         } else if (message.find("unexpected instance type") != std::string::npos) {
             fullMessage = "Invalid parameter type for the configuration option " + path.to_string() + "\n";
 
@@ -286,7 +292,6 @@ struct SchemaValidationErrorHandler : public nlohmann::json_schema::error_handle
             } else {
                 fullMessage += "  Expected type: unknown (schema type not found)\n";
             }
-
         }
 
         if (path.to_string() == "/log/level") {
@@ -294,9 +299,9 @@ struct SchemaValidationErrorHandler : public nlohmann::json_schema::error_handle
         }
 
         oss << "Error at config file element: " << path.to_string() << "\n"
-            << "  Value: " << instance.dump(2) << "\n"
-            << "  Instance type: " << instance.type_name() << "\n"
-            << "  Error:    " << fullMessage << "\n";
+                << "  Value: " << instance.dump(2) << "\n"
+                << "  Instance type: " << instance.type_name() << "\n"
+                << "  Error:    " << fullMessage << "\n";
         errorMessage_ = oss.str();
         throw std::runtime_error(errorMessage_);
     }
@@ -314,7 +319,6 @@ void MachinePayConfigLoader::validateJson(const json &j) {
     }
 
 
-
     SchemaValidationErrorHandler errHandler(schema);
     try {
         json_validator validator;
@@ -323,16 +327,15 @@ void MachinePayConfigLoader::validateJson(const json &j) {
         validator.validate(j, errHandler); // throws on validation error
     } catch (const std::exception &ex) {
         std::string errorMsg = std::string("MachinePayConfigLoader::validateJson Invalid config file : "
-                                           "failed to validate config against schema:\n") +
-                                               errHandler.errorMessage_;
+                                   "failed to validate config against schema:\n") +
+                               errHandler.errorMessage_;
         RETHROW_NESTED(errorMsg);
     }
 }
 
 
 // ---------- Orchestrator ----------
-std::shared_ptr<MachinePayConfig> MachinePayConfigLoader::loadFromYamlFile(const std::string &yamlPath)
-    {
+std::shared_ptr<MachinePayConfig> MachinePayConfigLoader::loadFromYamlFile(const std::string &yamlPath) {
     try {
         spdlog::info("Parsing config file");
         json j = yamlToJson(yamlPath);
@@ -348,13 +351,35 @@ std::shared_ptr<MachinePayConfig> MachinePayConfigLoader::loadFromYamlFile(const
 }
 
 
-
-
 // Helper to get a string from a json object with a default value
-std::string MachinePayConfigLoader::getStringWithDefault(const nlohmann::json& j, const std::string& key, const std::string& defaultValue) {
+std::string MachinePayConfigLoader::getStringWithDefault(const nlohmann::json &j, const std::string &key,
+                                                         const std::string &defaultValue) {
     if (j.contains(key) && !j.at(key).is_null()) {
         return j.at(key).get<std::string>();
     }
     return defaultValue;
 }
+
+bool MachinePayConfigLoader::getBoolWithDefault(const nlohmann::json &j, const std::string &key,
+                                                         bool defaultValue) {
+    if (j.contains(key) && !j.at(key).is_null()) {
+        return j.at(key).get<bool>();
+    }
+    return defaultValue;
+}
+
+
+
+uint16_t MachinePayConfigLoader::getUint16WithDefault(const nlohmann::json &j, const std::string &key,
+                                                     uint16_t defaultValue) {
+        if (j.contains(key) && !j.at(key).is_null()) {
+            auto value = j.at(key).get<int>();
+            if (value <= 0 || value > 65535) {
+                throw std::out_of_range("Value for key '" + key + "' is out of range for uint16_t: " + std::to_string(value));
+            }
+            return static_cast<uint16_t>(value);
+        }
+        return defaultValue;
+}
+
 

@@ -18,20 +18,19 @@ BOOST_AUTO_TEST_CASE(deserialize_basic_proxy_config) {
 
     auto config = MachinePayConfigManager::latestConfig();
 
-    // Check frontend
-    BOOST_TEST(config->server()->httpEnabled() == true);
-    BOOST_TEST(config->server()->httpsEnabled() == false);
-    BOOST_TEST(config->server()->httpPort().value() == 8080);
-    BOOST_TEST(config->server()->httpsPort().value() == 8443);
 
-    BOOST_TEST(config->server()->tls().has_value());
+    BOOST_TEST(config->server()->http());// Check frontend
+    BOOST_TEST(config->server()->http()->isEnabled() == true);
+    BOOST_TEST(config->server()->https()->isEnabled() == false);
+    BOOST_TEST(config->server()->http()->port() == 8080);
+    BOOST_TEST(config->server()->https()->port() == 8443);
 
 
-    BOOST_TEST(config->server()->tls().value().certFile() == "certs/machinepay.crt");
-    BOOST_TEST(config->server()->tls().value().keyFile() == "certs/machinepay.key");
-    BOOST_TEST(config->server()->tls().value().keyPassFile() == "secrets/key_password");
-    BOOST_TEST(config->server()->tls().value().caFile().has_value());
-    BOOST_TEST(config->server()->tls().value().caFile().value() == "certs/ca.crt");
+    BOOST_TEST(config->server()->https()->certFile() == "certs/machinepay.crt");
+    BOOST_TEST(config->server()->https()->keyFile() == "certs/machinepay.key");
+    BOOST_TEST(config->server()->https()->keyPassFile() == "secrets/key_password");
+    BOOST_TEST(config->server()->https()->caFile().has_value());
+    BOOST_TEST(config->server()->https()->caFile().value() == "certs/ca.crt");
 
     // Check facilitator
     BOOST_TEST(config->facilitator()->type() == "cdp");
