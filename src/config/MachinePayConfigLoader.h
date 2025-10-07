@@ -5,6 +5,8 @@
 #include "nlohmann/json.hpp"
 #include <mutex>
 
+class MachinePayConfig;
+
 // Source-of-truth loader:
 // 1) Load YAML from file.
 // 2) Convert to JSON.
@@ -15,11 +17,15 @@
 class MachinePayConfigLoader {
 public:
 
-    explicit MachinePayConfigLoader(const map<string, string> &overrides)
-        : overrides_(overrides) {
+    explicit MachinePayConfigLoader(const std::map<std::string, std::string> &overrides)
+        : overridesFromCliAndEnv_(overrides) {
     }
 
     std::shared_ptr<MachinePayConfig> loadConfig(const std::string &yaml_path);
+
+    static std::string getStringWithDefault(
+        const nlohmann::json &j, const std::string &key, const std::string &defaultValue);
+
 
 private:
 
@@ -29,11 +35,7 @@ private:
     static bool asBool(const std::string& s);
 
 
-    static std::string getStringWithDefault(
-        const nlohmann::json &j, const std::string &key, const std::string &defaultValue);
 
-    static std::string getBoolWithDefault(
-        const nlohmann::json &j, const std::string &key, const std::string &defaultValue);
 
     void applyEnvOverrides(nlohmann::json& j);
     static void resolveSecrets(nlohmann::json& j);
@@ -54,6 +56,6 @@ private:
 
     std::shared_ptr<MachinePayConfig> loadFromYamlFile(const std::string& yamlPath);
 
-    map<string, string> overrides_;
+    std::map<std::string, std::string> overridesFromCliAndEnv_;
 
 };

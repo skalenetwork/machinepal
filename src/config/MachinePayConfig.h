@@ -123,6 +123,12 @@ public:
         : level_(level), type_(type) {}
     LogLevel level() const { return level_; }
     LogType type() const { return type_; }
+
+    static ptr<LogConfig> createDefault() {
+        return std::make_shared<LogConfig>("info", "plain");
+    }
+
+    static ptr<LogConfig> createFromJson(const nlohmann::json& j);
 };
 
 class MachinePayConfig {

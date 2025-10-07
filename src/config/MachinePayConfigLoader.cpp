@@ -24,8 +24,8 @@ using namespace nlohmann::literals; // Enables the _json_pointer literal
 
 // ---------- tiny utils ----------
 std::optional<std::string> MachinePayConfigLoader::getenvOpt(const char *key) {
-    if (overrides_.count(key)) {
-        return overrides_.at(key);
+    if (overridesFromCliAndEnv_.count(key)) {
+        return overridesFromCliAndEnv_.at(key);
     }
     return std::nullopt;
 }
@@ -374,17 +374,11 @@ std::shared_ptr<MachinePayConfig> MachinePayConfigLoader:: createMachinePayConfi
     );
 
     ptr<LogConfig> logConfig;
-
     if (j.count("log") == 0) {
         // Default log config if not log element is present
-        logConfig = std::make_shared<LogConfig>("info", "plain");
+        logConfig = LogConfig::createDefault();
     } else {
-        CHECK_STATE(j.count("log") > 0 && j.at("log").is_object());
-        const auto &jlog = j.at("log");
-        auto logConfig = std::make_shared<LogConfig>(
-            MachinePayConfigLoader::getStringWithDefault(jlog, "level", "info"),
-            MachinePayConfigLoader::getStringWithDefault(jlog, "type", "plain")
-        );
+        logConfig = LogConfig::createFromJson(j.at("log"));
     }
 
     return std::make_shared<MachinePayConfig>(serverConfig, facilitatorConfig, logConfig);
