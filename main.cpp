@@ -44,13 +44,17 @@ map<string, string>  parseCommandLineAndEnvironmentOverloads(int argc, char **ar
         auto envOverloads = Init::getMachinePayEnvironmentOverloads();
         // Use CLI11 to parse command line
         std::string configFilePathFromCli;
-        // Check for environment variable override
+        std::string logLevel;
         CLI::App app{"machinepay"};
         app.add_option("-c,--config", configFilePathFromCli,
             "Path to the config file. Default is ./machinepay.yml. "
             "Can be overwritten by MACHINEPAY_CONFIG environment variable.")
             ->default_val(configFilePathFromCli)
             ->type_name("FILE");
+        app.add_option("--log-level", logLevel,
+            "Log level: trace, debug, info, warn, error, critical")
+            ->default_val("info")
+            ->check(CLI::IsMember({"trace", "debug", "info", "warn", "error", "critical"}));
         try {
             app.parse(argc, argv);
         } catch (const CLI::ParseError &e) {
@@ -59,9 +63,14 @@ map<string, string>  parseCommandLineAndEnvironmentOverloads(int argc, char **ar
         }
 
 
+
         if (!configFilePathFromCli.empty()) {
             envOverloads["CONFIG"] = configFilePathFromCli;
         };
+
+        if (!logLevel.empty()) {
+            envOverloads["LOG_LEVEL"] = logLevel;
+        }
 
         return envOverloads;
 
@@ -84,6 +93,7 @@ int main(int argc, char *argv[]) {
         Init::initAllLibs(1, argv);
         auto configValuesFromCliAndEnv = parseCommandLineAndEnvironmentOverloads(argc, argv);
         MachinePayConfigManager::initManager(configValuesFromCliAndEnv);
+        auto logConfig = MachinePayConfigManager::latestConfig()->log();
         auto serverConfig = MachinePayConfigManager::latestConfig()->server();
         auto serverObject = ServerFactory::createServerInstance(*serverConfig);
         serverObject->start();

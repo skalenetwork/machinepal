@@ -366,7 +366,6 @@ std::shared_ptr<MachinePayConfig> MachinePayConfigLoader:: toMachinePayConfig(co
         tlsConfig
     );
 
-    // FacilitatorConfig
     const auto &jfaci = j.at("facilitator");
     auto facilitatorConfig = std::make_shared<FacilitatorConfig>(
         MachinePayConfigLoader::getStringWithDefault(jfaci, "type", ""),
@@ -374,8 +373,14 @@ std::shared_ptr<MachinePayConfig> MachinePayConfigLoader:: toMachinePayConfig(co
         (jfaci.contains("api_key_file") && !jfaci.at("api_key_file").is_null()) ? std::optional<std::string>(jfaci.at("api_key_file").get<std::string>()) : std::nullopt
     );
 
+    CHECK_STATE(j.count("log") == 0 || j.at("log").is_object());
+    const auto &jlog = j.at("log");
+    auto logConfig = std::make_shared<LogConfig>(
+        MachinePayConfigLoader::getStringWithDefault(jlog, "level", "info"),
+        MachinePayConfigLoader::getStringWithDefault(jlog, "level", "info")
+    );
 
-    return std::make_shared<MachinePayConfig>(serverConfig, facilitatorConfig);
+    return std::make_shared<MachinePayConfig>(serverConfig, facilitatorConfig, logConfig);
 }
 
 

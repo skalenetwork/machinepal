@@ -32,6 +32,8 @@ private:
     static std::string getStringWithDefault(
         const nlohmann::json &j, const std::string &key, const std::string &defaultValue);
 
+    static std::string getBoolWithDefault(
+        const nlohmann::json &j, const std::string &key, const std::string &defaultValue);
 
     void applyEnvOverrides(nlohmann::json& j);
     static void resolveSecrets(nlohmann::json& j);

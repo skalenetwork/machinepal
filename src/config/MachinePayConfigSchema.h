@@ -40,13 +40,12 @@ constexpr const char* MachinePayConfigSchemaJson = R"({
         "level": {
           "type": "string",
           "enum": ["trace", "debug", "info", "warn", "error", "fatal"],
-          "default": "info",
           "description": "Log verbosity level. Default: info. Override: LOG_LEVEL."
         },
-        "json": {
-          "type": "boolean",
-          "default": false,
-          "description": "Json format for logs. Default: false. Override: LOG_JSON."
+        "type": {
+          "type": "string",
+          "enum": ["plain", "json"],
+          "description": "Type for logs. Default: plain. Override: LOG_TYPE."
         }
       },
       "description": "Optional logging configuration. Default log level is 'info' to stderr."

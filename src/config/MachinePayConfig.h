@@ -88,28 +88,13 @@ public:
     const std::optional<TlsConfig>& tls() const { return tls_; }
 };
 
-class MachinePayConfig {
-    ptr<ServerConfig> server_;
-    ptr<FacilitatorConfig> facilitator_;
-public:
-    MachinePayConfig(const ptr<ServerConfig>& server,
-                     const ptr<FacilitatorConfig>& facilitator)
-        : server_(server), facilitator_(facilitator) {
-        CHECK_STATE(server_);
-        CHECK_STATE(facilitator_);
-    }
-    const ptr<ServerConfig>& server() const {
-        CHECK_STATE(server_);
-        return server_;
-    }
-    const ptr<FacilitatorConfig>& facilitator() const {
-        CHECK_STATE(facilitator_);
-        return facilitator_;
-    }
-};
 
 enum class LogLevel {
     trace, debug, info, warn, error, fatal
+};
+
+enum class LogType {
+    plain, json
 };
 
 inline LogLevel parseLogLevel(const std::string& level) {
@@ -122,14 +107,48 @@ inline LogLevel parseLogLevel(const std::string& level) {
     throw std::invalid_argument("Invalid log level: " + level);
 }
 
+inline LogType parseLogType(const std::string& type) {
+    if (type == "plain") return LogType::plain;
+    if (type == "json") return LogType::json;
+    throw std::invalid_argument("Invalid log type: " + type);
+}
+
 class LogConfig {
     LogLevel level_;
-    bool json_;
+    LogType type_;
 public:
-    LogConfig(const std::string& level, bool json)
-        : level_(parseLogLevel(level)), json_(json) {}
-    LogConfig(LogLevel level, bool json)
-        : level_(level), json_(json) {}
+    LogConfig(const std::string& level, const std::string& type)
+        : level_(parseLogLevel(level)), type_(parseLogType(type)) {}
+    LogConfig(LogLevel level, LogType type)
+        : level_(level), type_(type) {}
     LogLevel level() const { return level_; }
-    bool json() const { return json_; }
+    LogType type() const { return type_; }
+};
+
+class MachinePayConfig {
+    ptr<ServerConfig> server_;
+    ptr<FacilitatorConfig> facilitator_;
+    ptr<LogConfig> log_;
+public:
+    MachinePayConfig(const ptr<ServerConfig>& server,
+                     const ptr<FacilitatorConfig>& facilitator,
+                     const ptr<LogConfig>& log)
+        : server_(server), facilitator_(facilitator), log_(log) {
+        CHECK_STATE(server_);
+        CHECK_STATE(facilitator_);
+        CHECK_STATE(log_);
+    }
+    const ptr<ServerConfig>& server() const {
+        CHECK_STATE(server_);
+        return server_;
+    }
+    const ptr<FacilitatorConfig>& facilitator() const {
+        CHECK_STATE(facilitator_);
+        return facilitator_;
+    }
+
+    const ptr<LogConfig>& log() const {
+        CHECK_STATE(log_);
+        return log_;
+    }
 };
