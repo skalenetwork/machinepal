@@ -35,37 +35,7 @@ public:
 };
 
 
-void checkExistsAndReadable(std::string configFile) {
-    char cwd[4096];
-    if (!getcwd(cwd, sizeof(cwd))) {
-        throw std::runtime_error(
-            "Config file '" + configFile + "' does not exist. Failed to get current working directory.");
-    }
 
-    // Check that configFile exists
-    if (!std::filesystem::exists(configFile)) {
-        throw std::runtime_error(
-            "Config file '" + configFile + "' does not exist. Current working directory: " + std::string(cwd));
-    }
-    // Check that configFile is not a directory
-    if (std::filesystem::is_directory(configFile)) {
-        throw std::runtime_error(
-            "Config file '" + configFile + "' is a directory, not a file. Current working directory: " +
-            std::string(cwd));
-    }
-    // Check that configFile is readable
-    std::ifstream configTest(configFile);
-    if (!configTest.good()) {
-        char cwd2[4096];
-        if (!getcwd(cwd2, sizeof(cwd2))) {
-            throw std::runtime_error(
-                "Config file '" + configFile + "' is not readable. Failed to get current working directory.");
-        }
-        throw std::runtime_error(
-            "Config file '" + configFile + "' is not readable. Current working directory: " + std::string(cwd2));
-    }
-    configTest.close();
-}
 
 int parseCommandLine(int argc, char **argv) {
     try {
@@ -93,7 +63,6 @@ int parseCommandLine(int argc, char **argv) {
             configFile = envVars["MACHINEPAY_CONFIG"];
         }
 
-        checkExistsAndReadable(configFile);
         MachinePayConfigManager::loadConfig(configFile);
     } catch (const std::exception &ex) {
         spdlog::critical("Error loading config: {}", ex.what());

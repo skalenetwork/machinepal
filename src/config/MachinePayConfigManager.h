@@ -31,5 +31,7 @@ private:
 
     static std::string computeBlakeHash(const std::string& filePath);
 
+    static void checkExistsAndReadable(std::string configFile);
+
     static void reloadConfigUnsafe();
 };
