@@ -1,13 +1,16 @@
 //
 // Created by kladko on 9/29/25.
 //
+#include "common.h"
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_sinks.h>
-#include "InitLibs.h"
+#include "Init.h"
 
-std::atomic<bool> InitLibs::inited_{false};
+#include <regex>
 
-void InitLibs::initAll(int _argc, char* _argv[]) {
+std::atomic<bool> Init::inited_{false};
+
+void Init::initAllLibs(int _argc, char* _argv[]) {
     if (!inited_.exchange(true)) {
         curl_global_init(CURL_GLOBAL_DEFAULT);
         FLAGS_logtostderr = 1;
@@ -24,6 +27,25 @@ void InitLibs::initAll(int _argc, char* _argv[]) {
     }
 }
 
-bool InitLibs::isInited() {
+bool Init::isInited() {
     return inited_;
+}
+
+
+std::map<std::string, std::string> Init::getAllMachinePayEnvVars() {
+    std::map<std::string, std::string> envVars;
+    extern char **environ;
+    std::regex re("^MACHINE_PAY_");
+    for (char **env = environ; *env != nullptr; ++env) {
+        std::string entry(*env);
+        auto pos = entry.find('=');
+        if (pos != std::string::npos) {
+            std::string key = entry.substr(0, pos);
+            std::string value = entry.substr(pos + 1);
+            if (std::regex_search(key, re)) {
+                envVars[key] = value;
+            }
+        }
+    }
+    return envVars;
 }

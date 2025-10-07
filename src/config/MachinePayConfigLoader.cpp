@@ -2,7 +2,7 @@
 #include "MachinePayConfigLoader.h"
 #include "MachinePayConfig.h"
 #include "config/MachinePayConfigSchema.h"
-#include "init/InitLibs.h"
+#include "init/Init.h"
 #include <yaml-cpp/yaml.h>
 #include <fstream>
 #include <sstream>
@@ -190,7 +190,7 @@ void MachinePayConfigLoader::applyBoolEnv(json &j, const json::json_pointer &pat
  */
 void MachinePayConfigLoader::applyIntEnv(json &j, const json::json_pointer &path, const char *envVar) {
     try {
-        if (auto v = getenvOpt(envVar)) {
+        if (auto v = getenvOpt((std::string("MACHINE_PAY_") + envVar).c_str())) {
             j[path] = std::stoi(*v);
         }
     } catch (const std::exception &ex) {
@@ -219,6 +219,9 @@ void MachinePayConfigLoader::applyEnvOverrides(json &j) {
         applyStringEnv(j, "/facilitator/type"_json_pointer, "FACILITATOR_TYPE");
         applyStringEnv(j, "/facilitator/base_url"_json_pointer, "FACILITATOR_BASE_URL");
         applyStringEnv(j, "/facilitator/api_key_file"_json_pointer, "FACILITATOR_API_KEY_FILE");
+        applyStringEnv(j, "/log/level"_json_pointer, "LOG_LEVEL");
+        applyStringEnv(j, "/log/json"_json_pointer, "LOG_JSON");
+
     } catch (const std::exception &ex) {
         RETHROW_NESTED("MachinePayConfigLoader::applyEnvOverrides failed: ", ex);
     }

@@ -11,7 +11,10 @@
 #include "CLI/CLI.hpp"
 #include <folly/init/Init.h>
 #include "config/MachinePayConfigManager.h"
-#include "init/InitLibs.h"
+#include "init/Init.h"
+
+#include <map>
+#include <regex>
 
 
 using namespace proxygen;
@@ -83,10 +86,12 @@ int parseCommandLine(int argc, char **argv) {
             exit(code);
         }
 
-        if(const char* envConfig = std::getenv("MACHINEPAY_CONFIG")) {
-            configFile = envConfig;
-        }
 
+        auto envVars = Init::getAllMachinePayEnvVars();
+
+        if (envVars.contains("MACHINEPAY_CONFIG")) {
+            configFile = envVars["MACHINEPAY_CONFIG"];
+        }
 
         checkExistsAndReadable(configFile);
         MachinePayConfigManager::loadConfig(configFile);
@@ -103,13 +108,13 @@ int parseCommandLine(int argc, char **argv) {
     return 0;
 }
 
+
+
 int main(int argc, char *argv[]) {
 
 
-
-
     try {
-        InitLibs::initAll(1, argv);
+        Init::initAllLibs(1, argv);
 
         parseCommandLine(argc, argv);
 

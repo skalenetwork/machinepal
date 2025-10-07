@@ -4,7 +4,7 @@
 #include "MachinePayConfigLoader.h"
 #include "MachinePayConfig.h"
 #include "config/MachinePayConfigSchema.h"
-#include "init/InitLibs.h"
+#include "init/Init.h"
 #include <yaml-cpp/yaml.h>
 #include <filesystem>
 #include <fstream>

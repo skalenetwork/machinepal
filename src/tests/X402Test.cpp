@@ -2,7 +2,7 @@
 #define BOOST_TEST_MODULE X402HandlerSelfTest
 
 #include "common.h"
-#include "init/InitLibs.h"
+#include "init/Init.h"
 #include "x402_server/ServerFactory.h"
 #include <boost/test/included/unit_test.hpp> // or <boost/test/unit_test.hpp> if using dynamic link
 #include <folly/SocketAddress.h>
@@ -37,7 +37,7 @@ struct X402GlobalFixture {
         for (auto& s : args) {
             fake_argv.push_back(const_cast<char*>(s.c_str()));
         }
-        InitLibs::initAll(fake_argc, fake_argv.data());
+        Init::initAllLibs(fake_argc, fake_argv.data());
     }
     ~X402GlobalFixture() {}
 };

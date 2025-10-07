@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <spdlog/spdlog.h>
+#include <map>
 
 #if defined(__cpp_exceptions) || defined(__EXCEPTIONS) || defined(_CPPUNWIND)
     constexpr bool exceptions_enabled = true;

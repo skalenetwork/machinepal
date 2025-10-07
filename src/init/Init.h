@@ -5,10 +5,12 @@
 #include <mutex>
 #include <atomic>
 
-class InitLibs {
+class Init {
 public:
-    static void initAll(int _argc, char* _argv[]);
+    static void initAllLibs(int _argc, char* _argv[]);
     static bool isInited();
+    static std::map<std::string, std::string> getAllMachinePayEnvVars();
+
 private:
     static std::atomic<bool> inited_;
 };
