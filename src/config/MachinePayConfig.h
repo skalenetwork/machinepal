@@ -89,6 +89,8 @@ public:
     const std::optional<uint16_t>& httpsPort() const { return httpsPort_; }
     const std::string& bindIp() const { return bindIp_; }
     const std::optional<TlsConfig>& tls() const { return tls_; }
+
+    static ptr<ServerConfig> createFromJson(const nlohmann::json& j);
 };
 
 
