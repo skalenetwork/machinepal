@@ -37,6 +37,9 @@ public:
     const std::string& type() const { return type_; }
     const std::string& baseUrl() const { return baseUrl_; }
     const std::optional<std::string>& apiKeyFile() const { return apiKeyFile_; }
+
+    static ptr<FacilitatorConfig> createFomJson(const nlohmann::json& j);
+
 };
 
 class ServerConfig {
@@ -157,4 +160,6 @@ public:
         CHECK_STATE(log_);
         return log_;
     }
+
+    static ptr<MachinePayConfig> createFromJson(const nlohmann::json& j);
 };

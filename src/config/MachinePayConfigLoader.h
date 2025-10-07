@@ -21,10 +21,12 @@ public:
         : overridesFromCliAndEnv_(overrides) {
     }
 
-    std::shared_ptr<MachinePayConfig> loadConfig(const std::string &yaml_path);
 
     static std::string getStringWithDefault(
         const nlohmann::json &j, const std::string &key, const std::string &defaultValue);
+
+
+    std::shared_ptr<MachinePayConfig> loadFromYamlFile(const std::string& yamlPath);
 
 
 private:
@@ -40,7 +42,6 @@ private:
     void applyEnvOverrides(nlohmann::json& j);
     static void resolveSecrets(nlohmann::json& j);
     static void validateJson(const nlohmann::json& j);
-    static std::shared_ptr<MachinePayConfig> createMachinePayConfigFromJsonAndDefaults(const nlohmann::json& j);
 
     // Utility helpers
     std::optional<std::string> getenvOpt(const char* key);
@@ -54,7 +55,6 @@ private:
     static std::string readSecretFileFirstLine(const std::string& path,
                                          const std::string& fallback = "");
 
-    std::shared_ptr<MachinePayConfig> loadFromYamlFile(const std::string& yamlPath);
 
     std::map<std::string, std::string> overridesFromCliAndEnv_;
 

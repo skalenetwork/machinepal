@@ -341,48 +341,13 @@ std::shared_ptr<MachinePayConfig> MachinePayConfigLoader::loadFromYamlFile(const
         spdlog::info("Validating config file against schema: {}", yamlPath);
         validateJson(j);
         spdlog::info("Validated config file against schema");
-        return createMachinePayConfigFromJsonAndDefaults(j);
+        return MachinePayConfig::createFromJson(j);;
     } catch (const std::exception &ex) {
         RETHROW_NESTED("MachinePayConfigLoader::load failed: ");
     }
 }
 
-std::shared_ptr<MachinePayConfig> MachinePayConfigLoader:: createMachinePayConfigFromJsonAndDefaults(const nlohmann::json &j) {
-    // serverConfig
-    const auto &js = j.at("server");
-    const auto &jt = js.at("tls");
-    TlsConfig tlsConfig(
-        MachinePayConfigLoader::getStringWithDefault(jt, "cert_file", ""),
-        MachinePayConfigLoader::getStringWithDefault(jt, "key_file", ""),
-        MachinePayConfigLoader::getStringWithDefault(jt, "key_pass_file", ""),
-        (jt.contains("ca_file") && !jt.at("ca_file").is_null()) ? std::optional<std::string>(jt.at("ca_file").get<std::string>()) : std::nullopt
-    );
-    auto serverConfig = std::make_shared<ServerConfig>(
-        js.at("enable_http").get<bool>(),
-        js.at("enable_https").get<bool>(),
-        js.at("http_listen_port").get<uint16_t>(),
-        js.at("https_listen_port").get<uint16_t>(),
-        MachinePayConfigLoader::getStringWithDefault(js, "bind_ip", "0.0.0.0"),
-        tlsConfig
-    );
 
-    const auto &jfaci = j.at("facilitator");
-    auto facilitatorConfig = std::make_shared<FacilitatorConfig>(
-        MachinePayConfigLoader::getStringWithDefault(jfaci, "type", ""),
-        MachinePayConfigLoader::getStringWithDefault(jfaci, "base_url", ""),
-        (jfaci.contains("api_key_file") && !jfaci.at("api_key_file").is_null()) ? std::optional<std::string>(jfaci.at("api_key_file").get<std::string>()) : std::nullopt
-    );
-
-    ptr<LogConfig> logConfig;
-    if (j.count("log") == 0) {
-        // Default log config if not log element is present
-        logConfig = LogConfig::createDefault();
-    } else {
-        logConfig = LogConfig::createFromJson(j.at("log"));
-    }
-
-    return std::make_shared<MachinePayConfig>(serverConfig, facilitatorConfig, logConfig);
-}
 
 
 // Helper to get a string from a json object with a default value
@@ -393,16 +358,3 @@ std::string MachinePayConfigLoader::getStringWithDefault(const nlohmann::json& j
     return defaultValue;
 }
 
-
-
-std::shared_ptr<MachinePayConfig> MachinePayConfigLoader::loadConfig(const std::string &yaml_path) {
-    try {
-        json j = yamlToJson(yaml_path);
-        applyEnvOverrides(j);
-        resolveSecrets(j);
-        validateJson(j);
-        return createMachinePayConfigFromJsonAndDefaults(j);
-    } catch (const std::exception &ex) {
-        RETHROW_NESTED("MachinePayConfigLoader::load failed: ");
-    }
-}
