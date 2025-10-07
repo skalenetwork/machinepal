@@ -95,7 +95,15 @@ void MachinePayConfigManager::checkExistsAndReadable(std::string configFile) {
     configTest.close();
 }
 
-void MachinePayConfigManager::reloadConfigUnsafe() {
+
+void MachinePayConfigManager::initManager(map<string, string> configValuesFromCliAndEnv) {
+    setConfigValuesFromCliAndEnv(configValuesFromCliAndEnv);
+    reloadConfig();
+}
+
+void MachinePayConfigManager::reloadConfig() {
+    std::unique_lock<std::shared_mutex> lock(latestConfigMutex_);
+
     try {
         CHECK_STATE(!configPath_.empty())
 
@@ -116,23 +124,9 @@ void MachinePayConfigManager::reloadConfigUnsafe() {
             )
         );
     } catch (const std::exception &ex) {
-        RETHROW_NESTED("MachinePayConfigManager::reloadConfigUnsafe failed: ", ex);
+        RETHROW_NESTED("MachinePayConfigManager::reloadConfig failed: ");
     }
 
-    CHECK_STATE(latestConfig_);
-}
-
-void MachinePayConfigManager::loadConfig(const std::string &yamlPath) {
-    namespace fs = std::filesystem;
-    std::unique_lock<std::shared_mutex> lock(latestConfigMutex_);
-    configPath_ = yamlPath;
-    reloadConfigUnsafe();
-    CHECK_STATE(latestConfig_);
-}
-
-void MachinePayConfigManager::reloadConfig() {
-    std::unique_lock<std::shared_mutex> lock(latestConfigMutex_);
-    reloadConfigUnsafe();
     CHECK_STATE(latestConfig_);
 }
 
@@ -161,3 +155,4 @@ std::shared_ptr<MachinePayConfig> MachinePayConfigManager::latestConfig_ = nullp
 std::chrono::system_clock::time_point MachinePayConfigManager::latestConfigModificationTime_ = {};
 std::string MachinePayConfigManager::latestConfigHash_ = "";
 std::string MachinePayConfigManager::configPath_ = "";
+std::map<std::string, std::string> MachinePayConfigManager::configValuesFromCliAndEnv_ = {};

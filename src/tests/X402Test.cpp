@@ -33,40 +33,53 @@ struct X402GlobalFixture {
         std::vector<std::string> args;
         args.push_back("x402test"); // program name
         int fake_argc = static_cast<int>(args.size());
-        std::vector<char*> fake_argv;
-        for (auto& s : args) {
-            fake_argv.push_back(const_cast<char*>(s.c_str()));
+        std::vector<char *> fake_argv;
+        for (auto &s: args) {
+            fake_argv.push_back(const_cast<char *>(s.c_str()));
         }
         Init::initAllLibs(fake_argc, fake_argv.data());
     }
-    ~X402GlobalFixture() {}
+
+    ~X402GlobalFixture() {
+    }
 };
 
 BOOST_GLOBAL_FIXTURE(X402GlobalFixture);
-
-
 
 
 // ---- Test fixture that starts/stops the proxygen server ---------------------
 struct X402ServerFixture {
     X402ServerFixture() {
 
+        try {
+            MachinePayConfigManager::initManager({
+                {
+                    "CONFIG",
+                    "src/tests/configs/basic/machinepay.yml"
+                }
+            });
 
-        MachinePayConfigManager::loadConfig("src/tests/configs/basic/machinepay.yml");
-
-        auto config = MachinePayConfigManager::latestConfig();
+            auto config = MachinePayConfigManager::latestConfig();
 
 
-        server = ServerFactory().createServerInstance(*config->server());
+            server = ServerFactory().createServerInstance(*config->server());
 
-        client = std::make_shared<X402Client>(config->server()->bindIp(), config->server()->httpPort().value());
+            client = std::make_shared<X402Client>(config->server()->bindIp(), config->server()->httpPort().value());
 
-        srvThread = std::thread([this] {
-            server->start(); //
-        });
+            srvThread = std::thread([this] {
+                server->start(); //
+            });
 
-        // tiny wait to ensure acceptors are ready (bind happened already)
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            // tiny wait to ensure acceptors are ready (bind happened already)
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        } catch (const std::exception &ex) {
+            spdlog::critical("Error starting test server: {}", ex.what());
+            printNestedException(ex);
+            throw;
+        } catch (...) {
+            spdlog::critical("Unknown error starting test server.");
+            throw;
+        }
     }
 
     ~X402ServerFixture() {
@@ -102,8 +115,8 @@ BOOST_FIXTURE_TEST_SUITE(X402Suite, X402ServerFixture)
     }
 
     BOOST_AUTO_TEST_CASE(Returns200WhenPaymentHeaderPresent) {
-    auto [headersMap, statusLine, resp] = client->sendRequestAndParseResult(  "paid",
-        {"X-PAYMENT: demo-ok"});
+        auto [headersMap, statusLine, resp] = client->sendRequestAndParseResult("paid",
+            {"X-PAYMENT: demo-ok"});
         BOOST_TEST(resp.status == 200);
         auto xPaymentTesponse = headersMap.at("X-PAYMENT-RESPONSE");
         BOOST_TEST(xPaymentTesponse.find("txHash") != std::string::npos);

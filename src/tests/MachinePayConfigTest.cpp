@@ -7,10 +7,14 @@
 
 BOOST_AUTO_TEST_CASE(deserialize_basic_proxy_config) {
     // Path to the test config file
-    std::string configPath = "src/tests/configs/basic/machinepay.yml";
 
-    // Load config
-    MachinePayConfigManager::loadConfig(configPath);
+
+    MachinePayConfigManager::initManager({
+    {
+        "CONFIG",
+        "src/tests/configs/basic/machinepay.yml"
+    }
+    });
 
     auto config = MachinePayConfigManager::latestConfig();
 

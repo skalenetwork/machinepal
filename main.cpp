@@ -37,13 +37,14 @@ public:
 
 
 
-std::string parseCommandLineAndEnvironmentOverloads(int argc, char **argv) {
+map<string, string>  parseCommandLineAndEnvironmentOverloads(int argc, char **argv) {
     try {
-        // Use CLI11 to parse command line
 
+        // get environment overloads first. Then command line can override them.
+        auto envOverloads = Init::getMachinePayEnvironmentOverloads();
+        // Use CLI11 to parse command line
         std::string configFilePathFromCli;
         // Check for environment variable override
-
         CLI::App app{"machinepay"};
         app.add_option("-c,--config", configFilePathFromCli,
             "Path to the config file. Default is ./machinepay.yml. "
@@ -58,27 +59,14 @@ std::string parseCommandLineAndEnvironmentOverloads(int argc, char **argv) {
         }
 
 
-        auto envOverloads = Init::getMachinePayEnvironmentOverloads();
-
-        string configFilePath = "machinepay.yml";
-
         if (!configFilePathFromCli.empty()) {
-            configFilePath = configFilePathFromCli;
-        } else {
-            if (envOverloads.contains("CONFIG")) {
-                configFilePath = envOverloads["CONFIG"];
-            }
-        }
+            envOverloads["CONFIG"] = configFilePathFromCli;
+        };
 
-        auto it = envOverloads.find("CONFIG");
-        if (it != envOverloads.end()) {
-            envOverloads.erase(it);
-        }
-
-        return configFilePathFromCli;
+        return envOverloads;
 
     } catch (const std::exception &ex) {
-        spdlog::critical("Error loading config: {}", ex.what());
+        spdlog::critical("Error parsing commmand line and environment", ex.what());
         printNestedException(ex);
         exit(1);
     } catch (...) {
@@ -94,10 +82,8 @@ int main(int argc, char *argv[]) {
 
     try {
         Init::initAllLibs(1, argv);
-
-        auto configFile = parseCommandLineAndEnvironmentOverloads(argc, argv);
-
-        MachinePayConfigManager::loadConfig(configFile);
+        auto configValuesFromCliAndEnv = parseCommandLineAndEnvironmentOverloads(argc, argv);
+        MachinePayConfigManager::initManager(configValuesFromCliAndEnv);
         auto serverConfig = MachinePayConfigManager::latestConfig()->server();
         auto serverObject = ServerFactory::createServerInstance(*serverConfig);
         serverObject->start();

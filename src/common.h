@@ -56,7 +56,7 @@ inline void printNestedException(const std::exception& e, int level = 0) {
 #include <vector>
 #include <stdexcept>
 
-#define RETHROW_NESTED(msg, ex) \
+#define RETHROW_NESTED(msg) \
     do { std::throw_with_nested(std::runtime_error(std::string(msg))); \
     } while(0)
 
