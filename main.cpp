@@ -52,9 +52,11 @@ map<string, string>  parseCommandLineAndEnvironmentOverloads(int argc, char **ar
             ->type_name("FILE");
         app.add_option("-l,--log-level", logLevel,
             "Log level: trace, debug, info, warn, error, fatal")
+            ->type_name("LOG_LEVEL")
             ->check(CLI::IsMember({"trace", "debug", "info", "warn", "error", "fatal"}));
         app.add_option("-t,--log-type", logType,
             "Log type: plain, json")
+            ->type_name("LOG_TYPE")
             ->check(CLI::IsMember({"plain", "json"}));
         try {
             app.parse(argc, argv);

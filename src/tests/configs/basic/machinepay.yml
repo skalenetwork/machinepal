@@ -19,12 +19,12 @@ server:
     ca_file: certs/ca.crt
 
 # Optional logging configuration. Default log level is "info" to stderr.
-log:
+##log:
   # Optional Log verbosity level — one of: trace, debug, info, warn, error, fatal
   # Override: LOG_LEVEL Default: info
-  level: info
+#  level: info
   # Json format for logs. Override: LOG_JSON Default: plain
-  type: json
+#  type: json
 
 
 

@@ -341,13 +341,13 @@ std::shared_ptr<MachinePayConfig> MachinePayConfigLoader::loadFromYamlFile(const
         spdlog::info("Validating config file against schema: {}", yamlPath);
         validateJson(j);
         spdlog::info("Validated config file against schema");
-        return toMachinePayConfig(j);
+        return createMachinePayConfigFromJsonAndDefaults(j);
     } catch (const std::exception &ex) {
         RETHROW_NESTED("MachinePayConfigLoader::load failed: ");
     }
 }
 
-std::shared_ptr<MachinePayConfig> MachinePayConfigLoader:: toMachinePayConfig(const nlohmann::json &j) {
+std::shared_ptr<MachinePayConfig> MachinePayConfigLoader:: createMachinePayConfigFromJsonAndDefaults(const nlohmann::json &j) {
     // serverConfig
     const auto &js = j.at("server");
     const auto &jt = js.at("tls");
@@ -373,12 +373,19 @@ std::shared_ptr<MachinePayConfig> MachinePayConfigLoader:: toMachinePayConfig(co
         (jfaci.contains("api_key_file") && !jfaci.at("api_key_file").is_null()) ? std::optional<std::string>(jfaci.at("api_key_file").get<std::string>()) : std::nullopt
     );
 
-    CHECK_STATE(j.count("log") == 0 || j.at("log").is_object());
-    const auto &jlog = j.at("log");
-    auto logConfig = std::make_shared<LogConfig>(
-        MachinePayConfigLoader::getStringWithDefault(jlog, "level", "info"),
-        MachinePayConfigLoader::getStringWithDefault(jlog, "level", "plain")
-    );
+    ptr<LogConfig> logConfig;
+
+    if (j.count("log") == 0) {
+        // Default log config if not log element is present
+        logConfig = std::make_shared<LogConfig>("info", "plain");
+    } else {
+        CHECK_STATE(j.count("log") > 0 && j.at("log").is_object());
+        const auto &jlog = j.at("log");
+        auto logConfig = std::make_shared<LogConfig>(
+            MachinePayConfigLoader::getStringWithDefault(jlog, "level", "info"),
+            MachinePayConfigLoader::getStringWithDefault(jlog, "type", "plain")
+        );
+    }
 
     return std::make_shared<MachinePayConfig>(serverConfig, facilitatorConfig, logConfig);
 }
@@ -400,7 +407,7 @@ std::shared_ptr<MachinePayConfig> MachinePayConfigLoader::loadConfig(const std::
         applyEnvOverrides(j);
         resolveSecrets(j);
         validateJson(j);
-        return toMachinePayConfig(j);
+        return createMachinePayConfigFromJsonAndDefaults(j);
     } catch (const std::exception &ex) {
         RETHROW_NESTED("MachinePayConfigLoader::load failed: ");
     }

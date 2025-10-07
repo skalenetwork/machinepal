@@ -38,7 +38,7 @@ private:
     void applyEnvOverrides(nlohmann::json& j);
     static void resolveSecrets(nlohmann::json& j);
     static void validateJson(const nlohmann::json& j);
-    static std::shared_ptr<MachinePayConfig> toMachinePayConfig(const nlohmann::json& j);
+    static std::shared_ptr<MachinePayConfig> createMachinePayConfigFromJsonAndDefaults(const nlohmann::json& j);
 
     // Utility helpers
     std::optional<std::string> getenvOpt(const char* key);
