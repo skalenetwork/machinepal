@@ -48,7 +48,7 @@ private:
     static std::string readSecretFileFirstLine(const std::string& path,
                                          const std::string& fallback = "");
 
-    std::shared_ptr<MachinePayConfig> load(const std::string& yamlPath);
+    std::shared_ptr<MachinePayConfig> loadFromYamlFile(const std::string& yamlPath);
 
 
 };

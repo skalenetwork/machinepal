@@ -81,7 +81,7 @@ void MachinePayConfigManager::reloadConfigUnsafe() {
             )
         );
     } catch (const std::exception &ex) {
-        LOG_AND_RETHROW_NESTED("MachinePayConfigManager::reloadConfigUnsafe failed: ", ex);
+        RETHROW_NESTED("MachinePayConfigManager::reloadConfigUnsafe failed: ", ex);
     }
 
     CHECK_STATE(latestConfig_);
