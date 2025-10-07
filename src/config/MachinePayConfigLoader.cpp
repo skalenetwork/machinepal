@@ -238,26 +238,62 @@ void MachinePayConfigLoader::resolveSecrets(json &j) {
     }
 }
 
+
 // ---------- JSON Schema validation ----------
 struct SchemaValidationErrorHandler : public nlohmann::json_schema::error_handler {
+    std::string  errorMessage_;
+    const json & parsedSchema_;
 
-    std::string errorMessage;
+    SchemaValidationErrorHandler(const json& parsedSchema) : parsedSchema_(parsedSchema) {}
 
-    void error(const nlohmann::json_pointer<std::string>& ptr, const json& instance, const std::string& message) override {
+    std::optional<std::string> getExpectedType(const nlohmann::json& schema, const nlohmann::json_pointer<std::string>& path) {
+        const nlohmann::json* node = &schema;
+        std::string pathStr = path.to_string();
+        std::istringstream iss(pathStr);
+        std::string segment;
+        // Skip the first empty segment if path starts with '/'
+        while (std::getline(iss, segment, '/')) {
+            if (segment.empty()) continue;
+            if (node->contains("properties") && (*node)["properties"].contains(segment)) {
+                node = &(*node)["properties"][segment];
+            } else {
+                return std::nullopt;
+            }
+        }
+        if (node->contains("type")) {
+            return (*node)["type"].get<std::string>();
+        }
+        return std::nullopt;
+    }
+
+    void error(const nlohmann::json_pointer<std::string>& path, const json& instance, const std::string& message) override {
         std::ostringstream oss;
-
         auto fullMessage = message;
-
         if (message.find("instance not found in required enum") != std::string::npos) {
-            fullMessage = "Invalid parameter value for the configuration option " + ptr.to_string();
+            fullMessage = "Invalid parameter value for the configuration option " + path.to_string()  + "\n";
+        } else if (message.find("unexpected instance type") != std::string::npos) {
+            fullMessage = "Invalid parameter type for the configuration option " + path.to_string() + "\n";
+
+            auto expectedType = getExpectedType(parsedSchema_, path);
+
+            if (expectedType) {
+                fullMessage += "  Expected type: " + *expectedType + "\n";
+            } else {
+                fullMessage += "  Expected type: unknown (schema type not found)\n";
+            }
+
         }
 
-        oss << "Error at config file element: " << ptr.to_string() << "\n"
+        if (path.to_string() == "/log/level") {
+            fullMessage += "Valid values are: trace, debug, info, warn, error, fatal.\n";
+        }
+
+        oss << "Error at config file element: " << path.to_string() << "\n"
             << "  Value: " << instance.dump(2) << "\n"
             << "  Instance type: " << instance.type_name() << "\n"
             << "  Error:    " << fullMessage << "\n";
-        errorMessage = oss.str();
-        throw std::runtime_error(errorMessage);
+        errorMessage_ = oss.str();
+        throw std::runtime_error(errorMessage_);
     }
 };
 
@@ -274,7 +310,7 @@ void MachinePayConfigLoader::validateJson(const json &j) {
 
 
 
-    SchemaValidationErrorHandler errHandler;
+    SchemaValidationErrorHandler errHandler(schema);
     try {
         json_validator validator;
         validator.set_root_schema(schema); // throws on invalid schema
@@ -283,7 +319,7 @@ void MachinePayConfigLoader::validateJson(const json &j) {
     } catch (const std::exception &ex) {
         std::string errorMsg = std::string("MachinePayConfigLoader::validateJson Invalid config file : "
                                            "failed to validate config against schema:\n") +
-                                               errHandler.errorMessage;
+                                               errHandler.errorMessage_;
         RETHROW_NESTED(errorMsg, ex);
     }
 }

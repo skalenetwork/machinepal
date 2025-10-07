@@ -22,7 +22,7 @@ server:
 log:
   # Optional Log verbosity level — one of: trace, debug, info, warn, error, fatal
   # Override: LOG_LEVEL Default: info
-  level: inf
+  level: info
   # Json format for logs. Override: LOG_JSON Default: false
   json: true
 
