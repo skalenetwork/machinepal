@@ -37,6 +37,7 @@ inline std::string stripSpaces(std::string _s) {
     return _s;
 }
 
+// ...existing code...
 inline void printNestedException(const std::exception& e, int level = 0) {
     spdlog::error("{}Exception: {}", std::string(level, ' '), e.what());
     try {
@@ -44,9 +45,10 @@ inline void printNestedException(const std::exception& e, int level = 0) {
     } catch (const std::exception& nested) {
         printNestedException(nested, level + 2);
     } catch (...) {
-        // Non-std::exception nested
+        spdlog::error("{}Non-std::exception nested", std::string(level + 2, ' '));
     }
 }
+// ...existing co
 
 #include <glog/logging.h>
 #include <atomic>
