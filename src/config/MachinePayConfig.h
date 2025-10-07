@@ -107,3 +107,29 @@ public:
         return facilitator_;
     }
 };
+
+enum class LogLevel {
+    trace, debug, info, warn, error, fatal
+};
+
+inline LogLevel parseLogLevel(const std::string& level) {
+    if (level == "trace") return LogLevel::trace;
+    if (level == "debug") return LogLevel::debug;
+    if (level == "info") return LogLevel::info;
+    if (level == "warn") return LogLevel::warn;
+    if (level == "error") return LogLevel::error;
+    if (level == "fatal") return LogLevel::fatal;
+    throw std::invalid_argument("Invalid log level: " + level);
+}
+
+class LogConfig {
+    LogLevel level_;
+    bool json_;
+public:
+    LogConfig(const std::string& level, bool json)
+        : level_(parseLogLevel(level)), json_(json) {}
+    LogConfig(LogLevel level, bool json)
+        : level_(level), json_(json) {}
+    LogLevel level() const { return level_; }
+    bool json() const { return json_; }
+};

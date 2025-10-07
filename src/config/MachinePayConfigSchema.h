@@ -33,8 +33,24 @@ constexpr const char* MachinePayConfigSchemaJson = R"({
         "api_key_file": { "type": "string" }
       },
       "required": ["type", "base_url"]
+    },
+    "log": {
+      "type": "object",
+      "properties": {
+        "level": {
+          "type": "string",
+          "enum": ["trace", "debug", "info", "warn", "error", "fatal"],
+          "default": "info",
+          "description": "Log verbosity level. Default: info. Override: LOG_LEVEL."
+        },
+        "json": {
+          "type": "boolean",
+          "default": false,
+          "description": "Json format for logs. Default: false. Override: LOG_JSON."
+        }
+      },
+      "description": "Optional logging configuration. Default log level is 'info' to stderr."
     }
   },
   "required": ["server", "facilitator"]
 })";
-
