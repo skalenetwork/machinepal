@@ -223,7 +223,6 @@ nlohmann::json CBFacilitatorClient::postJson(const std::string &_path, const nlo
         std::string errorExplanationForUser = "Bad Request";
         std::string invalidReason = extractCBInvalidReason(responseData);
         errorExplanationForUser += ":" + invalidReason;
-        LOG(WARNING) << "CB verification error at " << url << ": " << responseData;
         throw VerificationError(errorExplanationForUser);
     }
 
