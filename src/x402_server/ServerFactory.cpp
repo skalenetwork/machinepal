@@ -72,6 +72,7 @@ std::shared_ptr<HTTPServer> ServerFactory::createServerInstance(const ServerConf
             if (!std::filesystem::exists(sslCfg.clientCAFile)) {
                 throw std::runtime_error("CA file does not exist: " + sslCfg.clientCAFile);
             }
+
             // Validate SSL context before adding to config
             FileReadUtils::validateSSLContext(https->certFile(), https->keyFile(), caFilePath);
 
