@@ -106,7 +106,8 @@ int main(int argc, char *argv[]) {
         Init::initAllLibs(1, argv);
         auto configValuesFromCliAndEnv = parseCommandLineAndEnvironmentOverloads(argc, argv);
         MachinePayConfigManager::getInstance().initManager(configValuesFromCliAndEnv);
-        auto logConfig = MachinePayConfigManager::getInstance().latestConfig()->log();
+        Init::setLogLevelFromConfig();
+
     } catch (std::exception &ex) {
         LOG(ERROR) << "Fatal error initing from config  in main: ";
         printNestedException(ex);

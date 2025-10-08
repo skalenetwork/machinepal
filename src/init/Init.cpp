@@ -7,6 +7,8 @@
 #include "Init.h"
 #include <boost/algorithm/string/predicate.hpp>
 
+#include "config/MachinePayConfigManager.h"
+
 
 atomic<bool> Init::inited_{false};
 
@@ -58,4 +60,26 @@ map<string, string> Init::getMachinePayEnvironmentOverloads() {
         envOverloads[strippedKey] = environmentVariable.substr(pos + 1);
     }
     return envOverloads;
+}
+
+
+
+void Init::setLogLevelFromConfig() {
+    auto logConfig = MachinePayConfigManager::getInstance().latestConfig()->log();
+    auto logLevel = logConfig->level();
+
+    spdlog::level::level_enum spdlogLevel = spdlog::level::info;
+
+    if (logLevel == LogLevel::trace) spdlogLevel = spdlog::level::trace;
+    else if (logLevel == LogLevel::debug) spdlogLevel = spdlog::level::debug;
+    else if (logLevel == LogLevel::info) spdlogLevel = spdlog::level::info;
+    else if (logLevel == LogLevel::warn) spdlogLevel = spdlog::level::warn;
+    else if (logLevel == LogLevel::error) spdlogLevel = spdlog::level::err;
+    else if (logLevel == LogLevel::fatal) spdlogLevel = spdlog::level::critical;
+    else
+    {
+        CHECK_STATE(false); // should never happen
+    }
+
+    spdlog::set_level(spdlogLevel);
 }

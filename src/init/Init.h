@@ -11,6 +11,10 @@ public:
     static bool isInited();
     static std::map<std::string, std::string> getMachinePayEnvironmentOverloads();
 
+
+
+    static void setLogLevelFromConfig();
+
 private:
     static std::atomic<bool> inited_;
 };
