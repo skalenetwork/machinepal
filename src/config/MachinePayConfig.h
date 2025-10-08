@@ -7,7 +7,7 @@
 #include <nlohmann/json.hpp>
 
 #include "common.h"
-#include "file_utils/FileReadUtils.h"
+#include "utils/FileReadUtils.h"
 
 
 class HTTPConfig {
@@ -43,6 +43,7 @@ public:
         CHECK_STATE(!keyFile.empty());
         FileReadUtils::checkFileExistsAndReadable(certFile_);
         FileReadUtils::checkFileExistsAndReadable(keyFile_);
+        FileReadUtils::checkPEMFormat(certFile_, keyFile_);
         if (caFile_)
         {
             FileReadUtils::checkFileExistsAndReadable(*caFile_);
