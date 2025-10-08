@@ -81,6 +81,7 @@ std::shared_ptr<HTTPServer> ServerFactory::createServerInstance(const ServerConf
             sslCfg.addCertificate(https->certFile(), https->keyFile(),
                 keyPassPath);
 
+
             if (https->caFile() && !https->caFile()->empty()) {
                 sslCfg.clientCAFile = https->caFile().value();
             } else {
