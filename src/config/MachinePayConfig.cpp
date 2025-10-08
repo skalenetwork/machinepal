@@ -15,30 +15,6 @@ ptr<LogConfig> LogConfig::createFromJson(const nlohmann::json& j)
         MachinePayConfigLoader::getStringWithDefault(j, "type", "plain"));
 }
 
-static void checkFileExistsAndReadable(const std::string& path)
-{
-    if (path.empty())
-    {
-        throw std::runtime_error("File path is empty");
-    }
-    if (!std::filesystem::exists(path))
-    {
-        throw std::runtime_error("File '" + path + "' does not exist");
-    }
-
-    if (!std::filesystem::is_regular_file(path))
-    {
-        throw std::runtime_error("File '" + path + "' is not a regular file (a directory?)");
-    }
-    if (access(path.c_str(), R_OK) != 0)
-    {
-        throw std::runtime_error("File '" + path + "' is not readable");
-    }
-    if (std::filesystem::file_size(path) == 0)
-    {
-        throw std::runtime_error("File '" + path + "' is empty");
-    }
-}
 
 ptr<FacilitatorConfig> FacilitatorConfig::createFomJson(const nlohmann::json& j)
 {
@@ -49,7 +25,7 @@ ptr<FacilitatorConfig> FacilitatorConfig::createFomJson(const nlohmann::json& j)
         if (j.contains("api_key_file") && !j.at("api_key_file").is_null())
         {
             std::string file = j.at("api_key_file").get<std::string>();
-            checkFileExistsAndReadable(file);
+            FileReadUtils::checkFileExistsAndReadable(file);
             apiKeyFile = file;
         }
         return std::make_shared<FacilitatorConfig>(
@@ -119,14 +95,14 @@ ptr<ServerConfig> ServerConfig::createFromJson(const nlohmann::json& j)
             if (jt.contains("ca_file") && !jt.at("ca_file").is_null())
             {
                 std::string file = jt.at("ca_file").get<std::string>();
-                checkFileExistsAndReadable(file);
+                FileReadUtils::checkFileExistsAndReadable(file);
                 caFile = file;
             }
             std::optional<std::string> keyPassFile = std::nullopt;
             if (jt.contains("key_pass_file") && !jt.at("key_pass_file").is_null())
             {
                 std::string file = jt.at("key_pass_file").get<std::string>();
-                checkFileExistsAndReadable(file);
+                FileReadUtils::checkFileExistsAndReadable(file);
                 keyPassFile = file;
             }
             httpsConfig = make_shared<HTTPSConfig>(
