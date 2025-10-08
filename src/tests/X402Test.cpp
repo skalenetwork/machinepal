@@ -53,19 +53,19 @@ struct X402ServerFixture {
 
 
         try {
-            MachinePayConfigManager::initManager({
+            MachinePayConfigManager::getInstance().initManager({
                 {
                     "CONFIG",
                     "src/tests/configs/basic/machinepay.yml"
                 }
             });
 
-            auto config = MachinePayConfigManager::latestConfig();
+            auto config = MachinePayConfigManager::getInstance().latestConfig();
 
 
             server = ServerFactory().createServerInstance(*config->server());
 
-            client = std::make_shared<X402Client>(config->server()->bindIp(), config->server()->httpPort().value());
+            client = std::make_shared<X402Client>(config->server()->bindIp(), config->server()->http()->port());
 
             srvThread = std::thread([this] {
                 server->start(); //

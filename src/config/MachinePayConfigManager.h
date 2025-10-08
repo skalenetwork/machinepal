@@ -5,48 +5,41 @@
 #include <shared_mutex>
 #include <atomic>
 #include <chrono>
+#include <map>
+#include <string>
+#include <memory>
 
 class MachinePayConfigManager {
 public:
+    static MachinePayConfigManager& getInstance() {
+        static MachinePayConfigManager instance;
+        return instance;
+    }
 
-
-    static void initManager(map<string, string> configValuesFromCliAndEnv);
-
-    static void reloadConfig();
-
-    static std::shared_ptr<MachinePayConfig> latestConfig();
-
-    static std::chrono::system_clock::time_point latestConfigModificationTime();
-
-    static const std::string& latestConfigSha256();
+    void initManager(const std::map<std::string, std::string>& configValuesFromCliAndEnv);
+    void reloadConfig();
+    std::shared_ptr<MachinePayConfig> latestConfig();
+    std::chrono::system_clock::time_point latestConfigModificationTime();
+    const std::string& latestConfigSha256();
 
 
 
 private:
+    MachinePayConfigManager() = default;
+    MachinePayConfigManager(const MachinePayConfigManager&) = delete;
+    MachinePayConfigManager& operator=(const MachinePayConfigManager&) = delete;
 
 
-    static void setConfigValuesFromCliAndEnv(const std::map<std::string, std::string>& values) {
-        std::unique_lock lock(latestConfigMutex_);
-        configValuesFromCliAndEnv_ = values;
-        if (configValuesFromCliAndEnv_.contains("CONFIG")) {
-            configPath_ = configValuesFromCliAndEnv_.at("CONFIG");
-        } else {
-            configPath_ = "machinepay.yml";
-        }
-    }
+    void setConfigValuesFromCliAndEnv(const std::map<std::string, std::string>& values);
+
+    std::string configPath_ = "machinepay.yml";
+    std::shared_ptr<MachinePayConfig> latestConfig_;
+    std::shared_mutex latestConfigMutex_;
+    std::chrono::system_clock::time_point latestConfigModificationTime_;
+    std::string latestConfigHash_;
+    std::map<std::string, std::string> configValuesFromCliAndEnv_;
 
 
-    static std::string configPath_;
-    static std::shared_ptr<MachinePayConfig> latestConfig_;
-    static std::shared_mutex latestConfigMutex_;
-    static std::chrono::system_clock::time_point latestConfigModificationTime_;
-    static std::string latestConfigHash_;
-    static std::map<std::string, std::string> configValuesFromCliAndEnv_;
-
-
-    static std::string computeBlakeHash(const std::string& filePath);
-
-    static void checkExistsAndReadable(std::string configFile);
-
-
+    std::string computeBlakeHash(const std::string& filePath);
+    void checkExistsAndReadable(const std::string& configFile);
 };

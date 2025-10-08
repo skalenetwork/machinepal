@@ -30,7 +30,7 @@ public:
     RequestHandler *onRequest(RequestHandler *, HTTPMessage *msg) noexcept override {
         // Route if needed (e.g., only gate /paid). Here we gate everything.
         (void) msg;
-        return new X402Handler();
+        return new X402Handler(MachinePayConfigManager::getInstance().latestConfig());
     }
 };
 
@@ -105,9 +105,9 @@ int main(int argc, char *argv[]) {
     try {
         Init::initAllLibs(1, argv);
         auto configValuesFromCliAndEnv = parseCommandLineAndEnvironmentOverloads(argc, argv);
-        MachinePayConfigManager::initManager(configValuesFromCliAndEnv);
-        auto logConfig = MachinePayConfigManager::latestConfig()->log();
-        auto serverConfig = MachinePayConfigManager::latestConfig()->server();
+        MachinePayConfigManager::getInstance().initManager(configValuesFromCliAndEnv);
+        auto logConfig = MachinePayConfigManager::getInstance().latestConfig()->log();
+        auto serverConfig = MachinePayConfigManager::getInstance().latestConfig()->server();
         auto serverObject = ServerFactory::createServerInstance(*serverConfig);
         serverObject->start();
     } catch (std::exception &ex) {

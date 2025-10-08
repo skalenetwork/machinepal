@@ -5,6 +5,8 @@
 #include <folly/json.h>
 #include <string>
 
+#include "config/MachinePayConfig.h"
+
 class X402Handler : public proxygen::RequestHandler {
 public:
     void onRequest(std::unique_ptr<proxygen::HTTPMessage> _headers) noexcept override;
@@ -17,7 +19,15 @@ public:
         // No upgrade handling needed for now
     }
 
+    explicit X402Handler(const ptr<MachinePayConfig>& config)
+        : config_(config)
+    {
+        CHECK_STATE(config_);
+    }
+
 private:
+    ptr<MachinePayConfig> config_;
+
     static bool hasValidPaymentHeader(const proxygen::HTTPMessage* _req, std::string& _paymentInfo);
     void reply402();
 

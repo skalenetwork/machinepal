@@ -10,11 +10,15 @@
 
 
 class HTTPConfig {
+protected:
     bool isEnabled_;
     uint16_t port_;
 public:
     HTTPConfig(bool isEnabled, uint16_t port)
-        : isEnabled_(isEnabled), port_(port) {}
+        : isEnabled_(isEnabled), port_(port)
+    {
+        CHECK_STATE(port_ > 0);
+    }
     bool isEnabled() const { return isEnabled_; }
     uint16_t port() const { return port_; }
 };
@@ -31,7 +35,10 @@ public:
               const std::string& keyFile,
               const std::string& keyPassFile,
               const std::optional<std::string>& caFile)
-        : HTTPConfig(isEnabled, port), keyFile_(keyFile), keyPassFile_(keyPassFile), caFile_(caFile) {}
+        : HTTPConfig(isEnabled, port), keyFile_(keyFile), keyPassFile_(keyPassFile), caFile_(caFile)
+    {
+        CHECK_STATE(port_ > 0);
+    }
     const std::string& certFile() const { return certFile_; }
     const std::string& keyFile() const { return keyFile_; }
     const std::string& keyPassFile() const { return keyPassFile_; }
@@ -82,8 +89,14 @@ public:
     }
 
     const std::string& bindIp() const { return bindIp_; }
-    const ptr<HTTPConfig> http() const { return http_; }
-    const ptr<HTTPSConfig> https() const { return https_; }
+    const ptr<HTTPConfig> http() const
+    {
+        return http_;
+    }
+    const ptr<HTTPSConfig> https() const
+    {
+        return https_;
+    }
     static ptr<ServerConfig> createFromJson(const nlohmann::json& j);
 };
 

@@ -3,6 +3,7 @@
 #include <proxygen/httpserver/RequestHandlerFactory.h>
 #include <proxygen/httpserver/RequestHandler.h>
 #include "X402Handler.h"
+#include "config/MachinePayConfigManager.h"
 
 class X402HandlerFactory : public proxygen::RequestHandlerFactory {
 public:
@@ -11,6 +12,6 @@ public:
 
     proxygen::RequestHandler* onRequest(proxygen::RequestHandler* /*_handler*/,
                                         proxygen::HTTPMessage* /*_msg*/) noexcept override {
-        return new X402Handler();
+        return new X402Handler(MachinePayConfigManager::getInstance().latestConfig());
     }
 };

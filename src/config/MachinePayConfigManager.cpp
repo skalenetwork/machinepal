@@ -63,7 +63,7 @@ std::string MachinePayConfigManager::computeBlakeHash(const std::string &filePat
     return oss.str();
 }
 
-void MachinePayConfigManager::checkExistsAndReadable(std::string configFile) {
+void MachinePayConfigManager::checkExistsAndReadable(const std::string& configFile) {
     char cwd[4096];
     if (!getcwd(cwd, sizeof(cwd))) {
         throw std::runtime_error(
@@ -96,9 +96,16 @@ void MachinePayConfigManager::checkExistsAndReadable(std::string configFile) {
 }
 
 
-void MachinePayConfigManager::initManager(map<string, string> configValuesFromCliAndEnv) {
+void MachinePayConfigManager::initManager(const std::map<std::string, std::string>& configValuesFromCliAndEnv) {
     setConfigValuesFromCliAndEnv(configValuesFromCliAndEnv);
     reloadConfig();
+}
+
+void MachinePayConfigManager::setConfigValuesFromCliAndEnv(const std::map<std::string, std::string>& values) {
+    configValuesFromCliAndEnv_ = values;
+    if (auto it = values.find("CONFIG"); it != values.end()) {
+        configPath_ = it->second;
+    }
 }
 
 void MachinePayConfigManager::reloadConfig() {
@@ -150,13 +157,3 @@ const std::string &MachinePayConfigManager::latestConfigSha256() {
     std::shared_lock<std::shared_mutex> lock(latestConfigMutex_);
     return latestConfigHash_;
 }
-
-// Definition of the static member
-
-
-std::shared_mutex MachinePayConfigManager::latestConfigMutex_;
-std::shared_ptr<MachinePayConfig> MachinePayConfigManager::latestConfig_ = nullptr;
-std::chrono::system_clock::time_point MachinePayConfigManager::latestConfigModificationTime_ = {};
-std::string MachinePayConfigManager::latestConfigHash_ = "";
-std::string MachinePayConfigManager::configPath_ = "";
-std::map<std::string, std::string> MachinePayConfigManager::configValuesFromCliAndEnv_ = {};
