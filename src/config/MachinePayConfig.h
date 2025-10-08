@@ -36,16 +36,16 @@ public:
               const std::string& keyFile,
               const std::optional<std::string> keyPassFile,
               const std::optional<std::string>& caFile)
-        : HTTPConfig(isEnabled, port), keyFile_(keyFile), keyPassFile_(keyPassFile), caFile_(caFile)
+        : HTTPConfig(isEnabled, port), certFile_(certFile), keyFile_(keyFile), keyPassFile_(keyPassFile), caFile_(caFile)
     {
         CHECK_STATE(port_ > 0);
         CHECK_STATE(!certFile.empty());
         CHECK_STATE(!keyFile.empty());
-        FileReadUtils::checkFileExistsAndReadable(keyFile);
-        FileReadUtils::checkFileExistsAndReadable(certFile);
-        if (caFile)
+        FileReadUtils::checkFileExistsAndReadable(certFile_);
+        FileReadUtils::checkFileExistsAndReadable(keyFile_);
+        if (caFile_)
         {
-            FileReadUtils::checkFileExistsAndReadable(*caFile);
+            FileReadUtils::checkFileExistsAndReadable(*caFile_);
         }
     }
     const std::string& certFile() const { return certFile_; }
