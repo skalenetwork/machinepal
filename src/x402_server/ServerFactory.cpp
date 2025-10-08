@@ -55,6 +55,8 @@ std::shared_ptr<HTTPServer> ServerFactory::createServerInstance(const ServerConf
             FileReadUtils::doThoroughKeyCertFormatCheck(https->certFile(), https->keyFile());
             auto keyPassPath = https->keyPassFile() ? https->keyPassFile().value() : "";
             sslCfg.addCertificate(https->certFile(), https->keyFile(), keyPassPath);
+            sslCfg.sslCiphers = "ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384";
+
             std::string caFilePath;
             if (https->caFile() && !https->caFile()->empty()) {
                 sslCfg.clientCAFile = https->caFile().value();

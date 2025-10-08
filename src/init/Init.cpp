@@ -2,6 +2,14 @@
 // Created by kladko on 9/29/25.
 //
 #include "common.h"
+
+
+#include <glog/logging.h>
+#include <stdexcept>
+#include <execinfo.h>
+#include <iostream>
+#include <stdexcept>
+
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_sinks.h>
 #include "Init.h"
@@ -12,6 +20,12 @@
 
 atomic<bool> Init::inited_{false};
 
+
+void ThrowOnFailure() {
+    std::cerr << "Fatal log or CHECK failed in proxygen" << std::endl;
+    throw std::runtime_error("Fatal log or CHECK failed");
+}
+
 void Init::initAllLibs(int _argc, char *_argv[]) {
     if (!inited_.exchange(true)) {
 
@@ -21,6 +35,9 @@ void Init::initAllLibs(int _argc, char *_argv[]) {
         FLAGS_logtostderr = 1;
         FLAGS_minloglevel = google::INFO;
         static folly::Init init(&_argc, &_argv); // Static to preserve lifetime, pass by pointer
+
+
+        google::InstallFailureFunction(&ThrowOnFailure);
 
         auto logger = spdlog::stderr_logger_mt("machinepay");
         spdlog::set_default_logger(logger);
