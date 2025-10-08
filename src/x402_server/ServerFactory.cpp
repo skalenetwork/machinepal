@@ -73,9 +73,10 @@ std::shared_ptr<HTTPServer> ServerFactory::createServerInstance(const ServerConf
             CHECK_STATE(!https->keyFile().empty());
             CHECK_STATE(!https->certFile().empty());
 
+            FileReadUtils::doThoroughKeyCertFormatCheck(https->certFile(), https->keyFile());
+
             auto keyPassPath = https->keyPassFile() ? https->keyPassFile().value() : "";
 
-            checkWellFormedPEM(https->certFile(), https->keyFile());
 
             sslCfg.addCertificate(https->certFile(), https->keyFile(),
                 keyPassPath);
