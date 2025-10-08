@@ -6,6 +6,8 @@
 #include <curl/curl.h>
 #include <filesystem>
 #include <fstream>
+#include <openssl/ssl.h>
+#include <openssl/err.h>
 
 
 
@@ -52,6 +54,32 @@ static void checkWellFormedPEM(const std::string& certPath, const std::string& k
     EVP_PKEY_free(pkey);
 }
 
+static void validateSSLContext(const std::string& certFile, const std::string& keyFile, const std::string& caFile) {
+    SSL_CTX* ctx = SSL_CTX_new(TLS_server_method());
+    if (!ctx) {
+        throw std::runtime_error("Failed to create SSL_CTX");
+    }
+    if (SSL_CTX_use_certificate_file(ctx, certFile.c_str(), SSL_FILETYPE_PEM) != 1) {
+        SSL_CTX_free(ctx);
+        throw std::runtime_error("Failed to load certificate file: " + certFile);
+    }
+    if (SSL_CTX_use_PrivateKey_file(ctx, keyFile.c_str(), SSL_FILETYPE_PEM) != 1) {
+        SSL_CTX_free(ctx);
+        throw std::runtime_error("Failed to load private key file: " + keyFile);
+    }
+    if (!caFile.empty()) {
+        if (SSL_CTX_load_verify_locations(ctx, caFile.c_str(), nullptr) != 1) {
+            SSL_CTX_free(ctx);
+            throw std::runtime_error("Failed to load CA file: " + caFile);
+        }
+    }
+    if (SSL_CTX_check_private_key(ctx) != 1) {
+        SSL_CTX_free(ctx);
+        throw std::runtime_error("Private key does not match certificate");
+    }
+    SSL_CTX_free(ctx);
+}
+
 std::shared_ptr<HTTPServer> ServerFactory::createServerInstance(const ServerConfig& serverConfig) {
 
 
@@ -69,21 +97,15 @@ std::shared_ptr<HTTPServer> ServerFactory::createServerInstance(const ServerConf
 
         if (auto https = serverConfig.https(); https && https->isEnabled()) {
             wangle::SSLContextConfig sslCfg;
-
             CHECK_STATE(!https->keyFile().empty());
             CHECK_STATE(!https->certFile().empty());
-
             FileReadUtils::doThoroughKeyCertFormatCheck(https->certFile(), https->keyFile());
-
             auto keyPassPath = https->keyPassFile() ? https->keyPassFile().value() : "";
-
-
-            sslCfg.addCertificate(https->certFile(), https->keyFile(),
-                keyPassPath);
-
-
+            sslCfg.addCertificate(https->certFile(), https->keyFile(), keyPassPath);
+            std::string caFilePath;
             if (https->caFile() && !https->caFile()->empty()) {
                 sslCfg.clientCAFile = https->caFile().value();
+                caFilePath = sslCfg.clientCAFile;
             } else {
                 if (isRedHat()) {
                     sslCfg.clientCAFile = "/etc/pki/tls/certs/ca-bundle.crt";
@@ -92,21 +114,17 @@ std::shared_ptr<HTTPServer> ServerFactory::createServerInstance(const ServerConf
                 } else {
                     sslCfg.clientCAFile  = "/etc/ssl/certs/ca-certificates.crt";
                 }
+                caFilePath = sslCfg.clientCAFile;
             }
-
-
             if (!std::filesystem::exists(sslCfg.clientCAFile)) {
-                throw std::runtime_error("CA file does not exist: " +
-                    sslCfg.clientCAFile);
+                throw std::runtime_error("CA file does not exist: " + sslCfg.clientCAFile);
             }
-
-
+            // Validate SSL context before adding to config
+            validateSSLContext(https->certFile(), https->keyFile(), caFilePath);
             HTTPServer::IPConfig config(
                 folly::SocketAddress(serverConfig.bindIp(), https->port(), true),
                 HTTPServer::Protocol::HTTP);
-
             config.sslConfigs.push_back(sslCfg);
-
             ipConfigs.emplace_back(config);
         }
 
