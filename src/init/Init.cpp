@@ -64,7 +64,7 @@ map<string, string> Init::getMachinePayEnvironmentOverloads() {
 
 
 
-void Init::setLogLevelFromConfig() {
+void Init::initLogLevelFromConfig() {
     auto logConfig = MachinePayConfigManager::getInstance().latestConfig()->log();
     auto logLevel = logConfig->level();
 

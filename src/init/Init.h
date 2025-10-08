@@ -13,7 +13,7 @@ public:
 
 
 
-    static void setLogLevelFromConfig();
+    static void initLogLevelFromConfig();
 
 private:
     static std::atomic<bool> inited_;

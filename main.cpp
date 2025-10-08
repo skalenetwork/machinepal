@@ -98,39 +98,49 @@ map<string, string>  parseCommandLineAndEnvironmentOverloads(int argc, char **ar
 }
 
 
-
-int main(int argc, char *argv[]) {
-
-
+void parseCommandLineAndConfigThenInitLibsAndLogging(int argc, char** argv)
+{
     try {
         Init::initAllLibs(1, argv);
         auto configValuesFromCliAndEnv = parseCommandLineAndEnvironmentOverloads(argc, argv);
         MachinePayConfigManager::getInstance().initManager(configValuesFromCliAndEnv);
-        Init::setLogLevelFromConfig();
-
+        Init::initLogLevelFromConfig();
     } catch (std::exception &ex) {
         LOG(ERROR) << "Fatal error initing from config  in main: ";
-        printNestedException(ex);
-        goto error;
+        printNestedException(ex);;
     } catch (...) {
         LOG(ERROR) << "Unknown fatal error initing from config in main";
-        goto error;
+        throw;
     }
+}
 
+void runServerUntilShutdown()
+{
     try
     {
         auto serverConfig = MachinePayConfigManager::getInstance().latestConfig()->server();
         auto serverObject = ServerFactory::createServerInstance(*serverConfig);
         serverObject->start();
     } catch (std::exception &ex) {
-        LOG(ERROR) << "Fatal error starting x402 server in main: ";
-        printNestedException(ex);
-        return 1;
-    } catch (...) {
-        LOG(ERROR) << "Unknown fatal starting x402 server in main";
-        return 1;
+        RETHROW_NESTED("Fatal error running x402 server in main: ");
     }
+}
 
+int main(int argc, char *argv[]) {
+
+    try {
+        parseCommandLineAndConfigThenInitLibsAndLogging(argc, argv);
+
+        spdlog::info("Creating and starting server");
+
+        runServerUntilShutdown();
+
+        spdlog::info("Server exited");
+    } catch (std::exception &ex) {
+        spdlog::critical("Fatal error in main: ");
+        printNestedException(ex);
+        goto error;
+    }
 
     return 0;
 
