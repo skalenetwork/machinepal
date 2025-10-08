@@ -35,19 +35,23 @@ public:
 };
 
 
-
+void setIfNotEmpty(std::map<std::string, std::string>& envOverloads, const std::string& key, const std::string& value)
+{
+    if (!value.empty()) {
+        envOverloads[key] = value;
+    }
+}
 
 map<string, string>  parseCommandLineAndEnvironmentOverloads(int argc, char **argv) {
     try {
-
         // get environment overloads first. Then command line can override them.
         auto envOverloads = Init::getMachinePayEnvironmentOverloads();
         // Use CLI11 to parse command line
-        std::string configFilePathFromCli;
+        std::string configFilePath;
         std::string logLevel;
         std::string logType;
         CLI::App app{"machinepay"};
-        app.add_option("-c,--config", configFilePathFromCli,
+        app.add_option("-c,--config", configFilePath,
             "Path to the config file. Default is ./machinepay.yml.")
             ->type_name("FILE");
         app.add_option("-l,--log-level", logLevel,
@@ -65,17 +69,9 @@ map<string, string>  parseCommandLineAndEnvironmentOverloads(int argc, char **ar
             exit(code);
         }
 
-        if (!configFilePathFromCli.empty()) {
-            envOverloads["CONFIG"] = configFilePathFromCli;
-        };
-
-        if (!logLevel.empty()) {
-            envOverloads["LOG_LEVEL"] = logLevel;
-        }
-
-        if (!logType.empty()) {
-            envOverloads["LOG_TYPE"] = logType;
-        }
+        setIfNotEmpty(envOverloads, "CONFIG", configFilePath);
+        setIfNotEmpty(envOverloads, "LOG_LEVEL", logLevel);
+        setIfNotEmpty(envOverloads, "LOG_TYPE", logType);
 
         if (envOverloads.size() > 0) {
             spdlog::info("Values set in command line and environment override "
