@@ -26,7 +26,7 @@ constexpr const char* MachinePayConfigSchemaJson = R"({
             "key_pass_file": { "type": "string" },
             "ca_file": { "type": "string" }
           },
-          "required": ["port", "cert_file", "key_file", "key_pass_file"]
+          "required": ["port", "cert_file", "key_file"]
         }
       },
       "required": ["http", "https"]

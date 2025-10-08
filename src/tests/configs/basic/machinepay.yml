@@ -6,10 +6,8 @@ server:
   https:
     enable: false
     port: 8443
-    cert_file: certs/machinepay.crt
-    key_file: certs/machinepay.key
-    key_pass_file: secrets/key_password
-    ca_file: certs/ca.crt
+    cert_file: certs/insecure_test_localhost.crt
+    key_file: secrets/insecure_test_localhost.key
 
 # Optional logging configuration. Default log level is "info" to stderr.
 

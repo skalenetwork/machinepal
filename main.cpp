@@ -107,16 +107,32 @@ int main(int argc, char *argv[]) {
         auto configValuesFromCliAndEnv = parseCommandLineAndEnvironmentOverloads(argc, argv);
         MachinePayConfigManager::getInstance().initManager(configValuesFromCliAndEnv);
         auto logConfig = MachinePayConfigManager::getInstance().latestConfig()->log();
+    } catch (std::exception &ex) {
+        LOG(ERROR) << "Fatal error initing from config  in main: ";
+        printNestedException(ex);
+        goto error;
+    } catch (...) {
+        LOG(ERROR) << "Unknown fatal error initing from config in main";
+        goto error;
+    }
+
+    try
+    {
         auto serverConfig = MachinePayConfigManager::getInstance().latestConfig()->server();
         auto serverObject = ServerFactory::createServerInstance(*serverConfig);
         serverObject->start();
     } catch (std::exception &ex) {
-        LOG(ERROR) << "Fatal error thrown in main: ";
+        LOG(ERROR) << "Fatal error starting x402 server in main: ";
         printNestedException(ex);
         return 1;
     } catch (...) {
-        LOG(ERROR) << "Unknown fatal error thrown in main";
+        LOG(ERROR) << "Unknown fatal starting x402 server in main";
         return 1;
     }
+
+
     return 0;
+
+error:
+    return 1;
 }

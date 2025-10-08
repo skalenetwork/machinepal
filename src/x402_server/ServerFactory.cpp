@@ -45,8 +45,10 @@ std::shared_ptr<HTTPServer> ServerFactory::createServerInstance(const ServerConf
 
         if (auto https = serverConfig.https(); https && https->isEnabled()) {
             wangle::SSLContextConfig sslCfg;
+            auto keyPassPath = https->keyPassFile() ? https->keyPassFile().value() : "";
+
             sslCfg.addCertificate(https->certFile(), https->keyFile(),
-                https->keyPassFile());
+                keyPassPath);
 
             if (https->caFile() && !https->caFile()->empty()) {
                 sslCfg.clientCAFile = https->caFile().value();

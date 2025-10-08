@@ -28,12 +28,12 @@ public:
 class HTTPSConfig : public HTTPConfig {
     std::string certFile_;
     std::string keyFile_;
-    std::string keyPassFile_;
+    std::optional<std::string> keyPassFile_;
     std::optional<std::string> caFile_;
 public:
     HTTPSConfig(bool isEnabled, uint16_t port, const std::string& certFile,
               const std::string& keyFile,
-              const std::string& keyPassFile,
+              const std::optional<std::string> keyPassFile,
               const std::optional<std::string>& caFile)
         : HTTPConfig(isEnabled, port), keyFile_(keyFile), keyPassFile_(keyPassFile), caFile_(caFile)
     {
@@ -41,7 +41,7 @@ public:
     }
     const std::string& certFile() const { return certFile_; }
     const std::string& keyFile() const { return keyFile_; }
-    const std::string& keyPassFile() const { return keyPassFile_; }
+    const std::optional<std::string>  keyPassFile() const { return keyPassFile_; }
     const std::optional<std::string>& caFile() const { return caFile_; }
 };
 

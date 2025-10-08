@@ -71,12 +71,16 @@ ptr<ServerConfig> ServerConfig::createFromJson(const nlohmann::json& j) {
         auto caFile = (jt.contains("ca_file") && !jt.at("ca_file").is_null()) ?
             std::optional<std::string>(jt.at("ca_file").get<std::string>()) : std::nullopt;
 
-        httpConfig = make_shared<HTTPSConfig>(
+
+        auto keyPassFile = (jt.contains("key_pass_file") && !jt.at("key_pass_file").is_null()) ?
+            std::optional<std::string>(jt.at("key_pass_file").get<std::string>()) : std::nullopt;
+
+        httpsConfig = make_shared<HTTPSConfig>(
             MachinePayConfigLoader::getBoolWithDefault(jt, "enabled", true),
             MachinePayConfigLoader::getUint16WithDefault(jt, "port",8080),
             MachinePayConfigLoader::getStringWithDefault(jt, "cert_file", ""),
                         MachinePayConfigLoader::getStringWithDefault(jt, "key_file", ""),
-                        MachinePayConfigLoader::getStringWithDefault(jt, "key_pass_file", ""),
+                        keyPassFile,
                         caFile);
     }
 
