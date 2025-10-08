@@ -7,6 +7,7 @@
 #include <nlohmann/json.hpp>
 
 #include "common.h"
+#include "file_utils/FileReadUtils.h"
 
 
 class HTTPConfig {
@@ -38,6 +39,14 @@ public:
         : HTTPConfig(isEnabled, port), keyFile_(keyFile), keyPassFile_(keyPassFile), caFile_(caFile)
     {
         CHECK_STATE(port_ > 0);
+        CHECK_STATE(!certFile.empty());
+        CHECK_STATE(!keyFile.empty());
+        FileReadUtils::checkFileExistsAndReadable(keyFile);
+        FileReadUtils::checkFileExistsAndReadable(certFile);
+        if (caFile)
+        {
+            FileReadUtils::checkFileExistsAndReadable(*caFile);
+        }
     }
     const std::string& certFile() const { return certFile_; }
     const std::string& keyFile() const { return keyFile_; }

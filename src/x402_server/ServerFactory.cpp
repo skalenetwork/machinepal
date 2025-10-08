@@ -28,6 +28,30 @@ bool isAlpine() {
 
 
 
+static void checkWellFormedPEM(const std::string& certPath, const std::string& keyPath) {
+
+    FILE* certFile = fopen(certPath.c_str(), "r");
+    if (!certFile)
+        throw std::runtime_error("Cannot open certificate file: " + certPath);
+
+    X509* cert = PEM_read_X509(certFile, nullptr, nullptr, nullptr);
+    fclose(certFile);
+    if (!cert)
+        throw std::runtime_error("Certificate file is not a well-formed PEM: " + certPath);
+
+    FILE* keyFile = fopen(keyPath.c_str(), "r");
+    if (!keyFile)
+        throw std::runtime_error("Cannot open key file: " + keyPath);
+
+    EVP_PKEY* pkey = PEM_read_PrivateKey(keyFile, nullptr, nullptr, nullptr);
+    fclose(keyFile);
+    if (!pkey)
+        throw std::runtime_error("Key file is not a well-formed PEM: " + keyPath);
+
+    X509_free(cert);
+    EVP_PKEY_free(pkey);
+}
+
 std::shared_ptr<HTTPServer> ServerFactory::createServerInstance(const ServerConfig& serverConfig) {
 
 
@@ -45,7 +69,13 @@ std::shared_ptr<HTTPServer> ServerFactory::createServerInstance(const ServerConf
 
         if (auto https = serverConfig.https(); https && https->isEnabled()) {
             wangle::SSLContextConfig sslCfg;
+
+            CHECK_STATE(!https->keyFile().empty());
+            CHECK_STATE(!https->certFile().empty());
+
             auto keyPassPath = https->keyPassFile() ? https->keyPassFile().value() : "";
+
+            checkWellFormedPEM(https->certFile(), https->keyFile());
 
             sslCfg.addCertificate(https->certFile(), https->keyFile(),
                 keyPassPath);
