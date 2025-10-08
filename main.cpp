@@ -102,8 +102,7 @@ void parseCommandLineAndConfigThenInitLibsAndLogging(int argc, char** argv)
         MachinePayConfigManager::getInstance().initManager(configValuesFromCliAndEnv);
         Init::initLogLevelFromConfig();
     } catch (std::exception &ex) {
-        LOG(ERROR) << "Fatal error initing from config  in main: ";
-        printNestedException(ex);;
+        RETHROW_NESTED("Fatal error initing from config in main: ");
     } catch (...) {
         LOG(ERROR) << "Unknown fatal error initing from config in main";
         throw;
@@ -118,7 +117,7 @@ void runServerUntilShutdown()
         auto serverObject = ServerFactory::createServerInstance(*serverConfig);
         serverObject->start();
     } catch (std::exception &ex) {
-        RETHROW_NESTED("Fatal error running x402 server in main: ");
+        RETHROW_NESTED("Fatal error running x402 server in main. machinepay server will exit.");
     }
 }
 
@@ -133,7 +132,7 @@ int main(int argc, char *argv[]) {
 
         spdlog::info("Server exited");
     } catch (std::exception &ex) {
-        spdlog::critical("Fatal error in main: ");
+        spdlog::critical("Fatal error in main ");
         printNestedException(ex);
         goto error;
     }

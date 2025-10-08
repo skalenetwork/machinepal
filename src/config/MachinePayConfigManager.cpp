@@ -97,8 +97,13 @@ void MachinePayConfigManager::checkExistsAndReadable(const std::string& configFi
 
 
 void MachinePayConfigManager::initManager(const std::map<std::string, std::string>& configValuesFromCliAndEnv) {
-    setConfigValuesFromCliAndEnv(configValuesFromCliAndEnv);
-    reloadConfig();
+    try
+    {
+        setConfigValuesFromCliAndEnv(configValuesFromCliAndEnv);
+        reloadConfig();
+    } catch (const std::exception &ex) {
+        RETHROW_NESTED("MachinePayConfigManager::initManager failed: ");
+    }
 }
 
 void MachinePayConfigManager::setConfigValuesFromCliAndEnv(const std::map<std::string, std::string>& values) {
