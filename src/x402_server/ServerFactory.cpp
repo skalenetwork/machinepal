@@ -30,55 +30,8 @@ bool isAlpine() {
 
 
 
-static void checkWellFormedPEM(const std::string& certPath, const std::string& keyPath) {
 
-    FILE* certFile = fopen(certPath.c_str(), "r");
-    if (!certFile)
-        throw std::runtime_error("Cannot open certificate file: " + certPath);
 
-    X509* cert = PEM_read_X509(certFile, nullptr, nullptr, nullptr);
-    fclose(certFile);
-    if (!cert)
-        throw std::runtime_error("Certificate file is not a well-formed PEM: " + certPath);
-
-    FILE* keyFile = fopen(keyPath.c_str(), "r");
-    if (!keyFile)
-        throw std::runtime_error("Cannot open key file: " + keyPath);
-
-    EVP_PKEY* pkey = PEM_read_PrivateKey(keyFile, nullptr, nullptr, nullptr);
-    fclose(keyFile);
-    if (!pkey)
-        throw std::runtime_error("Key file is not a well-formed PEM: " + keyPath);
-
-    X509_free(cert);
-    EVP_PKEY_free(pkey);
-}
-
-static void validateSSLContext(const std::string& certFile, const std::string& keyFile, const std::string& caFile) {
-    SSL_CTX* ctx = SSL_CTX_new(TLS_server_method());
-    if (!ctx) {
-        throw std::runtime_error("Failed to create SSL_CTX");
-    }
-    if (SSL_CTX_use_certificate_file(ctx, certFile.c_str(), SSL_FILETYPE_PEM) != 1) {
-        SSL_CTX_free(ctx);
-        throw std::runtime_error("Failed to load certificate file: " + certFile);
-    }
-    if (SSL_CTX_use_PrivateKey_file(ctx, keyFile.c_str(), SSL_FILETYPE_PEM) != 1) {
-        SSL_CTX_free(ctx);
-        throw std::runtime_error("Failed to load private key file: " + keyFile);
-    }
-    if (!caFile.empty()) {
-        if (SSL_CTX_load_verify_locations(ctx, caFile.c_str(), nullptr) != 1) {
-            SSL_CTX_free(ctx);
-            throw std::runtime_error("Failed to load CA file: " + caFile);
-        }
-    }
-    if (SSL_CTX_check_private_key(ctx) != 1) {
-        SSL_CTX_free(ctx);
-        throw std::runtime_error("Private key does not match certificate");
-    }
-    SSL_CTX_free(ctx);
-}
 
 std::shared_ptr<HTTPServer> ServerFactory::createServerInstance(const ServerConfig& serverConfig) {
 
@@ -120,7 +73,8 @@ std::shared_ptr<HTTPServer> ServerFactory::createServerInstance(const ServerConf
                 throw std::runtime_error("CA file does not exist: " + sslCfg.clientCAFile);
             }
             // Validate SSL context before adding to config
-            validateSSLContext(https->certFile(), https->keyFile(), caFilePath);
+            FileReadUtils::validateSSLContext(https->certFile(), https->keyFile(), caFilePath);
+
             HTTPServer::IPConfig config(
                 folly::SocketAddress(serverConfig.bindIp(), https->port(), true),
                 HTTPServer::Protocol::HTTP);

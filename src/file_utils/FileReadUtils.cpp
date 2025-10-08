@@ -4,9 +4,10 @@
 #include "common.h"
 #include "FileReadUtils.h"
 #include <filesystem>
+#include <openssl/ssl.h>
+#include <openssl/err.h>
 #include <openssl/pem.h>
 #include <openssl/x509.h>
-#include <openssl/err.h>
 
 void FileReadUtils::checkFileExistsAndReadable(const std::string& path)
 {
@@ -100,4 +101,98 @@ void FileReadUtils::doThoroughKeyCertFormatCheck(const std::string& certPath, co
     checkPEMFormat(certPath, keyPath);
     // Check key matches certificate
     checkKeyMatchesCert(certPath, keyPath);
+}
+
+
+void FileReadUtils::validateSSLContext(const std::string& certFile, const std::string& keyFile, const std::string& caFile) {
+    SSL_CTX* ctx = SSL_CTX_new(TLS_server_method());
+    if (!ctx) {
+        throw std::runtime_error("Failed to create SSL_CTX");
+    }
+    if (SSL_CTX_use_certificate_file(ctx, certFile.c_str(), SSL_FILETYPE_PEM) != 1) {
+        SSL_CTX_free(ctx);
+        throw std::runtime_error("Failed to load certificate file: " + certFile);
+    }
+    if (SSL_CTX_use_PrivateKey_file(ctx, keyFile.c_str(), SSL_FILETYPE_PEM) != 1) {
+        SSL_CTX_free(ctx);
+        throw std::runtime_error("Failed to load private key file: " + keyFile);
+    }
+    if (!caFile.empty()) {
+        if (SSL_CTX_load_verify_locations(ctx, caFile.c_str(), nullptr) != 1) {
+            SSL_CTX_free(ctx);
+            throw std::runtime_error("Failed to load CA file: " + caFile);
+        }
+    }
+    if (SSL_CTX_check_private_key(ctx) != 1) {
+        SSL_CTX_free(ctx);
+        throw std::runtime_error("Private key does not match certificate");
+    }
+    // Additional validation: sign and verify using key/cert
+    EVP_PKEY* pkey = nullptr;
+    X509* cert = nullptr;
+    FILE* keyFp = fopen(keyFile.c_str(), "r");
+    if (keyFp) {
+        pkey = PEM_read_PrivateKey(keyFp, nullptr, nullptr, nullptr);
+        fclose(keyFp);
+    }
+    FILE* certFp = fopen(certFile.c_str(), "r");
+    if (certFp) {
+        cert = PEM_read_X509(certFp, nullptr, nullptr, nullptr);
+        fclose(certFp);
+    }
+    if (!pkey || !cert) {
+        if (pkey) EVP_PKEY_free(pkey);
+        if (cert) X509_free(cert);
+        SSL_CTX_free(ctx);
+        throw std::runtime_error("Failed to load key or certificate for signing test");
+    }
+    // Create a test message
+    unsigned char testMsg[] = "ssl_test_message";
+    unsigned char sig[256];
+    unsigned int sigLen = 0;
+    EVP_MD_CTX* mdCtx = EVP_MD_CTX_new();
+    if (!mdCtx) {
+        EVP_PKEY_free(pkey);
+        X509_free(cert);
+        SSL_CTX_free(ctx);
+        throw std::runtime_error("Failed to create EVP_MD_CTX");
+    }
+    if (EVP_SignInit(mdCtx, EVP_sha256()) != 1 ||
+        EVP_SignUpdate(mdCtx, testMsg, sizeof(testMsg)) != 1 ||
+        EVP_SignFinal(mdCtx, sig, &sigLen, pkey) != 1) {
+        EVP_MD_CTX_free(mdCtx);
+        EVP_PKEY_free(pkey);
+        X509_free(cert);
+        SSL_CTX_free(ctx);
+        throw std::runtime_error("Failed to sign test message with private key");
+    }
+    EVP_MD_CTX_free(mdCtx);
+    // Verify signature using cert's public key
+    EVP_PKEY* pubkey = X509_get_pubkey(cert);
+    if (!pubkey) {
+        EVP_PKEY_free(pkey);
+        X509_free(cert);
+        SSL_CTX_free(ctx);
+        throw std::runtime_error("Failed to extract public key from certificate");
+    }
+    EVP_MD_CTX* verifyCtx = EVP_MD_CTX_new();
+    if (!verifyCtx) {
+        EVP_PKEY_free(pubkey);
+        EVP_PKEY_free(pkey);
+        X509_free(cert);
+        SSL_CTX_free(ctx);
+        throw std::runtime_error("Failed to create EVP_MD_CTX for verify");
+    }
+    bool verifyOk =
+        EVP_VerifyInit(verifyCtx, EVP_sha256()) == 1 &&
+        EVP_VerifyUpdate(verifyCtx, testMsg, sizeof(testMsg)) == 1 &&
+        EVP_VerifyFinal(verifyCtx, sig, sigLen, pubkey) == 1;
+    EVP_MD_CTX_free(verifyCtx);
+    EVP_PKEY_free(pubkey);
+    EVP_PKEY_free(pkey);
+    X509_free(cert);
+    SSL_CTX_free(ctx);
+    if (!verifyOk) {
+        throw std::runtime_error("Failed to verify signature with certificate public key");
+    }
 }
