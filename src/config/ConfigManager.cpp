@@ -132,6 +132,10 @@ void ConfigManager::reloadConfig() {
         CHECK_STATE(!userProvidedConfigPath_.empty());
         CHECK_STATE(!fullyResolvedConfigPath_.empty());
 
+        spdlog::info("Loading machinepay config from: {}", fullyResolvedConfigPath_);
+        spdlog::info("All relative paths in the config will be resolved against the machinepay config location.");
+
+
         checkFileExistsAndReadable(fullyResolvedConfigPath_);
 
         auto hash = computeBlakeHash(userProvidedConfigPath_);
