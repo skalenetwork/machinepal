@@ -27,18 +27,22 @@ bool isAlpine() {
 }
 
 
-wangle::SSLContextConfig ServerFactory::createAndValidateWangleSSLContext(ptr<HTTPSConfig> https, std::string caFilePath) {
-
+wangle::SSLContextConfig ServerFactory::createAndValidateWangleSSLContext(ptr<HTTPSConfig> https) {
+    CHECK_STATE(https);
+    CHECK_STATE(!https->keyFile().empty());
+    CHECK_STATE(!https->certFile().empty())
+    auto certFile = https->certFile();
+    auto keyFile = https->keyFile();
+    auto caFile = CertManager::getCaFilePath(https);
+    CertManager::validateSSLFiles(https->certFile(), keyFile, caFile);
     wangle::SSLContextConfig sslCfg;
     sslCfg.isDefault = true; // very important otherwise proxygen will fail
     auto keyPassPath = https->keyPassFile() ? https->keyPassFile().value() : "";
     sslCfg.addCertificate(https->certFile(), https->keyFile(), keyPassPath);
     // TODO add more options to yaml to set these
     //sslCfg.sslCiphers = "ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384";
-    //sslCfg.clientVerification =
-    //folly::SSLContext::VerifyClientCertificate::DO_NOT_REQUEST;
+    sslCfg.clientVerification = folly::SSLContext::VerifyClientCertificate::DO_NOT_REQUEST;
     //sslCfg.clientCAFile = caFilePath;
-    folly::SSLContext::VerifyClientCertificate::DO_NOT_REQUEST;
     return sslCfg;
 }
 
@@ -55,19 +59,12 @@ void ServerFactory::addHttpServerToIPConfigs(const ServerConfig &serverConfig, s
 void ServerFactory::addHTTPSServerToConfigs(const ServerConfig &serverConfig, std::vector<HTTPServer::IPConfig>& ipConfigs) {
     auto https = serverConfig.https();
     CHECK_STATE(https);
-    CHECK_STATE(!https->keyFile().empty());
-    CHECK_STATE(!https->certFile().empty())
-    auto certFile = https->certFile();
-    auto keyFile = https->keyFile();
-    auto caFile = CertManager::getCaFilePath(https);
-    CertManager::validateSSLFiles(https->certFile(), keyFile, caFile);
-
-    auto sslCfg = createAndValidateWangleSSLContext(https, caFile);
+    auto sslCfg = createAndValidateWangleSSLContext(https);
 
     HTTPServer::IPConfig config(
         folly::SocketAddress(serverConfig.bindIp(), https->port(), true),
         HTTPServer::Protocol::HTTP);
-    //config.sslConfigs.push_back(sslCfg);
+    config.sslConfigs.push_back(sslCfg);
     ipConfigs.emplace_back(config);
 }
 
