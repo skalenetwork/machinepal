@@ -43,7 +43,10 @@ private:
     void setConfigValuesFromCliAndEnv(const std::map<std::string, std::string>& values);
 
     std::string userProvidedConfigPath_ = "machinepay.yml";
-    std::string fullyResolvedConfigPath_;
+    std::filesystem::path fullyResolvedConfigPath_;
+    std::filesystem::path fullyResolvedConfigDirPath_;
+
+
     std::shared_ptr<MachinePayConfig> latestConfig_;
     std::shared_mutex latestConfigMutex_;
     std::chrono::system_clock::time_point latestConfigModificationTime_;

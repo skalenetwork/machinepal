@@ -52,9 +52,9 @@ std::chrono::system_clock::time_point FileManager::getLastFileModificationTime(s
     );
 }
 
-std::string FileManager::resolveCanonicalPathAgainstCwd(std::string _path) {
+filesystem::path FileManager::resolveCanonicalPathAgainstCwd(std::string _path) {
     try {
-        return std::filesystem::canonical(std::filesystem::absolute(_path)).string();
+        return std::filesystem::weakly_canonical(std::filesystem::absolute(_path)).string();
     } catch (exception& e) {
         RETHROW_NESTED("ileManager::resolveCanonicalPathAgainstCwd failed");
     }

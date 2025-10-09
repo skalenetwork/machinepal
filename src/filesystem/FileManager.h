@@ -1,5 +1,6 @@
 #pragma once
 
+#include <filesystem>
 #include <string>
 
 class FileManager
@@ -15,7 +16,7 @@ public:
 
     static std::chrono::system_clock::time_point getLastFileModificationTime(string& _path);
 
-    static std::string resolveCanonicalPathAgainstCwd(std::string _path);
+    static filesystem::path resolveCanonicalPathAgainstCwd(std::string _path);
 
 private:
     std::string userProvidedConfigPath_;

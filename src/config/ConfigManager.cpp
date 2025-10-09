@@ -117,12 +117,17 @@ ptr<ConfigManager> ConfigManager::create(const std::map<std::string, std::string
 
 
 void ConfigManager::setConfigValuesFromCliAndEnv(const std::map<std::string, std::string>& values) {
-    configValuesFromCliAndEnv_ = values;
-    CHECK_STATE(values.contains("CONFIG"));
-    userProvidedConfigPath_ = values.at("CONFIG");
-    CHECK_STATE(!userProvidedConfigPath_.empty())
-    fullyResolvedConfigPath_ = FileManager::resolveCanonicalPathAgainstCwd(userProvidedConfigPath_);
-    CHECK_STATE(!fullyResolvedConfigPath_.empty())
+    try {
+        configValuesFromCliAndEnv_ = values;
+        CHECK_STATE(values.contains("CONFIG"));
+        userProvidedConfigPath_ = values.at("CONFIG");
+        CHECK_STATE(!userProvidedConfigPath_.empty())
+        fullyResolvedConfigPath_ = FileManager::resolveCanonicalPathAgainstCwd(userProvidedConfigPath_);
+        CHECK_STATE(!fullyResolvedConfigPath_.empty())
+        fullyResolvedConfigDirPath_ = std::filesystem::path(fullyResolvedConfigPath_).parent_path().string();
+    } catch (const std::exception &ex) {
+        RETHROW_NESTED("MachinePayConfigManager::setConfigValuesFromCliAndEnv failed: ");
+    }
 }
 
 void ConfigManager::reloadConfig() {
@@ -132,7 +137,7 @@ void ConfigManager::reloadConfig() {
         CHECK_STATE(!userProvidedConfigPath_.empty());
         CHECK_STATE(!fullyResolvedConfigPath_.empty());
 
-        spdlog::info("Loading machinepay config from: {}", fullyResolvedConfigPath_);
+        spdlog::info("Loading machinepay config from: {}", fullyResolvedConfigPath_.c_str());
         spdlog::info("All relative paths in the config will be resolved against the machinepay config location.");
 
 
