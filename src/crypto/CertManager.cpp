@@ -197,3 +197,23 @@ std::string CertManager::getCaFilePath(const std::shared_ptr<HTTPSConfig>& https
     }
     return "/etc/ssl/certs/ca-certificates.crt";
 }
+
+
+wangle::SSLContextConfig CertManager::createAndValidateWangleSSLContext(ptr<HTTPSConfig> https) {
+    CHECK_STATE(https);
+    CHECK_STATE(!https->keyFile().empty());
+    CHECK_STATE(!https->certFile().empty())
+    auto certFile = https->certFile();
+    auto keyFile = https->keyFile();
+    auto caFile = CertManager::getCaFilePath(https);
+    CertManager::validateSSLFiles(https->certFile(), keyFile, caFile);
+    wangle::SSLContextConfig sslCfg;
+    sslCfg.isDefault = true; // very important otherwise proxygen will fail
+    auto keyPassPath = https->keyPassFile() ? https->keyPassFile().value() : "";
+    sslCfg.addCertificate(https->certFile(), https->keyFile(), keyPassPath);
+    // TODO add more options to yaml to set these
+    //sslCfg.sslCiphers = "ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384";
+    sslCfg.clientVerification = folly::SSLContext::VerifyClientCertificate::DO_NOT_REQUEST;
+    //sslCfg.clientCAFile = caFilePath;
+    return sslCfg;
+}

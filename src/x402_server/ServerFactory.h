@@ -6,7 +6,6 @@
 #include <cstdint>
 #include <memory>
 #include <proxygen/httpserver/HTTPServer.h>
-#include <wangle/ssl/SSLContextConfig.h>
 
 
 namespace proxygen {
@@ -14,15 +13,17 @@ namespace proxygen {
 }
 
 class ServerFactory {
-public:
-    static wangle::SSLContextConfig createAndValidateWangleSSLContext(ptr<HTTPSConfig> https);
 
+public:
+
+    static std::shared_ptr<proxygen::HTTPServer> createServerInstance(
+            const ServerConfig& serverConfig );
+
+private:
     static void addHttpServerToIPConfigs(const ServerConfig &serverConfig,
                                          std::vector<proxygen::HTTPServer::IPConfig>& ipConfigs);
 
-    static void addHTTPSServerToConfigs(const ServerConfig &serverConfig,
+    static void addHTTPSServerToIpConfigs(const ServerConfig &serverConfig,
                                         std::vector<proxygen::HTTPServer::IPConfig>& ipConfigs);
 
-    static std::shared_ptr<proxygen::HTTPServer> createServerInstance(
-        const ServerConfig& serverConfig );
 };

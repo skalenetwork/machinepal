@@ -26,27 +26,6 @@ bool isAlpine() {
     return std::filesystem::exists("/etc/alpine-release");
 }
 
-
-wangle::SSLContextConfig ServerFactory::createAndValidateWangleSSLContext(ptr<HTTPSConfig> https) {
-    CHECK_STATE(https);
-    CHECK_STATE(!https->keyFile().empty());
-    CHECK_STATE(!https->certFile().empty())
-    auto certFile = https->certFile();
-    auto keyFile = https->keyFile();
-    auto caFile = CertManager::getCaFilePath(https);
-    CertManager::validateSSLFiles(https->certFile(), keyFile, caFile);
-    wangle::SSLContextConfig sslCfg;
-    sslCfg.isDefault = true; // very important otherwise proxygen will fail
-    auto keyPassPath = https->keyPassFile() ? https->keyPassFile().value() : "";
-    sslCfg.addCertificate(https->certFile(), https->keyFile(), keyPassPath);
-    // TODO add more options to yaml to set these
-    //sslCfg.sslCiphers = "ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384";
-    sslCfg.clientVerification = folly::SSLContext::VerifyClientCertificate::DO_NOT_REQUEST;
-    //sslCfg.clientCAFile = caFilePath;
-    return sslCfg;
-}
-
-
 void ServerFactory::addHttpServerToIPConfigs(const ServerConfig &serverConfig, std::vector<HTTPServer::IPConfig>& ipConfigs) {
     auto http = serverConfig.http();
     CHECK_STATE(http);
@@ -56,10 +35,10 @@ void ServerFactory::addHttpServerToIPConfigs(const ServerConfig &serverConfig, s
     );
 }
 
-void ServerFactory::addHTTPSServerToConfigs(const ServerConfig &serverConfig, std::vector<HTTPServer::IPConfig>& ipConfigs) {
+void ServerFactory::addHTTPSServerToIpConfigs(const ServerConfig &serverConfig, std::vector<HTTPServer::IPConfig>& ipConfigs) {
     auto https = serverConfig.https();
     CHECK_STATE(https);
-    auto sslCfg = createAndValidateWangleSSLContext(https);
+    auto sslCfg = CertManager::createAndValidateWangleSSLContext(https);
 
     HTTPServer::IPConfig config(
         folly::SocketAddress(serverConfig.bindIp(), https->port(), true),
@@ -92,7 +71,7 @@ std::shared_ptr<HTTPServer> ServerFactory::createServerInstance(const ServerConf
         }
 
         if (serverConfig.https() && serverConfig.https()->isEnabled()) {
-            addHTTPSServerToConfigs(serverConfig, ipConfigs);
+            addHTTPSServerToIpConfigs(serverConfig, ipConfigs);
         }
 
         if (ipConfigs.empty()) {
@@ -107,7 +86,7 @@ std::shared_ptr<HTTPServer> ServerFactory::createServerInstance(const ServerConf
             spdlog::info("Binding to {}:{} [{}]",
                 config.address.getAddressStr(),
                 config.address.getPort(),
-                config.protocol == HTTPServer::Protocol::HTTP ? "HTTP" : "HTTPS");
+                config.sslConfigs.empty() ? " HTTP" : "HTTPS");
         }
 
         server->bind(ipConfigs);
