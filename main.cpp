@@ -30,7 +30,7 @@ public:
     RequestHandler *onRequest(RequestHandler *, HTTPMessage *msg) noexcept override {
         // Route if needed (e.g., only gate /paid). Here we gate everything.
         (void) msg;
-        return new X402Handler(MachinePayConfigManager::getInstance().latestConfig());
+        return new X402Handler(MachinePayConfigManager::getInstance()->latestConfig());
     }
 };
 
@@ -94,13 +94,11 @@ map<string, string>  parseCommandLineAndEnvironmentOverloads(int argc, char **ar
 }
 
 
-void parseCommandLineAndConfigThenInitLibsAndLogging(int argc, char** argv)
+std::map<string, string> parseCommandLineAndConfigThenInitLibsAndLogging(int argc, char** argv)
 {
     try {
         Init::initAllLibs(1, argv);
-        auto configValuesFromCliAndEnv = parseCommandLineAndEnvironmentOverloads(argc, argv);
-        MachinePayConfigManager::getInstance().initManager(configValuesFromCliAndEnv);
-        Init::initLogLevelFromConfig();
+        return  parseCommandLineAndEnvironmentOverloads(argc, argv);
     } catch (std::exception &ex) {
         RETHROW_NESTED("Fatal error initing from config in main: ");
     } catch (...) {
@@ -109,11 +107,13 @@ void parseCommandLineAndConfigThenInitLibsAndLogging(int argc, char** argv)
     }
 }
 
-void runServerUntilShutdown()
-{
+void runServerUntilShutdown(std::map<string, string> configValuesFromCliAndEnv) {
     try
     {
-        auto serverConfig = MachinePayConfigManager::getInstance().latestConfig()->server();
+        spdlog::info("Processing config");
+        MachinePayConfigManager::getInstance()->initManager(configValuesFromCliAndEnv);
+        Init::initLogLevelFromConfig();
+        auto serverConfig = MachinePayConfigManager::getInstance()->latestConfig()->server();
         auto serverObject = ServerFactory::createServerInstance(*serverConfig);
         serverObject->start();
     } catch (std::exception &ex) {
@@ -122,23 +122,15 @@ void runServerUntilShutdown()
 }
 
 int main(int argc, char *argv[]) {
-
     try {
-        parseCommandLineAndConfigThenInitLibsAndLogging(argc, argv);
-
+        auto configValuesFromCliAndEnv = parseCommandLineAndConfigThenInitLibsAndLogging(argc, argv);
         spdlog::info("Creating and starting server");
-
-        runServerUntilShutdown();
-
+        runServerUntilShutdown(configValuesFromCliAndEnv);
         spdlog::info("Server exited");
+        return 0;
     } catch (std::exception &ex) {
         spdlog::critical("Fatal error in main ");
         printNestedException(ex);
-        goto error;
+        return 1;
     }
-
-    return 0;
-
-error:
-    return 1;
 }
