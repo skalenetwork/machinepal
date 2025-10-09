@@ -29,39 +29,35 @@ bool isAlpine() {
 }
 
 
-wangle::SSLContextConfig ServerFactory::createAndValidateWangleSSLContext(ptr<HTTPSConfig> https, std::string &caFilePath) {
+wangle::SSLContextConfig ServerFactory::createAndValidateWangleSSLContext(ptr<HTTPSConfig> https, std::string caFilePath) {
 
     wangle::SSLContextConfig sslCfg;
-    CHECK_STATE(!https->keyFile().empty());
-    CHECK_STATE(!https->certFile().empty());
-    FileReadUtils::doThoroughKeyCertFormatCheck(https->certFile(), https->keyFile());
-    FileReadUtils::validateSSLContext(https->certFile(), https->keyFile(), caFilePath);
     auto keyPassPath = https->keyPassFile() ? https->keyPassFile().value() : "";
     sslCfg.addCertificate(https->certFile(), https->keyFile(), keyPassPath);
     sslCfg.sslCiphers = "ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384";
-
-    if (https->caFile() && !https->caFile()->empty()) {
-        sslCfg.clientCAFile = https->caFile().value();
-        caFilePath = sslCfg.clientCAFile;
-    } else {
-        if (isRedHat()) {
-            sslCfg.clientCAFile = "/etc/pki/tls/certs/ca-bundle.crt";
-        } else if (isAlpine()) {
-            sslCfg.clientCAFile = "/etc/ssl/cert.pem";
-        } else {
-            sslCfg.clientCAFile  = "/etc/ssl/certs/ca-certificates.crt";
-        }
-        caFilePath = sslCfg.clientCAFile;
-    }
-    if (!std::filesystem::exists(sslCfg.clientCAFile)) {
-        throw std::runtime_error("CA file does not exist: " + sslCfg.clientCAFile);
-    }
-
-
+    sslCfg.clientCAFile = caFilePath;
     return sslCfg;
 }
 
 
+std::string ServerFactory::getCaFilePath(ptr<HTTPSConfig> https) {
+    string caFilePath;
+    if (https->caFile() && !https->caFile()->empty()) {
+        caFilePath = https->caFile().value();
+    } else {
+        if (isRedHat()) {
+            caFilePath = "/etc/pki/tls/certs/ca-bundle.crt";
+        } else if (isAlpine()) {
+            caFilePath = "/etc/ssl/cert.pem";
+        } else {
+            caFilePath  = "/etc/ssl/certs/ca-certificates.crt";
+        }
+    }
+    if (!std::filesystem::exists(caFilePath)) {
+        throw std::runtime_error("CA file does not exist: " + caFilePath);
+    }
+    return caFilePath;
+}
 
 std::shared_ptr<HTTPServer> ServerFactory::createServerInstance(const ServerConfig& serverConfig) {
 
@@ -80,10 +76,13 @@ std::shared_ptr<HTTPServer> ServerFactory::createServerInstance(const ServerConf
 
         if (auto https = serverConfig.https(); https && https->isEnabled()) {
 ;
-            std::string caFilePath;
+            CHECK_STATE(!https->keyFile().empty());
+            CHECK_STATE(!https->certFile().empty());
+            string caFilePath = getCaFilePath(https);
+            FileReadUtils::doThoroughKeyCertFormatCheck(https->certFile(), https->keyFile());
+            FileReadUtils::validateSSLContext(https->certFile(), https->keyFile(), caFilePath);
+
             auto sslCfg = createAndValidateWangleSSLContext(https, caFilePath);
-
-
 
             HTTPServer::IPConfig config(
                 folly::SocketAddress(serverConfig.bindIp(), https->port(), true),

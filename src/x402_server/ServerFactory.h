@@ -14,7 +14,9 @@ namespace proxygen {
 
 class ServerFactory {
 public:
-    static wangle::SSLContextConfig createAndValidateWangleSSLContext(ptr<HTTPSConfig> https, std::string &caFilePath);
+    static wangle::SSLContextConfig createAndValidateWangleSSLContext(ptr<HTTPSConfig> https, std::string caFilePath);
+
+    static std::string getCaFilePath(ptr<HTTPSConfig> https);
 
     static std::shared_ptr<proxygen::HTTPServer> createServerInstance(
         const ServerConfig& serverConfig );
