@@ -35,8 +35,11 @@ wangle::SSLContextConfig ServerFactory::createAndValidateWangleSSLContext(ptr<HT
     sslCfg.isDefault = true;
     auto keyPassPath = https->keyPassFile() ? https->keyPassFile().value() : "";
     sslCfg.addCertificate(https->certFile(), https->keyFile(), keyPassPath);
-    sslCfg.sslCiphers = "ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384";
-    sslCfg.clientCAFile = caFilePath;
+    //sslCfg.sslCiphers = "ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384";
+    //sslCfg.clientVerification =
+    //folly::SSLContext::VerifyClientCertificate::DO_NOT_REQUEST;
+    //sslCfg.clientCAFile = caFilePath;
+    folly::SSLContext::VerifyClientCertificate::DO_NOT_REQUEST;
     return sslCfg;
 }
 
