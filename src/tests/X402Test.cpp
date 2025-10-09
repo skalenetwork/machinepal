@@ -38,6 +38,9 @@ struct X402GlobalFixture {
             fake_argv.push_back(const_cast<char *>(s.c_str()));
         }
         Init::initAllLibs(fake_argc, fake_argv.data());
+
+        // Direct log output (errors, failures) to std::cerr
+        boost::unit_test::unit_test_log.set_stream(std::cerr);
     }
 
     ~X402GlobalFixture() {
