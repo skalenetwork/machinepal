@@ -15,6 +15,7 @@ public:
 
 
     static ptr<ConfigManager> initManager(const std::map<std::string, std::string>& configValuesFromCliAndEnv);
+    static ptr<ConfigManager> create(const std::map<std::string, std::string>& configValuesFromCliAndEnv);
 
     void reloadConfig();
     std::shared_ptr<MachinePayConfig> latestConfig();
@@ -28,11 +29,13 @@ public:
     }
 
 
+public:
+    ConfigManager() = default;
+
 private:
 
     ptr<FileManager> fileManager_;
 
-    ConfigManager() = default;
     ConfigManager(const ConfigManager&) = delete;
     ConfigManager& operator=(const ConfigManager&) = delete;
 

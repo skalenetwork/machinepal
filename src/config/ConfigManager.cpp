@@ -100,14 +100,21 @@ void ConfigManager::checkFileExistsAndReadable(const std::string& configFile) {
 ptr<ConfigManager> ConfigManager::initManager(const std::map<std::string, std::string>& configValuesFromCliAndEnv) {
     try
     {
-        auto instance = std::shared_ptr<ConfigManager>(new ConfigManager());
-        instance->setConfigValuesFromCliAndEnv(configValuesFromCliAndEnv);
+        auto instance = create(configValuesFromCliAndEnv);
         instance->reloadConfig();
         return instance;
     } catch (const std::exception &ex) {
         RETHROW_NESTED("MachinePayConfigManager::initManager failed: ");
     }
 }
+
+ptr<ConfigManager> ConfigManager::create(const std::map<std::string, std::string>& configValuesFromCliAndEnv) {
+    ptr<ConfigManager> mgr(new ConfigManager());
+    mgr->setConfigValuesFromCliAndEnv(configValuesFromCliAndEnv);
+    return mgr;
+}
+
+
 
 void ConfigManager::setConfigValuesFromCliAndEnv(const std::map<std::string, std::string>& values) {
     configValuesFromCliAndEnv_ = values;
