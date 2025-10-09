@@ -42,7 +42,7 @@ void ServerFactory::addHTTPSServerToIpConfigs(const ServerConfig &serverConfig, 
 
     HTTPServer::IPConfig config(
         folly::SocketAddress(serverConfig.bindIp(), https->port(), true),
-        HTTPServer::Protocol::HTTP);
+        HTTPServer::Protocol::HTTP2); // we use HTTP2 for HTTPS, since this is default for industry now
     config.sslConfigs.push_back(sslCfg);
     ipConfigs.emplace_back(config);
 }
