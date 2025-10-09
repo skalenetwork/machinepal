@@ -7,7 +7,7 @@
 #include <filesystem>
 
 
-ptr<LogConfig> LogConfig::createFromJson(const nlohmann::json& j)
+ptr<LogConfig> LogConfig::createFromJson(const nlohmann::json& j, ptr<FileManager> fileManager)
 {
     CHECK_STATE(j.is_object());
     return std::make_shared<LogConfig>(
@@ -16,17 +16,18 @@ ptr<LogConfig> LogConfig::createFromJson(const nlohmann::json& j)
 }
 
 
-ptr<FacilitatorConfig> FacilitatorConfig::createFomJson(const nlohmann::json& j)
+ptr<FacilitatorConfig> FacilitatorConfig::createFomJson(const nlohmann::json& j, ptr<FileManager> fileManager)
 {
+
+    CHECK_STATE(fileManager);
     try
     {
         CHECK_STATE(j.is_object());
-        std::optional<std::string> apiKeyFile = std::nullopt;
+        std::optional<filesystem::path> apiKeyFile = std::nullopt;
         if (j.contains("api_key_file") && !j.at("api_key_file").is_null())
         {
             std::string file = j.at("api_key_file").get<std::string>();
-            FileManager::checkFileExistsAndReadable(file);
-            apiKeyFile = file;
+            apiKeyFile = fileManager->checkFileExistsAndReadableAndResolve(file);
         }
         return std::make_shared<FacilitatorConfig>(
             ConfigLoader::getStringWithDefault(j, "type", ""),
@@ -41,7 +42,7 @@ ptr<FacilitatorConfig> FacilitatorConfig::createFomJson(const nlohmann::json& j)
 }
 
 
-ptr<MachinePayConfig> MachinePayConfig::createFromJson(const nlohmann::json& j)
+ptr<MachinePayConfig> MachinePayConfig::createFromJson(const nlohmann::json& j, ptr<FileManager> fileManager)
 {
     try
     {
@@ -71,7 +72,7 @@ ptr<MachinePayConfig> MachinePayConfig::createFromJson(const nlohmann::json& j)
 }
 
 
-ptr<ServerConfig> ServerConfig::createFromJson(const nlohmann::json& j)
+ptr<ServerConfig> ServerConfig::createFromJson(const nlohmann::json& j,  ptr<FileManager> fileManager)
 {
     try
     {
@@ -95,14 +96,14 @@ ptr<ServerConfig> ServerConfig::createFromJson(const nlohmann::json& j)
             if (jt.contains("ca_file") && !jt.at("ca_file").is_null())
             {
                 std::string file = jt.at("ca_file").get<std::string>();
-                FileManager::checkFileExistsAndReadable(file);
+                FileManager::checkFileExistsAndReadableAndResolve(file);
                 caFile = file;
             }
             std::optional<std::string> keyPassFile = std::nullopt;
             if (jt.contains("key_pass_file") && !jt.at("key_pass_file").is_null())
             {
                 std::string file = jt.at("key_pass_file").get<std::string>();
-                FileManager::checkFileExistsAndReadable(file);
+                FileManager::checkFileExistsAndReadableAndResolve(file);
                 keyPassFile = file;
             }
             httpsConfig = make_shared<HTTPSConfig>(

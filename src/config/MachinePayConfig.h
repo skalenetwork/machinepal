@@ -45,7 +45,7 @@ public:
         CertManager::doThoroughKeyCertFormatCheck(certFile_, keyFile_);
         if (caFile_)
         {
-            FileManager::checkFileExistsAndReadable(*caFile_);
+            FileManager::checkFileExistsAndReadableAndResolve(*caFile_);
         }
     }
     const std::string& certFile() const { return certFile_; }
@@ -67,7 +67,7 @@ public:
     const std::string& baseUrl() const { return baseUrl_; }
     const std::optional<std::string>& apiKeyFile() const { return apiKeyFile_; }
 
-    static ptr<FacilitatorConfig> createFomJson(const nlohmann::json& j);
+    static ptr<FacilitatorConfig> createFomJson(const nlohmann::json& j, ptr<FileManager> fileManager);
 
 };
 
@@ -106,7 +106,7 @@ public:
     {
         return https_;
     }
-    static ptr<ServerConfig> createFromJson(const nlohmann::json& j);
+    static ptr<ServerConfig> createFromJson(const nlohmann::json& j, ptr<FileManager> fileManager););
 };
 
 
@@ -149,7 +149,7 @@ public:
         return std::make_shared<LogConfig>("info", "plain");
     }
 
-    static ptr<LogConfig> createFromJson(const nlohmann::json& j);
+    static ptr<LogConfig> createFromJson(const nlohmann::json& j, ptr<FileManager> fileManager););
 };
 
 class MachinePayConfig {
@@ -179,5 +179,5 @@ public:
         return log_;
     }
 
-    static ptr<MachinePayConfig> createFromJson(const nlohmann::json& j);
+    static ptr<MachinePayConfig> createFromJson(const nlohmann::json& j, ptr<FileManager> fileManager);
 };
