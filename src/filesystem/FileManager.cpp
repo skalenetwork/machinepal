@@ -21,6 +21,14 @@ void FileManager::checkFileExistsAndReadable(const std::string& path)
     {
         throw std::runtime_error("File '" + path + "' does not exist. Current working directory: " + cwd);
     }
+
+    // Check that configFile is not a directory
+    if (std::filesystem::is_directory(path)) {
+        throw std::runtime_error(
+            "File '" + path + "' is a directory, not a file. Current working directory: " +
+            std::string(cwd));
+    }
+
     if (!fs::is_regular_file(path))
     {
         throw std::runtime_error("File '" + path + "' is not a regular file (a directory?). Current working directory: " + cwd);
@@ -33,4 +41,13 @@ void FileManager::checkFileExistsAndReadable(const std::string& path)
     {
         throw std::runtime_error("File '" + path + "' is empty. Current working directory: " + cwd);
     }
+}
+
+std::chrono::system_clock::time_point FileManager::getLastFileModificationTime(string& _path) {
+    auto ftime = std::filesystem::last_write_time(_path);
+    return std::chrono::system_clock::time_point(
+        chrono::duration_cast<std::chrono::system_clock::duration>(
+            ftime.time_since_epoch()
+        )
+    );
 }
