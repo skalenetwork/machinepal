@@ -12,12 +12,9 @@
 class MachinePayConfigManager {
 public:
 
-    static ptr<MachinePayConfigManager> getInstance() {
-        CHECK_STATE(instance);
-        return instance;
-    }
 
-    static void initManager(const std::map<std::string, std::string>& configValuesFromCliAndEnv);
+
+    static ptr<MachinePayConfigManager> initManager(const std::map<std::string, std::string>& configValuesFromCliAndEnv);
 
     void reloadConfig();
     std::shared_ptr<MachinePayConfig> latestConfig();
@@ -30,7 +27,6 @@ public:
         return fileManager_;
     }
 
-    static ptr<MachinePayConfigManager> instance;
 
 private:
 

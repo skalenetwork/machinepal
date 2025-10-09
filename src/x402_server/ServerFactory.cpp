@@ -56,11 +56,14 @@ std::shared_ptr<HTTPServer> ServerFactory::createServerInstance(const ServerConf
 
         HTTPServerOptions options;
         spdlog::info("Creating server instance");
+
+        auto factory = std::make_unique<X402HandlerFactory>(app_);
+
         options.threads = static_cast<size_t>(std::thread::hardware_concurrency());
         options.idleTimeout = std::chrono::milliseconds(60000);
         options.shutdownOn = {SIGINT, SIGTERM};
         options.handlerFactories = RequestHandlerChain()
-                .addThen<X402HandlerFactory>()
+                .addThen(std::move(factory))
                 .build();
 
 

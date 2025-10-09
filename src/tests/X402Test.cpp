@@ -17,6 +17,7 @@
 #include <nlohmann/json.hpp>
 
 
+#include "MachinePayApp.h"
 #include "../datastructures/PaymentRequirements.h"
 #include "../examples/PaymentExamples.h"
 #include "config/MachinePayConfigLoader.h"
@@ -56,17 +57,17 @@ struct X402ServerFixture {
 
 
         try {
-            MachinePayConfigManager::getInstance()->initManager({
-                {
-                    "CONFIG",
-                    "src/tests/configs/basic/machinepay.yml"
-                }
-            });
 
-            auto config = MachinePayConfigManager::getInstance()->latestConfig();
+            std::map<std::string, std::string> configMap = {
+                {"CONFIG", "src/tests/configs/basic/machinepay.yml"}
+            };
+            MachinePayApp app(configMap);
 
 
-            server = ServerFactory().createServerInstance(*config->server());
+            auto config = app.configManager()->latestConfig();
+
+
+            server = app.serverFactory()->createServerInstance(*config->server());
 
             client = std::make_shared<X402Client>(config->server()->bindIp(), config->server()->http()->port());
 

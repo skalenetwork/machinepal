@@ -20,21 +20,6 @@
 
 using namespace proxygen;
 
-class X402HandlerFactory : public RequestHandlerFactory {
-public:
-    void onServerStart(folly::EventBase *) noexcept override {
-    }
-
-    void onServerStop() noexcept override {
-    }
-
-    RequestHandler *onRequest(RequestHandler *, HTTPMessage *msg) noexcept override {
-        // Route if needed (e.g., only gate /paid). Here we gate everything.
-        (void) msg;
-        return new X402Handler(MachinePayConfigManager::getInstance()->latestConfig());
-    }
-};
-
 
 void setIfNotEmpty(std::map<std::string, std::string>& envOverloads, const std::string& key, const std::string& value)
 {

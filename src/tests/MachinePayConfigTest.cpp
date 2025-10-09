@@ -1,22 +1,21 @@
 #include "../config/MachinePayConfigLoader.h"
 #include <boost/test/unit_test.hpp>
 #include <string>
+#include <map>
 
+#include "MachinePayApp.h"
 #include "config/MachinePayConfigManager.h"
 #include "nlohmann/json.hpp"
 
 BOOST_AUTO_TEST_CASE(deserialize_basic_proxy_config) {
     // Path to the test config file
+    std::map<std::string, std::string> configMap = {
+        {"CONFIG", "src/tests/configs/basic/machinepay.yml"}
+    };
+    MachinePayApp app(configMap);
 
 
-    MachinePayConfigManager::initManager({
-    {
-        "CONFIG",
-        "src/tests/configs/basic/machinepay.yml"
-    }
-    });
-
-    auto config = MachinePayConfigManager::getInstance()->latestConfig();
+    auto config = app.configManager()->latestConfig();
 
     BOOST_TEST(config->server()->http());// Check frontend
     BOOST_TEST(config->server()->http()->isEnabled() == true);

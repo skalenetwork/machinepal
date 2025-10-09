@@ -12,11 +12,18 @@ namespace proxygen {
     class HTTPServer;
 }
 
+class MachinePayApp;
+
 class ServerFactory {
 
-public:
+    MachinePayApp& app_;
 
-    static std::shared_ptr<proxygen::HTTPServer> createServerInstance(
+public:
+    explicit ServerFactory(MachinePayApp &app)
+        : app_(app) {
+    }
+
+    std::shared_ptr<proxygen::HTTPServer> createServerInstance(
             const ServerConfig& serverConfig );
 
 private:

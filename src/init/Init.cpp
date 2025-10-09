@@ -81,8 +81,9 @@ map<string, string> Init::getMachinePayEnvironmentOverloads() {
 
 
 
-void Init::initLogLevelFromConfig() {
-    auto logConfig = MachinePayConfigManager::getInstance()->latestConfig()->log();
+void Init::initLogLevelFromConfig(ptr<MachinePayConfigManager> manager) {
+    CHECK_STATE(manager);
+    auto logConfig = manager->latestConfig()->log();
     auto logLevel = logConfig->level();
 
     spdlog::level::level_enum spdlogLevel = spdlog::level::info;

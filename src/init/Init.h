@@ -5,6 +5,8 @@
 #include <mutex>
 #include <atomic>
 
+class MachinePayConfigManager;
+
 class Init {
 public:
     static void initAllLibs(int _argc, char* _argv[]);
@@ -12,8 +14,7 @@ public:
     static std::map<std::string, std::string> getMachinePayEnvironmentOverloads();
 
 
-
-    static void initLogLevelFromConfig();
+    static void initLogLevelFromConfig(ptr<MachinePayConfigManager> manager);
 
 private:
     static std::atomic<bool> inited_;

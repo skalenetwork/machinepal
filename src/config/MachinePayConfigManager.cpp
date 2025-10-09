@@ -22,7 +22,6 @@ using nlohmann::json;
 using nlohmann::json_schema::json_validator;;
 using namespace nlohmann::literals; // Enables the _json_pointer literal
 
-std::shared_ptr<MachinePayConfigManager> MachinePayConfigManager::instance = nullptr;
 
 std::string MachinePayConfigManager::computeBlakeHash(const std::string &filePath) {
     std::ifstream file(filePath, std::ios::binary);
@@ -98,12 +97,13 @@ void MachinePayConfigManager::checkFileExistsAndReadable(const std::string& conf
 }
 
 
-void MachinePayConfigManager::initManager(const std::map<std::string, std::string>& configValuesFromCliAndEnv) {
+ptr<MachinePayConfigManager> MachinePayConfigManager::initManager(const std::map<std::string, std::string>& configValuesFromCliAndEnv) {
     try
     {
-        instance = std::shared_ptr<MachinePayConfigManager>(new MachinePayConfigManager());
+        auto instance = std::shared_ptr<MachinePayConfigManager>(new MachinePayConfigManager());
         instance->setConfigValuesFromCliAndEnv(configValuesFromCliAndEnv);
         instance->reloadConfig();
+        return instance;
     } catch (const std::exception &ex) {
         RETHROW_NESTED("MachinePayConfigManager::initManager failed: ");
     }

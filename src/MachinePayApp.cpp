@@ -2,10 +2,11 @@
 
 MachinePayApp::MachinePayApp(std::map<std::string, std::string> configValuesFromCliAndEnv) {
     spdlog::info("Processing config");
-    MachinePayConfigManager::initManager(configValuesFromCliAndEnv);
-    Init::initLogLevelFromConfig();
-    auto serverConfig = MachinePayConfigManager::getInstance()->latestConfig()->server();
-    auto serverObject = ServerFactory::createServerInstance(*serverConfig);
+    configManager_  = MachinePayConfigManager::initManager(configValuesFromCliAndEnv);
+    Init::initLogLevelFromConfig(configManager());
+    auto serverConfig = configManager_->latestConfig()->server();
+    serverFactory_ = std::make_shared<ServerFactory>(*this);
+    auto serverObject = serverFactory_->createServerInstance(*serverConfig);
     serverObject->start();
 }
 
