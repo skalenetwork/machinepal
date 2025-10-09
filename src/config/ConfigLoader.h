@@ -14,10 +14,10 @@ class MachinePayConfig;
 // 4) Resolve secret *files* (read contents).
 // 5) Validate against JSON Schema.
 // 6) Materialize AppConfig.
-class MachinePayConfigLoader {
+class ConfigLoader {
 public:
 
-    explicit MachinePayConfigLoader(const std::map<std::string, std::string> &overrides)
+    explicit ConfigLoader(const std::map<std::string, std::string> &overrides)
         : overridesFromCliAndEnv_(overrides) {
     }
 

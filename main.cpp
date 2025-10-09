@@ -11,7 +11,7 @@
 #include <wangle/ssl/SSLContextConfig.h>
 #include "CLI/CLI.hpp"
 #include <folly/init/Init.h>
-#include "config/MachinePayConfigManager.h"
+#include "config/ConfigManager.h"
 #include "init/Init.h"
 
 #include <map>

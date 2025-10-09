@@ -5,7 +5,7 @@
 
 #include "MachinePayApp.h"
 #include "X402Handler.h"
-#include "config/MachinePayConfigManager.h"
+#include "config/ConfigManager.h"
 
 class MachinePayApp;
 

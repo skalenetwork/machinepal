@@ -3,7 +3,7 @@
 //
 
 #include "MachinePayConfig.h"
-#include "MachinePayConfigLoader.h"
+#include "ConfigLoader.h"
 #include <filesystem>
 
 
@@ -11,8 +11,8 @@ ptr<LogConfig> LogConfig::createFromJson(const nlohmann::json& j)
 {
     CHECK_STATE(j.is_object());
     return std::make_shared<LogConfig>(
-        MachinePayConfigLoader::getStringWithDefault(j, "level", "info"),
-        MachinePayConfigLoader::getStringWithDefault(j, "type", "plain"));
+        ConfigLoader::getStringWithDefault(j, "level", "info"),
+        ConfigLoader::getStringWithDefault(j, "type", "plain"));
 }
 
 
@@ -29,8 +29,8 @@ ptr<FacilitatorConfig> FacilitatorConfig::createFomJson(const nlohmann::json& j)
             apiKeyFile = file;
         }
         return std::make_shared<FacilitatorConfig>(
-            MachinePayConfigLoader::getStringWithDefault(j, "type", ""),
-            MachinePayConfigLoader::getStringWithDefault(j, "base_url", ""),
+            ConfigLoader::getStringWithDefault(j, "type", ""),
+            ConfigLoader::getStringWithDefault(j, "base_url", ""),
             apiKeyFile
         );
     }
@@ -82,8 +82,8 @@ ptr<ServerConfig> ServerConfig::createFromJson(const nlohmann::json& j)
             CHECK_STATE(j.at("http").is_object());
             const auto& jt = j.at("http");
             httpConfig = make_shared<HTTPConfig>(
-                MachinePayConfigLoader::getBoolWithDefault(jt, "enabled", true),
-                MachinePayConfigLoader::getUint16WithDefault(jt, "port", 8080)
+                ConfigLoader::getBoolWithDefault(jt, "enabled", true),
+                ConfigLoader::getUint16WithDefault(jt, "port", 8080)
             );
         }
         ptr<HTTPSConfig> httpsConfig = nullptr;
@@ -106,10 +106,10 @@ ptr<ServerConfig> ServerConfig::createFromJson(const nlohmann::json& j)
                 keyPassFile = file;
             }
             httpsConfig = make_shared<HTTPSConfig>(
-                MachinePayConfigLoader::getBoolWithDefault(jt, "enabled", true),
-                MachinePayConfigLoader::getUint16WithDefault(jt, "port", 8080),
-                MachinePayConfigLoader::getStringWithDefault(jt, "cert_file", ""),
-                MachinePayConfigLoader::getStringWithDefault(jt, "key_file", ""),
+                ConfigLoader::getBoolWithDefault(jt, "enabled", true),
+                ConfigLoader::getUint16WithDefault(jt, "port", 8080),
+                ConfigLoader::getStringWithDefault(jt, "cert_file", ""),
+                ConfigLoader::getStringWithDefault(jt, "key_file", ""),
                 keyPassFile,
                 caFile);
         }
@@ -119,7 +119,7 @@ ptr<ServerConfig> ServerConfig::createFromJson(const nlohmann::json& j)
         }
 
         return std::make_shared<ServerConfig>(
-            MachinePayConfigLoader::getStringWithDefault(j, "bind_ip", "0.0.0.0"),
+            ConfigLoader::getStringWithDefault(j, "bind_ip", "0.0.0.0"),
             httpConfig,
             httpsConfig
         );

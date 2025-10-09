@@ -1,7 +1,7 @@
-#include "MachinePayConfigManager.h"
+#include "ConfigManager.h"
 
 #include "common.h"
-#include "MachinePayConfigLoader.h"
+#include "ConfigLoader.h"
 #include "MachinePayConfig.h"
 #include "config/MachinePayConfigSchema.h"
 #include "init/Init.h"
@@ -23,7 +23,7 @@ using nlohmann::json_schema::json_validator;;
 using namespace nlohmann::literals; // Enables the _json_pointer literal
 
 
-std::string MachinePayConfigManager::computeBlakeHash(const std::string &filePath) {
+std::string ConfigManager::computeBlakeHash(const std::string &filePath) {
     std::ifstream file(filePath, std::ios::binary);
     if (!file) throw std::runtime_error("Failed to open file for hashing: " + filePath);
     EVP_MD_CTX *ctx = EVP_MD_CTX_new();
@@ -64,7 +64,7 @@ std::string MachinePayConfigManager::computeBlakeHash(const std::string &filePat
     return oss.str();
 }
 
-void MachinePayConfigManager::checkFileExistsAndReadable(const std::string& configFile) {
+void ConfigManager::checkFileExistsAndReadable(const std::string& configFile) {
     char cwd[4096];
     if (!getcwd(cwd, sizeof(cwd))) {
         throw std::runtime_error(
@@ -97,10 +97,10 @@ void MachinePayConfigManager::checkFileExistsAndReadable(const std::string& conf
 }
 
 
-ptr<MachinePayConfigManager> MachinePayConfigManager::initManager(const std::map<std::string, std::string>& configValuesFromCliAndEnv) {
+ptr<ConfigManager> ConfigManager::initManager(const std::map<std::string, std::string>& configValuesFromCliAndEnv) {
     try
     {
-        auto instance = std::shared_ptr<MachinePayConfigManager>(new MachinePayConfigManager());
+        auto instance = std::shared_ptr<ConfigManager>(new ConfigManager());
         instance->setConfigValuesFromCliAndEnv(configValuesFromCliAndEnv);
         instance->reloadConfig();
         return instance;
@@ -109,14 +109,14 @@ ptr<MachinePayConfigManager> MachinePayConfigManager::initManager(const std::map
     }
 }
 
-void MachinePayConfigManager::setConfigValuesFromCliAndEnv(const std::map<std::string, std::string>& values) {
+void ConfigManager::setConfigValuesFromCliAndEnv(const std::map<std::string, std::string>& values) {
     configValuesFromCliAndEnv_ = values;
     if (auto it = values.find("CONFIG"); it != values.end()) {
         userProvidedConfigPath_ = it->second;
     }
 }
 
-void MachinePayConfigManager::reloadConfig() {
+void ConfigManager::reloadConfig() {
     std::unique_lock<std::shared_mutex> lock(latestConfigMutex_);
 
     try {
@@ -133,7 +133,7 @@ void MachinePayConfigManager::reloadConfig() {
             return;
         }
 
-        MachinePayConfigLoader loader(MachinePayConfigManager::configValuesFromCliAndEnv_);
+        ConfigLoader loader(ConfigManager::configValuesFromCliAndEnv_);
 
         latestConfig_ = loader.loadFromYamlFile(userProvidedConfigPath_);
 
@@ -152,18 +152,18 @@ void MachinePayConfigManager::reloadConfig() {
 }
 
 
-std::shared_ptr<MachinePayConfig> MachinePayConfigManager::latestConfig() {
+std::shared_ptr<MachinePayConfig> ConfigManager::latestConfig() {
     std::shared_lock<std::shared_mutex> lock(latestConfigMutex_);
     CHECK_STATE(latestConfig_);
     return latestConfig_;
 }
 
-std::chrono::system_clock::time_point MachinePayConfigManager::latestConfigModificationTime() {
+std::chrono::system_clock::time_point ConfigManager::latestConfigModificationTime() {
     std::shared_lock<std::shared_mutex> lock(latestConfigMutex_);
     return latestConfigModificationTime_;
 }
 
-const std::string &MachinePayConfigManager::latestConfigSha256() {
+const std::string &ConfigManager::latestConfigSha256() {
     std::shared_lock<std::shared_mutex> lock(latestConfigMutex_);
     return latestConfigHash_;
 }

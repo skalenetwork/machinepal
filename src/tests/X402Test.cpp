@@ -20,8 +20,8 @@
 #include "MachinePayApp.h"
 #include "../datastructures/PaymentRequirements.h"
 #include "../examples/PaymentExamples.h"
-#include "config/MachinePayConfigLoader.h"
-#include "config/MachinePayConfigManager.h"
+#include "config/ConfigLoader.h"
+#include "config/ConfigManager.h"
 
 
 const std::string BIND_IP = "0.0.0.0";

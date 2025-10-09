@@ -2,13 +2,13 @@
 #include <map>
 #include <string>
 #include <spdlog/spdlog.h>
-#include "config/MachinePayConfigManager.h"
+#include "config/ConfigManager.h"
 #include "init/Init.h"
 #include "x402_server/ServerFactory.h"
 
 class MachinePayApp {
 public:
-    [[nodiscard]] ptr<MachinePayConfigManager> configManager() const {
+    [[nodiscard]] ptr<ConfigManager> configManager() const {
         CHECK_STATE(configManager_);
         return configManager_;
     }
@@ -24,6 +24,6 @@ public:
     MachinePayApp& operator=(MachinePayApp&&) = default;
 
 private:
-    ptr<MachinePayConfigManager> configManager_;
+    ptr<ConfigManager> configManager_;
     ptr<ServerFactory> serverFactory_;
 };

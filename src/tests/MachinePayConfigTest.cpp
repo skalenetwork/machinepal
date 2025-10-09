@@ -1,10 +1,10 @@
-#include "../config/MachinePayConfigLoader.h"
+#include "../config/ConfigLoader.h"
 #include <boost/test/unit_test.hpp>
 #include <string>
 #include <map>
 
 #include "MachinePayApp.h"
-#include "config/MachinePayConfigManager.h"
+#include "config/ConfigManager.h"
 #include "nlohmann/json.hpp"
 
 BOOST_AUTO_TEST_CASE(deserialize_basic_proxy_config) {

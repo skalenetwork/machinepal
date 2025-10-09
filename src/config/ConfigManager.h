@@ -9,12 +9,12 @@
 #include <string>
 #include <memory>
 
-class MachinePayConfigManager {
+class ConfigManager {
 public:
 
 
 
-    static ptr<MachinePayConfigManager> initManager(const std::map<std::string, std::string>& configValuesFromCliAndEnv);
+    static ptr<ConfigManager> initManager(const std::map<std::string, std::string>& configValuesFromCliAndEnv);
 
     void reloadConfig();
     std::shared_ptr<MachinePayConfig> latestConfig();
@@ -32,9 +32,9 @@ private:
 
     ptr<FileManager> fileManager_;
 
-    MachinePayConfigManager() = default;
-    MachinePayConfigManager(const MachinePayConfigManager&) = delete;
-    MachinePayConfigManager& operator=(const MachinePayConfigManager&) = delete;
+    ConfigManager() = default;
+    ConfigManager(const ConfigManager&) = delete;
+    ConfigManager& operator=(const ConfigManager&) = delete;
 
 
     void setConfigValuesFromCliAndEnv(const std::map<std::string, std::string>& values);

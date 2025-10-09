@@ -15,7 +15,7 @@
 #include "Init.h"
 #include <boost/algorithm/string/predicate.hpp>
 
-#include "config/MachinePayConfigManager.h"
+#include "config/ConfigManager.h"
 
 
 atomic<bool> Init::inited_{false};
@@ -81,7 +81,7 @@ map<string, string> Init::getMachinePayEnvironmentOverloads() {
 
 
 
-void Init::initLogLevelFromConfig(ptr<MachinePayConfigManager> manager) {
+void Init::initLogLevelFromConfig(ptr<ConfigManager> manager) {
     CHECK_STATE(manager);
     auto logConfig = manager->latestConfig()->log();
     auto logLevel = logConfig->level();

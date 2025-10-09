@@ -1,5 +1,5 @@
 #include "common.h"
-#include "MachinePayConfigLoader.h"
+#include "ConfigLoader.h"
 #include "MachinePayConfig.h"
 #include "config/MachinePayConfigSchema.h"
 #include "init/Init.h"
@@ -23,14 +23,14 @@ using namespace nlohmann::literals; // Enables the _json_pointer literal
 // --- Helper Functions ---
 
 // ---------- tiny utils ----------
-std::optional<std::string> MachinePayConfigLoader::getenvOpt(const char *key) {
+std::optional<std::string> ConfigLoader::getenvOpt(const char *key) {
     if (overridesFromCliAndEnv_.count(key)) {
         return overridesFromCliAndEnv_.at(key);
     }
     return std::nullopt;
 }
 
-std::string MachinePayConfigLoader::readSecretFileFirstLine(const std::string &path,
+std::string ConfigLoader::readSecretFileFirstLine(const std::string &path,
                                                             const std::string &fallback) {
     try {
         std::ifstream f(path);
@@ -148,7 +148,7 @@ static json yamlNodeToJson(const YAML::Node &node) {
     }
 }
 
-json MachinePayConfigLoader::yamlToJson(const std::string &yaml_path) {
+json ConfigLoader::yamlToJson(const std::string &yaml_path) {
     try {
         YAML::Node root = YAML::LoadFile(yaml_path);
         return yamlNodeToJson(root);
@@ -160,7 +160,7 @@ json MachinePayConfigLoader::yamlToJson(const std::string &yaml_path) {
 }
 
 
-bool MachinePayConfigLoader::asBool(const std::string &s) {
+bool ConfigLoader::asBool(const std::string &s) {
     return s == "1" || s == "true" || s == "TRUE" || s == "yes" || s == "on";
 };
 
@@ -168,7 +168,7 @@ bool MachinePayConfigLoader::asBool(const std::string &s) {
 /**
  * @brief Applies an environment variable as a string to a JSON object at a given path.
  */
-void MachinePayConfigLoader::applyStringEnv(json &j, const json::json_pointer &path, const char *envVar) {
+void ConfigLoader::applyStringEnv(json &j, const json::json_pointer &path, const char *envVar) {
     try {
         if (auto v = getenvOpt(envVar)) {
             j[path] = *v;
@@ -181,7 +181,7 @@ void MachinePayConfigLoader::applyStringEnv(json &j, const json::json_pointer &p
 /**
  * @brief Applies an environment variable as a boolean to a JSON object at a given path.
  */
-void MachinePayConfigLoader::applyBoolEnv(json &j, const json::json_pointer &path, const char *envVar) {
+void ConfigLoader::applyBoolEnv(json &j, const json::json_pointer &path, const char *envVar) {
     try {
         if (auto v = getenvOpt(envVar)) {
             j[path] = asBool(*v);
@@ -194,7 +194,7 @@ void MachinePayConfigLoader::applyBoolEnv(json &j, const json::json_pointer &pat
 /**
  * @brief Applies an environment variable as an integer to a JSON object at a given path.
  */
-void MachinePayConfigLoader::applyIntEnv(json &j, const json::json_pointer &path, const char *envVar) {
+void ConfigLoader::applyIntEnv(json &j, const json::json_pointer &path, const char *envVar) {
     try {
         if (auto v = getenvOpt((std::string("MACHINE_PAY_") + envVar).c_str())) {
             j[path] = std::stoi(*v);
@@ -207,7 +207,7 @@ void MachinePayConfigLoader::applyIntEnv(json &j, const json::json_pointer &path
 
 // --- Refactored applyEnvOverrides Function ---
 
-void MachinePayConfigLoader::applyEnvOverrides(json &j) {
+void ConfigLoader::applyEnvOverrides(json &j) {
     try {
         // ---------- server ----------
         applyBoolEnv(j, "/server/enable_http"_json_pointer, "SERVER_ENABLE_HTTP");
@@ -234,7 +234,7 @@ void MachinePayConfigLoader::applyEnvOverrides(json &j) {
 
 
 // ---------- Resolve secret files to actual values ----------
-void MachinePayConfigLoader::resolveSecrets(json &j) {
+void ConfigLoader::resolveSecrets(json &j) {
     try {
         if (j.contains("database") && j["database"].is_object()) {
             const std::string dbFile = j["database"].value("passwordFile", "");
@@ -307,7 +307,7 @@ struct SchemaValidationErrorHandler : public nlohmann::json_schema::error_handle
     }
 };
 
-void MachinePayConfigLoader::validateJson(const json &j) {
+void ConfigLoader::validateJson(const json &j) {
     json schema;
 
     CHECK_STATE2(!j.empty(), "Empty config file");
@@ -335,7 +335,7 @@ void MachinePayConfigLoader::validateJson(const json &j) {
 
 
 // ---------- Orchestrator ----------
-std::shared_ptr<MachinePayConfig> MachinePayConfigLoader::loadFromYamlFile(const std::string &yamlPath) {
+std::shared_ptr<MachinePayConfig> ConfigLoader::loadFromYamlFile(const std::string &yamlPath) {
     try {
         spdlog::info("Parsing config file");
         json j = yamlToJson(yamlPath);
@@ -352,7 +352,7 @@ std::shared_ptr<MachinePayConfig> MachinePayConfigLoader::loadFromYamlFile(const
 
 
 // Helper to get a string from a json object with a default value
-std::string MachinePayConfigLoader::getStringWithDefault(const nlohmann::json &j, const std::string &key,
+std::string ConfigLoader::getStringWithDefault(const nlohmann::json &j, const std::string &key,
                                                          const std::string &defaultValue) {
     if (j.contains(key) && !j.at(key).is_null()) {
         return j.at(key).get<std::string>();
@@ -360,7 +360,7 @@ std::string MachinePayConfigLoader::getStringWithDefault(const nlohmann::json &j
     return defaultValue;
 }
 
-bool MachinePayConfigLoader::getBoolWithDefault(const nlohmann::json &j, const std::string &key,
+bool ConfigLoader::getBoolWithDefault(const nlohmann::json &j, const std::string &key,
                                                          bool defaultValue) {
     if (j.contains(key) && !j.at(key).is_null()) {
         return j.at(key).get<bool>();
@@ -370,7 +370,7 @@ bool MachinePayConfigLoader::getBoolWithDefault(const nlohmann::json &j, const s
 
 
 
-uint16_t MachinePayConfigLoader::getUint16WithDefault(const nlohmann::json &j, const std::string &key,
+uint16_t ConfigLoader::getUint16WithDefault(const nlohmann::json &j, const std::string &key,
                                                      uint16_t defaultValue) {
         if (j.contains(key) && !j.at(key).is_null()) {
             auto value = j.at(key).get<int>();
