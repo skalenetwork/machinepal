@@ -6,8 +6,6 @@
 #include <curl/curl.h>
 #include <filesystem>
 #include <fstream>
-#include <openssl/ssl.h>
-#include <openssl/err.h>
 
 
 
@@ -32,9 +30,10 @@ bool isAlpine() {
 wangle::SSLContextConfig ServerFactory::createAndValidateWangleSSLContext(ptr<HTTPSConfig> https, std::string caFilePath) {
 
     wangle::SSLContextConfig sslCfg;
-    sslCfg.isDefault = true;
+    sslCfg.isDefault = true; // very important otherwise proxygen will fail
     auto keyPassPath = https->keyPassFile() ? https->keyPassFile().value() : "";
     sslCfg.addCertificate(https->certFile(), https->keyFile(), keyPassPath);
+    // TODO add more options to yaml to set these
     //sslCfg.sslCiphers = "ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384";
     //sslCfg.clientVerification =
     //folly::SSLContext::VerifyClientCertificate::DO_NOT_REQUEST;
@@ -43,25 +42,6 @@ wangle::SSLContextConfig ServerFactory::createAndValidateWangleSSLContext(ptr<HT
     return sslCfg;
 }
 
-
-std::string ServerFactory::getCaFilePath(ptr<HTTPSConfig> https) {
-    string caFilePath;
-    if (https->caFile() && !https->caFile()->empty()) {
-        caFilePath = https->caFile().value();
-    } else {
-        if (isRedHat()) {
-            caFilePath = "/etc/pki/tls/certs/ca-bundle.crt";
-        } else if (isAlpine()) {
-            caFilePath = "/etc/ssl/cert.pem";
-        } else {
-            caFilePath  = "/etc/ssl/certs/ca-certificates.crt";
-        }
-    }
-    if (!std::filesystem::exists(caFilePath)) {
-        throw std::runtime_error("CA file does not exist: " + caFilePath);
-    }
-    return caFilePath;
-}
 
 void ServerFactory::addHttpServerToIPConfigs(const ServerConfig &serverConfig, std::vector<HTTPServer::IPConfig>& ipConfigs) {
     auto http = serverConfig.http();
@@ -79,8 +59,8 @@ void ServerFactory::addHTTPSServerToConfigs(const ServerConfig &serverConfig, st
     CHECK_STATE(!https->certFile().empty())
     auto certFile = https->certFile();
     auto keyFile = https->keyFile();
-    auto caFile = getCaFilePath(https);
-    FileReadUtils::validateSSLFiles(https->certFile(), keyFile, caFile);
+    auto caFile = CertManager::getCaFilePath(https);
+    CertManager::validateSSLFiles(https->certFile(), keyFile, caFile);
 
     auto sslCfg = createAndValidateWangleSSLContext(https, caFile);
 

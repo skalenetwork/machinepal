@@ -17,8 +17,6 @@ class ServerFactory {
 public:
     static wangle::SSLContextConfig createAndValidateWangleSSLContext(ptr<HTTPSConfig> https, std::string caFilePath);
 
-    static std::string getCaFilePath(ptr<HTTPSConfig> https);
-
     static void addHttpServerToIPConfigs(const ServerConfig &serverConfig,
                                          std::vector<proxygen::HTTPServer::IPConfig>& ipConfigs);
 

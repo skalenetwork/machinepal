@@ -1,41 +1,20 @@
-//
-// Created by stan on 08/10/25.
-//
 #include "common.h"
-#include "FileReadUtils.h"
+
+
+#include "config/MachinePayConfig.h"
 #include <filesystem>
-#include <openssl/ssl.h>
-#include <openssl/err.h>
-#include <openssl/pem.h>
 #include <openssl/x509.h>
+#include <openssl/pem.h>
+#include <openssl/evp.h>
+#include <openssl/ssl.h>
+#include "filesystem/FileManager.h"
+#include "CertManager.h"
 
-void FileReadUtils::checkFileExistsAndReadable(const std::string& path)
-{
-    namespace fs = std::filesystem;
-    auto cwd = fs::current_path().string();
-    if (path.empty())
-    {
-        throw std::runtime_error("File path is empty. Current working directory: " + cwd);
-    }
-    if (!fs::exists(path))
-    {
-        throw std::runtime_error("File '" + path + "' does not exist. Current working directory: " + cwd);
-    }
-    if (!fs::is_regular_file(path))
-    {
-        throw std::runtime_error("File '" + path + "' is not a regular file (a directory?). Current working directory: " + cwd);
-    }
-    if (access(path.c_str(), R_OK) != 0)
-    {
-        throw std::runtime_error("File '" + path + "' is not readable. Current working directory: " + cwd);
-    }
-    if (fs::file_size(path) == 0)
-    {
-        throw std::runtime_error("File '" + path + "' is empty. Current working directory: " + cwd);
-    }
-}
 
-void FileReadUtils::checkPEMFormat(const std::string& certPath, const std::string& keyPath) {
+#include <fstream>
+
+
+void CertManager::checkPEMFormat(const std::string& certPath, const std::string& keyPath) {
     namespace fs = std::filesystem;
     auto cwd = fs::current_path().string();
     FILE* certFile = fopen(certPath.c_str(), "r");
@@ -60,7 +39,7 @@ void FileReadUtils::checkPEMFormat(const std::string& certPath, const std::strin
     EVP_PKEY_free(pkey);
 }
 
-void FileReadUtils::checkKeyMatchesCert(const std::string& certPath, const std::string& keyPath) {
+void CertManager::checkKeyMatchesCert(const std::string& certPath, const std::string& keyPath) {
     namespace fs = std::filesystem;
     auto cwd = fs::current_path().string();
     FILE* certFile = fopen(certPath.c_str(), "r");
@@ -93,10 +72,10 @@ void FileReadUtils::checkKeyMatchesCert(const std::string& certPath, const std::
     EVP_PKEY_free(pkey);
 }
 
-void FileReadUtils::doThoroughKeyCertFormatCheck(const std::string& certPath, const std::string& keyPath) {
+void CertManager::doThoroughKeyCertFormatCheck(const std::string& certPath, const std::string& keyPath) {
     // Check existence, readability, and non-emptiness
-    checkFileExistsAndReadable(certPath);
-    checkFileExistsAndReadable(keyPath);
+    FileManager::checkFileExistsAndReadable(certPath);
+    FileManager::checkFileExistsAndReadable(keyPath);
     // Check PEM format
     checkPEMFormat(certPath, keyPath);
     // Check key matches certificate
@@ -104,8 +83,8 @@ void FileReadUtils::doThoroughKeyCertFormatCheck(const std::string& certPath, co
 }
 
 
-void FileReadUtils::validateSSLFiles(const std::string& certFile, const std::string& keyFile, const std::string& caFile) {
-    FileReadUtils::doThoroughKeyCertFormatCheck(certFile, keyFile);
+void CertManager::validateSSLFiles(const std::string& certFile, const std::string& keyFile, const std::string& caFile) {
+    CertManager::doThoroughKeyCertFormatCheck(certFile, keyFile);
     SSL_CTX* ctx = SSL_CTX_new(TLS_server_method());
     if (!ctx) {
         throw std::runtime_error("Failed to create SSL_CTX");
@@ -196,4 +175,25 @@ void FileReadUtils::validateSSLFiles(const std::string& certFile, const std::str
     if (!verifyOk) {
         throw std::runtime_error("Failed to verify signature with certificate public key");
     }
+}
+
+std::string CertManager::getCaFilePath(const std::shared_ptr<HTTPSConfig>& https) {
+    if (https->caFile() && !https->caFile()->empty()) {
+        return https->caFile().value();
+    }
+    // OS detection
+    if (std::filesystem::exists("/etc/redhat-release")) {
+        return "/etc/pki/tls/certs/ca-bundle.crt";
+    }
+    std::ifstream f("/etc/os-release");
+    std::string line;
+    while (std::getline(f, line)) {
+        if (line.find("ID=alpine") != std::string::npos) {
+            return "/etc/ssl/cert.pem";
+        }
+    }
+    if (std::filesystem::exists("/etc/alpine-release")) {
+        return "/etc/ssl/cert.pem";
+    }
+    return "/etc/ssl/certs/ca-certificates.crt";
 }

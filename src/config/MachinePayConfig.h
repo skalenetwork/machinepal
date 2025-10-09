@@ -7,7 +7,8 @@
 #include <nlohmann/json.hpp>
 
 #include "common.h"
-#include "file_utils/FileReadUtils.h"
+#include "crypto/CertManager.h"
+#include "filesystem/FileManager.h"
 
 
 class HTTPConfig {
@@ -41,10 +42,10 @@ public:
         CHECK_STATE(port_ > 0);
         CHECK_STATE(!certFile.empty());
         CHECK_STATE(!keyFile.empty());
-        FileReadUtils::doThoroughKeyCertFormatCheck(certFile_, keyFile_);
+        CertManager::doThoroughKeyCertFormatCheck(certFile_, keyFile_);
         if (caFile_)
         {
-            FileReadUtils::checkFileExistsAndReadable(*caFile_);
+            FileManager::checkFileExistsAndReadable(*caFile_);
         }
     }
     const std::string& certFile() const { return certFile_; }
