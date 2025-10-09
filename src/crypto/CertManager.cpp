@@ -74,8 +74,8 @@ void CertManager::checkKeyMatchesCert(const std::string& certPath, const std::st
 
 void CertManager::doThoroughKeyCertFormatCheck(const std::string& certPath, const std::string& keyPath) {
     // Check existence, readability, and non-emptiness
-    FileManager::checkFileExistsAndReadableAndResolve(certPath);
-    FileManager::checkFileExistsAndReadableAndResolve(keyPath);
+    FileManager::checkFileExistsAndReadableCwd(certPath);
+    FileManager::checkFileExistsAndReadableCwd(keyPath);
     // Check PEM format
     checkPEMFormat(certPath, keyPath);
     // Check key matches certificate

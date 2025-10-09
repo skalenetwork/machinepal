@@ -28,44 +28,40 @@ public:
 
 
 class HTTPSConfig : public HTTPConfig {
-    std::string certFile_;
-    std::string keyFile_;
-    std::optional<std::string> keyPassFile_;
-    std::optional<std::string> caFile_;
+    filesystem::path certFile_;
+    filesystem::path keyFile_;
+    std::optional<filesystem::path> keyPassFile_;
+    std::optional<filesystem::path> caFile_;
 public:
-    HTTPSConfig(bool isEnabled, uint16_t port, const std::string& certFile,
-              const std::string& keyFile,
-              const std::optional<std::string> keyPassFile,
-              const std::optional<std::string>& caFile)
+    HTTPSConfig(bool isEnabled, uint16_t port, const filesystem::path& certFile,
+              const filesystem::path& keyFile,
+              const std::optional<filesystem::path> keyPassFile,
+              const std::optional<filesystem::path>& caFile)
         : HTTPConfig(isEnabled, port), certFile_(certFile), keyFile_(keyFile), keyPassFile_(keyPassFile), caFile_(caFile)
     {
         CHECK_STATE(port_ > 0);
         CHECK_STATE(!certFile.empty());
         CHECK_STATE(!keyFile.empty());
         CertManager::doThoroughKeyCertFormatCheck(certFile_, keyFile_);
-        if (caFile_)
-        {
-            FileManager::checkFileExistsAndReadableAndResolve(*caFile_);
-        }
     }
-    const std::string& certFile() const { return certFile_; }
-    const std::string& keyFile() const { return keyFile_; }
-    const std::optional<std::string>  keyPassFile() const { return keyPassFile_; }
-    const std::optional<std::string>& caFile() const { return caFile_; }
+    const filesystem::path& certFile() const { return certFile_; }
+    const filesystem::path& keyFile() const { return keyFile_; }
+    const std::optional<filesystem::path>& keyPassFile() const { return keyPassFile_; }
+    const std::optional<filesystem::path>& caFile() const { return caFile_; }
 };
 
 class FacilitatorConfig {
     std::string type_;
     std::string baseUrl_;
-    std::optional<std::string> apiKeyFile_;
+    std::optional<filesystem::path> apiKeyFile_;
 public:
     FacilitatorConfig(const std::string& type,
                      const std::string& baseUrl,
-                     const std::optional<std::string>& apiKeyFile = std::nullopt)
+                     const std::optional<filesystem::path>& apiKeyFile = std::nullopt)
         : type_(type), baseUrl_(baseUrl), apiKeyFile_(apiKeyFile) {}
     const std::string& type() const { return type_; }
     const std::string& baseUrl() const { return baseUrl_; }
-    const std::optional<std::string>& apiKeyFile() const { return apiKeyFile_; }
+    const std::optional<filesystem::path>& apiKeyFile() const { return apiKeyFile_; }
 
     static ptr<FacilitatorConfig> createFomJson(const nlohmann::json& j, ptr<FileManager> fileManager);
 
@@ -106,7 +102,7 @@ public:
     {
         return https_;
     }
-    static ptr<ServerConfig> createFromJson(const nlohmann::json& j, ptr<FileManager> fileManager););
+    static ptr<ServerConfig> createFromJson(const nlohmann::json& j, ptr<FileManager> fileManager);
 };
 
 
@@ -149,7 +145,7 @@ public:
         return std::make_shared<LogConfig>("info", "plain");
     }
 
-    static ptr<LogConfig> createFromJson(const nlohmann::json& j, ptr<FileManager> fileManager););
+    static ptr<LogConfig> createFromJson(const nlohmann::json& j, ptr<FileManager> fileManager);
 };
 
 class MachinePayConfig {

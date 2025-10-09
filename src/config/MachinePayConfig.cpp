@@ -47,10 +47,10 @@ ptr<MachinePayConfig> MachinePayConfig::createFromJson(const nlohmann::json& j, 
     try
     {
         CHECK_STATE2(j.count("server") != 0, "Missing required 'server' config section");
-        auto serverConfig = ServerConfig::createFromJson(j.at("server"));
+        auto serverConfig = ServerConfig::createFromJson(j.at("server"), fileManager);
 
         CHECK_STATE2(j.count("facilitator") != 0, "Missing required 'facilitator' config section");
-        auto facilitatorConfig = FacilitatorConfig::createFomJson(j.at("facilitator"));
+        auto facilitatorConfig = FacilitatorConfig::createFomJson(j.at("facilitator"), fileManager);
 
         ptr<LogConfig> logConfig;
         if (j.count("log") == 0)
@@ -60,7 +60,7 @@ ptr<MachinePayConfig> MachinePayConfig::createFromJson(const nlohmann::json& j, 
         }
         else
         {
-            logConfig = LogConfig::createFromJson(j.at("log"));
+            logConfig = LogConfig::createFromJson(j.at("log"), fileManager);
         }
 
         return std::make_shared<MachinePayConfig>(serverConfig, facilitatorConfig, logConfig);
@@ -74,8 +74,10 @@ ptr<MachinePayConfig> MachinePayConfig::createFromJson(const nlohmann::json& j, 
 
 ptr<ServerConfig> ServerConfig::createFromJson(const nlohmann::json& j,  ptr<FileManager> fileManager)
 {
+
     try
     {
+        CHECK_STATE(fileManager);
         CHECK_STATE(j.is_object());
         ptr<HTTPConfig> httpConfig = nullptr;
         if (j.count("http") > 0)
@@ -96,15 +98,13 @@ ptr<ServerConfig> ServerConfig::createFromJson(const nlohmann::json& j,  ptr<Fil
             if (jt.contains("ca_file") && !jt.at("ca_file").is_null())
             {
                 std::string file = jt.at("ca_file").get<std::string>();
-                FileManager::checkFileExistsAndReadableAndResolve(file);
-                caFile = file;
+                caFile = fileManager->checkFileExistsAndReadableAndResolve(file);
             }
-            std::optional<std::string> keyPassFile = std::nullopt;
+            std::optional<filesystem::path> keyPassFile = std::nullopt;
             if (jt.contains("key_pass_file") && !jt.at("key_pass_file").is_null())
             {
                 std::string file = jt.at("key_pass_file").get<std::string>();
-                FileManager::checkFileExistsAndReadableAndResolve(file);
-                keyPassFile = file;
+                keyPassFile = fileManager->checkFileExistsAndReadableAndResolve(file);
             }
             httpsConfig = make_shared<HTTPSConfig>(
                 ConfigLoader::getBoolWithDefault(jt, "enabled", true),

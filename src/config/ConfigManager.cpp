@@ -152,7 +152,7 @@ void ConfigManager::reloadConfig() {
 
         ConfigLoader loader(ConfigManager::configValuesFromCliAndEnv_);
 
-        latestConfig_ = loader.loadFromYamlFile(userProvidedConfigPath_);
+        latestConfig_ = loader.loadFromYamlFile(userProvidedConfigPath_, fileManager_);
 
         // Record last modified time
         auto ftime = std::filesystem::last_write_time(userProvidedConfigPath_);

@@ -9,38 +9,57 @@
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 
-filesystem::path FileManager::checkFileExistsAndReadableAndResolve(const std::string& path)
+filesystem::path FileManager::checkFileExistsAndReadableAndResolve(const std::string&  userProvidedPath)
 {
     namespace fs = std::filesystem;
 
-    if (path.empty())
+
+    if (userProvidedPath.empty())
     {
-        throw std::runtime_error("File path is empty. Current working directory: " + canonicalConfigPath_);
+        throw std::runtime_error(string("File path is empty. Current config dir: ") + canonicalConfigDir_.c_str());
     }
-    if (!fs::exists(path))
+
+    filesystem::path p(userProvidedPath);
+
+    if (!p.is_absolute()) {
+        // path is relative. Resolve against current config dir
+        p = this->canonicalConfigDir_ / p;
+    }
+
+    // resolve .. but do not go after symbolik links
+    p = weakly_canonical(p);
+
+
+    if (!fs::exists(p))
     {
-        throw std::runtime_error("File '" + path + "' does not exist. Current working directory: " + cwd);
+        throw std::runtime_error("File '" + userProvidedPath + "' does not exist. Current config dir: "
+            + + canonicalConfigDir_.c_str());
     }
 
     // Check that configFile is not a directory
-    if (std::filesystem::is_directory(path)) {
+    if (std::filesystem::is_directory(p)) {
         throw std::runtime_error(
-            "File '" + path + "' is a directory, not a file. Current working directory: " +
-            std::string(cwd));
+            "File '" + userProvidedPath + "' is a directory, not a file. Current config dir: " +
+            canonicalConfigDir_.c_str());
     }
 
-    if (!fs::is_regular_file(path))
+    if (!fs::is_regular_file(p))
     {
-        throw std::runtime_error("File '" + path + "' is not a regular file (a directory?). Current working directory: " + cwd);
+        throw std::runtime_error("File '" + userProvidedPath +
+            "' is not a regular file (a directory?). Current config gir: " + canonicalConfigDir_.c_str());
     }
-    if (access(path.c_str(), R_OK) != 0)
+    if (access(p.c_str(), R_OK) != 0)
     {
-        throw std::runtime_error("File '" + path + "' is not readable. Current working directory: " + cwd);
+        throw std::runtime_error("File '" + userProvidedPath +
+            "' is not readable. Current config dir: " + canonicalConfigDir_.c_str());
     }
-    if (fs::file_size(path) == 0)
+    if (fs::file_size(p) == 0)
     {
-        throw std::runtime_error("File '" + path + "' is empty. Current working directory: " + cwd);
+        throw std::runtime_error("File '" + userProvidedPath +
+            "' is empty. Current config dir: " + canonicalConfigDir_.c_str());
     }
+
+    return p;
 
 }
 

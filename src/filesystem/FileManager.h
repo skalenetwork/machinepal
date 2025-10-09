@@ -11,11 +11,12 @@ public:
         : userProvidedConfigPath_(userProvidedConfigPath) {
         checkFileExistsAndReadableCwd(userProvidedConfigPath);
         canonicalConfigPath_ = resolveCanonicalPathAgainstCwd(userProvidedConfigPath_);
+        canonicalConfigDir_ = canonicalConfigPath_.parent_path();
     }
 
     filesystem::path checkFileExistsAndReadableAndResolve(const std::string& path);
 
-    void checkFileExistsAndReadableCwd(const std::string& path);
+    static void checkFileExistsAndReadableCwd(const std::string& path);
 
     static std::chrono::system_clock::time_point getLastFileModificationTime(const std::string& _path);
 
@@ -26,4 +27,6 @@ public:
 private:
     std::string userProvidedConfigPath_;
     std::filesystem::path canonicalConfigPath_;
+    std::filesystem::path canonicalConfigDir_;
+    
 };
