@@ -118,9 +118,11 @@ ptr<ConfigManager> ConfigManager::create(const std::map<std::string, std::string
 
 void ConfigManager::setConfigValuesFromCliAndEnv(const std::map<std::string, std::string>& values) {
     configValuesFromCliAndEnv_ = values;
-    if (auto it = values.find("CONFIG"); it != values.end()) {
-        userProvidedConfigPath_ = it->second;
-    }
+    CHECK_STATE(values.contains("CONFIG"));
+    userProvidedConfigPath_ = values.at("CONFIG");
+    CHECK_STATE(!userProvidedConfigPath_.empty())
+    fullyResolvedConfigPath_ = FileManager::resolveCanonicalPathAgainstCwd(userProvidedConfigPath_);
+    CHECK_STATE(!fullyResolvedConfigPath_.empty())
 }
 
 void ConfigManager::reloadConfig() {
@@ -128,8 +130,7 @@ void ConfigManager::reloadConfig() {
 
     try {
         CHECK_STATE(!userProvidedConfigPath_.empty());
-
-        fullyResolvedConfigPath_ = FileManager::resolveCanonicalPathAgainstCwd(userProvidedConfigPath_);
+        CHECK_STATE(!fullyResolvedConfigPath_.empty());
 
         checkFileExistsAndReadable(fullyResolvedConfigPath_);
 
