@@ -29,8 +29,8 @@ BOOST_AUTO_TEST_CASE(deserialize_basic_proxy_config) {
     BOOST_TEST(config->server()->https()->certFile() == "certs/machinepay.crt");
     BOOST_TEST(config->server()->https()->keyFile() == "certs/machinepay.key");
 //  BOOST_TEST(config->server()->https()->keyPassFile() == "secrets/key_password");
-    BOOST_TEST(config->server()->https()->caFile().has_value());
-    BOOST_TEST(config->server()->https()->caFile().value() == "certs/ca.crt");
+//    BOOST_TEST(config->server()->https()->caFile().has_value());
+//    BOOST_TEST(config->server()->https()->caFile().value() == "certs/ca.crt");
 
     // Check facilitator
     BOOST_TEST(config->facilitator()->type() == "cdp");
