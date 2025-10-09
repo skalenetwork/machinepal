@@ -111,7 +111,7 @@ void runServerUntilShutdown(std::map<string, string> configValuesFromCliAndEnv) 
     try
     {
         spdlog::info("Processing config");
-        MachinePayConfigManager::getInstance()->initManager(configValuesFromCliAndEnv);
+        MachinePayConfigManager::initManager(configValuesFromCliAndEnv);
         Init::initLogLevelFromConfig();
         auto serverConfig = MachinePayConfigManager::getInstance()->latestConfig()->server();
         auto serverObject = ServerFactory::createServerInstance(*serverConfig);
