@@ -12,6 +12,6 @@ public:
 
     proxygen::RequestHandler* onRequest(proxygen::RequestHandler* /*_handler*/,
                                         proxygen::HTTPMessage* /*_msg*/) noexcept override {
-        return new X402Handler(MachinePayConfigManager::getInstance().latestConfig());
+        return new X402Handler(MachinePayConfigManager::getInstance()->latestConfig());
     }
 };

@@ -9,15 +9,14 @@ BOOST_AUTO_TEST_CASE(deserialize_basic_proxy_config) {
     // Path to the test config file
 
 
-    MachinePayConfigManager::getInstance().initManager({
+    MachinePayConfigManager::initManager({
     {
         "CONFIG",
         "src/tests/configs/basic/machinepay.yml"
     }
     });
 
-    auto config = MachinePayConfigManager::getInstance().latestConfig();
-
+    auto config = MachinePayConfigManager::getInstance()->latestConfig();
 
     BOOST_TEST(config->server()->http());// Check frontend
     BOOST_TEST(config->server()->http()->isEnabled() == true);

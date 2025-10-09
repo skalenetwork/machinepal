@@ -22,6 +22,8 @@ using nlohmann::json;
 using nlohmann::json_schema::json_validator;;
 using namespace nlohmann::literals; // Enables the _json_pointer literal
 
+std::shared_ptr<MachinePayConfigManager> MachinePayConfigManager::instance = nullptr;
+
 std::string MachinePayConfigManager::computeBlakeHash(const std::string &filePath) {
     std::ifstream file(filePath, std::ios::binary);
     if (!file) throw std::runtime_error("Failed to open file for hashing: " + filePath);
@@ -99,8 +101,9 @@ void MachinePayConfigManager::checkFileExistsAndReadable(const std::string& conf
 void MachinePayConfigManager::initManager(const std::map<std::string, std::string>& configValuesFromCliAndEnv) {
     try
     {
-        setConfigValuesFromCliAndEnv(configValuesFromCliAndEnv);
-        reloadConfig();
+        instance = std::shared_ptr<MachinePayConfigManager>(new MachinePayConfigManager());
+        instance->setConfigValuesFromCliAndEnv(configValuesFromCliAndEnv);
+        instance->reloadConfig();
     } catch (const std::exception &ex) {
         RETHROW_NESTED("MachinePayConfigManager::initManager failed: ");
     }

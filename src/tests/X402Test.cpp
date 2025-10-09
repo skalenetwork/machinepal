@@ -56,14 +56,14 @@ struct X402ServerFixture {
 
 
         try {
-            MachinePayConfigManager::getInstance().initManager({
+            MachinePayConfigManager::getInstance()->initManager({
                 {
                     "CONFIG",
                     "src/tests/configs/basic/machinepay.yml"
                 }
             });
 
-            auto config = MachinePayConfigManager::getInstance().latestConfig();
+            auto config = MachinePayConfigManager::getInstance()->latestConfig();
 
 
             server = ServerFactory().createServerInstance(*config->server());

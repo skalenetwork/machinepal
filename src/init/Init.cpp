@@ -82,7 +82,7 @@ map<string, string> Init::getMachinePayEnvironmentOverloads() {
 
 
 void Init::initLogLevelFromConfig() {
-    auto logConfig = MachinePayConfigManager::getInstance().latestConfig()->log();
+    auto logConfig = MachinePayConfigManager::getInstance()->latestConfig()->log();
     auto logLevel = logConfig->level();
 
     spdlog::level::level_enum spdlogLevel = spdlog::level::info;

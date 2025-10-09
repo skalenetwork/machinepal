@@ -11,20 +11,31 @@
 
 class MachinePayConfigManager {
 public:
-    static MachinePayConfigManager& getInstance() {
-        static MachinePayConfigManager instance;
+
+    static ptr<MachinePayConfigManager> getInstance() {
+        CHECK_STATE(instance);
         return instance;
     }
 
-    void initManager(const std::map<std::string, std::string>& configValuesFromCliAndEnv);
+    static void initManager(const std::map<std::string, std::string>& configValuesFromCliAndEnv);
+
     void reloadConfig();
     std::shared_ptr<MachinePayConfig> latestConfig();
     std::chrono::system_clock::time_point latestConfigModificationTime();
     const std::string& latestConfigSha256();
 
 
+    [[nodiscard]] ptr<FileManager> fileManager() const {
+        CHECK_STATE(fileManager_);
+        return fileManager_;
+    }
+
+    static ptr<MachinePayConfigManager> instance;
 
 private:
+
+    ptr<FileManager> fileManager_;
+
     MachinePayConfigManager() = default;
     MachinePayConfigManager(const MachinePayConfigManager&) = delete;
     MachinePayConfigManager& operator=(const MachinePayConfigManager&) = delete;
