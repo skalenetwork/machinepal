@@ -5,6 +5,7 @@
 #include <string>
 #include <cstdint>
 #include <memory>
+#include <proxygen/httpserver/HTTPServer.h>
 #include <wangle/ssl/SSLContextConfig.h>
 
 
@@ -17,6 +18,12 @@ public:
     static wangle::SSLContextConfig createAndValidateWangleSSLContext(ptr<HTTPSConfig> https, std::string caFilePath);
 
     static std::string getCaFilePath(ptr<HTTPSConfig> https);
+
+    static void addHttpServerToIPConfigs(const ServerConfig &serverConfig,
+                                         std::vector<proxygen::HTTPServer::IPConfig>& ipConfigs);
+
+    static void addHTTPSServerToConfigs(const ServerConfig &serverConfig,
+                                        std::vector<proxygen::HTTPServer::IPConfig>& ipConfigs);
 
     static std::shared_ptr<proxygen::HTTPServer> createServerInstance(
         const ServerConfig& serverConfig );

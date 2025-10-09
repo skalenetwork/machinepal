@@ -104,7 +104,8 @@ void FileReadUtils::doThoroughKeyCertFormatCheck(const std::string& certPath, co
 }
 
 
-void FileReadUtils::validateSSLContext(const std::string& certFile, const std::string& keyFile, const std::string& caFile) {
+void FileReadUtils::validateSSLFiles(const std::string& certFile, const std::string& keyFile, const std::string& caFile) {
+    FileReadUtils::doThoroughKeyCertFormatCheck(certFile, keyFile);
     SSL_CTX* ctx = SSL_CTX_new(TLS_server_method());
     if (!ctx) {
         throw std::runtime_error("Failed to create SSL_CTX");

@@ -32,6 +32,7 @@ bool isAlpine() {
 wangle::SSLContextConfig ServerFactory::createAndValidateWangleSSLContext(ptr<HTTPSConfig> https, std::string caFilePath) {
 
     wangle::SSLContextConfig sslCfg;
+    sslCfg.isDefault = true;
     auto keyPassPath = https->keyPassFile() ? https->keyPassFile().value() : "";
     sslCfg.addCertificate(https->certFile(), https->keyFile(), keyPassPath);
     sslCfg.sslCiphers = "ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384";
@@ -59,42 +60,40 @@ std::string ServerFactory::getCaFilePath(ptr<HTTPSConfig> https) {
     return caFilePath;
 }
 
+void ServerFactory::addHttpServerToIPConfigs(const ServerConfig &serverConfig, std::vector<HTTPServer::IPConfig>& ipConfigs) {
+    auto http = serverConfig.http();
+    CHECK_STATE(http);
+    ipConfigs.emplace_back(
+        folly::SocketAddress(serverConfig.bindIp(),http->port(), true),
+        HTTPServer::Protocol::HTTP
+    );
+}
+
+void ServerFactory::addHTTPSServerToConfigs(const ServerConfig &serverConfig, std::vector<HTTPServer::IPConfig>& ipConfigs) {
+    auto https = serverConfig.https();
+    CHECK_STATE(https);
+    CHECK_STATE(!https->keyFile().empty());
+    CHECK_STATE(!https->certFile().empty())
+    auto certFile = https->certFile();
+    auto keyFile = https->keyFile();
+    auto caFile = getCaFilePath(https);
+    FileReadUtils::validateSSLFiles(https->certFile(), keyFile, caFile);
+
+    auto sslCfg = createAndValidateWangleSSLContext(https, caFile);
+
+    HTTPServer::IPConfig config(
+        folly::SocketAddress(serverConfig.bindIp(), https->port(), true),
+        HTTPServer::Protocol::HTTP);
+    //config.sslConfigs.push_back(sslCfg);
+    ipConfigs.emplace_back(config);
+}
+
 std::shared_ptr<HTTPServer> ServerFactory::createServerInstance(const ServerConfig& serverConfig) {
 
 
 
     try {
-        std::vector<HTTPServer::IPConfig> ipConfigs;
-        if (serverConfig.http() && serverConfig.http()->isEnabled()) {
-            ipConfigs.emplace_back(
-                folly::SocketAddress(serverConfig.bindIp(), serverConfig.http()->port(), true),
-                HTTPServer::Protocol::HTTP
-            );
-        }
 
-
-
-        if (auto https = serverConfig.https(); https && https->isEnabled()) {
-;
-            CHECK_STATE(!https->keyFile().empty());
-            CHECK_STATE(!https->certFile().empty());
-            string caFilePath = getCaFilePath(https);
-            FileReadUtils::doThoroughKeyCertFormatCheck(https->certFile(), https->keyFile());
-            FileReadUtils::validateSSLContext(https->certFile(), https->keyFile(), caFilePath);
-
-            auto sslCfg = createAndValidateWangleSSLContext(https, caFilePath);
-
-            HTTPServer::IPConfig config(
-                folly::SocketAddress(serverConfig.bindIp(), https->port(), true),
-                HTTPServer::Protocol::HTTP);
-            config.sslConfigs.push_back(sslCfg);
-            ipConfigs.emplace_back(config);
-        }
-
-        if (ipConfigs.empty()) {
-            throw std::runtime_error("At least one of HTTP or HTTPS must"
-                                     " be enabled in the server configuration.");
-        }
 
         HTTPServerOptions options;
         spdlog::info("Creating server instance");
@@ -104,6 +103,23 @@ std::shared_ptr<HTTPServer> ServerFactory::createServerInstance(const ServerConf
         options.handlerFactories = RequestHandlerChain()
                 .addThen<X402HandlerFactory>()
                 .build();
+
+
+        std::vector<HTTPServer::IPConfig> ipConfigs;
+
+        if (serverConfig.http() && serverConfig.http()->isEnabled()) {
+            addHttpServerToIPConfigs(serverConfig, ipConfigs);
+        }
+
+        if (serverConfig.https() && serverConfig.https()->isEnabled()) {
+            addHTTPSServerToConfigs(serverConfig, ipConfigs);
+        }
+
+        if (ipConfigs.empty()) {
+            throw std::runtime_error("At least one of HTTP or HTTPS must"
+                                     " be enabled in the server configuration.");
+        }
+
 
         auto server = std::make_shared<HTTPServer>(std::move(options));
 
