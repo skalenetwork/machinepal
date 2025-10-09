@@ -2,6 +2,7 @@
 #include <openssl/evp.h>
 #include "CryptoManager.h"
 
+#include <fstream>
 #include <iomanip>
 
 

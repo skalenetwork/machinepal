@@ -63,7 +63,7 @@ std::string MachinePayConfigManager::computeBlakeHash(const std::string &filePat
     return oss.str();
 }
 
-void MachinePayConfigManager::checkExistsAndReadable(const std::string& configFile) {
+void MachinePayConfigManager::checkFileExistsAndReadable(const std::string& configFile) {
     char cwd[4096];
     if (!getcwd(cwd, sizeof(cwd))) {
         throw std::runtime_error(
@@ -109,7 +109,7 @@ void MachinePayConfigManager::initManager(const std::map<std::string, std::strin
 void MachinePayConfigManager::setConfigValuesFromCliAndEnv(const std::map<std::string, std::string>& values) {
     configValuesFromCliAndEnv_ = values;
     if (auto it = values.find("CONFIG"); it != values.end()) {
-        configPath_ = it->second;
+        userProvidedConfigPath_ = it->second;
     }
 }
 
@@ -117,11 +117,13 @@ void MachinePayConfigManager::reloadConfig() {
     std::unique_lock<std::shared_mutex> lock(latestConfigMutex_);
 
     try {
-        CHECK_STATE(!configPath_.empty())
+        CHECK_STATE(!userProvidedConfigPath_.empty());
 
-        checkExistsAndReadable(configPath_);
+        fullyResolvedConfigPath_ = FileManager::resolveCanonicalPathAgainstCwd(userProvidedConfigPath_);
 
-        auto hash = computeBlakeHash(configPath_);
+        checkFileExistsAndReadable(fullyResolvedConfigPath_);
+
+        auto hash = computeBlakeHash(userProvidedConfigPath_);
 
         if (hash == latestConfigHash_) {
             CHECK_STATE(latestConfig_);
@@ -130,10 +132,10 @@ void MachinePayConfigManager::reloadConfig() {
 
         MachinePayConfigLoader loader(MachinePayConfigManager::configValuesFromCliAndEnv_);
 
-        latestConfig_ = loader.loadFromYamlFile(configPath_);
+        latestConfig_ = loader.loadFromYamlFile(userProvidedConfigPath_);
 
         // Record last modified time
-        auto ftime = std::filesystem::last_write_time(configPath_);
+        auto ftime = std::filesystem::last_write_time(userProvidedConfigPath_);
         latestConfigModificationTime_ = std::chrono::system_clock::time_point(
             std::chrono::duration_cast<std::chrono::system_clock::duration>(
                 ftime.time_since_epoch()

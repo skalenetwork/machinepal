@@ -51,3 +51,11 @@ std::chrono::system_clock::time_point FileManager::getLastFileModificationTime(s
         )
     );
 }
+
+std::string FileManager::resolveCanonicalPathAgainstCwd(std::string _path) {
+    try {
+        return std::filesystem::canonical(std::filesystem::absolute(_path)).string();
+    } catch (exception& e) {
+        RETHROW_NESTED("ileManager::resolveCanonicalPathAgainstCwd failed");
+    }
+}

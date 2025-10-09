@@ -32,7 +32,8 @@ private:
 
     void setConfigValuesFromCliAndEnv(const std::map<std::string, std::string>& values);
 
-    std::string configPath_ = "machinepay.yml";
+    std::string userProvidedConfigPath_ = "machinepay.yml";
+    std::string fullyResolvedConfigPath_;
     std::shared_ptr<MachinePayConfig> latestConfig_;
     std::shared_mutex latestConfigMutex_;
     std::chrono::system_clock::time_point latestConfigModificationTime_;
@@ -41,5 +42,5 @@ private:
 
 
     std::string computeBlakeHash(const std::string& filePath);
-    void checkExistsAndReadable(const std::string& configFile);
+    void checkFileExistsAndReadable(const std::string& configFile);
 };
