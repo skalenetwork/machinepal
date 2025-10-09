@@ -29,7 +29,37 @@ bool isAlpine() {
 }
 
 
+wangle::SSLContextConfig ServerFactory::createAndValidateWangleSSLContext(ptr<HTTPSConfig> https, std::string &caFilePath) {
 
+    wangle::SSLContextConfig sslCfg;
+    CHECK_STATE(!https->keyFile().empty());
+    CHECK_STATE(!https->certFile().empty());
+    FileReadUtils::doThoroughKeyCertFormatCheck(https->certFile(), https->keyFile());
+    FileReadUtils::validateSSLContext(https->certFile(), https->keyFile(), caFilePath);
+    auto keyPassPath = https->keyPassFile() ? https->keyPassFile().value() : "";
+    sslCfg.addCertificate(https->certFile(), https->keyFile(), keyPassPath);
+    sslCfg.sslCiphers = "ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384";
+
+    if (https->caFile() && !https->caFile()->empty()) {
+        sslCfg.clientCAFile = https->caFile().value();
+        caFilePath = sslCfg.clientCAFile;
+    } else {
+        if (isRedHat()) {
+            sslCfg.clientCAFile = "/etc/pki/tls/certs/ca-bundle.crt";
+        } else if (isAlpine()) {
+            sslCfg.clientCAFile = "/etc/ssl/cert.pem";
+        } else {
+            sslCfg.clientCAFile  = "/etc/ssl/certs/ca-certificates.crt";
+        }
+        caFilePath = sslCfg.clientCAFile;
+    }
+    if (!std::filesystem::exists(sslCfg.clientCAFile)) {
+        throw std::runtime_error("CA file does not exist: " + sslCfg.clientCAFile);
+    }
+
+
+    return sslCfg;
+}
 
 
 
@@ -49,34 +79,11 @@ std::shared_ptr<HTTPServer> ServerFactory::createServerInstance(const ServerConf
 
 
         if (auto https = serverConfig.https(); https && https->isEnabled()) {
-            wangle::SSLContextConfig sslCfg;
-            CHECK_STATE(!https->keyFile().empty());
-            CHECK_STATE(!https->certFile().empty());
-            FileReadUtils::doThoroughKeyCertFormatCheck(https->certFile(), https->keyFile());
-            auto keyPassPath = https->keyPassFile() ? https->keyPassFile().value() : "";
-            sslCfg.addCertificate(https->certFile(), https->keyFile(), keyPassPath);
-            sslCfg.sslCiphers = "ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384";
-
+;
             std::string caFilePath;
-            if (https->caFile() && !https->caFile()->empty()) {
-                sslCfg.clientCAFile = https->caFile().value();
-                caFilePath = sslCfg.clientCAFile;
-            } else {
-                if (isRedHat()) {
-                    sslCfg.clientCAFile = "/etc/pki/tls/certs/ca-bundle.crt";
-                } else if (isAlpine()) {
-                    sslCfg.clientCAFile = "/etc/ssl/cert.pem";
-                } else {
-                    sslCfg.clientCAFile  = "/etc/ssl/certs/ca-certificates.crt";
-                }
-                caFilePath = sslCfg.clientCAFile;
-            }
-            if (!std::filesystem::exists(sslCfg.clientCAFile)) {
-                throw std::runtime_error("CA file does not exist: " + sslCfg.clientCAFile);
-            }
+            auto sslCfg = createAndValidateWangleSSLContext(https, caFilePath);
 
-            // Validate SSL context before adding to config
-            FileReadUtils::validateSSLContext(https->certFile(), https->keyFile(), caFilePath);
+
 
             HTTPServer::IPConfig config(
                 folly::SocketAddress(serverConfig.bindIp(), https->port(), true),
