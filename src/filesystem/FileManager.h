@@ -9,4 +9,6 @@ public:
 
     static void checkFileExistsAndReadable(const std::string& path);
 
+    static std::chrono::system_clock::time_point getLastFileModificationTime(string& _path);
+
 };
