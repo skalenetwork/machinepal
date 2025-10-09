@@ -1,6 +1,7 @@
 #include <common.h>
 #include "src/x402_server/X402Handler.h"
 #include "src/x402_server/ServerFactory.h"
+#include "src/MachinePayApp.h"
 
 #include <proxygen/httpserver/HTTPServer.h>
 #include <proxygen/httpserver/RequestHandler.h>
@@ -108,14 +109,8 @@ std::map<string, string> parseCommandLineAndConfigThenInitLibsAndLogging(int arg
 }
 
 void runServerUntilShutdown(std::map<string, string> configValuesFromCliAndEnv) {
-    try
-    {
-        spdlog::info("Processing config");
-        MachinePayConfigManager::initManager(configValuesFromCliAndEnv);
-        Init::initLogLevelFromConfig();
-        auto serverConfig = MachinePayConfigManager::getInstance()->latestConfig()->server();
-        auto serverObject = ServerFactory::createServerInstance(*serverConfig);
-        serverObject->start();
+    try {
+        MachinePayApp app(configValuesFromCliAndEnv);
     } catch (std::exception &ex) {
         RETHROW_NESTED("Fatal error running x402 server in main. machinepay server will exit.");
     }
