@@ -109,26 +109,30 @@ ptr<ConfigManager> ConfigManager::initManager(const std::map<std::string, std::s
 }
 
 ptr<ConfigManager> ConfigManager::create(const std::map<std::string, std::string>& configValuesFromCliAndEnv) {
-    ptr<ConfigManager> mgr(new ConfigManager());
-    mgr->setConfigValuesFromCliAndEnv(configValuesFromCliAndEnv);
-    return mgr;
+    try
+    {
+        ptr<ConfigManager> mgr(new ConfigManager());
+        mgr->initUsingConfigValuesFromCliAndEnv(configValuesFromCliAndEnv);
+        return mgr;
+    } catch (const std::exception &ex) {
+        RETHROW_NESTED("MachinePayConfigManager::create failed: ");
+    }
 }
 
 
 
-void ConfigManager::setConfigValuesFromCliAndEnv(const std::map<std::string, std::string>& values) {
+void ConfigManager::initUsingConfigValuesFromCliAndEnv(const std::map<std::string, std::string>& values) {
     try {
         configValuesFromCliAndEnv_ = values;
-        spdlog::info("configValuesFromCliAndEnv_:");
-        for (const auto& kv : configValuesFromCliAndEnv_) {
-            spdlog::info("  {} = {}", kv.first, kv.second);
-        }
         CHECK_STATE(values.contains("CONFIG"));
         userProvidedConfigPath_ = values.at("CONFIG");
         CHECK_STATE(!userProvidedConfigPath_.empty())
         fullyResolvedConfigPath_ = FileManager::resolveCanonicalPathAgainstCwd(userProvidedConfigPath_);
         CHECK_STATE(!fullyResolvedConfigPath_.empty())
         fullyResolvedConfigDirPath_ = std::filesystem::path(fullyResolvedConfigPath_).parent_path().string();
+        // this method is only called once during factory init
+        CHECK_STATE(!fileManager_)
+        fileManager_ = std::make_shared<FileManager>(fullyResolvedConfigDirPath_);
     } catch (const std::exception &ex) {
         RETHROW_NESTED("MachinePayConfigManager::setConfigValuesFromCliAndEnv failed: ");
     }
@@ -153,6 +157,7 @@ void ConfigManager::reloadConfig() {
             CHECK_STATE(latestConfig_);
             return;
         }
+        latestConfigHash_ = hash;
 
         ConfigLoader loader(ConfigManager::configValuesFromCliAndEnv_);
 

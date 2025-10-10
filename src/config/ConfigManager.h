@@ -40,7 +40,7 @@ private:
     ConfigManager& operator=(const ConfigManager&) = delete;
 
 
-    void setConfigValuesFromCliAndEnv(const std::map<std::string, std::string>& values);
+    void initUsingConfigValuesFromCliAndEnv(const std::map<std::string, std::string>& values);
 
     std::string userProvidedConfigPath_ = "machinepay.yml";
     std::filesystem::path fullyResolvedConfigPath_;
