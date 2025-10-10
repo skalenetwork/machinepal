@@ -23,9 +23,9 @@ using nlohmann::json_schema::json_validator;;
 using namespace nlohmann::literals; // Enables the _json_pointer literal
 
 
-std::string ConfigManager::computeBlakeHash(const std::string &filePath) {
+std::string ConfigManager::computeBlakeHash(const filesystem::path &filePath) {
     std::ifstream file(filePath, std::ios::binary);
-    if (!file) throw std::runtime_error("Failed to open file for hashing: " + filePath);
+    if (!file) throw std::runtime_error("Failed to open file for hashing: " + filePath.string());
     EVP_MD_CTX *ctx = EVP_MD_CTX_new();
     if (!ctx) throw std::runtime_error("Failed to create EVP_MD_CTX");
     const EVP_MD *md = EVP_blake2b512();
@@ -42,7 +42,7 @@ std::string ConfigManager::computeBlakeHash(const std::string &filePath) {
         file.read(buf, sizeof(buf));
         if (file.bad()) {
             EVP_MD_CTX_free(ctx);
-            throw std::runtime_error("Error reading file during hashing: " + filePath);
+            throw std::runtime_error("Error reading file during hashing: " + filePath.string());
         }
         if (file.gcount() > 0) {
             if (EVP_DigestUpdate(ctx, buf, file.gcount()) != 1) {
@@ -100,7 +100,7 @@ void ConfigManager::checkFileExistsAndReadable(const std::string& configFile) {
 ptr<ConfigManager> ConfigManager::initManager(const std::map<std::string, std::string>& configValuesFromCliAndEnv) {
     try
     {
-        auto instance = create(configValuesFromCliAndEnv);
+        auto instance = createInstance(configValuesFromCliAndEnv);
         instance->reloadConfig();
         return instance;
     } catch (const std::exception &ex) {
@@ -108,7 +108,7 @@ ptr<ConfigManager> ConfigManager::initManager(const std::map<std::string, std::s
     }
 }
 
-ptr<ConfigManager> ConfigManager::create(const std::map<std::string, std::string>& configValuesFromCliAndEnv) {
+ptr<ConfigManager> ConfigManager::createInstance(const std::map<std::string, std::string>& configValuesFromCliAndEnv) {
     try
     {
         ptr<ConfigManager> mgr(new ConfigManager());
@@ -123,14 +123,10 @@ void ConfigManager::initConfigFilePathUsingConfigValuesFromCliAndEnv(const std::
     try {
         configValuesFromCliAndEnv_ = values;
         CHECK_STATE(values.contains("CONFIG"));
-        userProvidedConfigPath_ = values.at("CONFIG");
+        auto userProvidedConfigPath_ = values.at("CONFIG");
         CHECK_STATE(!userProvidedConfigPath_.empty())
-        fullyResolvedConfigPath_ = FileManager::resolveCanonicalPathAgainstCwd(userProvidedConfigPath_);
-        CHECK_STATE(!fullyResolvedConfigPath_.empty())
-        fullyResolvedConfigDirPath_ = std::filesystem::path(fullyResolvedConfigPath_).parent_path().string();
-        // this method is only called once during factory init
         CHECK_STATE(!fileManager_)
-        fileManager_ = std::make_shared<FileManager>(fullyResolvedConfigDirPath_);
+        fileManager_ = std::make_shared<FileManager>(userProvidedConfigPath_);
     } catch (const std::exception &ex) {
         RETHROW_NESTED;
     }
@@ -140,16 +136,17 @@ void ConfigManager::reloadConfig() {
     std::unique_lock<std::shared_mutex> lock(latestConfigMutex_);
 
     try {
-        CHECK_STATE(!userProvidedConfigPath_.empty());
-        CHECK_STATE(!fullyResolvedConfigPath_.empty());
 
-        spdlog::info("Loading machinepay config from: {}", fullyResolvedConfigPath_.c_str());
-        spdlog::info("All relative paths in the config will be resolved against the machinepay config location.");
+        CHECK_STATE(fileManager_);
+
+        auto configPath = fileManager_->canonicalConfigPath();
+
+        spdlog::info("Loading machinepay config from: {}", configPath.c_str());
+        spdlog::info("All relative paths in the config will be resolved against the machinepay config directory: {}",
+                     fileManager_->canonicalConfigDirPath().c_str());
 
 
-        checkFileExistsAndReadable(fullyResolvedConfigPath_);
-
-        auto hash = computeBlakeHash(userProvidedConfigPath_);
+        auto hash = computeBlakeHash(configPath);
 
         if (hash == latestConfigHash_) {
             CHECK_STATE(latestConfig_);
@@ -159,10 +156,10 @@ void ConfigManager::reloadConfig() {
 
         ConfigLoader loader(ConfigManager::configValuesFromCliAndEnv_);
 
-        latestConfig_ = loader.loadFromYamlFile(userProvidedConfigPath_, fileManager_);
+        latestConfig_ = loader.loadFromYamlFile(configPath, fileManager_);
 
         // Record last modified time
-        auto ftime = std::filesystem::last_write_time(userProvidedConfigPath_);
+        auto ftime = std::filesystem::last_write_time(configPath);
         latestConfigModificationTime_ = std::chrono::system_clock::time_point(
             std::chrono::duration_cast<std::chrono::system_clock::duration>(
                 ftime.time_since_epoch()

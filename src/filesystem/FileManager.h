@@ -7,11 +7,30 @@
 class FileManager
 {
 public:
-    explicit FileManager(const std::string &userProvidedConfigPath)
+    [[nodiscard]] std::filesystem::path canonicalConfigPath() const
+    {
+        CHECK_STATE(!canonicalConfigPath_.empty());
+        return canonicalConfigPath_;
+    }
+
+    [[nodiscard]] std::filesystem::path canonicalConfigDirPath() const
+    {
+        CHECK_STATE(!canonicalConfigDirPath_.empty());
+        return canonicalConfigDirPath_;
+    }
+
+    explicit FileManager(const filesystem::path &userProvidedConfigPath)
         : userProvidedConfigPath_(userProvidedConfigPath) {
-        checkFileExistsAndReadableCwd(userProvidedConfigPath);
-        canonicalConfigPath_ = resolveCanonicalPathAgainstCwd(userProvidedConfigPath_);
-        canonicalConfigDir_ = canonicalConfigPath_.parent_path();
+        try
+        {
+            checkFileExistsAndReadableCwd(userProvidedConfigPath);
+            canonicalConfigPath_ = FileManager::resolveCanonicalPathAgainstCwd(userProvidedConfigPath_);
+            spdlog::info("Resolved machinepay config path: {}", canonicalConfigPath_.c_str());
+            CHECK_STATE(!canonicalConfigPath_.empty());
+            canonicalConfigDirPath_ = std::filesystem::path(canonicalConfigPath_).parent_path().string();
+        } catch (const std::exception &ex) {
+            RETHROW_NESTED;
+        }
     }
 
     filesystem::path checkFileExistsAndReadableAndResolve(const std::string& path);
@@ -27,6 +46,6 @@ public:
 private:
     std::string userProvidedConfigPath_;
     std::filesystem::path canonicalConfigPath_;
-    std::filesystem::path canonicalConfigDir_;
+    std::filesystem::path canonicalConfigDirPath_;
     
 };

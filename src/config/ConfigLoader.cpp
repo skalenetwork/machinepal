@@ -335,14 +335,15 @@ void ConfigLoader::validateJson(const json &j) {
 
 
 // ---------- Orchestrator ----------
-std::shared_ptr<MachinePayConfig> ConfigLoader::loadFromYamlFile(const std::string &yamlPath, ptr<FileManager> fileManager) {
+std::shared_ptr<MachinePayConfig> ConfigLoader::loadFromYamlFile(const filesystem::path &yamlPath, ptr<FileManager> fileManager) {
     try {
         CHECK_STATE(fileManager);
+        CHECK_STATE(yamlPath.is_absolute());
         spdlog::info("Parsing config file");
         json j = yamlToJson(yamlPath);
         applyEnvOverrides(j);
         resolveSecrets(j);
-        spdlog::info("Validating config file against schema: {}", yamlPath);
+        spdlog::info("Validating config file against schema: {}", yamlPath.string());
         validateJson(j);
         spdlog::info("Validated config file against schema");
         return MachinePayConfig::createFromJson(j, fileManager);;

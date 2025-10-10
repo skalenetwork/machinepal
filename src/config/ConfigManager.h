@@ -15,7 +15,7 @@ public:
 
 
     static ptr<ConfigManager> initManager(const std::map<std::string, std::string>& configValuesFromCliAndEnv);
-    static ptr<ConfigManager> create(const std::map<std::string, std::string>& configValuesFromCliAndEnv);
+    static ptr<ConfigManager> createInstance(const std::map<std::string, std::string>& configValuesFromCliAndEnv);
 
     void reloadConfig();
     std::shared_ptr<MachinePayConfig> latestConfig();
@@ -42,11 +42,6 @@ private:
 
     void initConfigFilePathUsingConfigValuesFromCliAndEnv(const std::map<std::string, std::string>& values);
 
-    std::string userProvidedConfigPath_ = "machinepay.yml";
-    std::filesystem::path fullyResolvedConfigPath_;
-    std::filesystem::path fullyResolvedConfigDirPath_;
-
-
     std::shared_ptr<MachinePayConfig> latestConfig_;
     std::shared_mutex latestConfigMutex_;
     std::chrono::system_clock::time_point latestConfigModificationTime_;
@@ -54,6 +49,6 @@ private:
     std::map<std::string, std::string> configValuesFromCliAndEnv_;
 
 
-    std::string computeBlakeHash(const std::string& filePath);
+    std::string computeBlakeHash(const filesystem::path& filePath);
     void checkFileExistsAndReadable(const std::string& configFile);
 };

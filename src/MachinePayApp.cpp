@@ -1,7 +1,7 @@
 #include "MachinePayApp.h"
 
 MachinePayApp::MachinePayApp(std::map<std::string, std::string> configValuesFromCliAndEnv) {
-    spdlog::info("Processing config");
+    spdlog::info("Looking for config");
     configManager_  = ConfigManager::initManager(configValuesFromCliAndEnv);
     Init::initLogLevelFromConfig(configManager());
     auto serverConfig = configManager_->latestConfig()->server();

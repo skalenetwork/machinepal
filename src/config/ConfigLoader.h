@@ -33,7 +33,7 @@ public:
         const nlohmann::json &j, const std::string &key, const std::string &defaultValue);
 
 
-    std::shared_ptr<MachinePayConfig> loadFromYamlFile(const std::string& yamlPath, ptr<FileManager> fileManager);
+    std::shared_ptr<MachinePayConfig> loadFromYamlFile(const filesystem::path& yamlPath, ptr<FileManager> fileManager);
 
 
 private:

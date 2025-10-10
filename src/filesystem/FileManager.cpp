@@ -13,50 +13,51 @@ filesystem::path FileManager::checkFileExistsAndReadableAndResolve(const std::st
 {
     namespace fs = std::filesystem;
 
+    // Disallow parent directory traversal in userProvidedPath (e.g. ../../somefile)
+    if (userProvidedPath.find("..") != std::string::npos) {
+        throw std::runtime_error("Parent directory traversal ('..') is not allowed in file path: '" +
+            userProvidedPath + "'. Current config dir: " + canonicalConfigDirPath_.string());
+    }
 
     if (userProvidedPath.empty())
     {
-        throw std::runtime_error(string("File path is empty. Current config dir: ") + canonicalConfigDir_.c_str());
+        throw std::runtime_error("File path is empty. Current config dir: " +
+            canonicalConfigDirPath_.string());
     }
 
     filesystem::path p(userProvidedPath);
 
     if (!p.is_absolute()) {
         // path is relative. Resolve against current config dir
-        p = this->canonicalConfigDir_ / p;
+        p = this->canonicalConfigDirPath_ / p;
     }
 
-    // resolve .. but do not go after symbolik links
+    // resolve .. but do not go after symbolic links
     p = weakly_canonical(p);
 
 
     if (!fs::exists(p))
     {
         throw std::runtime_error("File '" + userProvidedPath + "' does not exist. Current config dir: "
-            + + canonicalConfigDir_.c_str());
+            + canonicalConfigDirPath_.string());
     }
 
     // Check that configFile is not a directory
     if (std::filesystem::is_directory(p)) {
         throw std::runtime_error(
             "File '" + userProvidedPath + "' is a directory, not a file. Current config dir: " +
-            canonicalConfigDir_.c_str());
+            canonicalConfigDirPath_.string());
     }
 
     if (!fs::is_regular_file(p))
     {
         throw std::runtime_error("File '" + userProvidedPath +
-            "' is not a regular file (a directory?). Current config gir: " + canonicalConfigDir_.c_str());
+            "' is not a regular file (a directory?). Current config dir: " + canonicalConfigDirPath_.string());
     }
     if (access(p.c_str(), R_OK) != 0)
     {
         throw std::runtime_error("File '" + userProvidedPath +
-            "' is not readable. Current config dir: " + canonicalConfigDir_.c_str());
-    }
-    if (fs::file_size(p) == 0)
-    {
-        throw std::runtime_error("File '" + userProvidedPath +
-            "' is empty. Current config dir: " + canonicalConfigDir_.c_str());
+            "' is not readable. Current config dir: " + canonicalConfigDirPath_.string());
     }
 
     return p;
