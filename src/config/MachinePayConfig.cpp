@@ -4,6 +4,11 @@
 
 #include "MachinePayConfig.h"
 #include "ConfigLoader.h"
+#include "ServerConfig.h"
+#include "FacilitatorConfig.h"
+#include "LogConfig.h"
+#include "common.h"
+#include <nlohmann/json.hpp>
 #include <filesystem>
 
 
@@ -62,7 +67,7 @@ ptr<MachinePayConfig> MachinePayConfig::createFromJson(const nlohmann::json& j, 
         {
             logConfig = LogConfig::createFromJson(j.at("log"), fileManager);
         }
-
+#include "MachinePayConfig.h"
         return std::make_shared<MachinePayConfig>(serverConfig, facilitatorConfig, logConfig);
     }
     catch (const std::exception& ex)
@@ -129,3 +134,27 @@ ptr<ServerConfig> ServerConfig::createFromJson(const nlohmann::json& j,  ptr<Fil
         RETHROW_NESTED;
     }
 }
+#include <stdexcept>
+
+MachinePayConfig::MachinePayConfig(const ptr<ServerConfig>& server,
+                                   const ptr<FacilitatorConfig>& facilitator,
+                                   const ptr<LogConfig>& log)
+    : server_(server), facilitator_(facilitator), log_(log) {
+    CHECK_STATE(server_);
+    CHECK_STATE(facilitator_);
+    CHECK_STATE(log_);
+}
+
+const ptr<ServerConfig>& MachinePayConfig::server() const {
+    CHECK_STATE(server_);
+    return server_;
+}
+const ptr<FacilitatorConfig>& MachinePayConfig::facilitator() const {
+    CHECK_STATE(facilitator_);
+    return facilitator_;
+}
+const ptr<LogConfig>& MachinePayConfig::log() const {
+    CHECK_STATE(log_);
+    return log_;
+}
+

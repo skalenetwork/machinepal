@@ -1,6 +1,7 @@
 #include "common.h"
 #include "ServerFactory.h"
 #include "X402HandlerFactory.h"
+#include "crypto/CertManager.h"
 #include <proxygen/httpserver/HTTPServer.h>
 #include <proxygen/httpserver/HTTPServerOptions.h>
 #include <curl/curl.h>
