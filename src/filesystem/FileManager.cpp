@@ -11,91 +11,107 @@
 
 filesystem::path FileManager::checkFileExistsAndReadableAndResolve(const std::string&  userProvidedPath)
 {
+
+
     namespace fs = std::filesystem;
 
-    // Disallow parent directory traversal in userProvidedPath (e.g. ../../somefile)
-    if (userProvidedPath.find("..") != std::string::npos) {
-        throw std::runtime_error("Parent directory traversal ('..') is not allowed in file path: '" +
-            userProvidedPath + "'. Current config dir: " + canonicalConfigDirPath_.string());
-    }
-
-    if (userProvidedPath.empty())
+    try
     {
-        throw std::runtime_error("File path is empty. Current config dir: " +
-            canonicalConfigDirPath_.string());
-    }
+        // Disallow parent directory traversal in userProvidedPath (e.g. ../../somefile)
+        if (userProvidedPath.find("..") != std::string::npos) {
+            throw std::runtime_error("Parent directory traversal ('..') is not allowed in file path: '" +
+                userProvidedPath + "'. Current config dir: " + canonicalConfigDirPath_.string());
+        }
 
-    filesystem::path p(userProvidedPath);
+        if (userProvidedPath.empty())
+        {
+            throw std::runtime_error("File path is empty. Current config dir: " +
+                canonicalConfigDirPath_.string());
+        }
 
-    if (!p.is_absolute()) {
-        // path is relative. Resolve against current config dir
-        p = this->canonicalConfigDirPath_ / p;
-    }
+        filesystem::path p(userProvidedPath);
 
-    // resolve .. but do not go after symbolic links
-    p = weakly_canonical(p);
+        if (!p.is_absolute()) {
+            // path is relative. Resolve against current config dir
+            p = this->canonicalConfigDirPath_ / p;
+        }
+
+        // resolve .. but do not go after symbolic links
+        p = weakly_canonical(p);
 
 
-    if (!fs::exists(p))
+        if (!fs::exists(p))
+        {
+            throw std::runtime_error("File '" + userProvidedPath + "' does not exist. Current config dir: "
+                + canonicalConfigDirPath_.string());
+        }
+
+        // Check that configFile is not a directory
+        if (std::filesystem::is_directory(p)) {
+            throw std::runtime_error(
+                "File '" + userProvidedPath + "' is a directory, not a file. Current config dir: " +
+                canonicalConfigDirPath_.string());
+        }
+
+        if (!fs::is_regular_file(p))
+        {
+            throw std::runtime_error("File '" + userProvidedPath +
+                "' is not a regular file (a directory?). Current config dir: " + canonicalConfigDirPath_.string());
+        }
+        if (access(p.c_str(), R_OK) != 0)
+        {
+            throw std::runtime_error("File '" + userProvidedPath +
+                "' is not readable. Current config dir: " + canonicalConfigDirPath_.string());
+        }
+
+        return p;
+    } catch (const std::exception& e)
     {
-        throw std::runtime_error("File '" + userProvidedPath + "' does not exist. Current config dir: "
-            + canonicalConfigDirPath_.string());
+        RETHROW_NESTED;
     }
-
-    // Check that configFile is not a directory
-    if (std::filesystem::is_directory(p)) {
-        throw std::runtime_error(
-            "File '" + userProvidedPath + "' is a directory, not a file. Current config dir: " +
-            canonicalConfigDirPath_.string());
-    }
-
-    if (!fs::is_regular_file(p))
-    {
-        throw std::runtime_error("File '" + userProvidedPath +
-            "' is not a regular file (a directory?). Current config dir: " + canonicalConfigDirPath_.string());
-    }
-    if (access(p.c_str(), R_OK) != 0)
-    {
-        throw std::runtime_error("File '" + userProvidedPath +
-            "' is not readable. Current config dir: " + canonicalConfigDirPath_.string());
-    }
-
-    return p;
 
 }
 
 
 void FileManager::checkFileExistsAndReadableCwd(const std::string& path)
 {
+
     namespace fs = std::filesystem;
-    auto cwd = fs::current_path().string();
-    if (path.empty())
-    {
-        throw std::runtime_error("File path is empty. Current working directory: " + cwd);
-    }
-    if (!fs::exists(path))
-    {
-        throw std::runtime_error("File '" + path + "' does not exist. Current working directory: " + cwd);
-    }
 
-    // Check that configFile is not a directory
-    if (std::filesystem::is_directory(path)) {
-        throw std::runtime_error(
-            "File '" + path + "' is a directory, not a file. Current working directory: " +
-            std::string(cwd));
-    }
+    try
+    {
+        auto cwd = fs::current_path().string();
+        if (path.empty())
+        {
+            throw std::runtime_error("File path is empty. Current working directory: " + cwd);
+        }
+        if (!fs::exists(path))
+        {
+            throw std::runtime_error("File '" + path + "' does not exist. Current working directory: " + cwd);
+        }
 
-    if (!fs::is_regular_file(path))
+        // Check that configFile is not a directory
+        if (std::filesystem::is_directory(path)) {
+            throw std::runtime_error(
+                "File '" + path + "' is a directory, not a file. Current working directory: " +
+                std::string(cwd));
+        }
+
+        if (!fs::is_regular_file(path))
+        {
+            throw std::runtime_error("File '" + path + "' is not a regular file (a directory?). Current working directory: " + cwd);
+        }
+        if (access(path.c_str(), R_OK) != 0)
+        {
+            throw std::runtime_error("File '" + path + "' is not readable. Current working directory: " + cwd);
+        }
+        if (fs::file_size(path) == 0)
+        {
+            throw std::runtime_error("File '" + path + "' is empty. Current working directory: " + cwd);
+        }
+    } catch (const std::exception& e)
     {
-        throw std::runtime_error("File '" + path + "' is not a regular file (a directory?). Current working directory: " + cwd);
-    }
-    if (access(path.c_str(), R_OK) != 0)
-    {
-        throw std::runtime_error("File '" + path + "' is not readable. Current working directory: " + cwd);
-    }
-    if (fs::file_size(path) == 0)
-    {
-        throw std::runtime_error("File '" + path + "' is empty. Current working directory: " + cwd);
+        RETHROW_NESTED;
     }
 }
 

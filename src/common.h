@@ -64,7 +64,7 @@ do { std::throw_with_nested(std::runtime_error(std::string(__FILE__) + \
 
 #define RETHROW_NESTED2(__MSG__) \
 do { std::throw_with_nested(std::runtime_error(std::string(__FILE__) + ":" \
-+ std::to_string(__LINE__) + " " + std::string(__function__) + ":" + std::string(__MSG__))); \
++ std::to_string(__LINE__) + " " + std::string(__PRETTY_FUNCTION__) + ":" + std::string(__MSG__))); \
 } while(0)
 
 

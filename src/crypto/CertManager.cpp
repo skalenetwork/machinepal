@@ -14,68 +14,66 @@
 #include <fstream>
 
 
-void CertManager::checkPEMFormat(const std::string& certPath, const std::string& keyPath) {
+void CertManager::checkPEMFormat(const std::filesystem::path& certPath, const std::filesystem::path& keyPath) {
     namespace fs = std::filesystem;
     auto cwd = fs::current_path().string();
     FILE* certFile = fopen(certPath.c_str(), "r");
     if (!certFile) {
-        throw std::runtime_error("Cannot open certificate file: " + certPath + ". Current working directory: " + cwd);
+        throw std::runtime_error("Cannot open certificate file: " + certPath.string() + ". Current working directory: " + cwd);
     }
     X509* cert = PEM_read_X509(certFile, nullptr, nullptr, nullptr);
     fclose(certFile);
     if (!cert) {
-        throw std::runtime_error("Certificate file is not a well-formed PEM: " + certPath + ". Current working directory: " + cwd);
+        throw std::runtime_error("Certificate file is not a well-formed PEM: " + certPath.string() + ". Current working directory: " + cwd);
     }
     FILE* keyFile = fopen(keyPath.c_str(), "r");
     if (!keyFile) {
-        throw std::runtime_error("Cannot open key file: " + keyPath + ". Current working directory: " + cwd);
+        throw std::runtime_error("Cannot open key file: " + keyPath.string() + ". Current working directory: " + cwd);
     }
     EVP_PKEY* pkey = PEM_read_PrivateKey(keyFile, nullptr, nullptr, nullptr);
     fclose(keyFile);
     if (!pkey) {
-        throw std::runtime_error("Key file is not a well-formed PEM: " + keyPath + ". Current working directory: " + cwd);
+        throw std::runtime_error("Key file is not a well-formed PEM: " + keyPath.string() + ". Current working directory: " + cwd);
     }
     X509_free(cert);
     EVP_PKEY_free(pkey);
 }
 
-void CertManager::checkKeyMatchesCert(const std::string& certPath, const std::string& keyPath) {
+void CertManager::checkKeyMatchesCert(const std::filesystem::path& certPath, const std::filesystem::path& keyPath) {
     namespace fs = std::filesystem;
     auto cwd = fs::current_path().string();
     FILE* certFile = fopen(certPath.c_str(), "r");
     if (!certFile) {
-        throw std::runtime_error("Cannot open certificate file: " + certPath + ". Current working directory: " + cwd);
+        throw std::runtime_error("Cannot open certificate file: " + certPath.string() + ". Current working directory: " + cwd);
     }
     X509* cert = PEM_read_X509(certFile, nullptr, nullptr, nullptr);
     fclose(certFile);
     if (!cert) {
-        throw std::runtime_error("Certificate file is not a well-formed PEM: " + certPath + ". Current working directory: " + cwd);
+        throw std::runtime_error("Certificate file is not a well-formed PEM: " + certPath.string() + ". Current working directory: " + cwd);
     }
     FILE* keyFile = fopen(keyPath.c_str(), "r");
     if (!keyFile) {
         X509_free(cert);
-        throw std::runtime_error("Cannot open key file: " + keyPath + ". Current working directory: " + cwd);
+        throw std::runtime_error("Cannot open key file: " + keyPath.string() + ". Current working directory: " + cwd);
     }
     EVP_PKEY* pkey = PEM_read_PrivateKey(keyFile, nullptr, nullptr, nullptr);
     fclose(keyFile);
     if (!pkey) {
         X509_free(cert);
-        throw std::runtime_error("Key file is not a well-formed PEM: " + keyPath + ". Current working directory: " + cwd);
+        throw std::runtime_error("Key file is not a well-formed PEM: " + keyPath.string() + ". Current working directory: " + cwd);
     }
     // Check that the key matches the certificate
     if (!X509_check_private_key(cert, pkey)) {
         X509_free(cert);
         EVP_PKEY_free(pkey);
-        throw std::runtime_error("Key does not match certificate for cert: " + certPath + ", key: " + keyPath + ". Current working directory: " + cwd);
+        throw std::runtime_error("Key does not match certificate for cert: " + certPath.string() + ", key: " + keyPath.string() + ". Current working directory: " + cwd);
     }
     X509_free(cert);
     EVP_PKEY_free(pkey);
 }
 
-void CertManager::doThoroughKeyCertFormatCheck(const std::string& certPath, const std::string& keyPath) {
+void CertManager::doThoroughKeyCertFormatCheck(const std::filesystem::path& certPath, const std::filesystem::path& keyPath) {
     // Check existence, readability, and non-emptiness
-    FileManager::checkFileExistsAndReadableCwd(certPath);
-    FileManager::checkFileExistsAndReadableCwd(keyPath);
     // Check PEM format
     checkPEMFormat(certPath, keyPath);
     // Check key matches certificate
@@ -83,7 +81,7 @@ void CertManager::doThoroughKeyCertFormatCheck(const std::string& certPath, cons
 }
 
 
-void CertManager::validateSSLFiles(const std::string& certFile, const std::string& keyFile, const std::string& caFile) {
+void CertManager::validateSSLFiles(const std::filesystem::path& certFile, const std::filesystem::path& keyFile, const std::filesystem::path& caFile) {
     CertManager::doThoroughKeyCertFormatCheck(certFile, keyFile);
     SSL_CTX* ctx = SSL_CTX_new(TLS_server_method());
     if (!ctx) {
@@ -91,16 +89,16 @@ void CertManager::validateSSLFiles(const std::string& certFile, const std::strin
     }
     if (SSL_CTX_use_certificate_file(ctx, certFile.c_str(), SSL_FILETYPE_PEM) != 1) {
         SSL_CTX_free(ctx);
-        throw std::runtime_error("Failed to load certificate file: " + certFile);
+        throw std::runtime_error("Failed to load certificate file: " + certFile.string());
     }
     if (SSL_CTX_use_PrivateKey_file(ctx, keyFile.c_str(), SSL_FILETYPE_PEM) != 1) {
         SSL_CTX_free(ctx);
-        throw std::runtime_error("Failed to load private key file: " + keyFile);
+        throw std::runtime_error("Failed to load private key file: " + keyFile.string());
     }
     if (!caFile.empty()) {
         if (SSL_CTX_load_verify_locations(ctx, caFile.c_str(), nullptr) != 1) {
             SSL_CTX_free(ctx);
-            throw std::runtime_error("Failed to load CA file: " + caFile);
+            throw std::runtime_error("Failed to load CA file: " + caFile.string());
         }
     }
     if (SSL_CTX_check_private_key(ctx) != 1) {
@@ -177,7 +175,7 @@ void CertManager::validateSSLFiles(const std::string& certFile, const std::strin
     }
 }
 
-std::string CertManager::getCaFilePath(const std::shared_ptr<HTTPSConfig>& https) {
+std::filesystem::path CertManager::getCaFilePath(const std::shared_ptr<HTTPSConfig>& https) {
     if (https->caFile() && !https->caFile()->empty()) {
         return https->caFile().value();
     }
@@ -206,12 +204,11 @@ wangle::SSLContextConfig CertManager::createAndValidateWangleSSLContext(ptr<HTTP
     auto certFile = https->certFile();
     auto keyFile = https->keyFile();
     auto caFile = CertManager::getCaFilePath(https);
-    CertManager::validateSSLFiles(https->certFile(), keyFile, caFile);
+    CertManager::validateSSLFiles(certFile, keyFile, caFile);
     wangle::SSLContextConfig sslCfg;
     sslCfg.isDefault = true; // very important otherwise proxygen will fail
-    auto keyPassPath = https->keyPassFile() ? https->keyPassFile().value() : "";
-    sslCfg.addCertificate(https->certFile(), https->keyFile(), keyPassPath);
-    //sslCfg.sslCiphers = "ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384";
+    auto keyPassPath = https->keyPassFile() ? https->keyPassFile().value() : std::filesystem::path("");
+    sslCfg.addCertificate(certFile.string(), keyFile.string(), keyPassPath.string());
     sslCfg.clientVerification = folly::SSLContext::VerifyClientCertificate::DO_NOT_REQUEST;
     //sslCfg.clientCAFile = caFilePath;
     return sslCfg;

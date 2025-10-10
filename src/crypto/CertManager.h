@@ -1,6 +1,7 @@
 #pragma once
 
 
+#include <filesystem>
 #include <wangle/ssl/SSLContextConfig.h>
 
 class HTTPSConfig;
@@ -11,15 +12,15 @@ public:
 
 
     static wangle::SSLContextConfig createAndValidateWangleSSLContext(ptr<HTTPSConfig> https);
-    static void doThoroughKeyCertFormatCheck(const std::string& certPath, const std::string& keyPath);
+    static void doThoroughKeyCertFormatCheck(const std::filesystem::path& certPath, const std::filesystem::path& keyPath);
 
 private:
 
-    static void checkPEMFormat(const std::string& certPath, const std::string& keyPath);
-    static void checkKeyMatchesCert(const std::string& certPath, const std::string& keyPath);
+    static void checkPEMFormat(const std::filesystem::path& certPath, const std::filesystem::path& keyPath);
+    static void checkKeyMatchesCert(const std::filesystem::path& certPath, const std::filesystem::path& keyPath);
 
-    static void validateSSLFiles(const std::string& certFile, const std::string& keyFile, const std::string& caFile);
-    static std::string getCaFilePath(const std::shared_ptr<HTTPSConfig>& https);
+    static void validateSSLFiles(const std::filesystem::path& certFile, const std::filesystem::path& keyFile, const std::filesystem::path& caFile);
+    static std::filesystem::path getCaFilePath(const std::shared_ptr<HTTPSConfig>& https);
 
 
 
