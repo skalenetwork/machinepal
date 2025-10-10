@@ -37,7 +37,6 @@ inline std::string stripSpaces(std::string _s) {
     return _s;
 }
 
-// ...existing code...
 inline void printNestedException(const std::exception& e, int level = 0) {
     spdlog::error("{}Exception: {}", std::string(level, ' '), e.what());
     try {
@@ -48,7 +47,6 @@ inline void printNestedException(const std::exception& e, int level = 0) {
         spdlog::error("{}Non-std::exception nested", std::string(level + 2, ' '));
     }
 }
-// ...existing co
 
 #include <glog/logging.h>
 #include <atomic>
@@ -58,12 +56,15 @@ inline void printNestedException(const std::exception& e, int level = 0) {
 #include <vector>
 #include <stdexcept>
 
+
 #define RETHROW_NESTED \
-    do { std::throw_with_nested(std::runtime_error(std::string(__func__) + + " failed:")); \
-    } while(0)
+do { std::throw_with_nested(std::runtime_error(std::string(__FILE__) + \
+":" + std::to_string(__LINE__) + " " + std::string(__PRETTY_FUNCTION__))); \
+} while(0)
 
 #define RETHROW_NESTED2(__MSG__) \
-do { std::throw_with_nested(std::runtime_error(std::string(__func__) + + " failed:" + __MSG__)); \
+do { std::throw_with_nested(std::runtime_error(std::string(__FILE__) + ":" \
++ std::to_string(__LINE__) + " " + std::string(__function__) + ":" + std::string(__MSG__))); \
 } while(0)
 
 
