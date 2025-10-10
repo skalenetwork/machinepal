@@ -119,6 +119,10 @@ ptr<ConfigManager> ConfigManager::create(const std::map<std::string, std::string
 void ConfigManager::setConfigValuesFromCliAndEnv(const std::map<std::string, std::string>& values) {
     try {
         configValuesFromCliAndEnv_ = values;
+        spdlog::info("configValuesFromCliAndEnv_:");
+        for (const auto& kv : configValuesFromCliAndEnv_) {
+            spdlog::info("  {} = {}", kv.first, kv.second);
+        }
         CHECK_STATE(values.contains("CONFIG"));
         userProvidedConfigPath_ = values.at("CONFIG");
         CHECK_STATE(!userProvidedConfigPath_.empty())

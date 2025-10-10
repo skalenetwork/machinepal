@@ -67,6 +67,13 @@ map<string, string>  parseCommandLineAndEnvironmentOverloads(int argc, char **ar
                 spdlog::info("{} = {}", kv.first, kv.second);
             }
         }
+
+        if (!envOverloads.contains(("CONFIG")) {
+            // If config file is not set, set to default ./machinepay.yml
+            envOverloads["CONFIG"] = "./machinepay.yml";
+            spdlog::info("No config file specified in command line or environment. Using default ./machinepay.yml");
+        }
+
         return envOverloads;
 
     } catch (const std::exception &ex) {
