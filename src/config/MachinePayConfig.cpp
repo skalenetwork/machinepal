@@ -28,11 +28,12 @@ ptr<FacilitatorConfig> FacilitatorConfig::createFomJson(const nlohmann::json& j,
     try
     {
         CHECK_STATE(j.is_object());
-        std::optional<filesystem::path> apiKeyFile = std::nullopt;
+        std::optional<CanonicalPath> apiKeyFile = std::nullopt;
         if (j.contains("api_key_file") && !j.at("api_key_file").is_null())
         {
             std::string file = j.at("api_key_file").get<std::string>();
-            apiKeyFile = fileManager->checkFileExistsAndReadableAndResolve(file);
+            auto resolved = fileManager->checkFileExistsAndReadableAndResolve(file);
+            apiKeyFile = CanonicalPath(resolved);
         }
         return std::make_shared<FacilitatorConfig>(
             ConfigLoader::getStringWithDefault(j, "type", ""),
@@ -99,23 +100,27 @@ ptr<ServerConfig> ServerConfig::createFromJson(const nlohmann::json& j,  ptr<Fil
         {
             CHECK_STATE(j.at("https").is_object());
             const auto& jt = j.at("https");
-            std::optional<std::string> caFile = std::nullopt;
+            std::optional<CanonicalPath> caFile = std::nullopt;
             if (jt.contains("ca_file") && !jt.at("ca_file").is_null())
             {
                 std::string file = jt.at("ca_file").get<std::string>();
-                caFile = fileManager->checkFileExistsAndReadableAndResolve(file);
+                auto resolved = fileManager->checkFileExistsAndReadableAndResolve(file);
+                caFile = CanonicalPath(resolved);
             }
-            std::optional<filesystem::path> keyPassFile = std::nullopt;
+            std::optional<CanonicalPath> keyPassFile = std::nullopt;
             if (jt.contains("key_pass_file") && !jt.at("key_pass_file").is_null())
             {
                 std::string file = jt.at("key_pass_file").get<std::string>();
-                keyPassFile = fileManager->checkFileExistsAndReadableAndResolve(file);
+                auto resolved = fileManager->checkFileExistsAndReadableAndResolve(file);
+                keyPassFile = CanonicalPath(resolved);
             }
+            auto certFile = CanonicalPath(fileManager->checkFileExistsAndReadableAndResolve(ConfigLoader::getStringWithDefault(jt, "cert_file", "")));
+            auto keyFile = CanonicalPath(fileManager->checkFileExistsAndReadableAndResolve(ConfigLoader::getStringWithDefault(jt, "key_file", "")));
             httpsConfig = make_shared<HTTPSConfig>(
                 ConfigLoader::getBoolWithDefault(jt, "enabled", true),
                 ConfigLoader::getUint16WithDefault(jt, "port", 8080),
-                ConfigLoader::getStringWithDefault(jt, "cert_file", ""),
-                ConfigLoader::getStringWithDefault(jt, "key_file", ""),
+                certFile,
+                keyFile,
                 keyPassFile,
                 caFile);
         }
@@ -157,4 +162,3 @@ const ptr<LogConfig>& MachinePayConfig::log() const {
     CHECK_STATE(log_);
     return log_;
 }
-

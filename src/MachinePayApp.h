@@ -6,6 +6,8 @@
 #include "init/Init.h"
 #include "x402_server/ServerFactory.h"
 
+
+
 class MachinePayApp {
 public:
     [[nodiscard]] ptr<ConfigManager> configManager() const {
@@ -18,6 +20,8 @@ public:
     }
 
     explicit MachinePayApp(std::map<std::string, std::string> configValuesFromCliAndEnv);
+    void runUntilExit();
+    MachinePayApp() = delete;
     MachinePayApp(const MachinePayApp&) = delete;
     MachinePayApp(MachinePayApp&&) = delete;
     MachinePayApp& operator=(const MachinePayApp&) = delete;
@@ -26,4 +30,5 @@ public:
 private:
     ptr<ConfigManager> configManager_;
     ptr<ServerFactory> serverFactory_;
+    ptr<proxygen::HTTPServer> proxygenServer_;
 };

@@ -2,20 +2,20 @@
 #include <filesystem>
 #include <optional>
 #include "HTTPConfig.h"
+#include "filesystem/CanonicalPath.h"
 
 class HTTPSConfig : public HTTPConfig {
-    std::filesystem::path certFile_;
-    std::filesystem::path keyFile_;
-    std::optional<std::filesystem::path> keyPassFile_;
-    std::optional<std::filesystem::path> caFile_;
+    CanonicalPath certFile_;
+    CanonicalPath keyFile_;
+    std::optional<CanonicalPath> keyPassFile_;
+    std::optional<CanonicalPath> caFile_;
 public:
-    HTTPSConfig(bool isEnabled, uint16_t port, const std::filesystem::path& certFile,
-                const std::filesystem::path& keyFile,
-                const std::optional<std::filesystem::path> keyPassFile,
-                const std::optional<std::filesystem::path>& caFile);
-    const std::filesystem::path& certFile() const;
-    const std::filesystem::path& keyFile() const;
-    const std::optional<std::filesystem::path>& keyPassFile() const;
-    const std::optional<std::filesystem::path>& caFile() const;
+    HTTPSConfig(bool isEnabled, uint16_t port, const CanonicalPath& certFile,
+                const CanonicalPath& keyFile,
+                const std::optional<CanonicalPath> keyPassFile,
+                const std::optional<CanonicalPath>& caFile);
+    const CanonicalPath& certFile() const;
+    const CanonicalPath& keyFile() const;
+    const std::optional<CanonicalPath>& keyPassFile() const;
+    const std::optional<CanonicalPath>& caFile() const;
 };
-

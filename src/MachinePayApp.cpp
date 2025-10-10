@@ -4,9 +4,16 @@ MachinePayApp::MachinePayApp(std::map<std::string, std::string> configValuesFrom
     spdlog::info("Looking for config");
     configManager_  = ConfigManager::initManager(configValuesFromCliAndEnv);
     Init::initLogLevelFromConfig(configManager());
-    auto serverConfig = configManager_->latestConfig()->server();
+}
+
+void MachinePayApp::runUntilExit()
+{
+
+    spdlog::info("Creating and starting server");
     serverFactory_ = std::make_shared<ServerFactory>(*this);
-    auto serverObject = serverFactory_->createServerInstance(*serverConfig);
-    serverObject->start();
+    auto serverConfig = configManager_->latestConfig()->server();
+    proxygenServer_ = serverFactory_->createServerInstance(*serverConfig);
+    proxygenServer_->start();
+    spdlog::info("Server exited");
 }
 

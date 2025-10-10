@@ -28,7 +28,7 @@ void setIfNotEmpty(std::map<std::string, std::string>& envOverloads, const std::
     }
 }
 
-map<string, string>  parseCommandLineAndEnvironmentOverloads(int argc, char **argv) {
+map<string, string>  parseConfigValueOverloadsFromCommandLineAndEnvironment(int argc, char **argv) {
     try {
         // get environment overloads first. Then command line can override them.
         auto envOverloads = Init::getMachinePayEnvironmentOverloads();
@@ -87,34 +87,20 @@ map<string, string>  parseCommandLineAndEnvironmentOverloads(int argc, char **ar
 }
 
 
-std::map<string, string> parseCommandLineAndConfigThenInitLibsAndLogging(int argc, char** argv)
-{
-    try {
-        Init::initAllLibs(1, argv);
-        return  parseCommandLineAndEnvironmentOverloads(argc, argv);
-    } catch (const std::exception &ex) {
-        RETHROW_NESTED;
-    }
-}
-
-void runServerUntilShutdown(std::map<string, string> configValuesFromCliAndEnv) {
-    try {
-        MachinePayApp app(configValuesFromCliAndEnv);
-    } catch (const std::exception &ex) {
-        RETHROW_NESTED;
-    }
-}
 
 int main(int argc, char *argv[]) {
     try {
-        auto configValuesFromCliAndEnv = parseCommandLineAndConfigThenInitLibsAndLogging(argc, argv);
-        spdlog::info("Creating and starting server");
-        runServerUntilShutdown(configValuesFromCliAndEnv);
-        spdlog::info("Server exited");
+        Init::initAllLibs(1, argv);
+        auto configValueOverloads = parseConfigValueOverloadsFromCommandLineAndEnvironment(argc, argv);
+        MachinePayApp app(configValueOverloads);
+        app.runUntilExit();
         return 0;
     } catch (const std::exception &ex) {
-        spdlog::critical("Fatal error in main ");
+        spdlog::critical("Fatal error in main. Exiting. ");
         printNestedException(ex);
+        return 1;
+    } catch (...) {
+        spdlog::critical("Unknown fatal error in main. Exiting.");
         return 1;
     }
 }

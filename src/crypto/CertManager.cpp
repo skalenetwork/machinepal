@@ -19,21 +19,21 @@ void CertManager::checkPEMFormat(const std::filesystem::path& certPath, const st
     auto cwd = fs::current_path().string();
     FILE* certFile = fopen(certPath.c_str(), "r");
     if (!certFile) {
-        throw std::runtime_error("Cannot open certificate file: " + certPath.string() + ". Current working directory: " + cwd);
+        throw std::runtime_error("Cannot open certificate file: " + certPath.string());
     }
     X509* cert = PEM_read_X509(certFile, nullptr, nullptr, nullptr);
     fclose(certFile);
     if (!cert) {
-        throw std::runtime_error("Certificate file is not a well-formed PEM: " + certPath.string() + ". Current working directory: " + cwd);
+        throw std::runtime_error("Certificate file is not a well-formed PEM: " + certPath.string());
     }
     FILE* keyFile = fopen(keyPath.c_str(), "r");
     if (!keyFile) {
-        throw std::runtime_error("Cannot open key file: " + keyPath.string() + ". Current working directory: " + cwd);
+        throw std::runtime_error("Cannot open key file: " + keyPath.string());
     }
     EVP_PKEY* pkey = PEM_read_PrivateKey(keyFile, nullptr, nullptr, nullptr);
     fclose(keyFile);
     if (!pkey) {
-        throw std::runtime_error("Key file is not a well-formed PEM: " + keyPath.string() + ". Current working directory: " + cwd);
+        throw std::runtime_error("Key file is not a well-formed PEM: " + keyPath.string());
     }
     X509_free(cert);
     EVP_PKEY_free(pkey);
@@ -176,7 +176,7 @@ void CertManager::validateSSLFiles(const std::filesystem::path& certFile, const 
 }
 
 std::filesystem::path CertManager::getCaFilePath(const std::shared_ptr<HTTPSConfig>& https) {
-    if (https->caFile() && !https->caFile()->empty()) {
+    if (https->caFile()) {
         return https->caFile().value();
     }
     // OS detection
@@ -199,8 +199,6 @@ std::filesystem::path CertManager::getCaFilePath(const std::shared_ptr<HTTPSConf
 
 wangle::SSLContextConfig CertManager::createAndValidateWangleSSLContext(ptr<HTTPSConfig> https) {
     CHECK_STATE(https);
-    CHECK_STATE(!https->keyFile().empty());
-    CHECK_STATE(!https->certFile().empty())
     auto certFile = https->certFile();
     auto keyFile = https->keyFile();
     auto caFile = CertManager::getCaFilePath(https);
