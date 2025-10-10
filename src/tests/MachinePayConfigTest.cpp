@@ -19,13 +19,13 @@ BOOST_AUTO_TEST_CASE(deserialize_basic_proxy_config) {
 
     BOOST_TEST(config->server()->http());// Check frontend
     BOOST_TEST(config->server()->http()->isEnabled() == true);
-    BOOST_TEST(config->server()->https()->isEnabled() == false);
+    BOOST_TEST(config->server()->https()->isEnabled() == true);
     BOOST_TEST(config->server()->http()->port() == 8080);
     BOOST_TEST(config->server()->https()->port() == 8443);
 
 
-    BOOST_TEST(config->server()->https()->certFile().string().ends_with("certs/machinepay.crt"));
-    BOOST_TEST(config->server()->https()->keyFile().string().ends_with("certs/machinepay.key"));
+    BOOST_TEST(config->server()->https()->certFile().string().ends_with("certs/insecure_test_localhost.crt"));
+    BOOST_TEST(config->server()->https()->keyFile().string().ends_with("secrets/insecure_test_localhost.key"));
 //  BOOST_TEST(config->server()->https()->keyPassFile() == "secrets/key_password");
 //    BOOST_TEST(config->server()->https()->caFile().has_value());
 //    BOOST_TEST(config->server()->https()->caFile().value() == "certs/ca.crt");
@@ -34,5 +34,5 @@ BOOST_AUTO_TEST_CASE(deserialize_basic_proxy_config) {
     BOOST_TEST(config->facilitator()->type() == "cdp");
     BOOST_TEST(config->facilitator()->baseUrl() == "https://api.coinbase.com/v2");
     BOOST_TEST(config->facilitator()->apiKeyFile().has_value());
-    BOOST_TEST(config->facilitator()->apiKeyFile().value().string().ends_with("secrets/coinbase_api_key"));
+    BOOST_TEST(config->facilitator()->apiKeyFile().value().string().ends_with("secrets/coinbase_api_key.txt"));
 }

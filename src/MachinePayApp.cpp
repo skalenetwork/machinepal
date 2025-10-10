@@ -17,3 +17,9 @@ void MachinePayApp::runUntilExit()
     spdlog::info("Server exited");
 }
 
+void MachinePayApp::stopServer()
+{
+    proxygenServer_->stop();
+}
+
+

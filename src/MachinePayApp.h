@@ -21,6 +21,7 @@ public:
 
     explicit MachinePayApp(std::map<std::string, std::string> configValuesFromCliAndEnv);
     void runUntilExit();
+    void stopServer();
     MachinePayApp() = delete;
     MachinePayApp(const MachinePayApp&) = delete;
     MachinePayApp(MachinePayApp&&) = delete;
