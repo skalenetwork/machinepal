@@ -39,7 +39,7 @@ std::string ConfigLoader::readSecretFileFirstLine(const std::string &path,
         std::getline(f, line);
         return line;
     } catch (const std::exception &ex) {
-        RETHROW_NESTED("MachinePayConfigLoader::readSecretFileFirstLine failed: ");
+        RETHROW_NESTED;
     }
 }
 
@@ -174,7 +174,7 @@ void ConfigLoader::applyStringEnv(json &j, const json::json_pointer &path, const
             j[path] = *v;
         }
     } catch (const std::exception &ex) {
-        RETHROW_NESTED("MachinePayConfigLoader::applyStringEnv failed: ");
+        RETHROW_NESTED;
     }
 }
 
@@ -187,7 +187,7 @@ void ConfigLoader::applyBoolEnv(json &j, const json::json_pointer &path, const c
             j[path] = asBool(*v);
         }
     } catch (const std::exception &ex) {
-        RETHROW_NESTED("MachinePayConfigLoader::applyBoolEnv failed: ");
+        RETHROW_NESTED;
     }
 }
 
@@ -200,7 +200,7 @@ void ConfigLoader::applyIntEnv(json &j, const json::json_pointer &path, const ch
             j[path] = std::stoi(*v);
         }
     } catch (const std::exception &ex) {
-        RETHROW_NESTED("MachinePayConfigLoader::applyIntEnv failed: ");
+        RETHROW_NESTED;
     }
 }
 
@@ -228,7 +228,7 @@ void ConfigLoader::applyEnvOverrides(json &j) {
         applyStringEnv(j, "/log/level"_json_pointer, "LOG_LEVEL");
         applyStringEnv(j, "/log/json"_json_pointer, "LOG_JSON");
     } catch (const std::exception &ex) {
-        RETHROW_NESTED("MachinePayConfigLoader::applyEnvOverrides failed: ");
+        RETHROW_NESTED;
     }
 }
 
@@ -242,7 +242,7 @@ void ConfigLoader::resolveSecrets(json &j) {
         }
         // Only resolve password in db, not jwt
     } catch (const std::exception &ex) {
-        RETHROW_NESTED("MachinePayConfigLoader::resolveSecrets failed: ");
+        RETHROW_NESTED;
     }
 }
 
@@ -315,7 +315,7 @@ void ConfigLoader::validateJson(const json &j) {
     try {
         schema = json::parse(MachinePayConfigSchemaJson);
     } catch (const std::exception &ex) {
-        RETHROW_NESTED("MachinePayConfigLoader::validateJson failed to parse schema: ");
+        RETHROW_NESTED;
     }
 
 
@@ -329,7 +329,7 @@ void ConfigLoader::validateJson(const json &j) {
         std::string errorMsg = std::string("MachinePayConfigLoader::validateJson Invalid config file : "
                                    "failed to validate config against schema:\n") +
                                errHandler.errorMessage_;
-        RETHROW_NESTED(errorMsg);
+        RETHROW_NESTED2(errorMsg);
     }
 }
 
@@ -347,7 +347,7 @@ std::shared_ptr<MachinePayConfig> ConfigLoader::loadFromYamlFile(const std::stri
         spdlog::info("Validated config file against schema");
         return MachinePayConfig::createFromJson(j, fileManager);;
     } catch (const std::exception &ex) {
-        RETHROW_NESTED("MachinePayConfigLoader::load failed: ");
+        RETHROW_NESTED;
     }
 }
 
@@ -382,5 +382,3 @@ uint16_t ConfigLoader::getUint16WithDefault(const nlohmann::json &j, const std::
         }
         return defaultValue;
 }
-
-

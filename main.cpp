@@ -92,19 +92,16 @@ std::map<string, string> parseCommandLineAndConfigThenInitLibsAndLogging(int arg
     try {
         Init::initAllLibs(1, argv);
         return  parseCommandLineAndEnvironmentOverloads(argc, argv);
-    } catch (std::exception &ex) {
-        RETHROW_NESTED("Fatal error initing from config in main: ");
-    } catch (...) {
-        LOG(ERROR) << "Unknown fatal error initing from config in main";
-        throw;
+    } catch (const std::exception &ex) {
+        RETHROW_NESTED;
     }
 }
 
 void runServerUntilShutdown(std::map<string, string> configValuesFromCliAndEnv) {
     try {
         MachinePayApp app(configValuesFromCliAndEnv);
-    } catch (std::exception &ex) {
-        RETHROW_NESTED("Fatal error running x402 server in main. machinepay server will exit.");
+    } catch (const std::exception &ex) {
+        RETHROW_NESTED;
     }
 }
 
@@ -115,7 +112,7 @@ int main(int argc, char *argv[]) {
         runServerUntilShutdown(configValuesFromCliAndEnv);
         spdlog::info("Server exited");
         return 0;
-    } catch (std::exception &ex) {
+    } catch (const std::exception &ex) {
         spdlog::critical("Fatal error in main ");
         printNestedException(ex);
         return 1;

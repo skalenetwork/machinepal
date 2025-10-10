@@ -112,7 +112,7 @@ std::filesystem::path FileManager::resolveCanonicalPathAgainstCwd(const std::str
     try {
         return std::filesystem::weakly_canonical(std::filesystem::absolute(_path));
     } catch (const std::exception& e) {
-        RETHROW_NESTED("FileManager::resolveCanonicalPathAgainstCwd failed");
+        RETHROW_NESTED;
     }
 }
 
@@ -124,6 +124,6 @@ std::filesystem::path FileManager::resolveCanonicalPath(const std::string& _path
         }
         return std::filesystem::weakly_canonical(this->canonicalConfigPath_ / rel);
     } catch (const std::exception& e) {
-        RETHROW_NESTED("FileManager::resolveCanonicalConfigPath failed");
+        RETHROW_NESTED;
     }
 }

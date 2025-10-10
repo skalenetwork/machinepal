@@ -37,7 +37,7 @@ ptr<FacilitatorConfig> FacilitatorConfig::createFomJson(const nlohmann::json& j,
     }
     catch (const std::exception& ex)
     {
-        RETHROW_NESTED("FacilitatorConfig::createFomJson failed: ");
+        RETHROW_NESTED;
     }
 }
 
@@ -67,7 +67,7 @@ ptr<MachinePayConfig> MachinePayConfig::createFromJson(const nlohmann::json& j, 
     }
     catch (const std::exception& ex)
     {
-        RETHROW_NESTED("MachinePayConfig::createFromJson failed: ");
+        RETHROW_NESTED;
     }
 }
 
@@ -126,6 +126,6 @@ ptr<ServerConfig> ServerConfig::createFromJson(const nlohmann::json& j,  ptr<Fil
         );
     } catch (exception& ex)
     {
-        RETHROW_NESTED("ServerConfig::createFromJson failed: ");
+        RETHROW_NESTED;
     }
 }

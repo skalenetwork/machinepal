@@ -58,9 +58,13 @@ inline void printNestedException(const std::exception& e, int level = 0) {
 #include <vector>
 #include <stdexcept>
 
-#define RETHROW_NESTED(msg) \
-    do { std::throw_with_nested(std::runtime_error(std::string(msg))); \
+#define RETHROW_NESTED \
+    do { std::throw_with_nested(std::runtime_error(std::string(__func__) + + " failed:")); \
     } while(0)
+
+#define RETHROW_NESTED2(__MSG__) \
+do { std::throw_with_nested(std::runtime_error(std::string(__func__) + + " failed:" + __MSG__)); \
+} while(0)
 
 
 template<typename T>

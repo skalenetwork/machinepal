@@ -96,6 +96,6 @@ std::shared_ptr<HTTPServer> ServerFactory::createServerInstance(const ServerConf
         spdlog::info("Server instance created and bound successfully.");
         return server;
     } catch (const std::exception &ex) {
-        RETHROW_NESTED("ServerFactory::createServerInstance failed: ");
+        RETHROW_NESTED;
     }
 }

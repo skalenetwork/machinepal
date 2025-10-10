@@ -104,7 +104,7 @@ ptr<ConfigManager> ConfigManager::initManager(const std::map<std::string, std::s
         instance->reloadConfig();
         return instance;
     } catch (const std::exception &ex) {
-        RETHROW_NESTED("MachinePayConfigManager::initManager failed: ");
+        RETHROW_NESTED;
     }
 }
 
@@ -112,16 +112,14 @@ ptr<ConfigManager> ConfigManager::create(const std::map<std::string, std::string
     try
     {
         ptr<ConfigManager> mgr(new ConfigManager());
-        mgr->initUsingConfigValuesFromCliAndEnv(configValuesFromCliAndEnv);
+        mgr->initConfigFilePathUsingConfigValuesFromCliAndEnv(configValuesFromCliAndEnv);
         return mgr;
     } catch (const std::exception &ex) {
-        RETHROW_NESTED("MachinePayConfigManager::create failed: ");
+        RETHROW_NESTED;
     }
 }
 
-
-
-void ConfigManager::initUsingConfigValuesFromCliAndEnv(const std::map<std::string, std::string>& values) {
+void ConfigManager::initConfigFilePathUsingConfigValuesFromCliAndEnv(const std::map<std::string, std::string>& values) {
     try {
         configValuesFromCliAndEnv_ = values;
         CHECK_STATE(values.contains("CONFIG"));
@@ -134,7 +132,7 @@ void ConfigManager::initUsingConfigValuesFromCliAndEnv(const std::map<std::strin
         CHECK_STATE(!fileManager_)
         fileManager_ = std::make_shared<FileManager>(fullyResolvedConfigDirPath_);
     } catch (const std::exception &ex) {
-        RETHROW_NESTED("MachinePayConfigManager::setConfigValuesFromCliAndEnv failed: ");
+        RETHROW_NESTED;
     }
 }
 
@@ -171,7 +169,7 @@ void ConfigManager::reloadConfig() {
             )
         );
     } catch (const std::exception &ex) {
-        RETHROW_NESTED("MachinePayConfigManager::reloadConfig failed: ");
+        RETHROW_NESTED;
     }
 
     CHECK_STATE(latestConfig_);
