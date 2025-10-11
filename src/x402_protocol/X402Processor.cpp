@@ -3,11 +3,18 @@
 #include "MachinePayApp.h"
 #include "IResponseSender.h"
 #include <folly/json.h>
-
 #include "BackendConnection.h"
 #include "examples/PaymentExamples.h"
 
-
+#include "boost/url/decode_view.hpp"
+#include <boost/locale.hpp>
+#include <boost/locale/conversion.hpp>
+#include <algorithm>
+#include <cctype>
+#include <string>
+#include <stdexcept>
+#include <sstream>
+#include <iomanip>
 
 
 X402Processor::X402Processor(MachinePayApp& app)
@@ -23,7 +30,7 @@ bool X402Processor::hasValidPaymentHeader(const std::unique_ptr<proxygen::HTTPMe
     std::string payment = headerTable.getSingleOrEmpty("X-PAYMENT");
     if (payment.empty()) return false;
     if (payment == "demo-ok") {
-        paymentInfo = R"({\"txHash\":\"0xabc123...\",\"amount\":\"0.25\",\"asset\":\"USDC\",\"network\":\"base-1net\"})";
+        paymentInfo = R"({\"txHash\":\"0xabc123...\",\"amount\":\"0.25\",\"asset\":\"SDC\",\"network\":\"base-1net\"})";
         return true;
     }
     return false;
@@ -70,34 +77,48 @@ void X402Processor::reply502BadGateway(IResponseSender& downstream, const std::s
     downstream.sendResponse({502, "Bad Gateway"}, headers, message);
 }
 
-bool X402Processor::isPathValid(std::string path, std::string& errorMessage)
+bool X402Processor::isPathValid(const std::string& path, std::string& errorMessage)
 {
-    // Reject empty or non-rooted paths
-    if (path.empty() || path.front() != '/') {
-        errorMessage = "Invalid or insecure path";
-        return false;
-    }
-    // Allow only [A-Za-z0-9] and '/'
-    bool badChar = std::any_of(path.begin(), path.end(), [](unsigned char c) {
-        return !(std::isalnum(c) || c == '/');
-    });
-    if (badChar) {
+    std::string decodedPath;
+    try {
+        auto decoded = boost::urls::decode_view(path);
+        decodedPath = std::string(decoded.begin(), decoded.end());
+    } catch (const std::exception& e) {
         errorMessage = "Path contains invalid characters";
         return false;
     }
-    // Reject traversal attempts
-    if (path.find("..") != std::string::npos) {
+    if (decodedPath.empty()) {
+        errorMessage = "Empty path";
+        return false;
+    }
+    if (decodedPath.front() != '/') {
+        errorMessage = "Non-rooted path";
+        return false;
+    }
+    // Reject traversal attempts (including encoded)
+    if (decodedPath.find("..") != std::string::npos) {
         errorMessage = "Path traversal not allowed";
         return false;
     }
+
+
+    std::wstring wide_text = boost::locale::conv::to_utf<wchar_t>(decodedPath,  "UTF-8");
+
+    for (wchar_t ch : wide_text) {
+        if (iswalnum(ch) || ch == L'/') {
+            continue;
+        }
+        return false;
+    }
+
     return true;
 }
 
 void X402Processor::onRequestStart(const std::unique_ptr<proxygen::HTTPMessage>& reqHeaders, IResponseSender& downstream)
 {
     CHECK_STATE(reqHeaders);
-    auto path = reqHeaders->getPath();
-    string errorMessage;
+    auto path = reqHeaders->getQueryString();
+    std::string errorMessage;
     if (!isPathValid(path, errorMessage) ) {
         reply400BadRequest(downstream, errorMessage);
     }

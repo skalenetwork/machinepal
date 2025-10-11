@@ -22,7 +22,7 @@ private:
     static void reply402PaymentRequired(IResponseSender& downstream);
     static void reply400BadRequest(IResponseSender& downstream, const std::string& message);
     static void reply502BadGateway(IResponseSender& downstream, const std::string& message);
-    static bool isPathValid(std::string path, string& errorMessage);
+    static bool isPathValid(const std::string& path, string& errorMessage);
     static void reply200Success(IResponseSender& downstream, const std::string& settlementInfo,
                                 std::string proxyBody);
 

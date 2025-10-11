@@ -6,11 +6,13 @@
     "wangle",
     "proxygen",
     "boost-test",
+    "boost-url",
     "curl",
     "nlohmann-json",
     "json-schema-validator",
     "boost-beast",
     "cli11",
-    "spdlog"
+    "spdlog",
+    "boost-locale"
   ]
 }

@@ -39,7 +39,7 @@ foreach(pkg folly Wangle Proxygen CURL nlohmann_json_schema_validator yaml-cpp C
 endforeach()
 
 
-find_package(Boost REQUIRED CONFIG COMPONENTS unit_test_framework system thread)
+find_package(Boost REQUIRED CONFIG COMPONENTS unit_test_framework system thread url locale)
 
 
 # ---- App target ----
@@ -59,6 +59,8 @@ set (PROXY_COMMON_LIBS
         Boost::system
         Boost::thread
         Boost::headers
+        Boost::locale
+        Boost::url
         nlohmann_json_schema_validator
         yaml-cpp
         spdlog::spdlog
