@@ -1,6 +1,9 @@
 #include "common.h"
 #include "X402Processor.h"
 #include "MachinePayApp.h"
+#include <proxygen/httpserver/ResponseBuilder.h>
+#include <folly/json.h>
+#include "examples/PaymentExamples.h"
 
 
 
@@ -21,4 +24,17 @@ bool X402Processor::hasValidPaymentHeader(const proxygen::HTTPMessage* _req, std
         return true;
     }
     return false;
+}
+
+void X402Processor::reply402(proxygen::ResponseHandler* downstream) {
+    // Demo payment requirements JSON (normally dynamic / per-request).
+    folly::dynamic req = folly::dynamic::object;
+    auto paymentRequirements = EXACT_UCDC_PAYMENT_REQ_CB_SEPOLIA;
+    req = folly::parseJson(paymentRequirements);
+    auto json = folly::toJson(req);
+    proxygen::ResponseBuilder(downstream)
+        .status(402, "Payment Required")
+        .header("Content-Type", "application/json")
+        .body(json)
+        .sendWithEOM();
 }

@@ -17,6 +17,14 @@ namespace {
 }
 
 
+void X402Handler::reply400(const std::string& message)
+{
+    ResponseBuilder(downstream_)
+        .status(400, "Bad Request")
+        .body(message)
+        .sendWithEOM();
+}
+
 void X402Handler::onRequest(std::unique_ptr<HTTPMessage> _headers) noexcept {
     reqHeaders = std::move(_headers);
     reqURL = reqHeaders->getURL();
@@ -39,10 +47,7 @@ void X402Handler::onRequest(std::unique_ptr<HTTPMessage> _headers) noexcept {
     });
 
     if (badChar) {
-        ResponseBuilder(downstream_)
-            .status(400, "Bad Request")
-            .body("Path contains invalid characters")
-            .sendWithEOM();
+        reply400("Path contains invalid characters");
         return;
     }
 
@@ -72,6 +77,15 @@ void X402Handler::reply402() {
             .sendWithEOM();
 }
 
+
+void X402Handler::reply502()
+{
+    ResponseBuilder(downstream_)
+        .status(502, "Bad Gateway")
+        .header("Content-Type", "text/plain")
+        .body("Failed to fetch content from upstream service.")
+        .sendWithEOM();
+}
 
 void X402Handler::proxyToBackEnd(std::string _settlementInfo) {
     static thread_local std::unique_ptr<CURL, decltype(&curl_easy_cleanup)> curlThreadLocal(nullptr, &curl_easy_cleanup);
@@ -114,11 +128,7 @@ void X402Handler::proxyToBackEnd(std::string _settlementInfo) {
     if (result != CURLE_OK) {
         LOG(ERROR) << "CURL error: " << curl_easy_strerror(result);
         // Failed to fetch content, reply with 502
-        ResponseBuilder(downstream_)
-                .status(502, "Bad Gateway")
-                .header("Content-Type", "text/plain")
-                .body("Failed to fetch content from upstream service.")
-                .sendWithEOM();
+        reply502();
         curl_easy_cleanup(curl);
         return;
     }
@@ -139,6 +149,6 @@ void X402Handler::onEOM() noexcept {
     if (X402Processor::hasValidPaymentHeader(reqHeaders.get(), settlementInfo)) {
         proxyToBackEnd(settlementInfo);
     } else {
-        reply402();
+        X402Processor::reply402(downstream_);
     }
 }

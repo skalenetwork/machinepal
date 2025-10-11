@@ -12,6 +12,7 @@ class MachinePayApp;
 
 class X402Handler : public proxygen::RequestHandler {
 public:
+    void reply400(const std::string& message);
     void onRequest(std::unique_ptr<proxygen::HTTPMessage> _headers) noexcept override;
     void onBody(std::unique_ptr<folly::IOBuf> _body) noexcept override;
     void onEOM() noexcept override;
@@ -35,6 +36,7 @@ private:
     ptr<MachinePayConfig> config_;
 
     void reply402();
+    void reply502();
     void proxyToBackEnd(std::string _settlementInfo);
     std::unique_ptr<proxygen::HTTPMessage> reqHeaders;
     std::string reqURL;
