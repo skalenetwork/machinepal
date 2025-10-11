@@ -1,8 +1,7 @@
 #include "common.h"
 #include "X402Processor.h"
 #include "MachinePayApp.h"
-#include "ResponseSender.h"
-#include <proxygen/httpserver/ResponseBuilder.h>
+#include "IResponseSender.h"
 #include <folly/json.h>
 #include "examples/PaymentExamples.h"
 
@@ -15,14 +14,14 @@ X402Processor::X402Processor(MachinePayApp& app)
     // TODO: Add any initialization logic if needed
 }
 
-bool X402Processor::hasValidPaymentHeader(const proxygen::HTTPMessage* _req, std::string& _paymentInfo) {
+bool X402Processor::hasValidPaymentHeader(const std::unique_ptr<proxygen::HTTPMessage>& req, std::string& paymentInfo) {
     // TODO: Parse and verify real X-PAYMENT header.
     // This stub accepts "demo-ok".
-    const auto& headerTable = _req->getHeaders();
+    const auto& headerTable = req->getHeaders();
     std::string payment = headerTable.getSingleOrEmpty("X-PAYMENT");
     if (payment.empty()) return false;
     if (payment == "demo-ok") {
-        _paymentInfo = R"({\"txHash\":\"0xabc123...\",\"amount\":\"0.25\",\"asset\":\"USDC\",\"network\":\"base-1net\"})";
+        paymentInfo = R"({\"txHash\":\"0xabc123...\",\"amount\":\"0.25\",\"asset\":\"USDC\",\"network\":\"base-1net\"})";
         return true;
     }
     return false;
@@ -30,7 +29,7 @@ bool X402Processor::hasValidPaymentHeader(const proxygen::HTTPMessage* _req, std
 
 
 
-void X402Processor::reply200(ResponseSender downstream, const std::string& settlementInfo, std::string proxyBody)
+void X402Processor::reply200(IResponseSender& downstream, const std::string& settlementInfo, std::string proxyBody)
 {
     std::vector<std::pair<std::string, std::string>> headers = {
         {"Content-Type", "text/plain"},
@@ -40,7 +39,7 @@ void X402Processor::reply200(ResponseSender downstream, const std::string& settl
 }
 
 
-void X402Processor::reply402(ResponseSender downstream) {
+void X402Processor::reply402(IResponseSender& downstream) {
     folly::dynamic req = folly::dynamic::object;
     auto paymentRequirements = EXACT_UCDC_PAYMENT_REQ_CB_SEPOLIA;
     req = folly::parseJson(paymentRequirements);
@@ -54,7 +53,7 @@ void X402Processor::reply402(ResponseSender downstream) {
 
 
 
-void X402Processor::reply400(ResponseSender downstream, const std::string& message) {
+void X402Processor::reply400(IResponseSender& downstream, const std::string& message) {
     std::vector<std::pair<std::string, std::string>> headers = {
         {"Content-Type", "text/plain"}
     };
@@ -62,14 +61,15 @@ void X402Processor::reply400(ResponseSender downstream, const std::string& messa
 }
 
 
-void X402Processor::reply502(ResponseSender downstream, const std::string& message) {
+void X402Processor::reply502(IResponseSender& downstream, const std::string& message) {
     std::vector<std::pair<std::string, std::string>> headers = {
         {"Content-Type", "text/plain"}
     };
     downstream.sendResponse({502, "Bad Gateway"}, headers, message);
 }
 
-bool X402Processor::processUrlAndHeaders(const proxygen::HTTPMessage* reqHeaders, ResponseSender downstream) {
+bool X402Processor::processUrlAndHeaders(const std::unique_ptr<proxygen::HTTPMessage>& reqHeaders, IResponseSender& downstream) {
+    CHECK_STATE(reqHeaders);
     auto path = reqHeaders->getPath();
     // Reject empty or non-rooted paths
     if (path.empty() || path.front() != '/') {
@@ -93,7 +93,7 @@ bool X402Processor::processUrlAndHeaders(const proxygen::HTTPMessage* reqHeaders
 }
 
 
-void X402Processor::proxyToBackEnd(ResponseSender downstream, const std::string& settlementInfo) {
+void X402Processor::proxyToBackEnd(IResponseSender& downstream, const std::string& settlementInfo) {
     static thread_local std::unique_ptr<CURL, decltype(&curl_easy_cleanup)> curlThreadLocal(nullptr, &curl_easy_cleanup);
 
     if (!curlThreadLocal) {

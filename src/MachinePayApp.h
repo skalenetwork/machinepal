@@ -19,7 +19,11 @@ public:
         CHECK_STATE(serverFactory_);
         return serverFactory_;
     }
-    std::shared_ptr<X402Processor> x402Processor() const { return x402Processor_; }
+    std::shared_ptr<X402Processor> x402Processor() const
+    {
+        CHECK_STATE(x402Processor_);
+        return x402Processor_;
+    }
 
     explicit MachinePayApp(std::map<std::string, std::string> configValuesFromCliAndEnv);
     void runUntilExit();
