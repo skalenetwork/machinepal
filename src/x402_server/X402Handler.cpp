@@ -23,16 +23,6 @@ void X402Handler::onBody(std::unique_ptr<folly::IOBuf> _body) noexcept {
 }
 
 
-void X402Handler::doOnEOM(IResponseSender& responseSender)
-{
-
-    std::string settlementInfo;
-    if (app_.x402Processor()->hasValidPaymentHeader(reqHeaders_, settlementInfo)) {
-        BackendConnection::proxyToBackEnd(app_.x402Processor().get() ,responseSender, settlementInfo);
-    } else {
-        app_.x402Processor()->reply402(responseSender);
-    }
-}
 
 void X402Handler::onEOM() noexcept {
     ProxygenResponseSender responseSender(downstream_);

@@ -6,7 +6,7 @@
 #include "X402Processor.h"
 #include "curl/curl.h"
 
-std::string BackendConnection::proxyToBackEnd(X402Processor* processor, IResponseSender& downstream, const std::string& settlementInfo) {
+std::string BackendConnection::proxyToBackEnd(std::string& backendResponseBody) {
     static thread_local std::unique_ptr<CURL, decltype(&curl_easy_cleanup)> curlThreadLocal(nullptr, &curl_easy_cleanup);
 
     if (!curlThreadLocal) {
@@ -26,8 +26,6 @@ std::string BackendConnection::proxyToBackEnd(X402Processor* processor, IRespons
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
 
-    std::string proxyBody;
-
     curl_easy_setopt(curl, CURLOPT_URL, "https://jsonplaceholder.typicode.com/posts/1");
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION,
                      +[](char* _ptr, size_t _size, size_t _nmemb, void* _userdata) -> size_t {
@@ -35,7 +33,7 @@ std::string BackendConnection::proxyToBackEnd(X402Processor* processor, IRespons
                      str->append(_ptr, _size * _nmemb);
                      return _size * _nmemb;
                      });
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &proxyBody);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &backendResponseBody);
 
     auto result = curl_easy_perform(curl);
 
@@ -50,7 +48,6 @@ std::string BackendConnection::proxyToBackEnd(X402Processor* processor, IRespons
         return "Failed to fetch content from upstream service.";
     } else
     {
-        processor->reply200(downstream, settlementInfo, proxyBody);
         return "";
     }
 }
