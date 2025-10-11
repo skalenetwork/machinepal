@@ -14,7 +14,7 @@ class X402Processor {
 public:
     explicit X402Processor(MachinePayApp& app);
 
-    bool onRequestStart(const std::unique_ptr<proxygen::HTTPMessage>& headers, IResponseSender& downstream);
+    void onRequestStart(const std::unique_ptr<proxygen::HTTPMessage>& headers, IResponseSender& downstream);
     void onRequestCompletion(IResponseSender& responseSender, const std::unique_ptr<proxygen::HTTPMessage>& reqHeaders);
 private:
 
@@ -22,8 +22,9 @@ private:
     static void reply402PaymentRequired(IResponseSender& downstream);
     static void reply400BadRequest(IResponseSender& downstream, const std::string& message);
     static void reply502BadGateway(IResponseSender& downstream, const std::string& message);
+    static bool isPathValid(std::string path, string& errorMessage);
     static void reply200Success(IResponseSender& downstream, const std::string& settlementInfo,
-                 std::string proxyBody);
+                                std::string proxyBody);
 
 
     MachinePayApp& app_;

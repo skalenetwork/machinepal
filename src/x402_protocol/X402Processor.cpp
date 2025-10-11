@@ -70,28 +70,37 @@ void X402Processor::reply502BadGateway(IResponseSender& downstream, const std::s
     downstream.sendResponse({502, "Bad Gateway"}, headers, message);
 }
 
-bool X402Processor::onRequestStart(const std::unique_ptr<proxygen::HTTPMessage>& reqHeaders, IResponseSender& downstream) {
-    CHECK_STATE(reqHeaders);
-    auto path = reqHeaders->getPath();
+bool X402Processor::isPathValid(std::string path, std::string& errorMessage)
+{
     // Reject empty or non-rooted paths
     if (path.empty() || path.front() != '/') {
-        reply400BadRequest(downstream, "Invalid or insecure path");
-        return true;
+        errorMessage = "Invalid or insecure path";
+        return false;
     }
     // Allow only [A-Za-z0-9] and '/'
     bool badChar = std::any_of(path.begin(), path.end(), [](unsigned char c) {
         return !(std::isalnum(c) || c == '/');
     });
     if (badChar) {
-        reply400BadRequest(downstream, "Path contains invalid characters");
-        return true;
+        errorMessage = "Path contains invalid characters";
+        return false;
     }
-    // Optionally: reject traversal attempts
+    // Reject traversal attempts
     if (path.find("..") != std::string::npos) {
-        reply400BadRequest(downstream, "Path traversal not allowed");
-        return true;
+        errorMessage = "Path traversal not allowed";
+        return false;
     }
-    return false;
+    return true;
+}
+
+void X402Processor::onRequestStart(const std::unique_ptr<proxygen::HTTPMessage>& reqHeaders, IResponseSender& downstream)
+{
+    CHECK_STATE(reqHeaders);
+    auto path = reqHeaders->getPath();
+    string errorMessage;
+    if (!isPathValid(path, errorMessage) ) {
+        reply400BadRequest(downstream, errorMessage);
+    }
 }
 
 void X402Processor::onRequestCompletion(IResponseSender& responseSender, const std::unique_ptr<proxygen::HTTPMessage>& reqHeaders) {
