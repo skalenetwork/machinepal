@@ -5,6 +5,7 @@
 #include "config/ConfigManager.h"
 #include "init/Init.h"
 #include "x402_server/ServerFactory.h"
+#include "x402_protocol/X402Processor.h"
 
 
 
@@ -18,6 +19,7 @@ public:
         CHECK_STATE(serverFactory_);
         return serverFactory_;
     }
+    std::shared_ptr<X402Processor> x402Processor() const { return x402Processor_; }
 
     explicit MachinePayApp(std::map<std::string, std::string> configValuesFromCliAndEnv);
     void runUntilExit();
@@ -32,4 +34,5 @@ private:
     ptr<ConfigManager> configManager_;
     ptr<ServerFactory> serverFactory_;
     ptr<proxygen::HTTPServer> proxygenServer_;
+    std::shared_ptr<X402Processor> x402Processor_;
 };

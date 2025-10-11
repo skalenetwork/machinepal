@@ -5,7 +5,10 @@
 #include <folly/json.h>
 #include <string>
 
+#include "MachinePayApp.h"
 #include "config/MachinePayConfig.h"
+
+class MachinePayApp;
 
 class X402Handler : public proxygen::RequestHandler {
 public:
@@ -19,13 +22,16 @@ public:
         // No upgrade handling needed for now
     }
 
-    explicit X402Handler(const ptr<MachinePayConfig>& config)
-        : config_(config)
+    explicit X402Handler(MachinePayApp& app)
+        : app_(app)
     {
+        // we take the latest condig at the start
+        config_ = app_.configManager()->latestConfig();
         CHECK_STATE(config_);
     }
 
 private:
+    MachinePayApp& app_;
     ptr<MachinePayConfig> config_;
 
     static bool hasValidPaymentHeader(const proxygen::HTTPMessage* _req, std::string& _paymentInfo);

@@ -1,4 +1,5 @@
 #include "MachinePayApp.h"
+#include "x402_protocol/X402Processor.h"
 
 MachinePayApp::MachinePayApp(std::map<std::string, std::string> configValuesFromCliAndEnv) {
     spdlog::info("Looking for config");
@@ -9,7 +10,9 @@ MachinePayApp::MachinePayApp(std::map<std::string, std::string> configValuesFrom
 void MachinePayApp::runUntilExit()
 {
 
+
     spdlog::info("Creating and starting server");
+    x402Processor_ = std::make_shared<X402Processor>(*this);
     serverFactory_ = std::make_shared<ServerFactory>(*this);
     auto serverConfig = configManager_->latestConfig()->server();
     proxygenServer_ = serverFactory_->createServerInstance(*serverConfig);
@@ -21,5 +24,3 @@ void MachinePayApp::stopServer()
 {
     proxygenServer_->stop();
 }
-
-

@@ -20,7 +20,7 @@ public:
 
     proxygen::RequestHandler* onRequest(proxygen::RequestHandler* /*_handler*/,
                                         proxygen::HTTPMessage* /*_msg*/) noexcept override {
-        return new X402Handler(app_.configManager()->latestConfig());
+        return new X402Handler(app_);
     }
 
 private:
