@@ -20,7 +20,6 @@ public:
     bool processUrlAndHeaders(const std::unique_ptr<proxygen::HTTPMessage>& headers, IResponseSender& downstream);
     void reply200(IResponseSender& downstream, const std::string& settlementInfo,
                  std::string proxyBody);
-    void proxyToBackEnd(IResponseSender& downstream, const std::string& settlementInfo);
 private:
     MachinePayApp& app_;
 };

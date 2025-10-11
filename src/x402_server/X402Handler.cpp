@@ -5,6 +5,7 @@
 
 #include "ProxygenResponseSender.h"
 #include "examples/PaymentExamples.h"
+#include "x402_protocol/BackendConnection.h"
 
 using namespace proxygen;
 
@@ -25,9 +26,9 @@ void X402Handler::onBody(std::unique_ptr<folly::IOBuf> _body) noexcept {
 
 void X402Handler::onEOM() noexcept {
     std::string settlementInfo;
-    ProxygenResponseSender responseSender(downstream_) ;
+    ProxygenResponseSender responseSender(downstream_);
     if (app_.x402Processor()->hasValidPaymentHeader(reqHeaders_, settlementInfo)) {
-        app_.x402Processor()->proxyToBackEnd(responseSender, settlementInfo);
+        BackendConnection::proxyToBackEnd(app_.x402Processor().get() ,responseSender, settlementInfo);
     } else {
         app_.x402Processor()->reply402(responseSender);
     }
