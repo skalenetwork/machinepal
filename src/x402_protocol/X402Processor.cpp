@@ -79,39 +79,47 @@ void X402Processor::reply502BadGateway(IResponseSender& downstream, const std::s
 
 bool X402Processor::isPathValid(const std::string& path, std::string& errorMessage)
 {
-    std::string decodedPath;
-    try {
-        auto decoded = boost::urls::decode_view(path);
-        decodedPath = std::string(decoded.begin(), decoded.end());
-    } catch (const std::exception& e) {
-        errorMessage = "Path contains invalid characters";
-        return false;
-    }
-    if (decodedPath.empty()) {
-        errorMessage = "Empty path";
-        return false;
-    }
-    if (decodedPath.front() != '/') {
-        errorMessage = "Non-rooted path";
-        return false;
-    }
-    // Reject traversal attempts (including encoded)
-    if (decodedPath.find("..") != std::string::npos) {
-        errorMessage = "Path traversal not allowed";
-        return false;
-    }
 
-
-    std::wstring wide_text = boost::locale::conv::to_utf<wchar_t>(decodedPath,  "UTF-8");
-
-    for (wchar_t ch : wide_text) {
-        if (iswalnum(ch) || ch == L'/') {
-            continue;
+    try
+    {
+        std::string decodedPath;
+        try {
+            auto decoded = boost::urls::decode_view(path);
+            decodedPath = std::string(decoded.begin(), decoded.end());
+        } catch (const std::exception& e) {
+            errorMessage = "Path contains invalid characters";
+            return false;
         }
+        if (decodedPath.empty()) {
+            errorMessage = "Empty path";
+            return false;
+        }
+        if (decodedPath.front() != '/') {
+            errorMessage = "Non-rooted path";
+            return false;
+        }
+        // Reject traversal attempts (including encoded)
+        if (decodedPath.find("..") != std::string::npos) {
+            errorMessage = "Path traversal not allowed";
+            return false;
+        }
+
+
+        std::wstring wideText = boost::locale::conv::to_utf<wchar_t>(decodedPath,  "UTF-8");
+
+        for (wchar_t ch : wideText) {
+            if (iswalnum(ch) || ch == L'/') {
+                continue;
+            }
+            return false;
+        }
+
+        return true;
+    } catch (std::exception& e)
+    {
+        spdlog::error("Error parsing path: {}", e.what());
         return false;
     }
-
-    return true;
 }
 
 void X402Processor::onRequestStart(const std::unique_ptr<proxygen::HTTPMessage>& reqHeaders, IResponseSender& downstream)
