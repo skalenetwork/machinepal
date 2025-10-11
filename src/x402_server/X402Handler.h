@@ -34,11 +34,8 @@ private:
     MachinePayApp& app_;
     ptr<MachinePayConfig> config_;
 
-    static bool hasValidPaymentHeader(const proxygen::HTTPMessage* _req, std::string& _paymentInfo);
     void reply402();
-
     void proxyToBackEnd(std::string _settlementInfo);
-
     std::unique_ptr<proxygen::HTTPMessage> reqHeaders;
     std::string reqURL;
     std::string bodyBuffer;

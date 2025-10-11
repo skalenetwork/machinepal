@@ -15,7 +15,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # Gather all source files except test sources
-set(APP_SRC_DIRS . datastructures exceptions config facilitator_clients init x402_server x402_client filesystem crypto)
+set(APP_SRC_DIRS . datastructures exceptions config facilitator_clients init x402_server x402_client
+        filesystem crypto x402_protocol)
 
 set(APP_SRC_FILES)
 foreach(dir ${APP_SRC_DIRS})
