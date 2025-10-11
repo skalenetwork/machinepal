@@ -15,6 +15,7 @@ public:
     void reply400(const std::string& message);
     void reply502(const std::string& message);
 
+    bool processUrlAndHeaders();
     void onRequest(std::unique_ptr<proxygen::HTTPMessage> _headers) noexcept override;
     void onBody(std::unique_ptr<folly::IOBuf> _body) noexcept override;
     void onEOM() noexcept override;

@@ -7,8 +7,8 @@
 using namespace proxygen;
 
 
-void X402Handler::onRequest(std::unique_ptr<HTTPMessage> _headers) noexcept {
-    reqHeaders_ = std::move(_headers);
+bool X402Handler::processUrlAndHeaders()
+{
     auto path = reqHeaders_->getPath();
 
     // Check for insecure path patterns
@@ -16,7 +16,7 @@ void X402Handler::onRequest(std::unique_ptr<HTTPMessage> _headers) noexcept {
     // Reject empty or non-rooted paths
     if (path.empty() || path.front() != '/') {
         X402Processor::reply400(downstream_, "Invalid or insecure path");
-        return;
+        return true;
     }
 
     // Allow only [A-Za-z0-9] and '/'
@@ -26,14 +26,20 @@ void X402Handler::onRequest(std::unique_ptr<HTTPMessage> _headers) noexcept {
 
     if (badChar) {
         X402Processor::reply400(downstream_, "Path contains invalid characters");
-        return;
+        return true;
     }
 
     // Optionally: reject traversal attempts
     if (path.find("..") != std::string::npos) {
         X402Processor::reply400(downstream_, "Path traversal not allowed");
-        return;
+        return true;
     }
+    return false;
+}
+
+void X402Handler::onRequest(std::unique_ptr<HTTPMessage> _headers) noexcept {
+    reqHeaders_ = std::move(_headers);
+    processUrlAndHeaders();
 }
 
 void X402Handler::onBody(std::unique_ptr<folly::IOBuf> _body) noexcept {
