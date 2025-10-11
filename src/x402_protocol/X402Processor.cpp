@@ -1,6 +1,7 @@
 #include "common.h"
 #include "X402Processor.h"
 #include "MachinePayApp.h"
+#include "ResponseSender.h"
 #include <proxygen/httpserver/ResponseBuilder.h>
 #include <folly/json.h>
 #include "examples/PaymentExamples.h"
@@ -29,47 +30,46 @@ bool X402Processor::hasValidPaymentHeader(const proxygen::HTTPMessage* _req, std
 
 
 
-void X402Processor::reply200(proxygen::ResponseHandler* downstream, const std::string& settlementInfo, std::string proxyBody)
+void X402Processor::reply200(ResponseSender downstream, const std::string& settlementInfo, std::string proxyBody)
 {
-    proxygen::ResponseBuilder(downstream)
-        .status(200, "OK")
-        .header("Content-Type", "text/plain")
-        .header("X-PAYMENT-RESPONSE", settlementInfo)
-        .body(proxyBody)
-        .sendWithEOM();
+    std::vector<std::pair<std::string, std::string>> headers = {
+        {"Content-Type", "text/plain"},
+        {"X-PAYMENT-RESPONSE", settlementInfo}
+    };
+    downstream.sendResponse({200, "OK"}, headers, proxyBody);
 }
 
 
-void X402Processor::reply402(proxygen::ResponseHandler* downstream) {
-    // Demo payment requirements JSON (normally dynamic / per-request).
+void X402Processor::reply402(ResponseSender downstream) {
     folly::dynamic req = folly::dynamic::object;
     auto paymentRequirements = EXACT_UCDC_PAYMENT_REQ_CB_SEPOLIA;
     req = folly::parseJson(paymentRequirements);
     auto json = folly::toJson(req);
-    proxygen::ResponseBuilder(downstream)
-        .status(402, "Payment Required")
-        .header("Content-Type", "application/json")
-        .body(json)
-        .sendWithEOM();
-}
-
-void X402Processor::reply400(proxygen::ResponseHandler* downstream, const std::string& message) {
-    proxygen::ResponseBuilder(downstream)
-        .status(400, "Bad Request")
-        .body(message)
-        .sendWithEOM();
+    std::vector<std::pair<std::string, std::string>> headers = {
+        {"Content-Type", "application/json"}
+    };
+    downstream.sendResponse({402, "Payment Required"}, headers, json);
 }
 
 
-void X402Processor::reply502(proxygen::ResponseHandler* downstream, const std::string& message) {
-    proxygen::ResponseBuilder(downstream)
-        .status(502, "Bad Gateway")
-        .header("Content-Type", "text/plain")
-        .body(message)
-        .sendWithEOM();
+
+
+void X402Processor::reply400(ResponseSender downstream, const std::string& message) {
+    std::vector<std::pair<std::string, std::string>> headers = {
+        {"Content-Type", "text/plain"}
+    };
+    downstream.sendResponse({400, "Bad Request"}, headers, message);
 }
 
-bool X402Processor::processUrlAndHeaders(const proxygen::HTTPMessage* reqHeaders, proxygen::ResponseHandler* downstream) {
+
+void X402Processor::reply502(ResponseSender downstream, const std::string& message) {
+    std::vector<std::pair<std::string, std::string>> headers = {
+        {"Content-Type", "text/plain"}
+    };
+    downstream.sendResponse({502, "Bad Gateway"}, headers, message);
+}
+
+bool X402Processor::processUrlAndHeaders(const proxygen::HTTPMessage* reqHeaders, ResponseSender downstream) {
     auto path = reqHeaders->getPath();
     // Reject empty or non-rooted paths
     if (path.empty() || path.front() != '/') {
@@ -93,7 +93,7 @@ bool X402Processor::processUrlAndHeaders(const proxygen::HTTPMessage* reqHeaders
 }
 
 
-void X402Processor::proxyToBackEnd(proxygen::ResponseHandler* downstream, const std::string& settlementInfo) {
+void X402Processor::proxyToBackEnd(ResponseSender downstream, const std::string& settlementInfo) {
     static thread_local std::unique_ptr<CURL, decltype(&curl_easy_cleanup)> curlThreadLocal(nullptr, &curl_easy_cleanup);
 
     if (!curlThreadLocal) {

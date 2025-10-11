@@ -9,7 +9,7 @@ using namespace proxygen;
 
 void X402Handler::onRequest(std::unique_ptr<HTTPMessage> _headers) noexcept {
     reqHeaders_ = std::move(_headers);
-    X402Processor::processUrlAndHeaders(reqHeaders_.get(), downstream_);
+    X402Processor::processUrlAndHeaders(reqHeaders_.get(), ResponseSender(downstream_));
 }
 
 void X402Handler::onBody(std::unique_ptr<folly::IOBuf> _body) noexcept {
@@ -23,8 +23,8 @@ void X402Handler::onBody(std::unique_ptr<folly::IOBuf> _body) noexcept {
 void X402Handler::onEOM() noexcept {
     std::string settlementInfo;
     if (X402Processor::hasValidPaymentHeader(reqHeaders_.get(), settlementInfo)) {
-        X402Processor::proxyToBackEnd(downstream_, settlementInfo);
+        X402Processor::proxyToBackEnd(ResponseSender(downstream_), settlementInfo);
     } else {
-        X402Processor::reply402(downstream_);
+        X402Processor::reply402(ResponseSender(downstream_));
     }
 }
