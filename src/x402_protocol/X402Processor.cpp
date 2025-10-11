@@ -31,7 +31,7 @@ bool X402Processor::hasValidPaymentHeader(const std::unique_ptr<proxygen::HTTPMe
 
 
 
-void X402Processor::reply200(IResponseSender& downstream, const std::string& settlementInfo, std::string proxyBody)
+void X402Processor::reply200Success(IResponseSender& downstream, const std::string& settlementInfo, std::string proxyBody)
 {
     std::vector<std::pair<std::string, std::string>> headers = {
         {"Content-Type", "text/plain"},
@@ -41,7 +41,7 @@ void X402Processor::reply200(IResponseSender& downstream, const std::string& set
 }
 
 
-void X402Processor::reply402(IResponseSender& downstream) {
+void X402Processor::reply402PaymentRequired(IResponseSender& downstream) {
     folly::dynamic req = folly::dynamic::object;
     auto paymentRequirements = EXACT_UCDC_PAYMENT_REQ_CB_SEPOLIA;
     req = folly::parseJson(paymentRequirements);
@@ -55,7 +55,7 @@ void X402Processor::reply402(IResponseSender& downstream) {
 
 
 
-void X402Processor::reply400(IResponseSender& downstream, const std::string& message) {
+void X402Processor::reply400BadRequest(IResponseSender& downstream, const std::string& message) {
     std::vector<std::pair<std::string, std::string>> headers = {
         {"Content-Type", "text/plain"}
     };
@@ -63,19 +63,19 @@ void X402Processor::reply400(IResponseSender& downstream, const std::string& mes
 }
 
 
-void X402Processor::reply502(IResponseSender& downstream, const std::string& message) {
+void X402Processor::reply502BadGateway(IResponseSender& downstream, const std::string& message) {
     std::vector<std::pair<std::string, std::string>> headers = {
         {"Content-Type", "text/plain"}
     };
     downstream.sendResponse({502, "Bad Gateway"}, headers, message);
 }
 
-bool X402Processor::processUrlAndHeaders(const std::unique_ptr<proxygen::HTTPMessage>& reqHeaders, IResponseSender& downstream) {
+bool X402Processor::onRequestStart(const std::unique_ptr<proxygen::HTTPMessage>& reqHeaders, IResponseSender& downstream) {
     CHECK_STATE(reqHeaders);
     auto path = reqHeaders->getPath();
     // Reject empty or non-rooted paths
     if (path.empty() || path.front() != '/') {
-        reply400(downstream, "Invalid or insecure path");
+        reply400BadRequest(downstream, "Invalid or insecure path");
         return true;
     }
     // Allow only [A-Za-z0-9] and '/'
@@ -83,29 +83,30 @@ bool X402Processor::processUrlAndHeaders(const std::unique_ptr<proxygen::HTTPMes
         return !(std::isalnum(c) || c == '/');
     });
     if (badChar) {
-        reply400(downstream, "Path contains invalid characters");
+        reply400BadRequest(downstream, "Path contains invalid characters");
         return true;
     }
     // Optionally: reject traversal attempts
     if (path.find("..") != std::string::npos) {
-        reply400(downstream, "Path traversal not allowed");
+        reply400BadRequest(downstream, "Path traversal not allowed");
         return true;
     }
     return false;
 }
 
-void X402Processor::doOnEOM(IResponseSender& responseSender, const std::unique_ptr<proxygen::HTTPMessage>& reqHeaders) {
+void X402Processor::onRequestCompletion(IResponseSender& responseSender, const std::unique_ptr<proxygen::HTTPMessage>& reqHeaders) {
     std::string settlementInfo;
-    if (hasValidPaymentHeader(reqHeaders, settlementInfo)) {
-        std::string backendResponseBody;
-        auto errorString = BackendConnection::proxyToBackEnd(backendResponseBody);
-        if (!errorString.empty()) {
-            reply502(responseSender, "Failed to fetch content from upstream service.");
-        } else
-        {
-            reply200(responseSender, settlementInfo, backendResponseBody);
-        }
-    } else {
-        reply402(responseSender);
+    if (!hasValidPaymentHeader(reqHeaders, settlementInfo)) {
+        reply402PaymentRequired(responseSender);
+        return;
     }
+
+    std::string backendResponseBody;
+    std::string errorMessage;
+    bool success = BackendConnection::proxyToBackEnd(backendResponseBody, errorMessage);
+    if (!success) {
+        reply502BadGateway(responseSender, errorMessage.empty() ? "Failed to fetch content from upstream service." : errorMessage);
+        return;
+    }
+    reply200Success(responseSender, settlementInfo, backendResponseBody);
 }

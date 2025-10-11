@@ -6,14 +6,15 @@
 #include "X402Processor.h"
 #include "curl/curl.h"
 
-std::string BackendConnection::proxyToBackEnd(std::string& backendResponseBody) {
+bool BackendConnection::proxyToBackEnd(std::string& backendResponseBody, std::string& errorMessage) {
     static thread_local std::unique_ptr<CURL, decltype(&curl_easy_cleanup)> curlThreadLocal(nullptr, &curl_easy_cleanup);
 
     if (!curlThreadLocal) {
         auto curlObject = curl_easy_init();
         if (!curlObject) {
             spdlog::error("Could not initialize CURL object");
-            return "Could not initialize CURL object";
+            errorMessage =  "Could not initialize CURL object";
+            return false;
         }
         curlThreadLocal.reset(curlObject);
     }
@@ -45,9 +46,10 @@ std::string BackendConnection::proxyToBackEnd(std::string& backendResponseBody) 
 
     if (result != CURLE_OK)
     {
-        return "Failed to fetch content from upstream service.";
+        errorMessage =  "Failed to fetch content from upstream service.";
+        return false;
     } else
     {
-        return "";
+        return true;
     }
 }

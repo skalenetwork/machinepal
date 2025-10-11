@@ -9,6 +9,6 @@ class BackendConnection
 
 
 public:
-    static string proxyToBackEnd(std::string& backendResponseBody);
+    static bool proxyToBackEnd(std::string& backendResponseBody, std::string& errorMessage);
 
 };

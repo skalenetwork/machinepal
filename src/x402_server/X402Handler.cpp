@@ -13,7 +13,7 @@ using namespace proxygen;
 void X402Handler::onRequest(std::unique_ptr<HTTPMessage> _headers) noexcept {
     reqHeaders_ = std::move(_headers);
     ProxygenResponseSender responseSender(downstream_) ;
-    app_.x402Processor()->processUrlAndHeaders(reqHeaders_, responseSender);
+    app_.x402Processor()->onRequestStart(reqHeaders_, responseSender);
 }
 
 void X402Handler::onBody(std::unique_ptr<folly::IOBuf> _body) noexcept {
@@ -26,5 +26,5 @@ void X402Handler::onBody(std::unique_ptr<folly::IOBuf> _body) noexcept {
 
 void X402Handler::onEOM() noexcept {
     ProxygenResponseSender responseSender(downstream_);
-    app_.x402Processor()->doOnEOM(responseSender, reqHeaders_);
+    app_.x402Processor()->onRequestCompletion(responseSender, reqHeaders_);
 }
