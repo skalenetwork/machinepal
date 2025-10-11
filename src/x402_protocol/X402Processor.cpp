@@ -40,13 +40,6 @@ void X402Processor::reply200(proxygen::ResponseHandler* downstream, const std::s
 }
 
 
-void X402Processor::reply400(proxygen::ResponseHandler* downstream, const std::string& message) {
-    proxygen::ResponseBuilder(downstream)
-        .status(400, "Bad Request")
-        .body(message)
-        .sendWithEOM();
-}
-
 void X402Processor::reply402(proxygen::ResponseHandler* downstream) {
     // Demo payment requirements JSON (normally dynamic / per-request).
     folly::dynamic req = folly::dynamic::object;
@@ -59,6 +52,14 @@ void X402Processor::reply402(proxygen::ResponseHandler* downstream) {
         .body(json)
         .sendWithEOM();
 }
+
+void X402Processor::reply400(proxygen::ResponseHandler* downstream, const std::string& message) {
+    proxygen::ResponseBuilder(downstream)
+        .status(400, "Bad Request")
+        .body(message)
+        .sendWithEOM();
+}
+
 
 void X402Processor::reply502(proxygen::ResponseHandler* downstream, const std::string& message) {
     proxygen::ResponseBuilder(downstream)
