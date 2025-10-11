@@ -36,7 +36,7 @@ private:
     ptr<MachinePayConfig> config_;
 
     void reply402();
-    void reply502();
+    void reply502(const std::string& message);
     void proxyToBackEnd(std::string _settlementInfo);
     std::unique_ptr<proxygen::HTTPMessage> reqHeaders;
     std::string reqURL;

@@ -7,6 +7,7 @@
 
 
 
+
 X402Processor::X402Processor(MachinePayApp& app)
     : app_(app)
 {
@@ -38,3 +39,4 @@ void X402Processor::reply402(proxygen::ResponseHandler* downstream) {
         .body(json)
         .sendWithEOM();
 }
+

@@ -6,16 +6,6 @@
 
 using namespace proxygen;
 
-namespace {
-    // Demo payment requirements JSON (normally dynamic / per-request).
-    folly::dynamic paymentRequirements() {
-        folly::dynamic req = folly::dynamic::object;
-        auto paymentRequirements = EXACT_UCDC_PAYMENT_REQ_CB_SEPOLIA;
-        req = folly::parseJson(paymentRequirements);
-        return req;
-    }
-}
-
 
 void X402Handler::reply400(const std::string& message)
 {
@@ -34,10 +24,7 @@ void X402Handler::onRequest(std::unique_ptr<HTTPMessage> _headers) noexcept {
 
     // Reject empty or non-rooted paths
     if (path.empty() || path.front() != '/') {
-        ResponseBuilder(downstream_)
-            .status(400, "Bad Request")
-            .body("Invalid or insecure path")
-            .sendWithEOM();
+        reply400("Invalid or insecure path");
         return;
     }
 
@@ -53,10 +40,7 @@ void X402Handler::onRequest(std::unique_ptr<HTTPMessage> _headers) noexcept {
 
     // Optionally: reject traversal attempts
     if (path.find("..") != std::string::npos) {
-        ResponseBuilder(downstream_)
-            .status(400, "Bad Request")
-            .body("Path traversal not allowed")
-            .sendWithEOM();
+        reply400("Path traversal not allowed");
         return;
     }
 }
@@ -68,22 +52,13 @@ void X402Handler::onBody(std::unique_ptr<folly::IOBuf> _body) noexcept {
 }
 
 
-void X402Handler::reply402() {
-    auto json = folly::toJson(paymentRequirements());
-    ResponseBuilder(downstream_)
-            .status(402, "Payment Required")
-            .header("Content-Type", "application/json")
-            .body(json)
-            .sendWithEOM();
-}
 
-
-void X402Handler::reply502()
+void X402Handler::reply502(const std::string& message)
 {
     ResponseBuilder(downstream_)
         .status(502, "Bad Gateway")
         .header("Content-Type", "text/plain")
-        .body("Failed to fetch content from upstream service.")
+        .body(message)
         .sendWithEOM();
 }
 
@@ -94,11 +69,7 @@ void X402Handler::proxyToBackEnd(std::string _settlementInfo) {
         auto curlObject = curl_easy_init();
         if (!curlObject) {
             LOG(ERROR) << "Could not initialize CURL object";
-            ResponseBuilder(downstream_)
-                    .status(502, "Bad Gateway")
-                    .header("Content-Type", "text/plain")
-                    .body("Could not initialize CURL object")
-                    .sendWithEOM();
+            reply502("Could not initialize CURL object");
             return;
         }
         curlThreadLocal.reset(curlObject);
@@ -127,8 +98,7 @@ void X402Handler::proxyToBackEnd(std::string _settlementInfo) {
 
     if (result != CURLE_OK) {
         LOG(ERROR) << "CURL error: " << curl_easy_strerror(result);
-        // Failed to fetch content, reply with 502
-        reply502();
+        reply502("Failed to fetch content from upstream service.");
         curl_easy_cleanup(curl);
         return;
     }
