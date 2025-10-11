@@ -97,7 +97,10 @@ bool X402Processor::processUrlAndHeaders(const std::unique_ptr<proxygen::HTTPMes
 void X402Processor::doOnEOM(IResponseSender& responseSender, const std::unique_ptr<proxygen::HTTPMessage>& reqHeaders) {
     std::string settlementInfo;
     if (hasValidPaymentHeader(reqHeaders, settlementInfo)) {
-        BackendConnection::proxyToBackEnd(this, responseSender, settlementInfo);
+        auto errorString = BackendConnection::proxyToBackEnd(this, responseSender, settlementInfo);
+        if (!errorString.empty()) {
+            reply502(responseSender, "Failed to fetch content from upstream service.");
+        }
     } else {
         reply402(responseSender);
     }

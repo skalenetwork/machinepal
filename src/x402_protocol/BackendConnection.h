@@ -9,6 +9,6 @@ class BackendConnection
 
 
 public:
-    static void proxyToBackEnd(X402Processor* processor, IResponseSender& downstream, const std::string& settlementInfo);
+    static string proxyToBackEnd(X402Processor* processor, IResponseSender& downstream, const std::string& settlementInfo);
 
 };
