@@ -16,9 +16,8 @@ void X402Handler::reply400(const std::string& message)
 }
 
 void X402Handler::onRequest(std::unique_ptr<HTTPMessage> _headers) noexcept {
-    reqHeaders = std::move(_headers);
-    reqURL = reqHeaders->getURL();
-    auto path = reqHeaders->getPath();
+    reqHeaders_ = std::move(_headers);
+    auto path = reqHeaders_->getPath();
 
     // Check for insecure path patterns
 
@@ -48,7 +47,7 @@ void X402Handler::onRequest(std::unique_ptr<HTTPMessage> _headers) noexcept {
 void X402Handler::onBody(std::unique_ptr<folly::IOBuf> _body) noexcept {
     if (!_body) return;
     _body->coalesce();
-    bodyBuffer.append(reinterpret_cast<const char *>(_body->data()), _body->length());
+    bodyBuffer_.append(reinterpret_cast<const char *>(_body->data()), _body->length());
 }
 
 
@@ -116,7 +115,7 @@ void X402Handler::proxyToBackEnd(std::string _settlementInfo) {
 
 void X402Handler::onEOM() noexcept {
     std::string settlementInfo;
-    if (X402Processor::hasValidPaymentHeader(reqHeaders.get(), settlementInfo)) {
+    if (X402Processor::hasValidPaymentHeader(reqHeaders_.get(), settlementInfo)) {
         proxyToBackEnd(settlementInfo);
     } else {
         X402Processor::reply402(downstream_);
