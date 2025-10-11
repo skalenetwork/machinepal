@@ -54,3 +54,26 @@ void X402Processor::reply502(proxygen::ResponseHandler* downstream, const std::s
         .body(message)
         .sendWithEOM();
 }
+
+bool X402Processor::processUrlAndHeaders(const proxygen::HTTPMessage* reqHeaders, proxygen::ResponseHandler* downstream) {
+    auto path = reqHeaders->getPath();
+    // Reject empty or non-rooted paths
+    if (path.empty() || path.front() != '/') {
+        reply400(downstream, "Invalid or insecure path");
+        return true;
+    }
+    // Allow only [A-Za-z0-9] and '/'
+    bool badChar = std::any_of(path.begin(), path.end(), [](unsigned char c) {
+        return !(std::isalnum(c) || c == '/');
+    });
+    if (badChar) {
+        reply400(downstream, "Path contains invalid characters");
+        return true;
+    }
+    // Optionally: reject traversal attempts
+    if (path.find("..") != std::string::npos) {
+        reply400(downstream, "Path traversal not allowed");
+        return true;
+    }
+    return false;
+}

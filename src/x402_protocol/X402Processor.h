@@ -16,6 +16,7 @@ public:
     static void reply402(proxygen::ResponseHandler* downstream);
     static void reply400(proxygen::ResponseHandler* downstream, const std::string& message);
     static void reply502(proxygen::ResponseHandler* downstream, const std::string& message);
+    static bool processUrlAndHeaders(const proxygen::HTTPMessage* reqHeaders, proxygen::ResponseHandler* downstream);
 private:
     MachinePayApp& app_;
 };
