@@ -27,6 +27,19 @@ bool X402Processor::hasValidPaymentHeader(const proxygen::HTTPMessage* _req, std
     return false;
 }
 
+
+
+void X402Processor::reply200(proxygen::ResponseHandler* downstream, const std::string& settlementInfo, std::string proxyBody)
+{
+    proxygen::ResponseBuilder(downstream)
+        .status(200, "OK")
+        .header("Content-Type", "text/plain")
+        .header("X-PAYMENT-RESPONSE", settlementInfo)
+        .body(proxyBody)
+        .sendWithEOM();
+}
+
+
 void X402Processor::reply400(proxygen::ResponseHandler* downstream, const std::string& message) {
     proxygen::ResponseBuilder(downstream)
         .status(400, "Bad Request")
@@ -78,6 +91,7 @@ bool X402Processor::processUrlAndHeaders(const proxygen::HTTPMessage* reqHeaders
     return false;
 }
 
+
 void X402Processor::proxyToBackEnd(proxygen::ResponseHandler* downstream, const std::string& settlementInfo) {
     static thread_local std::unique_ptr<CURL, decltype(&curl_easy_cleanup)> curlThreadLocal(nullptr, &curl_easy_cleanup);
 
@@ -121,10 +135,5 @@ void X402Processor::proxyToBackEnd(proxygen::ResponseHandler* downstream, const 
 
     curl_easy_cleanup(curl);
 
-    proxygen::ResponseBuilder(downstream)
-            .status(200, "OK")
-            .header("Content-Type", "text/plain")
-            .header("X-PAYMENT-RESPONSE", settlementInfo)
-            .body(proxyBody)
-            .sendWithEOM();
+    reply200(downstream, settlementInfo, proxyBody);
 }
