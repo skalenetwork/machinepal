@@ -27,6 +27,13 @@ bool X402Processor::hasValidPaymentHeader(const proxygen::HTTPMessage* _req, std
     return false;
 }
 
+void X402Processor::reply400(proxygen::ResponseHandler* downstream, const std::string& message) {
+    proxygen::ResponseBuilder(downstream)
+        .status(400, "Bad Request")
+        .body(message)
+        .sendWithEOM();
+}
+
 void X402Processor::reply402(proxygen::ResponseHandler* downstream) {
     // Demo payment requirements JSON (normally dynamic / per-request).
     folly::dynamic req = folly::dynamic::object;
@@ -40,3 +47,10 @@ void X402Processor::reply402(proxygen::ResponseHandler* downstream) {
         .sendWithEOM();
 }
 
+void X402Processor::reply502(proxygen::ResponseHandler* downstream, const std::string& message) {
+    proxygen::ResponseBuilder(downstream)
+        .status(502, "Bad Gateway")
+        .header("Content-Type", "text/plain")
+        .body(message)
+        .sendWithEOM();
+}

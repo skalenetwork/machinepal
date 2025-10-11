@@ -7,14 +7,6 @@
 using namespace proxygen;
 
 
-void X402Handler::reply400(const std::string& message)
-{
-    ResponseBuilder(downstream_)
-        .status(400, "Bad Request")
-        .body(message)
-        .sendWithEOM();
-}
-
 void X402Handler::onRequest(std::unique_ptr<HTTPMessage> _headers) noexcept {
     reqHeaders_ = std::move(_headers);
     auto path = reqHeaders_->getPath();
@@ -23,7 +15,7 @@ void X402Handler::onRequest(std::unique_ptr<HTTPMessage> _headers) noexcept {
 
     // Reject empty or non-rooted paths
     if (path.empty() || path.front() != '/') {
-        reply400("Invalid or insecure path");
+        X402Processor::reply400(downstream_, "Invalid or insecure path");
         return;
     }
 
@@ -33,13 +25,13 @@ void X402Handler::onRequest(std::unique_ptr<HTTPMessage> _headers) noexcept {
     });
 
     if (badChar) {
-        reply400("Path contains invalid characters");
+        X402Processor::reply400(downstream_, "Path contains invalid characters");
         return;
     }
 
     // Optionally: reject traversal attempts
     if (path.find("..") != std::string::npos) {
-        reply400("Path traversal not allowed");
+        X402Processor::reply400(downstream_, "Path traversal not allowed");
         return;
     }
 }
@@ -52,15 +44,6 @@ void X402Handler::onBody(std::unique_ptr<folly::IOBuf> _body) noexcept {
 
 
 
-void X402Handler::reply502(const std::string& message)
-{
-    ResponseBuilder(downstream_)
-        .status(502, "Bad Gateway")
-        .header("Content-Type", "text/plain")
-        .body(message)
-        .sendWithEOM();
-}
-
 void X402Handler::proxyToBackEnd(std::string _settlementInfo) {
     static thread_local std::unique_ptr<CURL, decltype(&curl_easy_cleanup)> curlThreadLocal(nullptr, &curl_easy_cleanup);
 
@@ -68,7 +51,7 @@ void X402Handler::proxyToBackEnd(std::string _settlementInfo) {
         auto curlObject = curl_easy_init();
         if (!curlObject) {
             LOG(ERROR) << "Could not initialize CURL object";
-            reply502("Could not initialize CURL object");
+            X402Processor::reply502(downstream_, "Could not initialize CURL object");
             return;
         }
         curlThreadLocal.reset(curlObject);
@@ -97,7 +80,7 @@ void X402Handler::proxyToBackEnd(std::string _settlementInfo) {
 
     if (result != CURLE_OK) {
         LOG(ERROR) << "CURL error: " << curl_easy_strerror(result);
-        reply502("Failed to fetch content from upstream service.");
+        X402Processor::reply502(downstream_, "Failed to fetch content from upstream service.");
         curl_easy_cleanup(curl);
         return;
     }
