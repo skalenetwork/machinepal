@@ -19,6 +19,7 @@ namespace {
 
 void X402Handler::onRequest(std::unique_ptr<HTTPMessage> _headers) noexcept {
     reqHeaders = std::move(_headers);
+    reqURL = reqHeaders->getURL();
     auto path = reqHeaders->getPath();
 
     // Check for insecure path patterns
