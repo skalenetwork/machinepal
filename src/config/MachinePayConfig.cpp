@@ -68,7 +68,6 @@ ptr<MachinePayConfig> MachinePayConfig::createFromJson(const nlohmann::json& j, 
         {
             logConfig = LogConfig::createFromJson(j.at("log"), fileManager);
         }
-#include "MachinePayConfig.h"
         return std::make_shared<MachinePayConfig>(serverConfig, facilitatorConfig, logConfig);
     }
     catch (const std::exception& ex)
