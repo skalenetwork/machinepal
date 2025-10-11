@@ -36,5 +36,5 @@ void X402Handler::doOnEOM(IResponseSender& responseSender)
 
 void X402Handler::onEOM() noexcept {
     ProxygenResponseSender responseSender(downstream_);
-    doOnEOM(responseSender);
+    app_.x402Processor()->doOnEOM(responseSender, reqHeaders_);
 }

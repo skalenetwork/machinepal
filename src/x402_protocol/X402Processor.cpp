@@ -3,6 +3,8 @@
 #include "MachinePayApp.h"
 #include "IResponseSender.h"
 #include <folly/json.h>
+
+#include "BackendConnection.h"
 #include "examples/PaymentExamples.h"
 
 
@@ -92,5 +94,11 @@ bool X402Processor::processUrlAndHeaders(const std::unique_ptr<proxygen::HTTPMes
     return false;
 }
 
-
-
+void X402Processor::doOnEOM(IResponseSender& responseSender, const std::unique_ptr<proxygen::HTTPMessage>& reqHeaders) {
+    std::string settlementInfo;
+    if (hasValidPaymentHeader(reqHeaders, settlementInfo)) {
+        BackendConnection::proxyToBackEnd(this, responseSender, settlementInfo);
+    } else {
+        reply402(responseSender);
+    }
+}
