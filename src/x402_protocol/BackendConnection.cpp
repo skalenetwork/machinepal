@@ -12,7 +12,7 @@ void BackendConnection::proxyToBackEnd(X402Processor* processor, IResponseSender
     if (!curlThreadLocal) {
         auto curlObject = curl_easy_init();
         if (!curlObject) {
-            LOG(ERROR) << "Could not initialize CURL object";
+            spdlog::error("Could not initialize CURL object");
             processor->reply502(downstream, "Could not initialize CURL object");
             return;
         }
@@ -41,12 +41,16 @@ void BackendConnection::proxyToBackEnd(X402Processor* processor, IResponseSender
     auto result = curl_easy_perform(curl);
 
     if (result != CURLE_OK) {
-        LOG(ERROR) << "CURL error: " << curl_easy_strerror(result);
-        processor->reply502(downstream, "Failed to fetch content from upstream service.");
-        curl_easy_cleanup(curl);
-        return;
+        spdlog::error("CURL error: {}", curl_easy_strerror(result));
     }
 
     curl_easy_cleanup(curl);
-    processor->reply200(downstream, settlementInfo, proxyBody);
+
+    if (result != CURLE_OK)
+    {
+        processor->reply502(downstream, "Failed to fetch content from upstream service.");
+    } else
+    {
+        processor->reply200(downstream, settlementInfo, proxyBody);
+    }
 }
