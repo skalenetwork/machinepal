@@ -16,8 +16,18 @@ public:
     void onRequest(std::unique_ptr<proxygen::HTTPMessage> _headers) noexcept override;
     void onBody(std::unique_ptr<folly::IOBuf> _body) noexcept override;
     void onEOM() noexcept override;
-    void requestComplete() noexcept override { delete this; }
-    void onError(proxygen::ProxygenError /*_err*/) noexcept override { delete this; }
+    void requestComplete() noexcept override
+    {
+        // clean object if not used by different thread
+        self_.reset();
+    }
+    ~X402Handler() override {}
+    void onError(proxygen::ProxygenError _err ) noexcept override
+    {
+        spdlog::error("X402Handler::onError called: {}", proxygen::getErrorString((_err)));
+        // clean object if not used by different thread
+        self_.reset();
+    }
 
     void onUpgrade(proxygen::UpgradeProtocol /*_prot*/) noexcept override {
         // No upgrade handling needed for now

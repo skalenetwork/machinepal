@@ -11,26 +11,47 @@ using namespace proxygen;
 
 
 void X402Handler::onRequest(std::unique_ptr<HTTPMessage> _headers) noexcept {
-    reqHeaders_ = std::move(_headers);
-    std::shared_ptr<IResponseSender>  responseSender = std::make_shared<ProxygenResponseSender>(downstream_) ;
-    processor_ = app_.makeX402Processor(responseSender);
-    processor_->onRequestStart(reqHeaders_);
+    try
+    {
+        CHECK_STATE(self_);
+        reqHeaders_ = std::move(_headers);
+        std::shared_ptr<IResponseSender>  responseSender = std::make_shared<ProxygenResponseSender>(downstream_) ;
+        processor_ = app_.makeX402Processor(responseSender);
+        processor_->onRequestStart(reqHeaders_);
+    } catch (const std::exception& e)
+    {
+        spdlog::critical("Error in onRequest: {}", e.what());
+    }
 }
 
 void X402Handler::onBody(std::unique_ptr<folly::IOBuf> _body) noexcept {
-    if (!_body) return;
-    _body->coalesce();
-    bodyBuffer_.append(reinterpret_cast<const char *>(_body->data()), _body->length());
+    try
+    {
+        CHECK_STATE(self_);
+        if (!_body) return;
+        _body->coalesce();
+        bodyBuffer_.append(reinterpret_cast<const char *>(_body->data()), _body->length());
+    } catch (const std::exception& e)
+    {
+        spdlog::critical("Error in onBody: {}", e.what());
+    }
 }
 
 
 
 void X402Handler::onEOM() noexcept {
-    ProxygenResponseSender responseSender(downstream_);
-    if (!processor_)
+    try
     {
-        spdlog::critical("X402Handler::onEOM() called without processor_");
-        return;
+        CHECK_STATE(self_);
+        ProxygenResponseSender responseSender(downstream_);
+        if (!processor_)
+        {
+            spdlog::critical("X402Handler::onEOM() called without processor_");
+            return;
+        }
+        processor_->onRequestCompletion(reqHeaders_);
+    } catch (const std::exception& e)
+    {
+        spdlog::critical("Error in onEOM: {}", e.what());
     }
-    processor_->onRequestCompletion(reqHeaders_);
 }

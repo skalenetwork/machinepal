@@ -20,7 +20,9 @@ public:
 
     proxygen::RequestHandler* onRequest(proxygen::RequestHandler* /*_handler*/,
                                         proxygen::HTTPMessage* /*_msg*/) noexcept override {
-        return new X402Handler(app_);
+        auto handler = std::shared_ptr<X402Handler>(new X402Handler(app_));
+        handler->self_ = handler;  // self-owning ref, ensures lifetime
+        return handler.get();
     }
 
 private:
