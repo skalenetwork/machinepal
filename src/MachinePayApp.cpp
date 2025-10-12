@@ -12,7 +12,6 @@ void MachinePayApp::runUntilExit()
 
 
     spdlog::info("Creating and starting server");
-    x402Processor_ = std::make_shared<X402Processor>(*this);
     serverFactory_ = std::make_shared<ServerFactory>(*this);
     auto serverConfig = configManager_->latestConfig()->server();
     proxygenServer_ = serverFactory_->createServerInstance(*serverConfig);

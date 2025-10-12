@@ -17,8 +17,8 @@
 #include <iomanip>
 
 
-X402Processor::X402Processor(MachinePayApp& app)
-    : app_(app)
+X402Processor::X402Processor(MachinePayApp& app, IResponseSender& responseSender)
+    : app_(app), responseSender_(responseSender)
 {
     // TODO: Add any initialization logic if needed
 }
@@ -97,7 +97,7 @@ void X402Processor::reply502BadGateway(IResponseSender& responseSender, const st
     sendResponse(responseSender, {502, "Bad Gateway"}, headers, message);
 }
 
-bool X402Processor::isPathValid(const std::string& path, std::string& errorMessage)
+bool X402Processor::decodePath(const std::string& path, std::string& errorMessage)
 {
     try
     {
@@ -171,7 +171,7 @@ void X402Processor::onRequestStart(const std::unique_ptr<proxygen::HTTPMessage>&
         CHECK_STATE(reqHeaders);
         auto path = reqHeaders->getPath();
         std::string errorMessage;
-        if (!isPathValid(path, errorMessage))
+        if (!decodePath(path, errorMessage))
         {
             reply400BadRequest(responseSender, errorMessage);
         }

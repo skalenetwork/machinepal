@@ -19,10 +19,10 @@ public:
         CHECK_STATE(serverFactory_);
         return serverFactory_;
     }
-    std::shared_ptr<X402Processor> x402Processor() const
+
+    std::shared_ptr<X402Processor> makeX402Processor(IResponseSender& _responseSender)
     {
-        CHECK_STATE(x402Processor_);
-        return x402Processor_;
+        return std::make_shared<X402Processor>(*this, _responseSender);;
     }
 
     explicit MachinePayApp(std::map<std::string, std::string> configValuesFromCliAndEnv);
@@ -38,5 +38,4 @@ private:
     ptr<ConfigManager> configManager_;
     ptr<ServerFactory> serverFactory_;
     ptr<proxygen::HTTPServer> proxygenServer_;
-    std::shared_ptr<X402Processor> x402Processor_;
 };

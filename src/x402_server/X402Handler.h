@@ -36,4 +36,5 @@ private:
     ptr<MachinePayConfig> config_;
     std::unique_ptr<proxygen::HTTPMessage> reqHeaders_;
     std::string bodyBuffer_;
+    ptr<X402Processor> processor_;
 };
