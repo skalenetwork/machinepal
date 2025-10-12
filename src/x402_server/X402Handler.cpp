@@ -12,9 +12,9 @@ using namespace proxygen;
 
 void X402Handler::onRequest(std::unique_ptr<HTTPMessage> _headers) noexcept {
     reqHeaders_ = std::move(_headers);
-    ProxygenResponseSender responseSender(downstream_) ;
+    std::shared_ptr<IResponseSender>  responseSender = std::make_shared<ProxygenResponseSender>(downstream_) ;
     processor_ = app_.makeX402Processor(responseSender);
-    processor_->onRequestStart(reqHeaders_, responseSender);
+    processor_->onRequestStart(reqHeaders_);
 }
 
 void X402Handler::onBody(std::unique_ptr<folly::IOBuf> _body) noexcept {
@@ -32,5 +32,5 @@ void X402Handler::onEOM() noexcept {
         spdlog::critical("X402Handler::onEOM() called without processor_");
         return;
     }
-    processor_->onRequestCompletion(responseSender, reqHeaders_);
+    processor_->onRequestCompletion(reqHeaders_);
 }

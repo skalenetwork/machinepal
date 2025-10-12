@@ -17,7 +17,7 @@
 #include <iomanip>
 
 
-X402Processor::X402Processor(MachinePayApp& app, IResponseSender& responseSender)
+X402Processor::X402Processor(MachinePayApp& app, ptr<IResponseSender>& responseSender)
     : app_(app), responseSender_(responseSender)
 {
     // TODO: Add any initialization logic if needed
@@ -45,18 +45,18 @@ bool X402Processor::hasValidPaymentHeader(const std::unique_ptr<proxygen::HTTPMe
 }
 
 
-void X402Processor::reply200Success(IResponseSender& responseSender, const std::string& settlementInfo,
+void X402Processor::reply200Success(const std::string& settlementInfo,
                                     std::string proxyBody)
 {
     std::vector<std::pair<std::string, std::string>> headers = {
         {"Content-Type", "text/plain"},
         {"X-PAYMENT-RESPONSE", settlementInfo}
     };
-    sendResponse(responseSender, {200, "OK"}, headers, proxyBody);
+    sendResponse({200, "OK"}, headers, proxyBody);
 }
 
 
-void X402Processor::reply402PaymentRequired(IResponseSender& responseSender)
+void X402Processor::reply402PaymentRequired()
 {
     folly::dynamic req = folly::dynamic::object;
     auto paymentRequirements = EXACT_UCDC_PAYMENT_REQ_CB_SEPOLIA;
@@ -65,36 +65,37 @@ void X402Processor::reply402PaymentRequired(IResponseSender& responseSender)
     std::vector<std::pair<std::string, std::string>> headers = {
         {"Content-Type", "application/json"}
     };
-    sendResponse(responseSender, {402, "Payment Required"}, headers, json);
+    sendResponse({402, "Payment Required"}, headers, json);
 }
 
 
-void X402Processor::sendResponse(IResponseSender& responseSender,
+void X402Processor::sendResponse(
                                  const std::pair<uint16_t, std::string>& statusAndMessage,
                                  const std::vector<std::pair<std::string, std::string>>& headers,
                                  const std::string& body = "")
 {
     CHECK_STATE(!responseSent_);
-    responseSender.sendResponse(statusAndMessage, headers, body);
+    CHECK_STATE(responseSender_);
+    responseSender_->sendResponse(statusAndMessage, headers, body);
     responseSent_ = true;
 }
 
 
-void X402Processor::reply400BadRequest(IResponseSender& responseSender, const std::string& message)
+void X402Processor::reply400BadRequest(const std::string& message)
 {
     std::vector<std::pair<std::string, std::string>> headers = {
         {"Content-Type", "text/plain"}
     };
-    sendResponse(responseSender, {400, "Bad Request"}, headers, message);
+    sendResponse({400, "Bad Request"}, headers, message);
 }
 
 
-void X402Processor::reply502BadGateway(IResponseSender& responseSender, const std::string& message)
+void X402Processor::reply502BadGateway(const std::string& message)
 {
     std::vector<std::pair<std::string, std::string>> headers = {
         {"Content-Type", "text/plain"}
     };
-    sendResponse(responseSender, {502, "Bad Gateway"}, headers, message);
+    sendResponse({502, "Bad Gateway"}, headers, message);
 }
 
 bool X402Processor::decodePath(const std::string& path, std::string& errorMessage)
@@ -162,8 +163,7 @@ error:
     return false;
 }
 
-void X402Processor::onRequestStart(const std::unique_ptr<proxygen::HTTPMessage>& reqHeaders,
-                                   IResponseSender& responseSender)
+void X402Processor::onRequestStart(const std::unique_ptr<proxygen::HTTPMessage>& reqHeaders)
     noexcept
 {
     try
@@ -173,7 +173,7 @@ void X402Processor::onRequestStart(const std::unique_ptr<proxygen::HTTPMessage>&
         std::string errorMessage;
         if (!decodePath(path, errorMessage))
         {
-            reply400BadRequest(responseSender, errorMessage);
+            reply400BadRequest(errorMessage);
         }
     }
     catch (std::exception& e)
@@ -183,8 +183,7 @@ void X402Processor::onRequestStart(const std::unique_ptr<proxygen::HTTPMessage>&
     };
 }
 
-void X402Processor::onRequestCompletion(IResponseSender& responseSender,
-                                        const std::unique_ptr<proxygen::HTTPMessage>& reqHeaders) noexcept
+void X402Processor::onRequestCompletion(const std::unique_ptr<proxygen::HTTPMessage>& reqHeaders) noexcept
 {
     try
     {
@@ -192,7 +191,7 @@ void X402Processor::onRequestCompletion(IResponseSender& responseSender,
         std::string settlementInfo;
         if (!hasValidPaymentHeader(reqHeaders, settlementInfo))
         {
-            reply402PaymentRequired(responseSender);
+            reply402PaymentRequired();
             return;
         }
 
@@ -201,11 +200,10 @@ void X402Processor::onRequestCompletion(IResponseSender& responseSender,
         bool success = BackendConnection::proxyToBackEnd(backendResponseBody, errorMessage);
         if (!success)
         {
-            reply502BadGateway(responseSender,
-                               errorMessage.empty() ? "Failed to fetch content from upstream service." : errorMessage);
+            reply502BadGateway(errorMessage.empty() ? "Failed to fetch content from upstream service." : errorMessage);
             return;
         }
-        reply200Success(responseSender, settlementInfo, backendResponseBody);
+        reply200Success(settlementInfo, backendResponseBody);
     }
     catch (std::exception& e)
     {

@@ -20,7 +20,7 @@ public:
         return serverFactory_;
     }
 
-    std::shared_ptr<X402Processor> makeX402Processor(IResponseSender& _responseSender)
+    std::shared_ptr<X402Processor> makeX402Processor(ptr<IResponseSender>& _responseSender)
     {
         return std::make_shared<X402Processor>(*this, _responseSender);;
     }

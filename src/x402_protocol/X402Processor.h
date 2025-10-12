@@ -12,20 +12,20 @@ class MachinePayApp; // Forward declaration
 
 class X402Processor {
 public:
-    explicit X402Processor(MachinePayApp& app, IResponseSender& responseSender);
+    explicit X402Processor(MachinePayApp& app, ptr<IResponseSender>& responseSender);
 
-    void onRequestStart(const std::unique_ptr<proxygen::HTTPMessage>& headers, IResponseSender& downstream) noexcept;
-    void onRequestCompletion(IResponseSender& responseSender, const std::unique_ptr<proxygen::HTTPMessage>& reqHeaders) noexcept;
+    void onRequestStart(const std::unique_ptr<proxygen::HTTPMessage>& headers) noexcept;
+    void onRequestCompletion(const std::unique_ptr<proxygen::HTTPMessage>& reqHeaders) noexcept;
 private:
 
     bool hasValidPaymentHeader(const std::unique_ptr<proxygen::HTTPMessage>&  _req, std::string& paymentInfo);
-    void reply402PaymentRequired(IResponseSender& downstream);
-    void sendResponse(IResponseSender& downstream, const std::pair<uint16_t, std::string>& statusAndMessage,
+    void reply402PaymentRequired();
+    void sendResponse(const std::pair<uint16_t, std::string>& statusAndMessage,
                       const std::vector<std::pair<std::string, std::string>>& headers, const std::string& body);
-    void reply400BadRequest(IResponseSender& downstream, const std::string& message);
-    void reply502BadGateway(IResponseSender& downstream, const std::string& message);
+    void reply400BadRequest( const std::string& message);
+    void reply502BadGateway(const std::string& message);
     bool decodePath(const std::string& path, string& errorMessage);
-    void reply200Success(IResponseSender& downstream, const std::string& settlementInfo,
+    void reply200Success(const std::string& settlementInfo,
                                 std::string proxyBody);
 
 
@@ -33,5 +33,5 @@ private:
     bool responseSent_ = false;
     std::string path_;
     std::string decodedPath_;
-    IResponseSender& responseSender_;
+    ptr<IResponseSender> responseSender_;
 };
