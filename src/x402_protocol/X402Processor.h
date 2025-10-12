@@ -1,5 +1,6 @@
 #pragma once
 #include "IResponseSender.h"
+#include "X402ProcessorState.h"
 
 
 
@@ -12,6 +13,7 @@ class MachinePayApp; // Forward declaration
 
 class X402Processor {
 public:
+    using State = x402::State;
     explicit X402Processor(MachinePayApp& app, ptr<IResponseSender>& responseSender);
 
     void onRequestStart(const std::unique_ptr<proxygen::HTTPMessage>& headers) noexcept;
@@ -30,8 +32,8 @@ private:
 
 
     MachinePayApp& app_;
-    bool responseSent_ = false;
     std::string path_;
     std::string decodedPath_;
     ptr<IResponseSender> responseSender_;
+    State state_ = State::START;
 };

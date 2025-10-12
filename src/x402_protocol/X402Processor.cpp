@@ -53,11 +53,13 @@ void X402Processor::reply200Success(const std::string& settlementInfo,
         {"X-PAYMENT-RESPONSE", settlementInfo}
     };
     sendResponse({200, "OK"}, headers, proxyBody);
+    state_ = State::SUCCESS;
 }
 
 
 void X402Processor::reply402PaymentRequired()
 {
+
     folly::dynamic req = folly::dynamic::object;
     auto paymentRequirements = EXACT_UCDC_PAYMENT_REQ_CB_SEPOLIA;
     req = folly::parseJson(paymentRequirements);
@@ -66,20 +68,8 @@ void X402Processor::reply402PaymentRequired()
         {"Content-Type", "application/json"}
     };
     sendResponse({402, "Payment Required"}, headers, json);
+    state_ = State::PAYMENT_REQUIRED_SENT;
 }
-
-
-void X402Processor::sendResponse(
-                                 const std::pair<uint16_t, std::string>& statusAndMessage,
-                                 const std::vector<std::pair<std::string, std::string>>& headers,
-                                 const std::string& body = "")
-{
-    CHECK_STATE(!responseSent_);
-    CHECK_STATE(responseSender_);
-    responseSender_->sendResponse(statusAndMessage, headers, body);
-    responseSent_ = true;
-}
-
 
 void X402Processor::reply400BadRequest(const std::string& message)
 {
@@ -87,6 +77,7 @@ void X402Processor::reply400BadRequest(const std::string& message)
         {"Content-Type", "text/plain"}
     };
     sendResponse({400, "Bad Request"}, headers, message);
+    state_ = State::ERROR;
 }
 
 
@@ -96,7 +87,20 @@ void X402Processor::reply502BadGateway(const std::string& message)
         {"Content-Type", "text/plain"}
     };
     sendResponse({502, "Bad Gateway"}, headers, message);
+    state_ = State::ERROR;
 }
+
+
+void X402Processor::sendResponse(
+                                 const std::pair<uint16_t, std::string>& statusAndMessage,
+                                 const std::vector<std::pair<std::string, std::string>>& headers,
+                                 const std::string& body = "")
+{
+    CHECK_STATE(state_ != State::ERROR);
+    CHECK_STATE(responseSender_);
+    responseSender_->sendResponse(statusAndMessage, headers, body);
+}
+
 
 bool X402Processor::decodePath(const std::string& path, std::string& errorMessage)
 {
@@ -178,8 +182,8 @@ void X402Processor::onRequestStart(const std::unique_ptr<proxygen::HTTPMessage>&
     }
     catch (std::exception& e)
     {
+        state_ = State::ERROR;
         spdlog::critical("Error in onRequestStart: {}", e.what());
-        this->responseSent_ = true;
     };
 }
 
@@ -187,14 +191,14 @@ void X402Processor::onRequestCompletion(const std::unique_ptr<proxygen::HTTPMess
 {
     try
     {
-        if (responseSent_) return;
+        if (state_ == State::ERROR) return;
         std::string settlementInfo;
         if (!hasValidPaymentHeader(reqHeaders, settlementInfo))
         {
             reply402PaymentRequired();
             return;
         }
-
+        state_ = State::PAYMENT_HEADER_RECEIVED;
         std::string backendResponseBody;
         std::string errorMessage;
         bool success = BackendConnection::proxyToBackEnd(backendResponseBody, errorMessage);
@@ -207,6 +211,7 @@ void X402Processor::onRequestCompletion(const std::unique_ptr<proxygen::HTTPMess
     }
     catch (std::exception& e)
     {
+        state_ = State::ERROR;
         spdlog::critical("Error in onRequestStart: {}", e.what());
     }
 }
