@@ -187,6 +187,20 @@ void X402Processor::onRequestStart(const std::unique_ptr<proxygen::HTTPMessage>&
     };
 }
 
+bool X402Processor::proxyResponseToBackEnd(std::string settlementInfo)
+{
+    std::string backendResponseBody;
+    std::string errorMessage;
+    bool success = BackendConnection::proxyToBackEnd(backendResponseBody, errorMessage);
+    if (!success)
+    {
+        reply502BadGateway(errorMessage.empty() ? "Failed to fetch content from upstream service." : errorMessage);
+        return true;
+    }
+    reply200Success(settlementInfo, backendResponseBody);
+    return false;
+}
+
 void X402Processor::onRequestCompletion(const std::unique_ptr<proxygen::HTTPMessage>& reqHeaders) noexcept
 {
     try
@@ -199,15 +213,7 @@ void X402Processor::onRequestCompletion(const std::unique_ptr<proxygen::HTTPMess
             return;
         }
         state_ = State::PAYMENT_HEADER_RECEIVED;
-        std::string backendResponseBody;
-        std::string errorMessage;
-        bool success = BackendConnection::proxyToBackEnd(backendResponseBody, errorMessage);
-        if (!success)
-        {
-            reply502BadGateway(errorMessage.empty() ? "Failed to fetch content from upstream service." : errorMessage);
-            return;
-        }
-        reply200Success(settlementInfo, backendResponseBody);
+        if (proxyResponseToBackEnd(settlementInfo)) return;
     }
     catch (std::exception& e)
     {

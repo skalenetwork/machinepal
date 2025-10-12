@@ -17,6 +17,7 @@ public:
     explicit X402Processor(MachinePayApp& app, ptr<IResponseSender>& responseSender);
 
     void onRequestStart(const std::unique_ptr<proxygen::HTTPMessage>& headers) noexcept;
+    bool proxyResponseToBackEnd(std::string settlementInfo);
     void onRequestCompletion(const std::unique_ptr<proxygen::HTTPMessage>& reqHeaders) noexcept;
 private:
 
