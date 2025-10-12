@@ -3,12 +3,15 @@
 #include <string>
 #include <vector>
 #include "../x402_protocol/IResponseSender.h"
+#include <folly/io/async/EventBaseManager.h>
 
 class ProxygenResponseSender : public IResponseSender {
 public:
     explicit ProxygenResponseSender(proxygen::ResponseHandler* downstream)
-        : downstream_(downstream)
+        : downstream_(downstream),
+          eventBase_(folly::EventBaseManager::get()->getEventBase())
     {
+        CHECK_STATE(eventBase_);
         CHECK_STATE(downstream);
     }
 
@@ -24,9 +27,17 @@ public:
         if (!body.empty()) {
             builder.body(body);
         }
-        builder.sendWithEOM();
+        // Ensure sendWithEOM runs in the correct event base thread that handle this particular http connection
+        if (folly::EventBaseManager::get()->getEventBase() == eventBase_) {
+            builder.sendWithEOM();
+        } else {
+            eventBase_->runInEventBaseThread([builder = std::move(builder)]() mutable {
+                builder.sendWithEOM();
+            });
+        }
     }
 
 private:
     proxygen::ResponseHandler* downstream_;
+    folly::EventBase* eventBase_;
 };
