@@ -40,15 +40,18 @@ bool X402Processor::hasValidPaymentHeader(const std::unique_ptr<proxygen::HTTPMe
 
 void X402Processor::reply200Success(IResponseSender& downstream, const std::string& settlementInfo, std::string proxyBody)
 {
+    CHECK_STATE(!responseSent_);
     std::vector<std::pair<std::string, std::string>> headers = {
         {"Content-Type", "text/plain"},
         {"X-PAYMENT-RESPONSE", settlementInfo}
     };
     downstream.sendResponse({200, "OK"}, headers, proxyBody);
+    responseSent_ = true;
 }
 
 
 void X402Processor::reply402PaymentRequired(IResponseSender& downstream) {
+    CHECK_STATE(!responseSent_);
     folly::dynamic req = folly::dynamic::object;
     auto paymentRequirements = EXACT_UCDC_PAYMENT_REQ_CB_SEPOLIA;
     req = folly::parseJson(paymentRequirements);
@@ -57,24 +60,29 @@ void X402Processor::reply402PaymentRequired(IResponseSender& downstream) {
         {"Content-Type", "application/json"}
     };
     downstream.sendResponse({402, "Payment Required"}, headers, json);
+    responseSent_ = true;
 }
 
 
 
 
 void X402Processor::reply400BadRequest(IResponseSender& downstream, const std::string& message) {
+    CHECK_STATE(!responseSent_);
     std::vector<std::pair<std::string, std::string>> headers = {
         {"Content-Type", "text/plain"}
     };
     downstream.sendResponse({400, "Bad Request"}, headers, message);
+    responseSent_ = true;
 }
 
 
 void X402Processor::reply502BadGateway(IResponseSender& downstream, const std::string& message) {
+    CHECK_STATE(!responseSent_);
     std::vector<std::pair<std::string, std::string>> headers = {
         {"Content-Type", "text/plain"}
     };
     downstream.sendResponse({502, "Bad Gateway"}, headers, message);
+    responseSent_ = true;
 }
 
 bool X402Processor::isPathValid(const std::string& path, std::string& errorMessage)
@@ -133,6 +141,7 @@ void X402Processor::onRequestStart(const std::unique_ptr<proxygen::HTTPMessage>&
 }
 
 void X402Processor::onRequestCompletion(IResponseSender& responseSender, const std::unique_ptr<proxygen::HTTPMessage>& reqHeaders) {
+    if (responseSent_) return;
     std::string settlementInfo;
     if (!hasValidPaymentHeader(reqHeaders, settlementInfo)) {
         reply402PaymentRequired(responseSender);

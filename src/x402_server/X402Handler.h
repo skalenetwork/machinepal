@@ -15,7 +15,6 @@ public:
 
     void onRequest(std::unique_ptr<proxygen::HTTPMessage> _headers) noexcept override;
     void onBody(std::unique_ptr<folly::IOBuf> _body) noexcept override;
-    void doOnEOM(IResponseSender & responseSender);
     void onEOM() noexcept override;
     void requestComplete() noexcept override { delete this; }
     void onError(proxygen::ProxygenError /*_err*/) noexcept override { delete this; }
