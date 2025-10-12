@@ -31,15 +31,13 @@ public:
     static std::string parseStatusLineAndHeaders(const std::vector<std::string> &_headersVector,
                                                  std::map<std::string, std::string> &_headersMap);
     std::tuple<std::map<std::string, std::string>, std::string, HttpResponse>
-    sendRequestAndParseResult(std::string _location, const std::vector<std::string> &_extraHeaders);
+    sendRequestAndParseResult(std::string _location, const std::vector<std::string> &_extraHeaders,
+        bool printHttpTrace = false);
 
     static size_t writeBody(char *_ptr, size_t _size, size_t _nmemb, void *_userdata);
     static size_t writeHeader(char *_buffer, size_t _size, size_t _nitems, void *_userdata);
+    static int debugCallback(CURL *handle, curl_infotype type, char *data, size_t size, void *userptr);
 
     HttpResponse httpGet(const std::string &_baseURL, const std::string &_location,
-                         const std::vector<std::string> &_extraHeaders);
+                         const std::vector<std::string> &_extraHeaders, bool printHttpTrace = false);
 };
-
-
-
-

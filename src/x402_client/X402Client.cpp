@@ -32,8 +32,9 @@ std::string X402Client::parseStatusLineAndHeaders(const std::vector<std::string>
 }
 
 std::tuple<std::map<std::string, std::string>, std::string, HttpResponse>
-X402Client::sendRequestAndParseResult(std::string _location, const std::vector<std::string> &_extraHeaders) {
-    auto resp = httpGet(baseUrl(), _location, _extraHeaders);
+X402Client::sendRequestAndParseResult(std::string _location, const std::vector<std::string> &_extraHeaders,
+    bool printHttpTrace ) {
+    auto resp = httpGet(baseUrl(), _location, _extraHeaders, printHttpTrace);
     auto headersVector = resp.headers;
     std::map<std::string, std::string> headersMap;
     auto statusLine = parseStatusLineAndHeaders(headersVector, headersMap);
@@ -57,8 +58,28 @@ size_t X402Client::writeHeader(char *_buffer, size_t _size, size_t _nitems, void
     return _size * _nitems;
 }
 
+int X402Client::debugCallback(CURL *handle, curl_infotype type, char *data, size_t size, void *userptr) {
+    switch (type) {
+    case CURLINFO_HEADER_OUT:
+        spdlog::info("CURL SEND HEADER:\n{}", std::string(data, size));
+        break;
+    case CURLINFO_DATA_OUT:
+        spdlog::info("CURL SEND DATA:\n{}", std::string(data, size));
+        break;
+    case CURLINFO_HEADER_IN:
+        spdlog::info("CURL RECV HEADER:\n{}", std::string(data, size));
+        break;
+    case CURLINFO_DATA_IN:
+        spdlog::info("CURL RECV DATA:\n{}", std::string(data, size));
+        break;
+    default:
+        break;
+    }
+    return 0;
+}
+
 HttpResponse X402Client::httpGet(const std::string &_baseURL, const std::string &_location,
-                                 const std::vector<std::string> &_extraHeaders) {
+                                 const std::vector<std::string> &_extraHeaders, bool printHttpTrace) {
     CURL *curl = curl_easy_init();
     if (!curl) throw std::runtime_error("curl_easy_init failed");
 
@@ -74,6 +95,14 @@ HttpResponse X402Client::httpGet(const std::string &_baseURL, const std::string 
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &resp.body);
     curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, writeHeader);
     curl_easy_setopt(curl, CURLOPT_HEADERDATA, &resp.headers);
+
+    if (printHttpTrace)
+    {
+        // Then in your httpGet function, add before curl_easy_perform:
+        curl_easy_setopt(curl, CURLOPT_DEBUGFUNCTION, debugCallback);
+        curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+    }
+
     if (hdrs)
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, hdrs);
 

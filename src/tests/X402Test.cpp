@@ -99,7 +99,7 @@ BOOST_FIXTURE_TEST_SUITE(X402Suite, X402ServerFixture)
 
     BOOST_AUTO_TEST_CASE(Returns402WhenNoPaymentHeader) {
         auto [headersMap, statusLine, resp] = client->sendRequestAndParseResult(
-            "paid", {});
+            "paid", {}, true);
 
 
         BOOST_TEST(resp.status == 402);
@@ -114,7 +114,7 @@ BOOST_FIXTURE_TEST_SUITE(X402Suite, X402ServerFixture)
 
     BOOST_AUTO_TEST_CASE(Returns200WhenPaymentHeaderPresent) {
         auto [headersMap, statusLine, resp] = client->sendRequestAndParseResult("paid",
-            {"X-PAYMENT: demo-ok"});
+            {"X-PAYMENT: demo-ok"}, true);
         BOOST_TEST(resp.status == 200);
         auto xPaymentTesponse = headersMap.at("X-PAYMENT-RESPONSE");
         BOOST_TEST(xPaymentTesponse.find("txHash") != std::string::npos);
