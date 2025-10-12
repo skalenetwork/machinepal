@@ -38,20 +38,17 @@ bool X402Processor::hasValidPaymentHeader(const std::unique_ptr<proxygen::HTTPMe
 
 
 
-void X402Processor::reply200Success(IResponseSender& downstream, const std::string& settlementInfo, std::string proxyBody)
+void X402Processor::reply200Success(IResponseSender& responseSender, const std::string& settlementInfo, std::string proxyBody)
 {
-    CHECK_STATE(!responseSent_);
     std::vector<std::pair<std::string, std::string>> headers = {
         {"Content-Type", "text/plain"},
         {"X-PAYMENT-RESPONSE", settlementInfo}
     };
-    downstream.sendResponse({200, "OK"}, headers, proxyBody);
-    responseSent_ = true;
+    sendResponse(responseSender, {200, "OK"}, headers, proxyBody);
 }
 
 
-void X402Processor::reply402PaymentRequired(IResponseSender& downstream) {
-    CHECK_STATE(!responseSent_);
+void X402Processor::reply402PaymentRequired(IResponseSender& responseSender) {
     folly::dynamic req = folly::dynamic::object;
     auto paymentRequirements = EXACT_UCDC_PAYMENT_REQ_CB_SEPOLIA;
     req = folly::parseJson(paymentRequirements);
@@ -59,30 +56,34 @@ void X402Processor::reply402PaymentRequired(IResponseSender& downstream) {
     std::vector<std::pair<std::string, std::string>> headers = {
         {"Content-Type", "application/json"}
     };
-    downstream.sendResponse({402, "Payment Required"}, headers, json);
+    sendResponse(responseSender, {402, "Payment Required"}, headers, json);
+}
+
+
+void X402Processor::sendResponse(IResponseSender& responseSender, const std::pair<uint16_t, std::string>& statusAndMessage,
+                          const std::vector<std::pair<std::string, std::string>>& headers,
+                          const std::string& body = "")
+{
+    CHECK_STATE(!responseSent_);
+    responseSender.sendResponse(statusAndMessage, headers, body);
     responseSent_ = true;
 }
 
 
 
-
-void X402Processor::reply400BadRequest(IResponseSender& downstream, const std::string& message) {
-    CHECK_STATE(!responseSent_);
+void X402Processor::reply400BadRequest(IResponseSender& responseSender, const std::string& message) {
     std::vector<std::pair<std::string, std::string>> headers = {
         {"Content-Type", "text/plain"}
     };
-    downstream.sendResponse({400, "Bad Request"}, headers, message);
-    responseSent_ = true;
+    sendResponse(responseSender, {400, "Bad Request"}, headers, message);
 }
 
 
-void X402Processor::reply502BadGateway(IResponseSender& downstream, const std::string& message) {
-    CHECK_STATE(!responseSent_);
+void X402Processor::reply502BadGateway(IResponseSender& responseSender, const std::string& message) {
     std::vector<std::pair<std::string, std::string>> headers = {
         {"Content-Type", "text/plain"}
     };
-    downstream.sendResponse({502, "Bad Gateway"}, headers, message);
-    responseSent_ = true;
+    sendResponse(responseSender, {502, "Bad Gateway"}, headers, message);
 }
 
 bool X402Processor::isPathValid(const std::string& path, std::string& errorMessage)
@@ -130,13 +131,13 @@ bool X402Processor::isPathValid(const std::string& path, std::string& errorMessa
     }
 }
 
-void X402Processor::onRequestStart(const std::unique_ptr<proxygen::HTTPMessage>& reqHeaders, IResponseSender& downstream)
+void X402Processor::onRequestStart(const std::unique_ptr<proxygen::HTTPMessage>& reqHeaders, IResponseSender& responseSender)
 {
     CHECK_STATE(reqHeaders);
     auto path = reqHeaders->getQueryString();
     std::string errorMessage;
     if (!isPathValid(path, errorMessage) ) {
-        reply400BadRequest(downstream, errorMessage);
+        reply400BadRequest(responseSender, errorMessage);
     }
 }
 
