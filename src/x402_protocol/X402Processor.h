@@ -14,8 +14,8 @@ class X402Processor {
 public:
     explicit X402Processor(MachinePayApp& app);
 
-    void onRequestStart(const std::unique_ptr<proxygen::HTTPMessage>& headers, IResponseSender& downstream);
-    void onRequestCompletion(IResponseSender& responseSender, const std::unique_ptr<proxygen::HTTPMessage>& reqHeaders);
+    void onRequestStart(const std::unique_ptr<proxygen::HTTPMessage>& headers, IResponseSender& downstream) noexcept;
+    void onRequestCompletion(IResponseSender& responseSender, const std::unique_ptr<proxygen::HTTPMessage>& reqHeaders) noexcept;
 private:
 
     static bool hasValidPaymentHeader(const std::unique_ptr<proxygen::HTTPMessage>&  _req, std::string& paymentInfo);
