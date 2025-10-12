@@ -14,7 +14,7 @@ Instantly add **crypto payments** to any website or API using the [x402 protocol
 - ⚡ **Plug & play** — add x402 payments to existing websites & APIs in minutes
 - 🔒 **Fully x402 compliant** — built on the Coinbase standard
 - 🛠️ **Easy to deploy & configure** — no complex setup
-- 🚀 **High performance C++** — scales to thousands of concurrent connections
+- 🚀 **High performance asyncronous HTTP server +** — scales to 10,000+ concurrent connections
 - 🌉 **Multi-chain support** — works with both **Base** and **SKALE**
 - 💸 **Flexible payment models** — subscriptions, pay-per-request, metered access
 - 📊 **Deep logging & monitoring** — full visibility of payment traffic
