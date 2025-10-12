@@ -24,14 +24,18 @@ X402Processor::X402Processor(MachinePayApp& app)
 }
 
 bool X402Processor::hasValidPaymentHeader(const std::unique_ptr<proxygen::HTTPMessage>& req, std::string& paymentInfo) {
-    // TODO: Parse and verify real X-PAYMENT header.
-    // This stub accepts "demo-ok".
-    const auto& headerTable = req->getHeaders();
-    std::string payment = headerTable.getSingleOrEmpty("X-PAYMENT");
-    if (payment.empty()) return false;
-    if (payment == "demo-ok") {
-        paymentInfo = R"({\"txHash\":\"0xabc123...\",\"amount\":\"0.25\",\"asset\":\"SDC\",\"network\":\"base-1net\"})";
-        return true;
+    try
+    {
+        const auto& headerTable = req->getHeaders();
+        std::string payment = headerTable.getSingleOrEmpty("X-PAYMENT");
+        if (payment.empty()) return false;
+        if (payment == "demo-ok") {
+            paymentInfo = R"({\"txHash\":\"0xabc123...\",\"amount\":\"0.25\",\"asset\":\"SDC\",\"network\":\"base-1net\"})";
+            return true;
+        }
+    } catch (std::exception& e)
+    {
+        spdlog::error("Error parsing payment header: {}", e.what());
     }
     return false;
 }
@@ -97,38 +101,45 @@ bool X402Processor::isPathValid(const std::string& path, std::string& errorMessa
             decodedPath = std::string(decoded.begin(), decoded.end());
         } catch (const std::exception& e) {
             errorMessage = "Path contains invalid characters";
-            return false;
+            goto error;;
         }
         if (decodedPath.empty()) {
-            errorMessage = "Empty path";
-            return false;
+            errorMessage = "Empty URL path";
+            goto error;;;
         }
         if (decodedPath.front() != '/') {
-            errorMessage = "Non-rooted path";
-            return false;
+            errorMessage = "URL path does not start with '/'";
+            goto error;;;
         }
         // Reject traversal attempts (including encoded)
         if (decodedPath.find("..") != std::string::npos) {
-            errorMessage = "Path traversal not allowed";
-            return false;
+            errorMessage = "URL path traversal not allowed";
+            goto error;;
         }
 
 
         std::wstring wideText = boost::locale::conv::to_utf<wchar_t>(decodedPath,  "UTF-8");
 
         for (wchar_t ch : wideText) {
-            if (iswalnum(ch) || ch == L'/') {
-                continue;
+            auto isValid = iswalnum(ch) || ch == L'/';
+            if (!isValid)
+            {
+                errorMessage = "URL path contains invalid character:" + path;
+                goto error;
             }
-            return false;
+            goto error;
         }
 
         return true;
     } catch (std::exception& e)
     {
-        spdlog::error("Error parsing path: {}", e.what());
-        return false;
+        errorMessage = e.what();
+        goto error;
     }
+
+    error:
+    spdlog::error("Error parsing user submitted URL path in X402Processor: {}", errorMessage);
+    return false;
 }
 
 void X402Processor::onRequestStart(const std::unique_ptr<proxygen::HTTPMessage>& reqHeaders, IResponseSender& responseSender)
