@@ -14,8 +14,17 @@ void MachinePayApp::runUntilExit()
     spdlog::info("Creating and starting server");
     serverFactory_ = std::make_shared<ServerFactory>(*this);
     auto serverConfig = configManager_->latestConfig()->server();
+
+
+
+
     proxygenServer_ = serverFactory_->createServerInstance(*serverConfig);
-    proxygenServer_->start();
+
+    auto ioExecutor = std::make_shared<folly::IOThreadPoolExecutor>(
+    256,
+    std::make_shared<folly::NamedThreadFactory>("x402Processor"));
+
+    proxygenServer_->start(nullptr, nullptr, nullptr,  ioExecutor);
     spdlog::info("Server exited");
 }
 
