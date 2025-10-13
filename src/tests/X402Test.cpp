@@ -81,6 +81,7 @@ struct X402ServerFixture {
     }
 
     ~X402ServerFixture() {
+        usleep(1000 * 1000); // wait a bit to let any in-flight requests finish
         if (app_) app_->stopServer();
         if (srvThread.joinable()) srvThread.join();
     }
