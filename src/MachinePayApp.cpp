@@ -7,6 +7,25 @@ MachinePayApp::MachinePayApp(std::map<std::string, std::string> configValuesFrom
     Init::initLogLevelFromConfig(configManager());
 }
 
+void MachinePayApp::onSuccess() {
+    exitCode_ = 0;
+    spdlog::info("Machine pay server started successfully.");
+};
+
+void MachinePayApp::onError(std::exception_ptr eptr) {
+    isExited_ = true;
+    exitCode_ = 1;
+    try {
+        if (eptr) std::rethrow_exception(eptr);
+    } catch (const std::exception& ex) {
+        spdlog::error("Proxygen server failed: {}", ex.what());
+        exitErrorMessage_ = ex.what();
+    } catch (...) {
+        spdlog::error("Proxygen server failed: unknown error");
+    }
+};
+
+
 uint32_t MachinePayApp::runUntilExit()
 {
     try {
@@ -44,7 +63,11 @@ uint32_t MachinePayApp::runUntilExit()
             }
         });
         serverThread.join();
-        spdlog::info("Machinepay server exited normally");
+        if (exitCode_ != 0) {
+            spdlog::error("Error running machinepay serverMachinepay server. Server exited.");
+            return exitCode_;
+        }
+        spdlog::info("Machinepay server exited normally.");
         return 0;
     } catch (const std::exception& ex)
     {
