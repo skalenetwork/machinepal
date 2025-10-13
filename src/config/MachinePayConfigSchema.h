@@ -8,7 +8,7 @@ constexpr const char* MachinePayConfigSchemaJson = R"({
       "type": "object",
       "properties": {
         "bind_ip": { "type": "string" },
-        "host": { "type": "string" },
+        "hostname": { "type": "string" },
         "http": {
           "type": "object",
           "properties": {
@@ -30,7 +30,7 @@ constexpr const char* MachinePayConfigSchemaJson = R"({
           "required": ["port", "cert_file", "key_file"]
         }
       },
-      "required": ["host", "http", "https"]
+      "required": ["hostname", "http", "https"]
     },
     "facilitator": {
       "type": "object",

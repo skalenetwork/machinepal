@@ -13,6 +13,7 @@ class ServerConfig {
     std::string bindIp_;
     ptr<HTTPConfig> http_;
     ptr<HTTPSConfig> https_;
+    std::string hostName_;
 public:
     ServerConfig(const std::string& bindIp,
                  ptr<HTTPConfig> http,
