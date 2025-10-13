@@ -1,5 +1,6 @@
 # Machinepay server configuration. May be overridden by environment variables.
 server:
+  hostname: localhost
   http:
     enable: false
     port: 8080

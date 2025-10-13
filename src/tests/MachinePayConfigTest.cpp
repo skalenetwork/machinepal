@@ -7,12 +7,24 @@
 #include "config/ConfigManager.h"
 #include "nlohmann/json.hpp"
 
+ptr<MachinePayApp> startApp(std::map<std::string, std::string>& configMap) {
+    try {
+        return MachinePayApp::makeInstance(configMap);
+    } catch (const std::exception &ex) {
+        printNestedException(ex);
+        BOOST_FAIL("Exception:");
+    }
+    return nullptr;
+}
+
 BOOST_AUTO_TEST_CASE(deserialize_basic_proxy_config) {
     // Path to the test config file
     std::map<std::string, std::string> configMap = {
         {"CONFIG", "src/tests/configs/basic/machinepay.yml"}
     };
-    auto app = MachinePayApp::makeInstance(configMap);
+
+    auto app = startApp(configMap);
+
 
 
     auto config = app->configManager()->latestConfig();
@@ -35,4 +47,6 @@ BOOST_AUTO_TEST_CASE(deserialize_basic_proxy_config) {
     BOOST_TEST(config->facilitator()->baseUrl() == "https://api.coinbase.com/v2");
     BOOST_TEST(config->facilitator()->apiKeyFile().has_value());
     BOOST_TEST(config->facilitator()->apiKeyFile().value().string().ends_with("secrets/coinbase_api_key.txt"));
+
+
 }
