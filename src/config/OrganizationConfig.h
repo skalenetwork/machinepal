@@ -16,3 +16,4 @@ public:
     static ptr<OrganizationConfig> createFromJson(const nlohmann::json& j, ptr<FileManager> fileManager);
 };
 
+`
