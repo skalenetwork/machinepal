@@ -47,4 +47,7 @@ private:
     std::unique_ptr<proxygen::HTTPMessage> reqHeaders_;
     std::string bodyBuffer_;
     ptr<X402Processor> processor_;
+    ptr<X402Handler> self_{nullptr};
+
+    friend class X402HandlerFactory;
 };
