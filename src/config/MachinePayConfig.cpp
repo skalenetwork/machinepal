@@ -156,22 +156,22 @@ MachinePayConfig::MachinePayConfig(const ptr<ServerConfig>& server,
                                    const ptr<FacilitatorConfig>& facilitator,
                                    const ptr<LogConfig>& log,
                                    const ptr<std::vector<ptr<OrganizationConfig>> >& organizations)
-    : server_(server), facilitator_(facilitator), log_(log), organizations_(organizations) {
-    CHECK_STATE(server_);
+    : server_(server),facilitator_(facilitator), log_(log) {
+    CHECK_STATE(server);
     CHECK_STATE(facilitator_);
     CHECK_STATE(log_);
-    CHECK_STATE(organizations_);
-    if (organizations_) {
-        for (const auto& org : *organizations_) {
-            CHECK_STATE(org);
-        }
+    organizations_ = std::make_shared<std::map<string,ptr<OrganizationConfig>>>();
+    for (const auto& org : *organizations) {
+        CHECK_STATE(org);
+        auto orgName = org->organizationName();
+        CHECK_STATE2(!organizations_->contains(orgName),
+            "Duplicate organization name in config: " + orgName);
+        organizations_->emplace(orgName,  org);
     }
+
+    CHECK_STATE(organizations_->contains("")); // Default organization must be present=
 }
 
-const ptr<ServerConfig>& MachinePayConfig::server() const {
-    CHECK_STATE(server_);
-    return server_;
-}
 const ptr<FacilitatorConfig>& MachinePayConfig::facilitator() const {
     CHECK_STATE(facilitator_);
     return facilitator_;
@@ -179,4 +179,8 @@ const ptr<FacilitatorConfig>& MachinePayConfig::facilitator() const {
 const ptr<LogConfig>& MachinePayConfig::log() const {
     CHECK_STATE(log_);
     return log_;
+}
+const ptr<ServerConfig>& MachinePayConfig::server() const {
+    CHECK_STATE(server_);
+    return server_;
 }
