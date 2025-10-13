@@ -30,3 +30,8 @@ facilitator:
   base_url: https://api.coinbase.com/v2
     # Facilitator API key file. Override: FACILITATOR_API_KEY_FILE
   api_key_file: secrets/coinbase_api_key.txt
+
+resources:
+  - name: hello_world
+    type: local_file
+    location: resources/hello_world.txt
