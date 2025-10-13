@@ -51,4 +51,3 @@ private:
 
     friend class X402HandlerFactory;
 };
-
