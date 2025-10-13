@@ -31,18 +31,18 @@ void MachinePayApp::onError(std::exception_ptr eptr) {
     }
 };
 
-static std::atomic<int> sigTermReceived{0};
+static std::atomic<int> sigReceived{0};
 
 
 
-static void terminateSignalHandler(int sig) {
-        sigTermReceived = sig;
+static void machinepayTerminateSignalHandler(int sig) {
+        sigReceived = sig;
 }
 
 uint32_t MachinePayApp::runUntilExit() {
 
-    std::signal(SIGTERM, terminateSignalHandler);
-    std::signal(SIGINT, terminateSignalHandler);
+    std::signal(SIGTERM, machinepayTerminateSignalHandler);
+    std::signal(SIGINT, machinepayTerminateSignalHandler);
 
 
     try {
@@ -83,16 +83,16 @@ uint32_t MachinePayApp::runUntilExit() {
             }
         });
 
-        while (!isExited() && !sigTermReceived) {
+        while (!isExited() && !sigReceived) {
             usleep(100 * 1000);
         }
-        if (sigTermReceived) {
-            if (sigTermReceived == SIGINT)
+        if (sigReceived) {
+            if (sigReceived == SIGINT)
                 spdlog::info("SIGINT (Ctrl-C) received, stopping server.");
-            else if (sigTermReceived == SIGTERM)
+            else if (sigReceived == SIGTERM)
                 spdlog::info("SIGTERM received, stopping server.");
             else {
-                CHECK_STATE2(false, std::string("Unexpected signal {}") + to_string(sigTermReceived.load()));
+                CHECK_STATE2(false, std::string("Unexpected signal {}") + to_string(sigReceived.load()));
             }
             stopServer();        }
         // Wait for server to exit after stopServer is called
