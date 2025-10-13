@@ -7,6 +7,7 @@
 #include "ServerConfig.h"
 #include "FacilitatorConfig.h"
 #include "LogConfig.h"
+#include "OrganizationConfig.h"
 #include "common.h"
 #include <nlohmann/json.hpp>
 #include <filesystem>
@@ -68,7 +69,14 @@ ptr<MachinePayConfig> MachinePayConfig::createFromJson(const nlohmann::json& j, 
         {
             logConfig = LogConfig::createFromJson(j.at("log"), fileManager);
         }
-        return std::make_shared<MachinePayConfig>(serverConfig, facilitatorConfig, logConfig);
+
+        string defaultOrgName = "";
+        auto defaultOrganization = std::make_shared<OrganizationConfig>(serverConfig, defaultOrgName);
+        auto serverOrganizations = std::make_shared<std::vector<ptr<OrganizationConfig>>>();
+        serverOrganizations->push_back(defaultOrganization);
+
+
+        return std::make_shared<MachinePayConfig>(serverConfig, facilitatorConfig, logConfig, serverOrganizations);
     }
     catch (const std::exception& ex)
     {
@@ -146,11 +154,18 @@ ptr<ServerConfig> ServerConfig::createFromJson(const nlohmann::json& j,  ptr<Fil
 
 MachinePayConfig::MachinePayConfig(const ptr<ServerConfig>& server,
                                    const ptr<FacilitatorConfig>& facilitator,
-                                   const ptr<LogConfig>& log)
-    : server_(server), facilitator_(facilitator), log_(log) {
+                                   const ptr<LogConfig>& log,
+                                   const ptr<std::vector<ptr<OrganizationConfig>> >& organizations)
+    : server_(server), facilitator_(facilitator), log_(log), organizations_(organizations) {
     CHECK_STATE(server_);
     CHECK_STATE(facilitator_);
     CHECK_STATE(log_);
+    CHECK_STATE(organizations_);
+    if (organizations_) {
+        for (const auto& org : *organizations_) {
+            CHECK_STATE(org);
+        }
+    }
 }
 
 const ptr<ServerConfig>& MachinePayConfig::server() const {
