@@ -10,12 +10,13 @@
 class FileManager;
 
 class ServerConfig {
+    std::string hoistName_;
     std::string bindIp_;
     ptr<HTTPConfig> http_;
     ptr<HTTPSConfig> https_;
     std::string hostName_;
 public:
-    ServerConfig(const std::string& bindIp,
+    ServerConfig(const std::string& hostName, const std::string& bindIp,
                  ptr<HTTPConfig> http,
                  ptr<HTTPSConfig> https);
     const std::string& bindIp() const;

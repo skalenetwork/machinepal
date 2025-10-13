@@ -29,10 +29,10 @@ ptr<FacilitatorConfig> FacilitatorConfig::createFomJson(const nlohmann::json& j,
     {
         CHECK_STATE(j.is_object());
         std::optional<CanonicalPath> apiKeyFile = std::nullopt;
-        if (j.contains("api_key_file") && !j.at("api_key_file").is_null())
+        auto userProvidedApiKeyFile = ConfigLoader::getStringWithDefault(j, "api_key_file", "");
+        if (!userProvidedApiKeyFile.empty())
         {
-            std::string file = j.at("api_key_file").get<std::string>();
-            auto resolved = fileManager->checkFileExistsAndReadableAndResolve(file);
+            auto resolved = fileManager->checkFileExistsAndReadableAndResolve(userProvidedApiKeyFile);
             apiKeyFile = CanonicalPath(resolved);
         }
         return std::make_shared<FacilitatorConfig>(
@@ -84,7 +84,10 @@ ptr<ServerConfig> ServerConfig::createFromJson(const nlohmann::json& j,  ptr<Fil
     {
         CHECK_STATE(fileManager);
         CHECK_STATE(j.is_object());
+
+
         ptr<HTTPConfig> httpConfig = nullptr;
+
         if (j.count("http") > 0)
         {
             CHECK_STATE(j.at("http").is_object());
@@ -129,6 +132,7 @@ ptr<ServerConfig> ServerConfig::createFromJson(const nlohmann::json& j,  ptr<Fil
         }
 
         return std::make_shared<ServerConfig>(
+            ConfigLoader::getStringWithDefault(j, "hostname", ""),
             ConfigLoader::getStringWithDefault(j, "bind_ip", "0.0.0.0"),
             httpConfig,
             httpsConfig
