@@ -69,9 +69,12 @@ struct X402ServerFixture {
                 app_->runUntilExit(); //
             });
 
-            sleep(1); // give server a bit of time to start;
+            while (!app_->isStarted()) {
+                spdlog::info("Waiting for server to start...");
+                usleep(1000 * 100); // 100ms
+            }
 
-            spdlog::info(app_->serverStarted());
+            spdlog::info(app_->isStarted());
 
 
         } catch (const std::exception &ex) {
@@ -85,7 +88,6 @@ struct X402ServerFixture {
     }
 
     ~X402ServerFixture() {
-        usleep(1000 * 1000); // wait a bit to let any in-flight requests finish
         if (app_) app_->stopServer();
         if (srvThread.joinable()) srvThread.join();
     }

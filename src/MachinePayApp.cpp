@@ -42,7 +42,7 @@ uint32_t MachinePayApp::runUntilExit() {
 
         auto onSuccess = [this]() {
             spdlog::info("Machinepay server started successfully.");
-            this->serverStarted_ = true;
+            this->isStarted_ = true;
         };
         auto onError = [this](std::exception_ptr eptr) {
             try {

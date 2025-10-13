@@ -65,8 +65,8 @@ public:
 
 
 public:
-    [[nodiscard]] bool serverStarted() const {
-        return serverStarted_.load();
+    [[nodiscard]] bool isStarted() const {
+        return isStarted_.load();
     }
 
 
@@ -101,7 +101,7 @@ private:
     ptr<ConfigManager> configManager_;
     ptr<ServerFactory> serverFactory_;
     ptr<proxygen::HTTPServer> proxygenServer_;
-    std::atomic<bool> serverStarted_{false};
+    std::atomic<bool> isStarted_{false};
     std::atomic<bool> serverStopCalled_{false};
 
 
