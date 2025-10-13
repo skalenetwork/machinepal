@@ -60,7 +60,6 @@ std::shared_ptr<HTTPServer> ServerFactory::createServerInstance(const ServerConf
 
         auto factory = std::make_unique<X402HandlerFactory>(app_);
 
-        options.threads = 64;
         options.idleTimeout = std::chrono::milliseconds(60000);
         options.handlerFactories = RequestHandlerChain()
                 .addThen(std::move(factory))
