@@ -69,6 +69,14 @@ private:
     ptr<ConfigManager> configManager_;
     ptr<ServerFactory> serverFactory_;
     ptr<proxygen::HTTPServer> proxygenServer_;
+    std::atomic<bool> serverStarted_{false};
+
+public:
+    [[nodiscard]] bool serverStarted() const {
+        return serverStarted_.load();
+    }
+
+private:
     bool isExited_ {false};
     uint32_t exitCode_{0};
     string exitErrorMessage_;

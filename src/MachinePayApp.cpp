@@ -9,27 +9,7 @@ MachinePayApp::MachinePayApp(const std::map<std::string, std::string>& configVal
     Init::initLogLevelFromConfig(configManager());
 }
 
-void MachinePayApp::onSuccess() {
-    std::lock_guard<std::mutex> lock(exitMutex);
-    exitCode_ = 0;
-    spdlog::info("Machine pay server started successfully.");
-};
 
-void MachinePayApp::onError(std::exception_ptr eptr) {
-    std::lock_guard<std::mutex> lock(exitMutex);
-    exitCode_ = 1;
-    try {
-        if (eptr) std::rethrow_exception(eptr);
-    } catch (const std::exception& ex) {
-        spdlog::error("Proxygen server failed: {}", ex.what());
-        {
-
-            exitErrorMessage_ = ex.what();
-        }
-    } catch (...) {
-        spdlog::error("Proxygen server failed: unknown error");
-    }
-};
 
 static std::atomic<int> sigReceived{0};
 
@@ -60,17 +40,21 @@ uint32_t MachinePayApp::runUntilExit() {
 
         spdlog::info("Starting server");
 
-        auto onSuccess = []() {
-            spdlog::info("Machine pay server started successfully.");
+        auto onSuccess = [this]() {
+            spdlog::info("Machinepay server started successfully.");
+            this->serverStarted_ = true;
         };
-        auto onError = [](std::exception_ptr eptr) {
+        auto onError = [this](std::exception_ptr eptr) {
             try {
                 if (eptr) std::rethrow_exception(eptr);
             } catch (const std::exception& ex) {
-                spdlog::error("Proxygen server failed to start: {}", ex.what());
+                spdlog::error("Machinepay server failed to start: {}", ex.what());
+                this->setExited(1, ex.what());
+                return;
             } catch (...) {
-                spdlog::error("Proxygen server failed to start: unknown error");
             }
+            spdlog::error("Machinepay server failed to start: unknown error");
+            this->setExited(1, "Server failed to start: unknown error");
         };
 
         std::thread serverThread([this, ioExecutor, onSuccess, onError]() {

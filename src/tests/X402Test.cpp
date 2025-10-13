@@ -61,7 +61,7 @@ struct X402ServerFixture {
             std::map<std::string, std::string> configMap = {
                 {"CONFIG", "src/tests/configs/basic/machinepay.yml"}
             };
-            app_ = make_shared<MachinePayApp>(configMap);
+            app_ = MachinePayApp::makeInstance(configMap);
             auto config = app_->configManager()->latestConfig();
             client = std::make_shared<X402Client>(config->server()->bindIp(), config->server()->http()->port());
 
@@ -69,8 +69,11 @@ struct X402ServerFixture {
                 app_->runUntilExit(); //
             });
 
-            // tiny wait to ensure acceptors are ready (bind happened already)
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            sleep(1); // give server a bit of time to start;
+
+            spdlog::info(app_->serverStarted());
+
+
         } catch (const std::exception &ex) {
             printNestedException(ex);
             BOOST_FAIL("Exception starting test server");
@@ -78,6 +81,7 @@ struct X402ServerFixture {
             spdlog::critical("Unknown error starting test server.");
             BOOST_FAIL("Exception starting test server");
         }
+        spdlog::info("Starting test server done.");
     }
 
     ~X402ServerFixture() {
