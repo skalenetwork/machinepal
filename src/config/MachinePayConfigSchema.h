@@ -58,7 +58,19 @@ constexpr const char* MachinePayConfigSchemaJson = R"({
         }
       },
       "description": "Optional logging configuration. Default log level is 'info' to stderr."
+    },
+    "resources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "type": { "type": "string" },
+          "location": { "type": "string" }
+        },
+        "required": ["name", "type", "location"]
+      }
     }
   },
-  "required": ["server", "facilitator"]
+  "required": ["server", "facilitator", "resources"]
 })";
