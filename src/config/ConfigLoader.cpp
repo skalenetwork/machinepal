@@ -210,10 +210,12 @@ void ConfigLoader::applyIntEnv(json &j, const json::json_pointer &path, const ch
 void ConfigLoader::applyEnvOverrides(json &j) {
     try {
         // ---------- server ----------
-        applyBoolEnv(j, "/server/enable_http"_json_pointer, "SERVER_ENABLE_HTTP");
-        applyBoolEnv(j, "/server/enable_https"_json_pointer, "SERVER_ENABLE_HTTPS");
-        applyIntEnv(j, "/server/http_listen_port"_json_pointer, "SERVER_HTTP_PORT");
-        applyIntEnv(j, "/server/https_listen_port"_json_pointer, "SERVER_HTTPS_PORT");
+        applyBoolEnv(j, "/server/enable_http"_json_pointer, "ENABLE_HTTP");
+        applyBoolEnv(j, "/server/enable_https"_json_pointer, "ENABLE_HTTPS");
+        applyIntEnv(j, "/server/http_listen_port"_json_pointer, "HTTP_PORT");
+        applyIntEnv(j, "/server/https_listen_port"_json_pointer, "HTTPS_PORT");
+        applyIntEnv(j, "/server/bind_ip"_json_pointer, "BIND_IP");
+        applyIntEnv(j, "/server/hostname"_json_pointer, "HOSTNAME");
 
         // ---------- server.tls ----------
         applyStringEnv(j, "/server/tls/cert_file"_json_pointer, "SERVER_TLS_CERT_FILE");

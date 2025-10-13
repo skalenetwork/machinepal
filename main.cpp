@@ -36,6 +36,8 @@ map<string, string>  parseConfigValueOverloadsFromCommandLineAndEnvironment(int 
         std::string configFilePath;
         std::string logLevel;
         std::string logType;
+        std::string bindIp;
+        std::string hostname;
         CLI::App app{"machinepay"};
         app.add_option("-c,--config", configFilePath,
             "Path to the config file. Default is ./machinepay.yml.")
@@ -48,6 +50,12 @@ map<string, string>  parseConfigValueOverloadsFromCommandLineAndEnvironment(int 
             "Log type: plain, json")
             ->type_name("LOG_TYPE")
             ->check(CLI::IsMember({"plain", "json"}));
+        app.add_option("--bind-ip", bindIp,
+            "Bind IP address for the server")
+            ->type_name("IP");
+        app.add_option("--hostname", hostname,
+            "Hostname for the server")
+            ->type_name("HOSTNAME");
         try {
             app.parse(argc, argv);
         } catch (const CLI::ParseError &e) {
@@ -58,6 +66,8 @@ map<string, string>  parseConfigValueOverloadsFromCommandLineAndEnvironment(int 
         setIfNotEmpty(envOverloads, "CONFIG", configFilePath);
         setIfNotEmpty(envOverloads, "LOG_LEVEL", logLevel);
         setIfNotEmpty(envOverloads, "LOG_TYPE", logType);
+        setIfNotEmpty(envOverloads, "BIND_IP", bindIp);
+        setIfNotEmpty(envOverloads, "HOSTNAME", hostname);
 
         if (envOverloads.size() > 0) {
             spdlog::info("Values set in command line and environment override "

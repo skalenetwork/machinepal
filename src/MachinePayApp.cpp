@@ -26,11 +26,10 @@ uint32_t MachinePayApp::runUntilExit() {
 
 
     try {
-        spdlog::info("Creating and starting server");
+        spdlog::info("Creating and starting machinepay server");
         serverFactory_ = std::make_shared<ServerFactory>(*this);
         auto serverConfig = configManager_->latestConfig()->server();
 
-        spdlog::info("Creating server insatance");
         proxygenServer_ = serverFactory_->createServerInstance(*serverConfig);
 
         spdlog::info("Creating thread pool");
@@ -38,7 +37,7 @@ uint32_t MachinePayApp::runUntilExit() {
         256,
         std::make_shared<folly::NamedThreadFactory>("x402Processor"));
 
-        spdlog::info("Starting server");
+        spdlog::info("Starting machinepay server");
 
         auto onSuccess = [this]() {
             spdlog::info("Machinepay server started successfully.");
@@ -54,7 +53,7 @@ uint32_t MachinePayApp::runUntilExit() {
             } catch (...) {
             }
             spdlog::error("Machinepay server failed to start: unknown error");
-            this->setExited(1, "Server failed to start: unknown error");
+            this->setExited(1, "Machinepay server failed to start: unknown error");
         };
 
         std::thread serverThread([this, ioExecutor, onSuccess, onError]() {
@@ -63,7 +62,7 @@ uint32_t MachinePayApp::runUntilExit() {
                 setExited();
             } catch (...) {
                 spdlog::error("Proxygen server failed to start: unknown error");
-                setExited(1, "Unknown error starting server");
+                setExited(1, "Unknown error starting machinepay server");
             }
         });
 
