@@ -12,10 +12,10 @@ BOOST_AUTO_TEST_CASE(deserialize_basic_proxy_config) {
     std::map<std::string, std::string> configMap = {
         {"CONFIG", "src/tests/configs/basic/machinepay.yml"}
     };
-    MachinePayApp app(configMap);
+    auto app = MachinePayApp::makeInstance(configMap);
 
 
-    auto config = app.configManager()->latestConfig();
+    auto config = app->configManager()->latestConfig();
 
     BOOST_TEST(config->server()->http());// Check frontend
     BOOST_TEST(config->server()->http()->isEnabled() == true);

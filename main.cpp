@@ -92,8 +92,8 @@ int main(int argc, char *argv[]) {
     try {
         Init::initAllLibs(1, argv);
         auto configValueOverloads = parseConfigValueOverloadsFromCommandLineAndEnvironment(argc, argv);
-        MachinePayApp app(configValueOverloads);
-        app.runUntilExit();
+        auto machinePayApp = MachinePayApp::makeInstance(configValueOverloads);
+        machinePayApp->runUntilExit();
         return 0;
     } catch (const std::exception &ex) {
         spdlog::critical("Fatal error in main. Exiting. ");

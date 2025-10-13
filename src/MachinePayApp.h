@@ -25,7 +25,28 @@ public:
         return std::make_shared<X402Processor>(*this, _responseSender);;
     }
 
-    explicit MachinePayApp(std::map<std::string, std::string> configValuesFromCliAndEnv);
+
+    static std::weak_ptr<MachinePayApp> sLatestInstance;
+
+    static ptr<MachinePayApp> makeInstance(std::map<std::string, std::string>& configValuesFromCliAndEnv) {
+        auto shared = ptr<MachinePayApp>(new MachinePayApp(configValuesFromCliAndEnv));
+        sLatestInstance = shared;
+        CHECK_STATE(shared);
+        return shared;
+    }
+
+    static void processCRTLC() noexcept {
+        try {
+            auto shared = sLatestInstance.lock();
+            if (shared) {
+                shared->stopServer();
+            }
+        } catch (const std::exception& ex) {
+            spdlog::error("Error stopping server by terminate signal: {}", ex.what());
+        } catch (...) {
+            spdlog::error("Unknown error stopping server by terminate signal.");
+        }
+    }
 
     void onSuccess();
 
@@ -39,7 +60,10 @@ public:
     MachinePayApp& operator=(const MachinePayApp&) = delete;
     MachinePayApp& operator=(MachinePayApp&&) = default;
 
+
 private:
+
+    explicit MachinePayApp(const std::map<std::string, std::string>& configValuesFromCliAndEnv);
     ptr<ConfigManager> configManager_;
     ptr<ServerFactory> serverFactory_;
     ptr<proxygen::HTTPServer> proxygenServer_;
@@ -47,16 +71,21 @@ private:
     uint32_t exitCode_{1};
     string exitErrorMessage_;
 
+    std::mutex exitMutex;
+
 public:
-    [[nodiscard]] bool isExited() const {
+    [[nodiscard]] bool isExited()  {
+        std::lock_guard<std::mutex> lock(exitMutex);
         return isExited_;
     }
 
-    [[nodiscard]] uint32_t exitCode() const {
+    [[nodiscard]] uint32_t exitCode()  {
+        std::lock_guard<std::mutex> lock(exitMutex);
         return exitCode_;
     }
 
-    [[nodiscard]] string exitErrorMessage() const {
+    [[nodiscard]] string exitErrorMessage()  {
+        std::lock_guard<std::mutex> lock(exitMutex);
         return exitErrorMessage_;
     }
 };
