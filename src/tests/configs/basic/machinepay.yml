@@ -11,34 +11,24 @@ server:
     key_file: secrets/insecure_test_localhost.key
 
 
-  # Payment processor type. Override: PAYMENT_PROCESSOR_TYPE
-  # Payment processor types:
-  # none - no payment processing
-  # stripe - Stripe payment processor. You need to set api_key_file.
-  processor: none
-  # Stripe API key file. Override: STRIPE_API_KEY_FILE
-  api_key_file: secrets/stripe_api_key.txt
-
 # Optional logging configuration. Default log level is "info" to stderr.
 
-network_definitions:
-  - name: base-sepolia
-
-    facilitator:
-      # Facilitator type. Override: FACILITATOR_TYPE
-      # Facilitator types:
-      # cdp - Coinbase Developer Platform. You need to set base_url and api_key_file.
-      # x402 - generic x402-compatible API. You need to set base_url
-      type: cdp
-      # Facilitator base URL. Override: FACILITATOR_BASE_URL
-      base_url: https://api.coinbase.com/v2
-      # Facilitator API key file. Override: FACILITATOR_API_KEY_FILE
-      api_key_file: secrets/coinbase_api_key.txt
+network:
+  name: base-sepolia
+  facilitator:
+    # Facilitator type. Override: FACILITATOR_TYPE
+    # Facilitator types:
+    # cdp - Coinbase Developer Platform. You need to set base_url and api_key_file.
+    # x402 - generic x402-compatible API. You need to set base_url
+    type: cdp
+    # Facilitator base URL. Override: FACILITATOR_BASE_URL
+    base_url: https://api.coinbase.com/v2
+    # Facilitator API key file. Override: FACILITATOR_API_KEY_FILE
+    api_key_file: secrets/coinbase_api_key.txt
 
     payment_tokens:
-      - name: USDC
-        address: 0x036CbD53842c5426634e7929541eC2318f3dCF7e
-
+     - name: USDC
+       address: 0x036CbD53842c5426634e7929541eC2318f3dCF7e
 
 
 log:
@@ -49,8 +39,15 @@ log:
   type: plain
 
 
-
 resources:
   - name: hello_world
     type: local_file
     location: resources/hello_world.txt
+    price: 1.545
+    token: USDC
+
+  - name: hello_world_api
+    type: api-jsonrpc
+    location: https://google.com/resources/hello_world.txt
+    price: 1.545
+    token: USDC
