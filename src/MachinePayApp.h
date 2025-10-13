@@ -40,6 +40,8 @@ public:
             auto shared = sLatestInstance.lock();
             if (shared) {
                 shared->stopServer();
+            } else {
+                spdlog::warn("No MachinePayApp instance to stop server on terminate signal.");
             }
         } catch (const std::exception& ex) {
             spdlog::error("Error stopping server by terminate signal: {}", ex.what());
@@ -68,7 +70,7 @@ private:
     ptr<ServerFactory> serverFactory_;
     ptr<proxygen::HTTPServer> proxygenServer_;
     bool isExited_ {false};
-    uint32_t exitCode_{1};
+    uint32_t exitCode_{0};
     string exitErrorMessage_;
 
     std::mutex exitMutex;
@@ -77,6 +79,13 @@ public:
     [[nodiscard]] bool isExited()  {
         std::lock_guard<std::mutex> lock(exitMutex);
         return isExited_;
+    }
+
+    void setExited(uint32_t exitCode = 0, const string& exitErrorMessage = "")  {
+        std::lock_guard<std::mutex> lock(exitMutex);
+        isExited_ = true;
+        exitCode_ = exitCode;
+        exitErrorMessage_ = exitErrorMessage;
     }
 
     [[nodiscard]] uint32_t exitCode()  {

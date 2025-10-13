@@ -31,16 +31,20 @@ void MachinePayApp::onError(std::exception_ptr eptr) {
     }
 };
 
-static std::shared_ptr<MachinePayApp> gAppInstance;
+static std::atomic<int> sigTermReceived{0};
 
-static void signalHandler(int) {
-    spdlog::info("SIGINT(CTRL-C) received, stopping server...");
-    MachinePayApp::processCRTLC();
+
+
+static void terminateSignalHandler(int sig) {
+        sigTermReceived = sig;
 }
 
-uint32_t MachinePayApp::runUntilExit()
-{
-    std::signal(SIGINT, signalHandler);
+uint32_t MachinePayApp::runUntilExit() {
+
+    std::signal(SIGTERM, terminateSignalHandler);
+    std::signal(SIGINT, terminateSignalHandler);
+
+
     try {
         spdlog::info("Creating and starting server");
         serverFactory_ = std::make_shared<ServerFactory>(*this);
@@ -72,10 +76,31 @@ uint32_t MachinePayApp::runUntilExit()
         std::thread serverThread([this, ioExecutor, onSuccess, onError]() {
             try {
                 proxygenServer_->start(onSuccess, onError, nullptr, ioExecutor);
+                setExited();
             } catch (...) {
-                onError(std::current_exception());
+                spdlog::error("Proxygen server failed to start: unknown error");
+                setExited(1, "Unknown error starting server");
             }
         });
+
+        while (!isExited() && !sigTermReceived) {
+            usleep(100 * 1000);
+        }
+        if (sigTermReceived) {
+            if (sigTermReceived == SIGINT)
+                spdlog::info("SIGINT (Ctrl-C) received, stopping server.");
+            else if (sigTermReceived == SIGTERM)
+                spdlog::info("SIGTERM received, stopping server.");
+            else {
+                CHECK_STATE2(false, std::string("Unexpected signal {}") + to_string(sigTermReceived.load()));
+            }
+            stopServer();        }
+        // Wait for server to exit after stopServer is called
+        while (!isExited()) {
+            usleep(100 * 1000);
+        }
+
+
         serverThread.join();
         if (exitCode_ != 0) {
             spdlog::error("Error running machinepay server: {}. Server exited.", exitErrorMessage_);
@@ -93,6 +118,10 @@ uint32_t MachinePayApp::runUntilExit()
 
 void MachinePayApp::stopServer()
 {
+    static std::atomic<bool> alreadyStopped{false};
+    if (alreadyStopped.exchange(true)) {
+        return;
+    }
     proxygenServer_->stop();
 }
 

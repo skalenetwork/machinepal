@@ -62,7 +62,6 @@ std::shared_ptr<HTTPServer> ServerFactory::createServerInstance(const ServerConf
 
         options.threads = 64;
         options.idleTimeout = std::chrono::milliseconds(60000);
-        options.shutdownOn = {SIGINT, SIGTERM};
         options.handlerFactories = RequestHandlerChain()
                 .addThen(std::move(factory))
                 .build();
