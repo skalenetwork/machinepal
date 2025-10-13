@@ -63,27 +63,13 @@ public:
     MachinePayApp& operator=(MachinePayApp&&) = default;
 
 
-private:
-
-    explicit MachinePayApp(const std::map<std::string, std::string>& configValuesFromCliAndEnv);
-    ptr<ConfigManager> configManager_;
-    ptr<ServerFactory> serverFactory_;
-    ptr<proxygen::HTTPServer> proxygenServer_;
-    std::atomic<bool> serverStarted_{false};
 
 public:
     [[nodiscard]] bool serverStarted() const {
         return serverStarted_.load();
     }
 
-private:
-    bool isExited_ {false};
-    uint32_t exitCode_{0};
-    string exitErrorMessage_;
 
-    std::mutex exitMutex;
-
-public:
     [[nodiscard]] bool isExited()  {
         std::lock_guard<std::mutex> lock(exitMutex);
         return isExited_;
@@ -105,4 +91,26 @@ public:
         std::lock_guard<std::mutex> lock(exitMutex);
         return exitErrorMessage_;
     }
+
+
+
+private:
+
+
+    explicit MachinePayApp(const std::map<std::string, std::string>& configValuesFromCliAndEnv);
+    ptr<ConfigManager> configManager_;
+    ptr<ServerFactory> serverFactory_;
+    ptr<proxygen::HTTPServer> proxygenServer_;
+    std::atomic<bool> serverStarted_{false};
+    std::atomic<bool> serverStopCalled_{false};
+
+
+    bool isExited_ {false};
+    uint32_t exitCode_{0};
+    string exitErrorMessage_;
+
+    std::mutex exitMutex;
+
+
+
 };

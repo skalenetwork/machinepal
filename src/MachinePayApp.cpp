@@ -102,7 +102,11 @@ uint32_t MachinePayApp::runUntilExit() {
 
 void MachinePayApp::stopServer()
 {
+    if (serverStopCalled_.exchange(true))
+        return;
+
     proxygenServer_->stop();
+
 }
 
 std::weak_ptr<MachinePayApp> MachinePayApp::sLatestInstance;
