@@ -102,10 +102,6 @@ uint32_t MachinePayApp::runUntilExit() {
 
 void MachinePayApp::stopServer()
 {
-    static std::atomic<bool> alreadyStopped{false};
-    if (alreadyStopped.exchange(true)) {
-        return;
-    }
     proxygenServer_->stop();
 }
 
