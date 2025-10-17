@@ -17,6 +17,8 @@
 #include <optional>
 #include <unordered_set>
 
+#include "filesystem/FileManager.h"
+
 
 using nlohmann::json;
 using nlohmann::json_schema::json_validator;;

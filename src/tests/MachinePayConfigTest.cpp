@@ -5,6 +5,9 @@
 
 #include "MachinePayApp.h"
 #include "config/ConfigManager.h"
+#include "config/FacilitatorConfig.h"
+#include "config/NetworkConfig.h"
+#include "config/ServerConfig.h"
 #include "nlohmann/json.hpp"
 
 ptr<MachinePayApp> startApp(std::map<std::string, std::string>& configMap) {

@@ -1,12 +1,9 @@
 #pragma once
-#include <string>
-#include <optional>
-#include <filesystem>
-#include <memory>
-#include <nlohmann/json.hpp>
 #include "common.h"
-#include "filesystem/FileManager.h"
 #include "filesystem/CanonicalPath.h"
+
+class FileManager;
+class CanonicalPath;
 
 class FacilitatorConfig {
     std::string type_;

@@ -1,6 +1,7 @@
+#include "common.h"
 #include "NetworkConfig.h"
 #include "FacilitatorConfig.h"
-#include "common.h"
+
 
 std::shared_ptr<NetworkConfig> NetworkConfig::createFromJson(const nlohmann::json& j, ptr<FileManager> fileManager) {
     try {

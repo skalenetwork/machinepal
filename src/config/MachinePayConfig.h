@@ -1,10 +1,9 @@
 #pragma once
-#include <memory>
-#include "ServerConfig.h"
-#include "FacilitatorConfig.h"
-#include "LogConfig.h"
 #include "common.h"
-#include "NetworkConfig.h"
+class FileManager;
+class ServerConfig;
+class LogConfig;
+class NetworkConfig;
 
 class OrganizationConfig;
 

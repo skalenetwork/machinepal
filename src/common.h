@@ -5,6 +5,19 @@
 #include <string>
 #include <spdlog/spdlog.h>
 #include <map>
+#include <cstdint>
+#include <filesystem>
+#include <optional>
+#include <string>
+#include <shared_mutex>
+#include <atomic>
+#include <chrono>
+#include <memory>
+#include <regex>
+#include <memory>
+#include <set>
+#include <nlohmann/json_fwd.hpp>
+#include <nlohmann/json.hpp>
 
 #if defined(__cpp_exceptions) || defined(__EXCEPTIONS) || defined(_CPPUNWIND)
     constexpr bool exceptions_enabled = true;

@@ -22,6 +22,7 @@
 #include "../examples/PaymentExamples.h"
 #include "config/ConfigLoader.h"
 #include "config/ConfigManager.h"
+#include "config/ServerConfig.h"
 
 
 const std::string BIND_IP = "0.0.0.0";

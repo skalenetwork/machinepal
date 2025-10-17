@@ -1,13 +1,8 @@
 #pragma once
 
-
+#include "common.h"
 #include "MachinePayConfig.h"
-#include <shared_mutex>
-#include <atomic>
-#include <chrono>
-#include <map>
-#include <string>
-#include <memory>
+
 
 class ConfigManager {
 public:

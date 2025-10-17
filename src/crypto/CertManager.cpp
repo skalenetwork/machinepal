@@ -13,6 +13,8 @@
 
 #include <fstream>
 
+#include "config/HTTPSConfig.h"
+
 
 void CertManager::checkPEMFormat(const std::filesystem::path& certPath, const std::filesystem::path& keyPath) {
     namespace fs = std::filesystem;

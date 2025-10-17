@@ -1,5 +1,5 @@
 #pragma once
-#include <cstdint>
+
 #include "common.h"
 
 class HTTPConfig {
@@ -10,5 +10,5 @@ public:
     HTTPConfig(bool isEnabled, uint16_t port);
     bool isEnabled() const;
     uint16_t port() const;
+    static ptr<HTTPConfig> createFromJson(const nlohmann::json& j);
 };
-

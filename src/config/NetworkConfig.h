@@ -1,10 +1,8 @@
 #pragma once
-#include <string>
-#include <memory>
-#include <set>
+#include "common.h"
 
-#include "FacilitatorConfig.h"
-#include <nlohmann/json.hpp>
+class FacilitatorConfig;
+class FileManager;
 
 class NetworkConfig {
     std::string name_;
