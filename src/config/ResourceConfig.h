@@ -27,19 +27,6 @@ public:
     const std::string& location() const { return location_; }
     ResourceType type() const { return type_; }
     static ptr<ResourceConfig> createFromJson(const nlohmann::json& j);
-    static ptr<vector<ptr<ResourceConfig>>> createResourcesFromJsonArray(const nlohmann::json& j) {
-        auto result = std::make_shared<std::vector<ptr<ResourceConfig>>>();
-        if (!j.contains("resources"))
-            return result;
-        auto resources = j.at("resources");
-        CHECK_STATE(resources.is_array());
-
-        for (const auto& item : resources) {
-            auto res = createFromJson(item);
-            CHECK_STATE(res);
-            result->push_back(res);
-        }
-        return result;
-    }
+    static ptr<vector<ptr<ResourceConfig>>> createResourcesFromJsonArray(const nlohmann::json& j);
 
 };
