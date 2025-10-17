@@ -17,8 +17,6 @@
 #include <filesystem>
 
 
-
-
 ptr<FacilitatorConfig> FacilitatorConfig::createFomJson(const nlohmann::json& j, ptr<FileManager> fileManager)
 {
     try {
