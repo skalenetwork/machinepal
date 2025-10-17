@@ -69,7 +69,7 @@ ptr<MachinePayConfig> MachinePayConfig::createFromJson(const nlohmann::json& j, 
         auto organizations = OrganizationConfig::createVectorFromJsonArray(j, fileManager);
         organizations->push_back(defaultOrganization);
 
-        return std::make_shared<MachinePayConfig>(serverConfig, logConfig, organizations, networkConfig);
+        return ptr<MachinePayConfig>(new MachinePayConfig(serverConfig, logConfig, organizations, networkConfig));
     }
     catch (const std::exception& ex)
     {

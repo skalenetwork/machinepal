@@ -12,11 +12,13 @@ class MachinePayConfig {
     ptr<LogConfig> log_;
     ptr<std::map<string,ptr<OrganizationConfig>>> organizations_;
     std::shared_ptr<NetworkConfig> network_;
-public:
     MachinePayConfig(const ptr<ServerConfig>& server,
                      const ptr<LogConfig>& log,
                      const ptr<std::vector<ptr<OrganizationConfig>> >& organizations,
                      std::shared_ptr<NetworkConfig> network);
+
+public:
+
     const ptr<ServerConfig>& server() const;
     const ptr<LogConfig>& log() const;
     const std::shared_ptr<NetworkConfig>& network() const;
