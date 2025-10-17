@@ -20,6 +20,11 @@ class MachinePayConfig {
 public:
 
     const ptr<ServerConfig>& server() const;
+
+    [[nodiscard]] ptr<std::map<string, ptr<OrganizationConfig>>> organizations() const {
+        return organizations_;
+    }
+
     const ptr<LogConfig>& log() const;
     const std::shared_ptr<NetworkConfig>& network() const;
     static ptr<MachinePayConfig> createFromJson(const nlohmann::json& j, ptr<FileManager> fileManager);
