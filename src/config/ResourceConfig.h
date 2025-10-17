@@ -27,6 +27,6 @@ public:
     const std::string& location() const { return location_; }
     ResourceType type() const { return type_; }
     static ptr<ResourceConfig> createFromJson(const nlohmann::json& j);
-    static ptr<vector<ptr<ResourceConfig>>> createResourcesFromJsonArray(const nlohmann::json& j);
+    static ptr<vector<ptr<ResourceConfig>>> createVectorFromJsonArray(const nlohmann::json& j);
 
 };

@@ -10,20 +10,20 @@
 #include <memory>
 
 class OrganizationConfig {
-    ptr<vector<ptr<ResourceConfig> > > server_;
+    ptr<vector<ptr<ResourceConfig> > > resources_;
     std::string organizationName_;
     std::string subdomain_;
 
 public:
     OrganizationConfig(const ptr<vector<ptr<ResourceConfig> > > &server, const std::string &organizationName)
-        : server_(server), organizationName_(organizationName) {
+        : resources_(server), organizationName_(organizationName) {
     }
 
-    const ptr<vector<ptr<ResourceConfig> > > &server() const { return server_; }
+    const ptr<vector<ptr<ResourceConfig> > > &resources() const { return resources_; }
     const std::string &organizationName() const { return organizationName_; }
 
     static ptr<OrganizationConfig> createFromJson(const nlohmann::json &j, ptr<FileManager> fileManager);
 
-    static std::shared_ptr<std::vector<ptr<OrganizationConfig> > > createOrganizationsFromJsonArray(
+    static std::shared_ptr<std::vector<ptr<OrganizationConfig> > > createVectorFromJsonArray(
         const nlohmann::json &j, ptr<FileManager> fileManager);
 };

@@ -4,7 +4,7 @@
 #include <set>
 
 #include "FacilitatorConfig.h"
-#include "json.hpp"
+#include <nlohmann/json.hpp>
 
 class NetworkConfig {
     std::string name_;
@@ -15,5 +15,5 @@ public:
     const std::string& name() const { return name_; }
     const std::shared_ptr<FacilitatorConfig>& facilitator() const { return facilitator_; }
 
-    static std::shared_ptr<NetworkConfig> fromJson(const nlohmann::json& j, ptr<FileManager> fileManager);
+    static std::shared_ptr<NetworkConfig> createFromJson(const nlohmann::json& j, ptr<FileManager> fileManager);
 };

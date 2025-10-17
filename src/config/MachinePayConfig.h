@@ -4,22 +4,23 @@
 #include "FacilitatorConfig.h"
 #include "LogConfig.h"
 #include "common.h"
+#include "NetworkConfig.h"
 
 class OrganizationConfig;
 
 class MachinePayConfig {
     ptr<ServerConfig> server_;
-    ptr<FacilitatorConfig> facilitator_;
     ptr<LogConfig> log_;
-    ptr<std::map<string,ptr<OrganizationConfig>>>  organizations_;
+    ptr<std::map<string,ptr<OrganizationConfig>>> organizations_;
+    std::shared_ptr<NetworkConfig> network_;
 public:
     MachinePayConfig(const ptr<ServerConfig>& server,
-                     const ptr<FacilitatorConfig>& facilitator,
                      const ptr<LogConfig>& log,
-                     const ptr<std::vector<ptr<OrganizationConfig>> >& organizations);
+                     const ptr<std::vector<ptr<OrganizationConfig>> >& organizations,
+                     std::shared_ptr<NetworkConfig> network);
     const ptr<ServerConfig>& server() const;
-    const ptr<FacilitatorConfig>& facilitator() const;
     const ptr<LogConfig>& log() const;
+    const std::shared_ptr<NetworkConfig>& network() const;
     static ptr<MachinePayConfig> createFromJson(const nlohmann::json& j, ptr<FileManager> fileManager);
 
     ptr<OrganizationConfig> getDefaultOrganization() const {
@@ -31,14 +32,3 @@ public:
     }
 };
 
-class FacilitatorConfig;
-
-class NetworkConfig {
-    std::string name_;
-    std::shared_ptr<FacilitatorConfig> facilitator_;
-public:
-    NetworkConfig(const std::string& name, std::shared_ptr<FacilitatorConfig> facilitator)
-        : name_(name), facilitator_(std::move(facilitator)) {}
-    const std::string& name() const { return name_; }
-    const std::shared_ptr<FacilitatorConfig>& facilitator() const { return facilitator_; }
-};

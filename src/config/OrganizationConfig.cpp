@@ -6,15 +6,19 @@ ptr<OrganizationConfig> OrganizationConfig::createFromJson(const nlohmann::json&
     return std::make_shared<OrganizationConfig>(nullptr, organizationName);
 }
 
-std::shared_ptr<std::vector<ptr<OrganizationConfig>>> OrganizationConfig::createOrganizationsFromJsonArray(const nlohmann::json& j, ptr<FileManager> fileManager) {
-    auto result = std::make_shared<std::vector<ptr<OrganizationConfig>>>();
-    if (!j.contains("organizations"))
+std::shared_ptr<std::vector<ptr<OrganizationConfig>>> OrganizationConfig::createVectorFromJsonArray(const nlohmann::json& j, ptr<FileManager> fileManager) {
+    try {
+        auto result = std::make_shared<std::vector<ptr<OrganizationConfig>>>();
+        if (!j.contains("organizations"))
+            return result;
+        auto organizations = j.at("organizations");
+        CHECK_STATE(organizations.is_array());
+        for (const auto& item : organizations) {
+            auto org = OrganizationConfig::createFromJson(item, fileManager);
+            if (org) result->push_back(org);
+        }
         return result;
-    auto organizations = j.at("organizations");
-    CHECK_STATE(organizations.is_array());
-    for (const auto& item : organizations) {
-        auto org = OrganizationConfig::createFromJson(item, fileManager);
-        if (org) result->push_back(org);
+    } catch (const std::exception& ex) {
+        RETHROW_NESTED;
     }
-    return result;
 }

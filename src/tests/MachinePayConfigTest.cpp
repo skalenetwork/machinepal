@@ -43,10 +43,10 @@ BOOST_AUTO_TEST_CASE(deserialize_basic_proxy_config) {
 //    BOOST_TEST(config->server()->https()->caFile().value() == "certs/ca.crt");
 
     // Check facilitator
-    BOOST_TEST(config->facilitator()->type() == "cdp");
-    BOOST_TEST(config->facilitator()->baseUrl() == "https://api.coinbase.com/v2");
-    BOOST_TEST(config->facilitator()->apiKeyFile().has_value());
-    BOOST_TEST(config->facilitator()->apiKeyFile().value().string().ends_with("secrets/coinbase_api_key.txt"));
+    BOOST_TEST(config->network()->facilitator()->type() == "cdp");
+    BOOST_TEST(config->network()->facilitator()->baseUrl() == "https://api.coinbase.com/v2");
+    BOOST_TEST(config->network()->facilitator()->apiKeyFile().has_value());
+    BOOST_TEST(config->network()->facilitator()->apiKeyFile().value().string().ends_with("secrets/coinbase_api_key.txt"));
 
 
 }

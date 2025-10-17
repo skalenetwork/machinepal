@@ -53,11 +53,9 @@ ptr<MachinePayConfig> MachinePayConfig::createFromJson(const nlohmann::json& j, 
 {
     try
     {
+        CHECK_STATE(fileManager);
         CHECK_STATE2(j.count("server") != 0, "Missing required 'server' config section");
         auto serverConfig = ServerConfig::createFromJson(j.at("server"), fileManager);
-
-        CHECK_STATE2(j.count("facilitator") != 0, "Missing required 'facilitator' config section");
-        auto facilitatorConfig = FacilitatorConfig::createFomJson(j.at("facilitator"), fileManager);
 
         ptr<LogConfig> logConfig;
         if (j.count("log") == 0)
@@ -70,16 +68,14 @@ ptr<MachinePayConfig> MachinePayConfig::createFromJson(const nlohmann::json& j, 
             logConfig = LogConfig::createFromJson(j.at("log"), fileManager);
         }
 
-        auto resources = ResourceConfig::createResourcesFromJsonArray(j);
-
-
-
+        auto resources = ResourceConfig::createVectorFromJsonArray(j);
         auto defaultOrganization = std::make_shared<OrganizationConfig>(resources, "");
         auto organizations = std::make_shared<std::vector<ptr<OrganizationConfig>>>();
         organizations->push_back(defaultOrganization);
 
+        auto networkConfig = NetworkConfig::createFromJson(j, fileManager);
 
-        return std::make_shared<MachinePayConfig>(serverConfig, facilitatorConfig, logConfig, organizations);
+        return std::make_shared<MachinePayConfig>(serverConfig, logConfig, organizations, networkConfig);
     }
     catch (const std::exception& ex)
     {
@@ -156,12 +152,11 @@ ptr<ServerConfig> ServerConfig::createFromJson(const nlohmann::json& j,  ptr<Fil
 #include <stdexcept>
 
 MachinePayConfig::MachinePayConfig(const ptr<ServerConfig>& server,
-                                   const ptr<FacilitatorConfig>& facilitator,
                                    const ptr<LogConfig>& log,
-                                   const ptr<std::vector<ptr<OrganizationConfig>> >& organizations)
-    : server_(server),facilitator_(facilitator), log_(log) {
+                                   const ptr<std::vector<ptr<OrganizationConfig>> >& organizations,
+                                   std::shared_ptr<NetworkConfig> network)
+    : server_(server), log_(log), network_(network) {
     CHECK_STATE(server);
-    CHECK_STATE(facilitator_);
     CHECK_STATE(log_);
     organizations_ = std::make_shared<std::map<string,ptr<OrganizationConfig>>>();
     for (const auto& org : *organizations) {
@@ -171,14 +166,14 @@ MachinePayConfig::MachinePayConfig(const ptr<ServerConfig>& server,
             "Duplicate organization name in config: " + orgName);
         organizations_->emplace(orgName,  org);
     }
-
-    CHECK_STATE(organizations_->contains("")); // Default organization must be present=
+    CHECK_STATE(organizations_->contains("")); // Default organization must be present
 }
 
-const ptr<FacilitatorConfig>& MachinePayConfig::facilitator() const {
-    CHECK_STATE(facilitator_);
-    return facilitator_;
+const std::shared_ptr<NetworkConfig>& MachinePayConfig::network() const {
+    CHECK_STATE(network_);
+    return network_;
 }
+
 const ptr<LogConfig>& MachinePayConfig::log() const {
     CHECK_STATE(log_);
     return log_;

@@ -7,7 +7,7 @@ ptr<ResourceConfig> ResourceConfig::createFromJson(const nlohmann::json& j) {
     return std::make_shared<ResourceConfig>(name, location, type);
 }
 
-ptr<vector<ptr<ResourceConfig>>> ResourceConfig::createResourcesFromJsonArray(const nlohmann::json& j) {
+ptr<vector<ptr<ResourceConfig>>> ResourceConfig::createVectorFromJsonArray(const nlohmann::json& j) {
     auto result = std::make_shared<std::vector<ptr<ResourceConfig>>>();
     if (!j.contains("resources"))
         return result;
