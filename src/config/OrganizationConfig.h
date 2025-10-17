@@ -14,10 +14,12 @@ class OrganizationConfig {
     std::string organizationName_;
     std::string subdomain_;
 
-public:
     OrganizationConfig(const ptr<vector<ptr<ResourceConfig> > > &server, const std::string &organizationName)
-        : resources_(server), organizationName_(organizationName) {
+    : resources_(server), organizationName_(organizationName) {
     }
+
+public:
+
 
     const ptr<vector<ptr<ResourceConfig> > > &resources() const { return resources_; }
     const std::string &organizationName() const { return organizationName_; }
@@ -26,4 +28,6 @@ public:
 
     static std::shared_ptr<std::vector<ptr<OrganizationConfig> > > createVectorFromJsonArray(
         const nlohmann::json &j, ptr<FileManager> fileManager);
+
+    static ptr<OrganizationConfig> createDefaultFromResources(ptr<vector<ptr<ResourceConfig> > > resources);
 };

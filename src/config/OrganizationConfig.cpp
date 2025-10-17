@@ -2,9 +2,9 @@
 
 ptr<OrganizationConfig> OrganizationConfig::createFromJson(const nlohmann::json& j, ptr<FileManager> fileManager) {
     CHECK_STATE(fileManager);
-    auto server = ServerConfig::createFromJson(j["server"], fileManager);
     std::string organizationName = j.value("name", "");
-    return std::make_shared<OrganizationConfig>(nullptr, organizationName);
+    auto resources = ResourceConfig::createVectorFromJsonArray(j, fileManager);
+    return ptr<OrganizationConfig>(new OrganizationConfig(resources, organizationName));
 }
 
 std::shared_ptr<std::vector<ptr<OrganizationConfig>>> OrganizationConfig::createVectorFromJsonArray(const nlohmann::json& j, ptr<FileManager> fileManager) {
@@ -22,4 +22,8 @@ std::shared_ptr<std::vector<ptr<OrganizationConfig>>> OrganizationConfig::create
     } catch (const std::exception& ex) {
         RETHROW_NESTED;
     }
+}
+
+ptr<OrganizationConfig> OrganizationConfig::createDefaultFromResources(ptr<vector<ptr<ResourceConfig>>> resources) {
+    return ptr<OrganizationConfig>(new OrganizationConfig(resources, ""));
 }
