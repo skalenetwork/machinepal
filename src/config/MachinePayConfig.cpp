@@ -85,15 +85,22 @@ MachinePayConfig::MachinePayConfig(const ptr<ServerConfig>& server,
     : server_(server), log_(log), network_(network) {
     CHECK_STATE(server);
     CHECK_STATE(log_);
-    organizations_ = std::make_shared<std::map<string,ptr<OrganizationConfig>>>();
+    organizationsByName_ = std::make_shared<std::map<string,ptr<OrganizationConfig>>>();
     for (const auto& org : *organizations) {
         CHECK_STATE(org);
         auto orgName = org->organizationName();
-        CHECK_STATE2(!organizations_->contains(orgName),
+        CHECK_STATE2(!organizationsByName_->contains(orgName),
             "Duplicate organization name in config: " + orgName);
-        organizations_->emplace(orgName,  org);
+        organizationsByName_->emplace(orgName,  org);
+
+        auto subdomain = org->subdomain();
+        CHECK_STATE2(!organizationsBySubdomain_->contains(subdomain),
+            "Duplicate organization domain in config: " + subdomain);
+        organizationsBySubdomain_->emplace(subdomain,  org);
+
+
     }
-    CHECK_STATE(organizations_->contains("")); // Default organization must be present
+    CHECK_STATE(organizationsByName_->contains("")); // Default organization must be present
 }
 
 const std::shared_ptr<NetworkConfig>& MachinePayConfig::network() const {
