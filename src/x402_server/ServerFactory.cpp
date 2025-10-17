@@ -8,7 +8,7 @@
 #include <filesystem>
 #include <fstream>
 
-#include "config/ServerConfig.h"
+#include "config/subconfigs/ServerConfig.h"
 
 
 using namespace proxygen;

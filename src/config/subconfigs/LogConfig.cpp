@@ -1,7 +1,7 @@
 #include "LogConfig.h"
 #include <stdexcept>
 
-#include "ConfigLoader.h"
+#include "config/ConfigLoader.h"
 
 LogLevel parseLogLevel(const std::string& level) {
     if (level == "trace") return LogLevel::trace;

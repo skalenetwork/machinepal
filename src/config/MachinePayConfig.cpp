@@ -6,11 +6,11 @@
 
 #include "MachinePayConfig.h"
 #include "ConfigLoader.h"
-#include "ServerConfig.h"
-#include "FacilitatorConfig.h"
-#include "NetworkConfig.h"
-#include "LogConfig.h"
-#include "OrganizationConfig.h"
+#include "subconfigs/ServerConfig.h"
+#include "subconfigs/FacilitatorConfig.h"
+#include "subconfigs/NetworkConfig.h"
+#include "subconfigs/LogConfig.h"
+#include "subconfigs/OrganizationConfig.h"
 #include "filesystem/FileManager.h"
 
 #include <nlohmann/json.hpp>

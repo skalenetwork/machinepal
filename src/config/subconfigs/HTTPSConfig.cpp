@@ -2,7 +2,7 @@
 #include "crypto/CertManager.h"
 #include <stdexcept>
 
-#include "ConfigLoader.h"
+#include "config/ConfigLoader.h"
 #include "filesystem/FileManager.h"
 
 HTTPSConfig::HTTPSConfig(bool isEnabled, uint16_t port, const CanonicalPath &certFile,

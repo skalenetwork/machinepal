@@ -16,7 +16,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 
 #include "config/ConfigManager.h"
-#include "config/LogConfig.h"
+#include "config/subconfigs/LogConfig.h"
 
 
 atomic<bool> Init::inited_{false};
