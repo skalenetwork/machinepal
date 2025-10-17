@@ -18,9 +18,11 @@ class ResourceConfig {
     std::string name_;
     std::string location_;
     ResourceType type_;
-public:
+
     ResourceConfig(const std::string& name, const std::string& location, ResourceType type)
         : name_(name), location_(location), type_(type) {}
+
+public:
     const std::string& name() const { return name_; }
     const std::string& location() const { return location_; }
     ResourceType type() const { return type_; }

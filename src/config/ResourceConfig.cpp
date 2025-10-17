@@ -7,7 +7,7 @@ ptr<ResourceConfig> ResourceConfig::createFromJson(const nlohmann::json& j, ptr<
     std::string name = j.value("name", "");
     std::string location = j.value("location", "");
     ResourceType type = resourceTypeFromString(j.value("type", ""));
-    return std::make_shared<ResourceConfig>(name, location, type);
+    return ptr<ResourceConfig>(new ResourceConfig(name, location, type));
 }
 
 ptr<vector<ptr<ResourceConfig>>> ResourceConfig::createVectorFromJsonArray(const nlohmann::json& j, ptr<FileManager> fileManager) {
