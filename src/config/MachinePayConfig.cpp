@@ -20,9 +20,8 @@
 ptr<LogConfig> LogConfig::createFromJson(const nlohmann::json& j, ptr<FileManager> fileManager)
 {
     CHECK_STATE(j.is_object());
-    return std::make_shared<LogConfig>(
-        ConfigLoader::getStringWithDefault(j, "level", "info"),
-        ConfigLoader::getStringWithDefault(j, "type", "plain"));
+    return ptr<LogConfig>( new LogConfig( ConfigLoader::getStringWithDefault(j, "level", "info"),
+        ConfigLoader::getStringWithDefault(j, "type", "plain")));
 }
 
 

@@ -24,5 +24,5 @@ LogConfig::LogConfig(LogLevel level, LogType type)
 LogLevel LogConfig::level() const { return level_; }
 LogType LogConfig::type() const { return type_; }
 ptr<LogConfig> LogConfig::createDefault() {
-    return std::make_shared<LogConfig>(LogLevel::info, LogType::plain);
+    return ptr<LogConfig>(new LogConfig(LogLevel::info, LogType::plain));
 }

@@ -18,9 +18,12 @@ class FileManager;
 class LogConfig {
     LogLevel level_;
     LogType type_;
-public:
+
+
     LogConfig(const std::string& level, const std::string& type);
     LogConfig(LogLevel level, LogType type);
+
+public:
     LogLevel level() const;
     LogType type() const;
     static ptr<LogConfig> createDefault();
