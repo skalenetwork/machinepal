@@ -12,10 +12,11 @@ class ServerConfig {
     ptr<HTTPConfig> http_;
     ptr<HTTPSConfig> https_;
     std::string hostName_;
-public:
+
     ServerConfig(const std::string& hostName, const std::string& bindIp,
                  ptr<HTTPConfig> http,
                  ptr<HTTPSConfig> https);
+public:
     const std::string& bindIp() const;
     const ptr<HTTPConfig> http() const;
     const ptr<HTTPSConfig> https() const;

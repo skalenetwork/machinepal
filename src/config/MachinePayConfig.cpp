@@ -80,47 +80,7 @@ ptr<MachinePayConfig> MachinePayConfig::createFromJson(const nlohmann::json& j, 
 }
 
 
-ptr<ServerConfig> ServerConfig::createFromJson(const nlohmann::json& j,  ptr<FileManager> fileManager)
-{
 
-    try
-    {
-        CHECK_STATE(fileManager);
-        CHECK_STATE(j.is_object());
-
-
-        ptr<HTTPConfig> httpConfig = nullptr;
-
-        if (j.count("http") > 0)
-        {
-            const auto& jt = j.at("http");
-            httpConfig = HTTPConfig::createFromJson(jt, fileManager);
-        }
-        ptr<HTTPSConfig> httpsConfig = nullptr;
-        if (j.count("https") > 0)
-        {
-            CHECK_STATE(j.at("https").is_object());
-            const auto& jt = j.at("https");
-            httpsConfig = HTTPSConfig::createFromJson(jt, fileManager);
-
-        }
-        if (!httpConfig && !httpsConfig)
-        {
-            throw std::runtime_error("At least one of HTTP or HTTPS must be configured in server config");
-        }
-
-        return std::make_shared<ServerConfig>(
-            ConfigLoader::getStringWithDefault(j, "hostname", ""),
-            ConfigLoader::getStringWithDefault(j, "bind_ip", "0.0.0.0"),
-            httpConfig,
-            httpsConfig
-        );
-    } catch (exception& ex)
-    {
-        RETHROW_NESTED;
-    }
-}
-#include <stdexcept>
 
 MachinePayConfig::MachinePayConfig(const ptr<ServerConfig>& server,
                                    const ptr<LogConfig>& log,

@@ -2,6 +2,8 @@
 #include <stdexcept>
 #include <regex>
 
+#include "ConfigLoader.h"
+
 static const std::regex ipv4_regex(R"(^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$)");
 static const std::regex ipv6_regex(R"(^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$)");
 
@@ -38,6 +40,48 @@ ServerConfig::ServerConfig(const std::string& hostName, const std::string& bindI
     }
 
 
+}
+
+
+ptr<ServerConfig> ServerConfig::createFromJson(const nlohmann::json& j,  ptr<FileManager> fileManager)
+{
+
+    try
+    {
+        CHECK_STATE(fileManager);
+        CHECK_STATE(j.is_object());
+
+
+        ptr<HTTPConfig> httpConfig = nullptr;
+
+        if (j.count("http") > 0)
+        {
+            const auto& jt = j.at("http");
+            httpConfig = HTTPConfig::createFromJson(jt, fileManager);
+        }
+        ptr<HTTPSConfig> httpsConfig = nullptr;
+        if (j.count("https") > 0)
+        {
+            CHECK_STATE(j.at("https").is_object());
+            const auto& jt = j.at("https");
+            httpsConfig = HTTPSConfig::createFromJson(jt, fileManager);
+
+        }
+        if (!httpConfig && !httpsConfig)
+        {
+            throw std::runtime_error("At least one of HTTP or HTTPS must be configured in server config");
+        }
+
+        return ptr<ServerConfig>(new ServerConfig(
+            ConfigLoader::getStringWithDefault(j, "hostname", ""),
+            ConfigLoader::getStringWithDefault(j, "bind_ip", "0.0.0.0"),
+            httpConfig,
+            httpsConfig
+        ));
+    } catch (exception& ex)
+    {
+        RETHROW_NESTED;
+    }
 }
 
 const std::string& ServerConfig::bindIp() const { return bindIp_; }
