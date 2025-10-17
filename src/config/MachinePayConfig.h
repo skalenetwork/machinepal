@@ -30,3 +30,15 @@ public:
         return it->second;
     }
 };
+
+class FacilitatorConfig;
+
+class NetworkConfig {
+    std::string name_;
+    std::shared_ptr<FacilitatorConfig> facilitator_;
+public:
+    NetworkConfig(const std::string& name, std::shared_ptr<FacilitatorConfig> facilitator)
+        : name_(name), facilitator_(std::move(facilitator)) {}
+    const std::string& name() const { return name_; }
+    const std::shared_ptr<FacilitatorConfig>& facilitator() const { return facilitator_; }
+};
