@@ -17,12 +17,6 @@
 #include <filesystem>
 
 
-ptr<LogConfig> LogConfig::createFromJson(const nlohmann::json& j, ptr<FileManager> fileManager)
-{
-    CHECK_STATE(j.is_object());
-    return ptr<LogConfig>( new LogConfig( ConfigLoader::getStringWithDefault(j, "level", "info"),
-        ConfigLoader::getStringWithDefault(j, "type", "plain")));
-}
 
 
 ptr<FacilitatorConfig> FacilitatorConfig::createFomJson(const nlohmann::json& j, ptr<FileManager> fileManager)

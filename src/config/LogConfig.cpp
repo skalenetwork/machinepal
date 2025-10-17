@@ -1,6 +1,8 @@
 #include "LogConfig.h"
 #include <stdexcept>
 
+#include "ConfigLoader.h"
+
 LogLevel parseLogLevel(const std::string& level) {
     if (level == "trace") return LogLevel::trace;
     if (level == "debug") return LogLevel::debug;
@@ -25,4 +27,11 @@ LogLevel LogConfig::level() const { return level_; }
 LogType LogConfig::type() const { return type_; }
 ptr<LogConfig> LogConfig::createDefault() {
     return ptr<LogConfig>(new LogConfig(LogLevel::info, LogType::plain));
+}
+ptr<LogConfig> LogConfig::createFromJson(const nlohmann::json& j, ptr<FileManager> fileManager)
+{
+    CHECK_STATE(fileManager);
+    CHECK_STATE(j.is_object());
+    return ptr<LogConfig>( new LogConfig( ConfigLoader::getStringWithDefault(j, "level", "info"),
+        ConfigLoader::getStringWithDefault(j, "type", "plain")));
 }

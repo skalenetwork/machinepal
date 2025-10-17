@@ -6,6 +6,7 @@
 std::shared_ptr<NetworkConfig> NetworkConfig::createFromJson(const nlohmann::json& j, ptr<FileManager> fileManager) {
     try {
         CHECK_STATE(fileManager);
+        CHECK_STATE(fileManager);
 
         if (!j.contains("network")) {
             return nullptr;
