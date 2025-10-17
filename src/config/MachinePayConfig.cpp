@@ -70,13 +70,16 @@ ptr<MachinePayConfig> MachinePayConfig::createFromJson(const nlohmann::json& j, 
             logConfig = LogConfig::createFromJson(j.at("log"), fileManager);
         }
 
-        string defaultOrgName = "";
-        auto defaultOrganization = std::make_shared<OrganizationConfig>(serverConfig, defaultOrgName);
-        auto serverOrganizations = std::make_shared<std::vector<ptr<OrganizationConfig>>>();
-        serverOrganizations->push_back(defaultOrganization);
+        auto resources = ResourceConfig::createResourcesFromJsonArray(j);
 
 
-        return std::make_shared<MachinePayConfig>(serverConfig, facilitatorConfig, logConfig, serverOrganizations);
+
+        auto defaultOrganization = std::make_shared<OrganizationConfig>(resources, "");
+        auto organizations = std::make_shared<std::vector<ptr<OrganizationConfig>>>();
+        organizations->push_back(defaultOrganization);
+
+
+        return std::make_shared<MachinePayConfig>(serverConfig, facilitatorConfig, logConfig, organizations);
     }
     catch (const std::exception& ex)
     {

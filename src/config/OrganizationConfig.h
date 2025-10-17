@@ -1,17 +1,22 @@
 #pragma once
-#include "ServerConfig.h"
 #include "common.h"
+#include "OrganizationConfig.h"
+#include "ServerConfig.h"
+#include "ResourceConfig.h"
+
+
+#include <nlohmann/json.hpp>
 #include <string>
 #include <memory>
-#include <nlohmann/json.hpp>
 
 class OrganizationConfig {
-    ptr<ServerConfig> server_;
+    ptr<vector<ptr<ResourceConfig>>> server_;
     std::string organizationName_;
+    std::string subdomain_;
 public:
-    OrganizationConfig(const ptr<ServerConfig>& server, const std::string& organizationName)
+    OrganizationConfig(const ptr<vector<ptr<ResourceConfig>>> & server, const std::string& organizationName)
         : server_(server), organizationName_(organizationName) {}
-    const ptr<ServerConfig>& server() const { return server_; }
+    const ptr<vector<ptr<ResourceConfig>>> & server() const { return server_; }
     const std::string& organizationName() const { return organizationName_; }
     static ptr<OrganizationConfig> createFromJson(const nlohmann::json& j, ptr<FileManager> fileManager);
 };
