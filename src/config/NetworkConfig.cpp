@@ -27,7 +27,7 @@ std::shared_ptr<NetworkConfig> NetworkConfig::createFromJson(const nlohmann::jso
         if (networkJson.contains("facilitator") && networkJson["facilitator"].is_object()) {
             facilitator = FacilitatorConfig::createFomJson(networkJson["facilitator"], fileManager);
         }
-        return std::make_shared<NetworkConfig>(name, facilitator);
+        return ptr<NetworkConfig>(new NetworkConfig(name, facilitator));
     } catch (const std::exception& ex) {
         RETHROW_NESTED;
     }
