@@ -30,8 +30,12 @@ ptr<LogConfig> LogConfig::createDefault() {
 }
 ptr<LogConfig> LogConfig::createFromJson(const nlohmann::json& j, ptr<FileManager> fileManager)
 {
-    CHECK_STATE(fileManager);
-    CHECK_STATE(j.is_object());
-    return ptr<LogConfig>( new LogConfig( ConfigLoader::getStringWithDefault(j, "level", "info"),
-        ConfigLoader::getStringWithDefault(j, "type", "plain")));
+    try {
+        CHECK_STATE(fileManager);
+        CHECK_STATE(j.is_object());
+        return ptr<LogConfig>( new LogConfig( ConfigLoader::getStringWithDefault(j, "level", "info"),
+            ConfigLoader::getStringWithDefault(j, "type", "plain")));
+    } catch (const std::exception& ex) {
+        RETHROW_NESTED;
+    }
 }
