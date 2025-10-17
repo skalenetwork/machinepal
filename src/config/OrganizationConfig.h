@@ -14,8 +14,9 @@ class OrganizationConfig {
     std::string organizationName_;
     std::string subdomain_;
 
-    OrganizationConfig(const ptr<vector<ptr<ResourceConfig> > > &server, const std::string &organizationName)
-    : resources_(server), organizationName_(organizationName) {
+    OrganizationConfig(const ptr<vector<ptr<ResourceConfig> > > &server, const std::string &organizationName,
+        const std::string &subdomain)
+    : resources_(server), organizationName_(organizationName), subdomain_(subdomain) {
     }
 
 public:
@@ -23,6 +24,7 @@ public:
 
     const ptr<vector<ptr<ResourceConfig> > > &resources() const { return resources_; }
     const std::string &organizationName() const { return organizationName_; }
+    const std::string &subdomain() const { return subdomain_; }
 
     static ptr<OrganizationConfig> createFromJson(const nlohmann::json &j, ptr<FileManager> fileManager);
 
