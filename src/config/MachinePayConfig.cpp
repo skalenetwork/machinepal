@@ -101,41 +101,16 @@ ptr<ServerConfig> ServerConfig::createFromJson(const nlohmann::json& j,  ptr<Fil
 
         if (j.count("http") > 0)
         {
-            CHECK_STATE(j.at("http").is_object());
             const auto& jt = j.at("http");
-            httpConfig = make_shared<HTTPConfig>(
-                ConfigLoader::getBoolWithDefault(jt, "enabled", true),
-                ConfigLoader::getUint16WithDefault(jt, "port", 8080)
-            );
+            httpConfig = HTTPConfig::createFromJson(jt, fileManager);
         }
         ptr<HTTPSConfig> httpsConfig = nullptr;
         if (j.count("https") > 0)
         {
             CHECK_STATE(j.at("https").is_object());
             const auto& jt = j.at("https");
-            std::optional<CanonicalPath> caFile = std::nullopt;
-            if (jt.contains("ca_file") && !jt.at("ca_file").is_null())
-            {
-                std::string file = jt.at("ca_file").get<std::string>();
-                auto resolved = fileManager->checkFileExistsAndReadableAndResolve(file);
-                caFile = CanonicalPath(resolved);
-            }
-            std::optional<CanonicalPath> keyPassFile = std::nullopt;
-            if (jt.contains("key_pass_file") && !jt.at("key_pass_file").is_null())
-            {
-                std::string file = jt.at("key_pass_file").get<std::string>();
-                auto resolved = fileManager->checkFileExistsAndReadableAndResolve(file);
-                keyPassFile = CanonicalPath(resolved);
-            }
-            auto certFile = CanonicalPath(fileManager->checkFileExistsAndReadableAndResolve(ConfigLoader::getStringWithDefault(jt, "cert_file", "")));
-            auto keyFile = CanonicalPath(fileManager->checkFileExistsAndReadableAndResolve(ConfigLoader::getStringWithDefault(jt, "key_file", "")));
-            httpsConfig = make_shared<HTTPSConfig>(
-                ConfigLoader::getBoolWithDefault(jt, "enabled", true),
-                ConfigLoader::getUint16WithDefault(jt, "port", 8080),
-                certFile,
-                keyFile,
-                keyPassFile,
-                caFile);
+            httpsConfig = HTTPSConfig::createFromJson(jt, fileManager);
+
         }
         if (!httpConfig && !httpsConfig)
         {
