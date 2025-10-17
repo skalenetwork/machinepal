@@ -8,7 +8,11 @@ ptr<ResourceConfig> ResourceConfig::createFromJson(const nlohmann::json &j, ptr<
         std::string name = j.value("name", "");
         std::string location = j.value("location", "");
         ResourceType type = resourceTypeFromString(j.value("type", ""));
-        return ptr<ResourceConfig>(new ResourceConfig(name, location, type));
+        CHECK_STATE(j.contains("price"));
+        CHECK_STATE(j.contains("token"));
+        std::string price = j.value("price", "");
+        std::string token = j.value("token", "");
+        return ptr<ResourceConfig>(new ResourceConfig(name, location, type, price, token));
     } catch (const std::exception &ex) {
         RETHROW_NESTED;
     }
