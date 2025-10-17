@@ -20,27 +20,31 @@ const optional<CanonicalPath> &HTTPSConfig::keyPassFile() const { return keyPass
 const optional<CanonicalPath> &HTTPSConfig::caFile() const { return caFile_; }
 
 ptr<HTTPSConfig> HTTPSConfig::createFromJson(const nlohmann::json &j, ptr<FileManager> fileManager) {
-    optional<CanonicalPath> caFile = nullopt;
-    if (j.contains("ca_file") && !j.at("ca_file").is_null()) {
-        string file = j.at("ca_file").get<string>();
-        auto resolved = fileManager->checkFileExistsAndReadableAndResolve(file);
-        caFile = CanonicalPath(resolved);
+    try {
+        optional<CanonicalPath> caFile = nullopt;
+        if (j.contains("ca_file") && !j.at("ca_file").is_null()) {
+            string file = j.at("ca_file").get<string>();
+            auto resolved = fileManager->checkFileExistsAndReadableAndResolve(file);
+            caFile = CanonicalPath(resolved);
+        }
+        optional<CanonicalPath> keyPassFile = nullopt;
+        if (j.contains("key_pass_file") && !j.at("key_pass_file").is_null()) {
+            string file = j.at("key_pass_file").get<string>();
+            auto resolved = fileManager->checkFileExistsAndReadableAndResolve(file);
+            keyPassFile = CanonicalPath(resolved);
+        }
+        auto certFile = CanonicalPath(
+            fileManager->checkFileExistsAndReadableAndResolve(ConfigLoader::getStringWithDefault(j, "cert_file", "")));
+        auto keyFile = CanonicalPath(
+            fileManager->checkFileExistsAndReadableAndResolve(ConfigLoader::getStringWithDefault(j, "key_file", "")));
+        return ptr<HTTPSConfig>(new HTTPSConfig(
+            ConfigLoader::getBoolWithDefault(j, "enabled", true),
+            ConfigLoader::getUint16WithDefault(j, "port", 8080),
+            certFile,
+            keyFile,
+            keyPassFile,
+            caFile));
+    } catch (const std::exception& ex) {
+        RETHROW_NESTED;
     }
-    optional<CanonicalPath> keyPassFile = nullopt;
-    if (j.contains("key_pass_file") && !j.at("key_pass_file").is_null()) {
-        string file = j.at("key_pass_file").get<string>();
-        auto resolved = fileManager->checkFileExistsAndReadableAndResolve(file);
-        keyPassFile = CanonicalPath(resolved);
-    }
-    auto certFile = CanonicalPath(
-        fileManager->checkFileExistsAndReadableAndResolve(ConfigLoader::getStringWithDefault(j, "cert_file", "")));
-    auto keyFile = CanonicalPath(
-        fileManager->checkFileExistsAndReadableAndResolve(ConfigLoader::getStringWithDefault(j, "key_file", "")));
-    return ptr<HTTPSConfig>(new HTTPSConfig(
-        ConfigLoader::getBoolWithDefault(j, "enabled", true),
-        ConfigLoader::getUint16WithDefault(j, "port", 8080),
-        certFile,
-        keyFile,
-        keyPassFile,
-        caFile));
 }

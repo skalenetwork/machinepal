@@ -21,10 +21,8 @@
 
 ptr<FacilitatorConfig> FacilitatorConfig::createFomJson(const nlohmann::json& j, ptr<FileManager> fileManager)
 {
-
-    CHECK_STATE(fileManager);
-    try
-    {
+    try {
+        CHECK_STATE(fileManager);
         CHECK_STATE(j.is_object());
         std::optional<CanonicalPath> apiKeyFile = std::nullopt;
         auto userProvidedApiKeyFile = ConfigLoader::getStringWithDefault(j, "api_key_file", "");
@@ -33,11 +31,11 @@ ptr<FacilitatorConfig> FacilitatorConfig::createFomJson(const nlohmann::json& j,
             auto resolved = fileManager->checkFileExistsAndReadableAndResolve(userProvidedApiKeyFile);
             apiKeyFile = CanonicalPath(resolved);
         }
-        return std::make_shared<FacilitatorConfig>(
+        return ptr<FacilitatorConfig>(new FacilitatorConfig(
             ConfigLoader::getStringWithDefault(j, "type", ""),
             ConfigLoader::getStringWithDefault(j, "base_url", ""),
             apiKeyFile
-        );
+        ));
     }
     catch (const std::exception& ex)
     {
