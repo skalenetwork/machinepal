@@ -5,13 +5,17 @@ class FileManager;
 ptr<ResourceConfig> ResourceConfig::createFromJson(const nlohmann::json &j, ptr<FileManager> fileManager) {
     try {
         CHECK_STATE(fileManager);
+        CHECK_STATE(j.contains("location"));
+        CHECK_STATE(j.at("location").is_string());
         std::string name = j.value("name", "");
         std::string location = j.value("location", "");
         ResourceType type = resourceTypeFromString(j.value("type", ""));
         CHECK_STATE(j.contains("price"));
         CHECK_STATE(j.contains("token"));
-        std::string price = j.value("price", "");
-        std::string token = j.value("token", "");
+        CHECK_STATE(j.at("price").is_string());
+        CHECK_STATE(j.at("token").is_string());
+        string price = j.at("price");
+        std::string token = j.at("token");
         return ptr<ResourceConfig>(new ResourceConfig(name, location, type, price, token));
     } catch (const std::exception &ex) {
         RETHROW_NESTED;
