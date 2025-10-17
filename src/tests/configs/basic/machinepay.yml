@@ -26,9 +26,9 @@ network:
     # Facilitator API key file. Override: FACILITATOR_API_KEY_FILE
     api_key_file: secrets/coinbase_api_key.txt
 
-    payment_tokens:
-     - name: USDC
-       address: 0x036CbD53842c5426634e7929541eC2318f3dCF7e
+  payment_tokens:
+    - name: USDC
+      address: 0x036CbD53842c5426634e7929541eC2318f3dCF7e
 
 
 log:
