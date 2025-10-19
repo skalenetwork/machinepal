@@ -1,6 +1,7 @@
 #include "common.h"
 #include "ConfigLoader.h"
 #include "MachinePayConfig.h"
+#include "JsonUtils.h"
 #include "config/MachinePayConfigSchema.h"
 #include "init/Init.h"
 #include <yaml-cpp/yaml.h>
@@ -160,9 +161,7 @@ json ConfigLoader::yamlToJson(const std::string &yaml_path) {
 }
 
 
-bool ConfigLoader::asBool(const std::string &s) {
-    return s == "1" || s == "true" || s == "TRUE" || s == "yes" || s == "on";
-};
+
 
 
 /**
@@ -184,7 +183,7 @@ void ConfigLoader::applyStringEnv(json &j, const json::json_pointer &path, const
 void ConfigLoader::applyBoolEnv(json &j, const json::json_pointer &path, const char *envVar) {
     try {
         if (auto v = getenvOpt(envVar)) {
-            j[path] = asBool(*v);
+            j[path] = JsonUtils::asBool(*v);
         }
     } catch (const std::exception &ex) {
         RETHROW_NESTED;
@@ -359,33 +358,3 @@ std::shared_ptr<MachinePayConfig> ConfigLoader::loadFromYamlFile(const filesyste
 }
 
 
-// Helper to get a string from a json object with a default value
-std::string ConfigLoader::getStringWithDefault(const nlohmann::json &j, const std::string &key,
-                                                         const std::string &defaultValue) {
-    if (j.contains(key) && !j.at(key).is_null()) {
-        return j.at(key).get<std::string>();
-    }
-    return defaultValue;
-}
-
-bool ConfigLoader::getBoolWithDefault(const nlohmann::json &j, const std::string &key,
-                                                         bool defaultValue) {
-    if (j.contains(key) && !j.at(key).is_null()) {
-        return j.at(key).get<bool>();
-    }
-    return defaultValue;
-}
-
-
-
-uint16_t ConfigLoader::getUint16WithDefault(const nlohmann::json &j, const std::string &key,
-                                                     uint16_t defaultValue) {
-        if (j.contains(key) && !j.at(key).is_null()) {
-            auto value = j.at(key).get<int>();
-            if (value <= 0 || value > 65535) {
-                throw std::out_of_range("Value for key '" + key + "' is out of range for uint16_t: " + std::to_string(value));
-            }
-            return static_cast<uint16_t>(value);
-        }
-        return defaultValue;
-}
