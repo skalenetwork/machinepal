@@ -331,7 +331,8 @@ void ConfigLoader::validateJson(const json &j) {
         std::string errorMsg = std::string("MachinePayConfigLoader::validateJson Invalid config file : "
                                    "failed to validate config against schema:\n") +
                                errHandler.errorMessage_;
-        RETHROW_NESTED2(errorMsg);
+        spdlog::warn(errorMsg);
+        printNestedException(ex);
     }
 }
 
