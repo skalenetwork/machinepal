@@ -1,63 +1,72 @@
 #pragma once
 
-constexpr const char* MachinePayConfigSchemaJson = R"({
+constexpr const char* MachinePayConfigSchemaJson = R"(
+{
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "properties": {
     "server": {
       "type": "object",
       "properties": {
-        "bind_ip": { "type": "string" },
         "hostname": { "type": "string" },
         "http": {
           "type": "object",
           "properties": {
-            "enabled": { "type": "boolean" },
+            "enable": { "type": "boolean" },
             "port": { "type": "integer" }
           },
-          "required": ["port"]
+          "required": ["enable", "port"]
         },
         "https": {
           "type": "object",
           "properties": {
-            "enabled": { "type": "boolean" },
+            "enable": { "type": "boolean" },
             "port": { "type": "integer" },
             "cert_file": { "type": "string" },
-            "key_file": { "type": "string" },
-            "key_pass_file": { "type": "string" },
-            "ca_file": { "type": "string" }
+            "key_file": { "type": "string" }
           },
-          "required": ["port", "cert_file", "key_file"]
+          "required": ["enable", "port", "cert_file", "key_file"]
         }
       },
       "required": ["hostname", "http", "https"]
     },
-    "facilitator": {
+    "network": {
       "type": "object",
       "properties": {
-        "type": { "type": "string" },
-        "base_url": { "type": "string" },
-        "api_key_file": { "type": "string" }
+        "name": { "type": "string" },
+        "facilitator": {
+          "type": "object",
+          "properties": {
+            "type": { "type": "string", "enum": ["cdp", "x402"] },
+            "base_url": { "type": "string" },
+            "api_key_file": { "type": "string" }
+          },
+          "required": ["type", "base_url"]
+        },
+        "payment_tokens": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "address": { "type": "string" }
+            },
+            "required": ["name", "address"]
+          }
+        }
       },
-      "required": ["type", "base_url"]
+      "required": ["name", "facilitator", "payment_tokens"]
     },
     "log": {
       "type": "object",
       "properties": {
         "level": {
           "type": "string",
-          "enum": ["trace", "debug", "info", "warn", "error", "fatal"],
-          "description": "Log verbosity level. Default: info. Override: LOG_LEVEL.",
-          "default": "info"
+          "enum": ["trace", "debug", "info", "warn", "error", "fatal"]
         },
-        "type": {
-          "type": "string",
-          "enum": ["plain", "json"],
-          "description": "Type for logs. Default: plain. Override: LOG_TYPE.",
-          "default": "plain"
-        }
+        "type": { "type": "string", "enum": ["plain", "json"] }
       },
-      "description": "Optional logging configuration. Default log level is 'info' to stderr."
+      "required": ["level", "type"]
     },
     "resources": {
       "type": "array",
@@ -66,11 +75,14 @@ constexpr const char* MachinePayConfigSchemaJson = R"({
         "properties": {
           "name": { "type": "string" },
           "type": { "type": "string" },
-          "location": { "type": "string" }
+          "location": { "type": "string" },
+          "price": { "type": "number" },
+          "token": { "type": "string" }
         },
-        "required": ["name", "type", "location"]
+        "required": ["name", "type", "location", "price", "token"]
       }
     }
   },
-  "required": ["server", "facilitator", "resources"]
-})";
+  "required": ["server", "network", "log", "resources"]
+}
+)";
