@@ -35,6 +35,28 @@ public:
 
     std::shared_ptr<MachinePayConfig> loadFromYamlFile(const filesystem::path& yamlPath, ptr<FileManager> fileManager);
 
+    static std::string findPath(const json& root, const json& target, const std::string& current = "") {
+        if (&root == &target) {
+            return current.empty() ? "/" : current;
+        }
+
+        if (root.is_object()) {
+            for (auto it = root.begin(); it != root.end(); ++it) {
+                std::string child_path = current + "/" + it.key();
+                std::string p = findPath(it.value(), target, child_path);
+                if (!p.empty()) return p;
+            }
+        } else if (root.is_array()) {
+            for (size_t i = 0; i < root.size(); ++i) {
+                std::string child_path = current + "/" + std::to_string(i);
+                std::string p = findPath(root[i], target, child_path);
+                if (!p.empty()) return p;
+            }
+        }
+
+        return "";
+    }
+
 
 private:
 
@@ -64,5 +86,7 @@ private:
 
 
     std::map<std::string, std::string> overridesFromCliAndEnv_;
+
+
 
 };
