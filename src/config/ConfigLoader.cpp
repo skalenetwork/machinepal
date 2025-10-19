@@ -348,7 +348,10 @@ std::shared_ptr<MachinePayConfig> ConfigLoader::loadFromYamlFile(const filesyste
         spdlog::info("Validating config file against schema: {}", yamlPath.string());
         validateJson(j);
         spdlog::info("Validated config file against schema");
-        return MachinePayConfig::createFromJson(j, fileManager);;
+        auto result =  MachinePayConfig::createFromJson(j, fileManager);;
+        // sanity check manual validation corresponds to the schema
+        validateJson(j);
+        return result;
     } catch (const std::exception &ex) {
         RETHROW_NESTED;
     }

@@ -47,7 +47,7 @@ ptr<MachinePayConfig> MachinePayConfig::createFromJson(const nlohmann::json& j, 
     try
     {
         CHECK_STATE(fileManager);
-        CHECK_STATE2(j.count("server") != 0, "Missing required 'server' config section");
+        CHECK_STATE_JSON(j.count("server") != 0, "Missing required 'server' config section", j);
         auto serverConfig = ServerConfig::createFromJson(j.at("server"), fileManager);
 
         ptr<LogConfig> logConfig;

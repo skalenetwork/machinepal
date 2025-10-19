@@ -2,12 +2,17 @@
 
 class FileManager;
 
+string ResourceConfig::mustContainString(const nlohmann::json& j, string key)
+{
+    CHECK_STATE_JSON(j.contains(key), "Missing required " + key + " section", j);
+    CHECK_STATE_JSON(j.at(key).is_string(), "Invalid " + key + " section", j);
+    return j.at(key).get<std::string>();
+}
+
 ptr<ResourceConfig> ResourceConfig::createFromJson(const nlohmann::json &j, ptr<FileManager> fileManager) {
     try {
         CHECK_STATE(fileManager);
-        CHECK_STATE(j.contains("location"));
-        CHECK_STATE(j.at("location").is_string());
-        std::string name = j.value("name", "");
+        auto name = mustContainString(j, "name");
         std::string location = j.value("location", "");
 
         CHECK_STATE(j.contains("type"));
@@ -33,7 +38,7 @@ ptr<vector<ptr<ResourceConfig> > > ResourceConfig::createVectorFromJsonArray(
         if (!j.contains("resources"))
             return result;
         auto resources = j.at("resources");
-        CHECK_STATE(resources.is_array());
+        CHECK_STATE_JSON(resources.is_array(), "Resources must be an array resources", j);
         for (const auto &item: resources) {
             auto res = createFromJson(item, fileManager);
             CHECK_STATE(res);

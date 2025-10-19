@@ -45,6 +45,12 @@ static_assert(exceptions_enabled, "Exceptions must be enabled!");
         throw std::logic_error(__msg__ + "(): " + std::string(__MSG__)); \
     }
 
+#define CHECK_STATE_JSON(_EXPRESSION_, __MSG__, __JSON__) \
+if (!(_EXPRESSION_)) { \
+auto __msg__ = std::string("Check failed:") + __MSG__ + "\n" + j.dump(4); \
+}
+
+
 inline std::string stripSpaces(std::string _s) {
     _s.erase(std::remove_if(_s.begin(), _s.end(), ::isspace), _s.end());
     return _s;
