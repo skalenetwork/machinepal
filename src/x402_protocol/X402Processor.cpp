@@ -48,7 +48,7 @@ void X402Processor::reply200Success(const std::string &settlementInfo,
         {"X-PAYMENT-RESPONSE", settlementInfo}
     };
     sendResponse({200, "OK"}, headers, proxyBody);
-    state_ = State::SUCCESS;
+    state_ = State::SUCCESS_RESOURCE_PROVIDED;
 }
 
 
@@ -66,7 +66,7 @@ void X402Processor::reply402PaymentRequired() {
         {"Content-Type", "application/json"}
     };
     sendResponse({402, "Payment Required"}, headers, json);
-    state_ = State::PAYMENT_REQUIRED_SENT;
+    state_ = State::SUCCESS_PAYMENT_REQUIRED_SENT;
 }
 
 void X402Processor::reply400BadRequest(const std::string &message) {
@@ -274,6 +274,7 @@ bool X402Processor::proxyResponseToBackEnd(std::string settlementInfo) {
 void X402Processor::onRequestCompletion(const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders) noexcept {
     try {
         if (state_ == State::ERROR) return;
+
         std::string settlementInfo;
         if (!hasValidPaymentHeader(reqHeaders, settlementInfo)) {
             reply402PaymentRequired();

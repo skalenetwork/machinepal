@@ -4,9 +4,9 @@ namespace x402 {
     enum class State {
         START,
         ERROR,
-        PAYMENT_REQUIRED_SENT,
+        SUCCESS_PAYMENT_REQUIRED_SENT,
         PAYMENT_HEADER_RECEIVED,
-        SUCCESS
+        SUCCESS_RESOURCE_PROVIDED
     };
 }
 
