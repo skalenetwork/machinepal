@@ -35,11 +35,14 @@ private:
                       const std::vector<std::pair<std::string, std::string>>& headers, const std::string& body);
     void reply400BadRequest( const std::string& message);
     void reply502BadGateway(const std::string& message);
-    bool decodePath(const std::string& path, string& errorMessage);
 
     bool validateAndExtractSubDomainName(const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders);
 
-    void validateAndDecodePath(const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders);
+    bool validateAndDecodePath(const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders);
+
+    bool matchOrganization();
+
+    bool validateMethod(const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders);
 
     void reply200Success(const std::string& settlementInfo,
                          std::string proxyBody);

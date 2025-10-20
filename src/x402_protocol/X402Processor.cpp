@@ -98,58 +98,7 @@ void X402Processor::sendResponse(
 }
 
 
-bool X402Processor::decodePath(const std::string &path, std::string &errorMessage) {
-    try {
-        if (path.empty()) {
-            errorMessage = "Empty URL path " + path;
-            goto error;
-        }
 
-
-        std::string decodedPath;
-        try {
-            auto decoded = boost::urls::decode_view(path);
-            decodedPath = std::string(decoded.begin(), decoded.end());
-        } catch (const std::exception &e) {
-            errorMessage = "Path contains invalid characters";
-            goto error;;
-        }
-        if (decodedPath.empty()) {
-            errorMessage = "Empty decoded URL path " + path;
-            goto error;
-        }
-        if (decodedPath.front() != '/') {
-            errorMessage = "URL path does not start with '/'";
-            goto error;;;
-        }
-        // Reject traversal attempts (including encoded)
-        if (decodedPath.find("..") != std::string::npos) {
-            errorMessage = "URL path traversal not allowed";
-            goto error;;
-        }
-
-
-        std::wstring wideText = boost::locale::conv::to_utf<wchar_t>(decodedPath, "UTF-8");
-
-        for (wchar_t ch: wideText) {
-            auto isValid = iswalnum(ch) || ch == L'/';
-            if (!isValid) {
-                errorMessage = "URL path contains invalid character:" + path;
-                goto error;
-            }
-        }
-
-        decodedPath_ = decodedPath;
-        return true;
-    } catch (std::exception &e) {
-        errorMessage = e.what();
-        goto error;
-    }
-
-error:
-    spdlog::error("Error parsing user submitted URL path in X402Processor: {}", errorMessage);
-    return false;
-}
 
 bool X402Processor::validateAndExtractSubDomainName(const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders) {
     auto domainName = reqHeaders->getHeaders().getSingleOrEmpty("host");
@@ -208,12 +157,44 @@ bool X402Processor::validateAndExtractSubDomainName(const std::unique_ptr<proxyg
     return true;
 }
 
-void X402Processor::validateAndDecodePath(const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders) {
+bool X402Processor::validateAndDecodePath(const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders) {
     auto path = reqHeaders->getPath();
     std::string errorMessage;
-    if (!decodePath(path, errorMessage)) {
+    if (!URLUtils::decodePath(path, decodedPath_, errorMessage)) {
         reply400BadRequest(errorMessage);
+        return false;
     }
+    return true;
+}
+
+bool X402Processor::matchOrganization() {
+    organization_ = config()->getOrganizationBySubdomainName(subDomainName_);
+
+    if (!organization_) {
+        reply400BadRequest("Unknown subdomain  " + subDomainName_ + "." + config_->server()->hostName() +
+                           " Please use a valid subdomain specified in machinepay config "
+                           "(like localhost or xyz.com) to access this service.");
+        return false;
+    }
+    return true;
+}
+
+bool X402Processor::validateMethod(const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders) {
+    auto method = reqHeaders->getMethod();
+
+    if (!method.has_value() ) {
+        reply400BadRequest("Missing HTTP method");
+    }
+
+    method_ = method.value();
+
+    if (method_ != proxygen::HTTPMethod::GET &&
+        method_ != proxygen::HTTPMethod::POST) {
+        reply400BadRequest("Unsupported HTTP method. Only GET and POST are supported" +
+                           reqHeaders->getMethodString());
+        return false;
+    }
+    return true;
 }
 
 void X402Processor::onRequestStart(const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders)
@@ -221,38 +202,17 @@ void X402Processor::onRequestStart(const std::unique_ptr<proxygen::HTTPMessage> 
     try {
         CHECK_STATE(reqHeaders);
 
-        auto method = reqHeaders->getMethod();
-
-        if (!method.has_value() ) {
-            reply400BadRequest("Missing HTTP method");
-        }
-
-        method_ = method.value();
-
-        if (method_ != proxygen::HTTPMethod::GET &&
-            method_ != proxygen::HTTPMethod::POST) {
-            reply400BadRequest("Unsupported HTTP method. Only GET and POST are supported" +
-                reqHeaders->getMethodString());
+        if (!validateMethod(reqHeaders))
             return;
-        }
-
 
         if (!validateAndExtractSubDomainName(reqHeaders))
             return;
 
-        // now match organization by domainname
-
-        organization_ = config_->getOrganizationBySubdomainName(subDomainName_);
-
-        if (!organization_) {
-            reply400BadRequest("Unknown subdomain  " + subDomainName_ + "." + config_->server()->hostName() +
-                               " Please use a valid subdomain specified in machinepay config "
-                               "(like localhost or xyz.com) to access this service.");
+        if (!matchOrganization())
             return;
-        }
 
-
-        validateAndDecodePath(reqHeaders);
+        if (!validateAndDecodePath(reqHeaders))
+            return;
     } catch (std::exception &e) {
         state_ = State::ERROR;
         spdlog::critical("Error in onRequestStart: {}", e.what());

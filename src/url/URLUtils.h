@@ -9,5 +9,7 @@ public:
     static bool isIpAddress(const std::string& host);
 
     static bool isDomainName(const std::string& host);
+
+    static bool decodePath(const std::string &path, std::string& result, std::string &errorMessage);
 };
 
