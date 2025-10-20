@@ -4,6 +4,7 @@
 
 #include "common.h"
 #include "filesystem/FileManager.h"
+#include "url/URLUtils.h"
 
 enum class ResourceType {
     LocalFile,
@@ -32,7 +33,7 @@ private:
         if (type_ == ResourceType::LocalFile) {
             machinePayPath_ = location_;
         } else {
-            machinePayPath_ = getLocationFromUrl(location_);
+            machinePayPath_ = URLUtils::getLocationFromUrl(location_);
         }
     }
 
@@ -48,6 +49,6 @@ public:
 
     static ptr<ResourceConfig> createFromJson(const nlohmann::json &j, ptr<FileManager> fileManager);
     static ptr<vector<ptr<ResourceConfig>>> createVectorFromJsonArray(const nlohmann::json &j, ptr<FileManager> fileManager);
-    static std::string getLocationFromUrl(const std::string& url);
+
 
 };
