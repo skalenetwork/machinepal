@@ -31,6 +31,8 @@ private:
     void reply200Success(const std::string& settlementInfo,
                                 std::string proxyBody);
 
+    std::string getPaymentRequirementsAsString();
+
 
     MachinePayApp& app_;
     std::string path_;

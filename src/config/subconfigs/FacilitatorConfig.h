@@ -36,6 +36,6 @@ inline std::string to_string(FacilitatorType type) {
     switch (type) {
         case FacilitatorType::cdp: return "cdp";
         case FacilitatorType::base: return "base";
-        throw std::invalid_argument("Unknown FacilitatorType");
     }
+    throw std::invalid_argument("Unknown FacilitatorType");
 }

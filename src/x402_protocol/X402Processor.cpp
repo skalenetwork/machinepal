@@ -57,11 +57,16 @@ void X402Processor::reply200Success(const std::string& settlementInfo,
 }
 
 
+std::string X402Processor::getPaymentRequirementsAsString() {
+    auto paymentRequirements = EXACT_UCDC_PAYMENT_REQ_CB_SEPOLIA;
+    return paymentRequirements;
+}
+
 void X402Processor::reply402PaymentRequired()
 {
 
     folly::dynamic req = folly::dynamic::object;
-    auto paymentRequirements = EXACT_UCDC_PAYMENT_REQ_CB_SEPOLIA;
+    auto paymentRequirements = getPaymentRequirementsAsString();
     req = folly::parseJson(paymentRequirements);
     auto json = folly::toJson(req);
     std::vector<std::pair<std::string, std::string>> headers = {
