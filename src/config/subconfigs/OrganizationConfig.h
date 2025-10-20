@@ -35,9 +35,16 @@ public:
     static ptr<OrganizationConfig> createDefaultFromResources(ptr<vector<ptr<ResourceConfig> > > resources);
 
     ptr<ResourceConfig> getResourceByPath(const std::string& path, proxygen::HTTPMethod method, const std::string& body) const {
-        if (!resources_ || resources_->empty()) return nullptr;
+        CHECK_STATE(resources_);
+        string matchString;
+        // ignore last backslash for matching
+        if (path.size() > 1 && path.back() == '/') {
+            matchString = path.substr(0, path.size() - 1);
+        } else {
+            matchString = path;
+        }
         for (const auto& resource : *resources_) {
-            if (resource->location() == path) {
+            if (resource->machinePayPath() == matchString) {
                 return resource;
             }
         }

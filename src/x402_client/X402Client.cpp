@@ -83,7 +83,7 @@ HttpResponse X402Client::httpGet(const std::string &_baseURL, const std::string 
     CURL *curl = curl_easy_init();
     if (!curl) throw std::runtime_error("curl_easy_init failed");
 
-    std::string url = _baseURL + ":" + std::to_string(port) + "/" + _location;
+    std::string url = _baseURL + ":" + std::to_string(port) + _location;
 
     struct curl_slist *hdrs = nullptr;
     for (auto &_h: _extraHeaders) hdrs = curl_slist_append(hdrs, _h.c_str());
