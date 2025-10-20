@@ -21,18 +21,28 @@ ptr<FacilitatorConfig> FacilitatorConfig::createFomJson(const nlohmann::json& j,
     try {
         CHECK_STATE(fileManager);
         CHECK_STATE(j.is_object());
-        std::optional<CanonicalPath> apiKeyFile = std::nullopt;
-        auto userProvidedApiKeyFile = JsonUtils::getStringIfExists(j, "api_key_file");
-        if (userProvidedApiKeyFile.has_value())
+        auto type = mustContainType(j);
+        if (type == FacilitatorType::cdp)
         {
-            auto resolved = fileManager->checkFileExistsAndReadableAndResolve(userProvidedApiKeyFile.value());
-            apiKeyFile = CanonicalPath(resolved);
+            // For cdp type, api_key_file is required
+            auto base_url = JsonUtils::mustContainString(j, "base_url");
+            auto userProvidedApiKeyFile = JsonUtils::mustContainString("api_key_file", j);
+
+
+            auto resolved = fileManager->checkFileExistsAndReadableAndResolve(userProvidedApiKeyFile);
+            CanonicalPath apiKeyFile(resolved);
+
+            return ptr<FacilitatorConfig>(new FacilitatorConfig(
+                type,
+                base_url,
+                apiKeyFile
+            ));
+
+        } else {
+            throw JsonValidationException("Unsupported facilitator type", j);
         }
-        return ptr<FacilitatorConfig>(new FacilitatorConfig(
-            mustContainType(j),
-            JsonUtils::mustContainString(j, "base_url"),
-            apiKeyFile
-        ));
+
+
     }
     catch (const std::exception& ex)
     {
