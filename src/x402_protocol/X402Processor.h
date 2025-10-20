@@ -33,6 +33,8 @@ private:
 
     bool validateAndExtractDomainName(const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders);
 
+    void validateAndDecodePath(const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders);
+
     void reply200Success(const std::string& settlementInfo,
                          std::string proxyBody);
 

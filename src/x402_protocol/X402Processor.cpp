@@ -208,6 +208,14 @@ bool X402Processor::validateAndExtractDomainName(const std::unique_ptr<proxygen:
     return true;
 }
 
+void X402Processor::validateAndDecodePath(const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders) {
+    auto path = reqHeaders->getPath();
+    std::string errorMessage;
+    if (!decodePath(path, errorMessage)) {
+        reply400BadRequest(errorMessage);
+    }
+}
+
 void X402Processor::onRequestStart(const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders)
     noexcept {
     try {
@@ -220,11 +228,7 @@ void X402Processor::onRequestStart(const std::unique_ptr<proxygen::HTTPMessage> 
 
 
 
-        auto path = reqHeaders->getPath();
-        std::string errorMessage;
-        if (!decodePath(path, errorMessage)) {
-            reply400BadRequest(errorMessage);
-        }
+        validateAndDecodePath(reqHeaders);
     } catch (std::exception &e) {
         state_ = State::ERROR;
         spdlog::critical("Error in onRequestStart: {}", e.what());
