@@ -8,6 +8,7 @@
 #include <nlohmann/json.hpp>
 #include <string>
 #include <memory>
+#include <proxygen/lib/http/HTTPMethod.h>
 
 class OrganizationConfig {
     ptr<vector<ptr<ResourceConfig> > > resources_;
@@ -32,4 +33,14 @@ public:
         const nlohmann::json &j, ptr<FileManager> fileManager);
 
     static ptr<OrganizationConfig> createDefaultFromResources(ptr<vector<ptr<ResourceConfig> > > resources);
+
+    ptr<ResourceConfig> getResourceByPath(const std::string& path, proxygen::HTTPMethod method, const std::string& body) const {
+        if (!resources_ || resources_->empty()) return nullptr;
+        for (const auto& resource : *resources_) {
+            if (resource->location() == path) {
+                return resource;
+            }
+        }
+        return nullptr;
+    }
 };

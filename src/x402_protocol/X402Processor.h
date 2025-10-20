@@ -5,6 +5,7 @@
 #include "X402ProcessorState.h"
 
 
+class ResourceConfig;
 
 namespace proxygen {
     enum class HTTPMethod;
@@ -23,7 +24,8 @@ public:
 
     void onRequestStart(const std::unique_ptr<proxygen::HTTPMessage>& headers) noexcept;
     bool proxyResponseToBackEnd(std::string settlementInfo);
-    void onRequestCompletion(const std::unique_ptr<proxygen::HTTPMessage>& reqHeaders) noexcept;
+    void onRequestCompletion(const std::unique_ptr<proxygen::HTTPMessage>& reqHeaders,
+        const string& body) noexcept;
     void onBodySizeIncrease(size_t newSize);
 private:
 
@@ -47,10 +49,11 @@ private:
 
     MachinePayApp& app_;
     ptr<MachinePayConfig> config_;
-    std::string path_;
+    //std::string path_;
     std::string decodedPath_;
     std::string subDomainName_;
     ptr<OrganizationConfig> organization_;
+    ptr<ResourceConfig> resource_;
     ptr<IResponseSender> responseSender_;
     State state_ = State::START;
     // initially set to non-supported value

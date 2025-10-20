@@ -16,6 +16,7 @@
 #include <sstream>
 #include <iomanip>
 
+#include "config/subconfigs/OrganizationConfig.h"
 #include "config/subconfigs/ServerConfig.h"
 
 
@@ -138,6 +139,7 @@ bool X402Processor::decodePath(const std::string &path, std::string &errorMessag
             }
         }
 
+        decodedPath_ = decodedPath;
         return true;
     } catch (std::exception &e) {
         errorMessage = e.what();
@@ -242,9 +244,9 @@ void X402Processor::onRequestStart(const std::unique_ptr<proxygen::HTTPMessage> 
 
         // now match organization by domainname
 
-        auto organization = config_->getOrganizationBySubdomainName(subDomainName_);
+        organization_ = config_->getOrganizationBySubdomainName(subDomainName_);
 
-        if (!organization) {
+        if (!organization_) {
             reply400BadRequest("Unknown subdomain  " + subDomainName_ + "." + config_->server()->hostName() +
                                " Please use a valid subdomain specified in machinepay config "
                                "(like localhost or xyz.com) to access this service.");
@@ -271,9 +273,18 @@ bool X402Processor::proxyResponseToBackEnd(std::string settlementInfo) {
     return false;
 }
 
-void X402Processor::onRequestCompletion(const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders) noexcept {
+void X402Processor::onRequestCompletion(const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
+    const string& body) noexcept {
     try {
         if (state_ == State::ERROR) return;
+
+        CHECK_STATE(organization_);
+        resource_ = organization_->getResourceByPath(decodedPath_, method_, body);
+
+        if (!resource_) {
+            reply400BadRequest("Resource not found for path: " + decodedPath_);
+            return;
+        }
 
         std::string settlementInfo;
         if (!hasValidPaymentHeader(reqHeaders, settlementInfo)) {
