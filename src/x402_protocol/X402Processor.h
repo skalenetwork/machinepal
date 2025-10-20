@@ -37,7 +37,7 @@ private:
     void reply502BadGateway(const std::string& message);
     bool decodePath(const std::string& path, string& errorMessage);
 
-    bool validateAndExtractDomainName(const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders);
+    bool validateAndExtractSubDomainName(const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders);
 
     void validateAndDecodePath(const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders);
 

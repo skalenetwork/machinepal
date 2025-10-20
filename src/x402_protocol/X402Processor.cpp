@@ -151,7 +151,7 @@ error:
     return false;
 }
 
-bool X402Processor::validateAndExtractDomainName(const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders) {
+bool X402Processor::validateAndExtractSubDomainName(const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders) {
     auto domainName = reqHeaders->getHeaders().getSingleOrEmpty("host");
     // Remove port if present (e.g., example.com:8080 -> example.com)
 
@@ -161,17 +161,8 @@ bool X402Processor::validateAndExtractDomainName(const std::unique_ptr<proxygen:
         return false;
     }
 
-    // Check if domain is an IP address (IPv4 or IPv6)
-    auto isIpAddress = [](const std::string &host) {
-        // IPv4: 1.2.3.4
-        std::regex ipv4(R"(^\d{1,3}(?:\.\d{1,3}){3}$)");
-        // IPv6: [2001:db8::1] or 2001:db8::1
-        std::regex ipv6(R"(^\[?[0-9a-fA-F:]+\]?$)");
-        return std::regex_match(host, ipv4) || std::regex_match(host, ipv6);
-    };
 
-
-    if (isIpAddress(domainName)) {
+    if (URLUtils::isIpAddress(domainName)) {
         reply400BadRequest(
             "Unknown host: " + domainName + ". You need to access MachinePay using a hostname, not an IP address. "
             "Please use a valid hostname to access this service.");
@@ -185,7 +176,7 @@ bool X402Processor::validateAndExtractDomainName(const std::unique_ptr<proxygen:
 
     // check for IP address again
 
-    if (isIpAddress(domainName)) {
+    if (URLUtils::isIpAddress(domainName)) {
         reply400BadRequest(
             "Unknown host: " + domainName + ". You need to access MachinePay using a hostname, not an IP address. "
             "Please use a valid hostname specified in machinepay config "
@@ -193,6 +184,13 @@ bool X402Processor::validateAndExtractDomainName(const std::unique_ptr<proxygen:
         return false;
     }
 
+    if (!URLUtils::isDomainName(domainName)) {
+        reply400BadRequest(
+            "Invalid host name: " + domainName + "."
+            "Please use a valid hostname specified in machinepay config "
+            "(like localhost or xyz.com) to access this service.");
+        return false;
+    }
 
     auto hostName = config_->server()->hostName();
 
@@ -239,7 +237,7 @@ void X402Processor::onRequestStart(const std::unique_ptr<proxygen::HTTPMessage> 
         }
 
 
-        if (!validateAndExtractDomainName(reqHeaders))
+        if (!validateAndExtractSubDomainName(reqHeaders))
             return;
 
         // now match organization by domainname

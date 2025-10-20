@@ -5,5 +5,9 @@ class URLUtils {
 public:
 
     static std::string getLocationFromUrl(const std::string& url);
+
+    static bool isIpAddress(const std::string& host);
+
+    static bool isDomainName(const std::string& host);
 };
 
