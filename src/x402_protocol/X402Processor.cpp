@@ -286,3 +286,13 @@ void X402Processor::onRequestCompletion(const std::unique_ptr<proxygen::HTTPMess
         spdlog::critical("Error in onRequestStart: {}", e.what());
     }
 }
+
+void X402Processor::onBodySizeIncrease(size_t newSize) {
+    constexpr size_t MAX_BODY_SIZE = 128 * 1024; // 128 KB
+    spdlog::info("Request body size increased: {} bytes", newSize);
+    if (newSize > MAX_BODY_SIZE) {
+        reply400BadRequest("Request body too large. Maximum allowed is 128 KB. You can increase this limit in "
+                           "machinepay config if needed.");
+        state_ = State::ERROR;
+    }
+}

@@ -24,6 +24,7 @@ public:
     void onRequestStart(const std::unique_ptr<proxygen::HTTPMessage>& headers) noexcept;
     bool proxyResponseToBackEnd(std::string settlementInfo);
     void onRequestCompletion(const std::unique_ptr<proxygen::HTTPMessage>& reqHeaders) noexcept;
+    void onBodySizeIncrease(size_t newSize);
 private:
 
     bool hasValidPaymentHeader(const std::unique_ptr<proxygen::HTTPMessage>&  _req, std::string& paymentInfo);
@@ -52,7 +53,8 @@ private:
     ptr<OrganizationConfig> organization_;
     ptr<IResponseSender> responseSender_;
     State state_ = State::START;
-    proxygen::HTTPMethod method_ = proxygen::HTTPMethod::GET;
+    // initially set to non-supported value
+    proxygen::HTTPMethod method_ = proxygen::HTTPMethod::TRACE;
 
 
 

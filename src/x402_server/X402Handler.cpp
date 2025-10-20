@@ -31,6 +31,7 @@ void X402Handler::onBody(std::unique_ptr<folly::IOBuf> _body) noexcept {
         if (!_body) return;
         _body->coalesce();
         bodyBuffer_.append(reinterpret_cast<const char *>(_body->data()), _body->length());
+        processor_->onBodySizeIncrease(bodyBuffer_.size());
     } catch (const std::exception& e)
     {
         spdlog::critical("Error in onBody: {}", e.what());
