@@ -11,6 +11,7 @@ namespace proxygen {
 
 class MachinePayApp; // Forward declaration
 class MachinePayConfig;
+class OrganizationConfig;
 
 class X402Processor {
 public:
@@ -29,8 +30,11 @@ private:
     void reply400BadRequest( const std::string& message);
     void reply502BadGateway(const std::string& message);
     bool decodePath(const std::string& path, string& errorMessage);
+
+    bool validateAndExtractDomainName(const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders);
+
     void reply200Success(const std::string& settlementInfo,
-                                std::string proxyBody);
+                         std::string proxyBody);
 
     std::string getPaymentRequirementsAsString();
 
@@ -39,6 +43,14 @@ private:
     ptr<MachinePayConfig> config_;
     std::string path_;
     std::string decodedPath_;
+    std::string subDomainName_;
+    ptr<OrganizationConfig> organization_;
     ptr<IResponseSender> responseSender_;
     State state_ = State::START;
+
+    // Getter for config_
+    const std::shared_ptr<MachinePayConfig>& config() const {
+        CHECK_STATE(config_);
+        return config_;
+    }
 };
