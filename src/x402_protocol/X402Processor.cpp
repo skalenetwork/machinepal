@@ -226,6 +226,14 @@ void X402Processor::onRequestStart(const std::unique_ptr<proxygen::HTTPMessage> 
 
         // now match organization by domainname
 
+        auto organization = config_->getOrganizationBySubdomainName(subDomainName_);
+
+        if (!organization) {
+            reply400BadRequest("Unknown subdomain  " + subDomainName_ + "." + config_->server()->hostName() +
+                               " Please use a valid subdomain specified in machinepay config "
+                               "(like localhost or xyz.com) to access this service.");
+            return;
+        }
 
 
         validateAndDecodePath(reqHeaders);

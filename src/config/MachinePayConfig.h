@@ -18,20 +18,25 @@ class MachinePayConfig {
                      const ptr<std::vector<ptr<OrganizationConfig>> >& organizations,
                      std::shared_ptr<NetworkConfig> network);
 
+    [[nodiscard]] ptr<std::map<string, ptr<OrganizationConfig>>> organizationsBySubdomain() const {
+        CHECK_STATE(organizationsBySubdomain_)
+        return organizationsBySubdomain_;
+    }
+
+
+    [[nodiscard]] ptr<std::map<string, ptr<OrganizationConfig>>> organizationsByName() const {
+        CHECK_STATE(organizationsByName_)
+        return organizationsByName_;
+    }
+
 public:
 
     const ptr<ServerConfig>& server() const;
 
-    [[nodiscard]] ptr<std::map<string, ptr<OrganizationConfig>>> organizationsByName() const {
-        return organizationsByName_;
-    }
-
     const ptr<LogConfig>& log() const;
     const std::shared_ptr<NetworkConfig>& network() const;
 
-    [[nodiscard]] ptr<std::map<string, ptr<OrganizationConfig>>> organizationsBySubdomain() const {
-        return organizationsBySubdomain_;
-    }
+
 
     static ptr<MachinePayConfig> createFromJson(const nlohmann::json& j, ptr<FileManager> fileManager);
 
@@ -42,5 +47,11 @@ public:
         CHECK_STATE(it->second);
         return it->second;
     }
+    ptr<OrganizationConfig> getOrganizationBySubdomainName(const std::string& subdomain) const {
+        auto it = organizationsBySubdomain()->find(subdomain);
+        if (it != organizationsBySubdomain()->end()) {
+            return it->second;
+        }
+        return nullptr;
+    }
 };
-
