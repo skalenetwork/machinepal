@@ -90,7 +90,9 @@ public:
     static string mustContainString(const nlohmann::json& j, string key)
     {
         CHECK_STATE_JSON(j.contains(key), "Missing required " + key + " section", j);
+        cerr << "Check string key: " << key << endl;
         CHECK_STATE_JSON(j.at(key).is_string(), key + " must be string", j);
+        cerr << "Checked string key: " << key << endl;
         return j.at(key).get<std::string>();
     }
 

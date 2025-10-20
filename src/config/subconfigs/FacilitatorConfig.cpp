@@ -26,7 +26,7 @@ ptr<FacilitatorConfig> FacilitatorConfig::createFomJson(const nlohmann::json& j,
         {
             // For cdp type, api_key_file is required
             auto base_url = JsonUtils::mustContainString(j, "base_url");
-            auto userProvidedApiKeyFile = JsonUtils::mustContainString("api_key_file", j);
+            auto userProvidedApiKeyFile = JsonUtils::mustContainString(j, "api_key_file");
 
 
             auto resolved = fileManager->checkFileExistsAndReadableAndResolve(userProvidedApiKeyFile);

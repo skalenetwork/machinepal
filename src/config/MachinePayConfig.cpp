@@ -66,6 +66,7 @@ MachinePayConfig::MachinePayConfig(const ptr<ServerConfig>& server,
     CHECK_STATE(server);
     CHECK_STATE(log_);
     organizationsByName_ = std::make_shared<std::map<string,ptr<OrganizationConfig>>>();
+    organizationsBySubdomain_ = std::make_shared<std::map<string,ptr<OrganizationConfig>>>();
     for (const auto& org : *organizations) {
         CHECK_STATE(org);
         auto orgName = org->organizationName();
