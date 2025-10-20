@@ -23,7 +23,7 @@ ptr<ResourceConfig> ResourceConfig::createFromJson(const nlohmann::json &j, ptr<
         auto name = JsonUtils::mustContainString(j, "name");
         auto type = mustContainType(j);
         auto location = JsonUtils::mustContainString(j, "location");
-        auto price = JsonUtils::mustContainString(j, "price");
+        auto price = JsonUtils::mustContainPrice(j, "price");
         auto token = JsonUtils::mustContainString(j, "token");
         return ptr<ResourceConfig>(new ResourceConfig(name, location, type, price, token));
     } catch (const std::exception &ex) {

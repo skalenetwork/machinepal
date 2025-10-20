@@ -14,6 +14,8 @@ throw std::logic_error(__msg__ + "(): " + std::string(__MSG__)); \
 #include "MachinePayConfig.h"
 #include "nlohmann/json.hpp"
 #include <mutex>
+#include <boost/multiprecision/cpp_int.hpp>
+
 
 class MachinePayConfig;
 
@@ -54,7 +56,7 @@ public:
                                      const std::string &defaultValue) {
 
         if (j.contains(key)) {
-            CHECK_STATE_JSON(j.at(key).is_string(), "Expected string for key: " + key, j);
+            CHECK_STATE_JSON(j.at(key).is_string(), key + " must be string", j);
             return j.at(key).get<std::string>();
         }
         return defaultValue;
@@ -63,7 +65,7 @@ public:
     static bool getBoolWithDefault(const nlohmann::json &j, const std::string &key,
                             bool defaultValue) {
         if (j.contains(key)) {
-            CHECK_STATE_JSON(j.at(key).is_boolean(), "Expected boolean for key: " + key, j);
+            CHECK_STATE_JSON(j.at(key).is_boolean(), key + " must be boolean", j);
             return j.at(key).get<bool>();
         }
         return defaultValue;
@@ -73,11 +75,11 @@ public:
     static uint16_t getUint16WithDefault(const nlohmann::json &j, const std::string &key,
                                   uint16_t defaultValue) {
         if (j.contains(key)) {
-            CHECK_STATE_JSON(j.at(key).is_number_integer(), "Expected integer for key: " + key, j);
+            CHECK_STATE_JSON(j.at(key).is_number_integer(), key + " must be uint16", j);
             auto value = j.at(key).get<int>();
             if (value <= 0 || value > 65535) {
                 throw std::out_of_range(
-                    "Value for key '" + key + "' is out of range for uint16_t: " + std::to_string(value));
+                    "Value for key '" + key + "' is out of range for uint16: " + std::to_string(value));
             }
             return static_cast<uint16_t>(value);
         }
@@ -88,21 +90,21 @@ public:
     static string mustContainString(const nlohmann::json& j, string key)
     {
         CHECK_STATE_JSON(j.contains(key), "Missing required " + key + " section", j);
-        CHECK_STATE_JSON(j.at(key).is_string(), "Invalid " + key + " section", j);
+        CHECK_STATE_JSON(j.at(key).is_string(), key + " must be string", j);
         return j.at(key).get<std::string>();
     }
 
     static nlohmann::json mustContainObject(const nlohmann::json& j, const std::string& key)
     {
         CHECK_STATE_JSON(j.contains(key), "Missing required object: " + key, j);
-        CHECK_STATE_JSON(j.at(key).is_object(), "Expected object for key: " + key, j);
+        CHECK_STATE_JSON(j.at(key).is_object(), key + " must be object", j);
         return j.at(key);
     }
 
     static nlohmann::json mustContainArray(const nlohmann::json& j, const std::string& key)
     {
         CHECK_STATE_JSON(j.contains(key), "Missing required array: " + key, j);
-        CHECK_STATE_JSON(j.at(key).is_array(), "Expected array for key: " + key, j);
+        CHECK_STATE_JSON(j.at(key).is_array(), key + " must be array", j);
         return j.at(key);
     }
 
@@ -113,6 +115,18 @@ public:
             }
         }
         return std::nullopt;
+    }
+
+
+    static boost::multiprecision::uint256_t mustContainPrice(const nlohmann::json& j, const std::string& key)
+    {
+        CHECK_STATE_JSON(j.contains(key), "Missing required: " + key, j);
+        CHECK_STATE_JSON(j.at(key).is_number_float() || j.at(key).is_number_integer(), key + " must be integer or float price", j);
+        double value = j.at(key).get<double>();
+        CHECK_STATE_JSON(value >= 0.0f, key + " must be non-negative", j);
+        // Convert to 10^18 base (e.g., for Ethereum-like tokens)
+        boost::multiprecision::uint256_t result = static_cast<boost::multiprecision::uint256_t>(value * 1e18);
+        return result;
     }
 
 };

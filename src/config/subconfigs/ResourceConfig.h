@@ -1,4 +1,7 @@
 #pragma once
+#include <memory>
+#include <boost/multiprecision/cpp_int.hpp>
+
 #include "common.h"
 #include "filesystem/FileManager.h"
 
@@ -14,17 +17,17 @@ class ResourceConfig {
     std::string name_;
     std::string location_;
     ResourceType type_;
-    std::string price_;
+    boost::multiprecision::uint256_t price_;
     std::string token_;
 
-    ResourceConfig(const std::string& name, const std::string& location, ResourceType type, const std::string& price, const std::string& token)
+    ResourceConfig(const std::string& name, const std::string& location, ResourceType type, boost::multiprecision::uint256_t price, const std::string& token)
         : name_(name), location_(location), type_(type), price_(price), token_(token) {}
 
 public:
     const std::string& name() const { return name_; }
     const std::string& location() const { return location_; }
     ResourceType type() const { return type_; }
-    const std::string& price() const { return price_; }
+    const boost::multiprecision::uint256_t price() const { return price_; }
     const std::string& token() const { return token_; }
 
 
