@@ -1,10 +1,13 @@
 #pragma once
+#include <proxygen/lib/http/HTTPMethod.h>
+
 #include "IResponseSender.h"
 #include "X402ProcessorState.h"
 
 
 
 namespace proxygen {
+    enum class HTTPMethod;
     class ResponseHandler;
     class HTTPMessage;
 }
@@ -49,6 +52,9 @@ private:
     ptr<OrganizationConfig> organization_;
     ptr<IResponseSender> responseSender_;
     State state_ = State::START;
+    proxygen::HTTPMethod method_ = proxygen::HTTPMethod::GET;
+
+
 
     // Getter for config_
     const std::shared_ptr<MachinePayConfig>& config() const {

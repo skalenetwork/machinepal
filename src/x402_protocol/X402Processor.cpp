@@ -221,6 +221,22 @@ void X402Processor::onRequestStart(const std::unique_ptr<proxygen::HTTPMessage> 
     try {
         CHECK_STATE(reqHeaders);
 
+        auto method = reqHeaders->getMethod();
+
+        if (!method.has_value() ) {
+            reply400BadRequest("Missing HTTP method");
+        }
+
+        method_ = method.value();
+
+        if (method_ != proxygen::HTTPMethod::GET &&
+            method_ != proxygen::HTTPMethod::POST) {
+            reply400BadRequest("Unsupported HTTP method. Only GET and POST are supported" +
+                reqHeaders->getMethodString());
+            return;
+        }
+
+
         if (!validateAndExtractDomainName(reqHeaders))
             return;
 
