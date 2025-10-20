@@ -10,6 +10,7 @@ namespace proxygen {
 }
 
 class MachinePayApp; // Forward declaration
+class MachinePayConfig;
 
 class X402Processor {
 public:
@@ -35,6 +36,7 @@ private:
 
 
     MachinePayApp& app_;
+    ptr<MachinePayConfig> config_;
     std::string path_;
     std::string decodedPath_;
     ptr<IResponseSender> responseSender_;

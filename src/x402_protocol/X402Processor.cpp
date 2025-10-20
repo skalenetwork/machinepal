@@ -16,39 +16,34 @@
 #include <sstream>
 #include <iomanip>
 
+#include "config/subconfigs/ServerConfig.h"
 
-X402Processor::X402Processor(MachinePayApp& app, ptr<IResponseSender>& responseSender)
-    : app_(app), responseSender_(responseSender)
-{
-    // TODO: Add any initialization logic if needed
+
+X402Processor::X402Processor(MachinePayApp &app, ptr<IResponseSender> &responseSender)
+    : app_(app), responseSender_(responseSender) {
+    config_ = app_.configManager()->latestConfig();
 }
 
-bool X402Processor::hasValidPaymentHeader(const std::unique_ptr<proxygen::HTTPMessage>& req, std::string& paymentInfo)
-{
-    try
-    {
-        const auto& headerTable = req->getHeaders();
+bool X402Processor::hasValidPaymentHeader(const std::unique_ptr<proxygen::HTTPMessage> &req, std::string &paymentInfo) {
+    try {
+        const auto &headerTable = req->getHeaders();
         std::string payment = headerTable.getSingleOrEmpty("X-PAYMENT");
         if (payment.empty()) return false;
-        if (payment == "demo-ok")
-        {
+        if (payment == "demo-ok") {
             paymentInfo =
-                R"({\"txHash\":\"0xabc123...\",\"amount\":\"0.25\",\"asset\":\"SDC\",\"network\":\"base-1net\"})";
+                    R"({\"txHash\":\"0xabc123...\",\"amount\":\"0.25\",\"asset\":\"SDC\",\"network\":\"base-1net\"})";
             return true;
         }
-    }
-    catch (std::exception& e)
-    {
+    } catch (std::exception &e) {
         spdlog::error("Error parsing payment header: {}", e.what());
     }
     return false;
 }
 
 
-void X402Processor::reply200Success(const std::string& settlementInfo,
-                                    std::string proxyBody)
-{
-    std::vector<std::pair<std::string, std::string>> headers = {
+void X402Processor::reply200Success(const std::string &settlementInfo,
+                                    std::string proxyBody) {
+    std::vector<std::pair<std::string, std::string> > headers = {
         {"Content-Type", "text/plain"},
         {"X-PAYMENT-RESPONSE", settlementInfo}
     };
@@ -62,23 +57,20 @@ std::string X402Processor::getPaymentRequirementsAsString() {
     return paymentRequirements;
 }
 
-void X402Processor::reply402PaymentRequired()
-{
-
+void X402Processor::reply402PaymentRequired() {
     folly::dynamic req = folly::dynamic::object;
     auto paymentRequirements = getPaymentRequirementsAsString();
     req = folly::parseJson(paymentRequirements);
     auto json = folly::toJson(req);
-    std::vector<std::pair<std::string, std::string>> headers = {
+    std::vector<std::pair<std::string, std::string> > headers = {
         {"Content-Type", "application/json"}
     };
     sendResponse({402, "Payment Required"}, headers, json);
     state_ = State::PAYMENT_REQUIRED_SENT;
 }
 
-void X402Processor::reply400BadRequest(const std::string& message)
-{
-    std::vector<std::pair<std::string, std::string>> headers = {
+void X402Processor::reply400BadRequest(const std::string &message) {
+    std::vector<std::pair<std::string, std::string> > headers = {
         {"Content-Type", "text/plain"}
     };
     sendResponse({400, "Bad Request"}, headers, message);
@@ -86,9 +78,8 @@ void X402Processor::reply400BadRequest(const std::string& message)
 }
 
 
-void X402Processor::reply502BadGateway(const std::string& message)
-{
-    std::vector<std::pair<std::string, std::string>> headers = {
+void X402Processor::reply502BadGateway(const std::string &message) {
+    std::vector<std::pair<std::string, std::string> > headers = {
         {"Content-Type", "text/plain"}
     };
     sendResponse({502, "Bad Gateway"}, headers, message);
@@ -97,51 +88,41 @@ void X402Processor::reply502BadGateway(const std::string& message)
 
 
 void X402Processor::sendResponse(
-                                 const std::pair<uint16_t, std::string>& statusAndMessage,
-                                 const std::vector<std::pair<std::string, std::string>>& headers,
-                                 const std::string& body = "")
-{
+    const std::pair<uint16_t, std::string> &statusAndMessage,
+    const std::vector<std::pair<std::string, std::string> > &headers,
+    const std::string &body = "") {
     CHECK_STATE(state_ != State::ERROR);
     CHECK_STATE(responseSender_);
     responseSender_->sendResponse(statusAndMessage, headers, body);
 }
 
 
-bool X402Processor::decodePath(const std::string& path, std::string& errorMessage)
-{
-    try
-    {
-        if (path.empty())
-        {
+bool X402Processor::decodePath(const std::string &path, std::string &errorMessage) {
+    try {
+        if (path.empty()) {
             errorMessage = "Empty URL path " + path;
             goto error;
         }
 
 
         std::string decodedPath;
-        try
-        {
+        try {
             auto decoded = boost::urls::decode_view(path);
             decodedPath = std::string(decoded.begin(), decoded.end());
-        }
-        catch (const std::exception& e)
-        {
+        } catch (const std::exception &e) {
             errorMessage = "Path contains invalid characters";
             goto error;;
         }
-        if (decodedPath.empty())
-        {
+        if (decodedPath.empty()) {
             errorMessage = "Empty decoded URL path " + path;
             goto error;
         }
-        if (decodedPath.front() != '/')
-        {
+        if (decodedPath.front() != '/') {
             errorMessage = "URL path does not start with '/'";
             goto error;;;
         }
         // Reject traversal attempts (including encoded)
-        if (decodedPath.find("..") != std::string::npos)
-        {
+        if (decodedPath.find("..") != std::string::npos) {
             errorMessage = "URL path traversal not allowed";
             goto error;;
         }
@@ -149,20 +130,16 @@ bool X402Processor::decodePath(const std::string& path, std::string& errorMessag
 
         std::wstring wideText = boost::locale::conv::to_utf<wchar_t>(decodedPath, "UTF-8");
 
-        for (wchar_t ch : wideText)
-        {
+        for (wchar_t ch: wideText) {
             auto isValid = iswalnum(ch) || ch == L'/';
-            if (!isValid)
-            {
+            if (!isValid) {
                 errorMessage = "URL path contains invalid character:" + path;
                 goto error;
             }
         }
 
         return true;
-    }
-    catch (std::exception& e)
-    {
+    } catch (std::exception &e) {
         errorMessage = e.what();
         goto error;
     }
@@ -172,33 +149,58 @@ error:
     return false;
 }
 
-void X402Processor::onRequestStart(const std::unique_ptr<proxygen::HTTPMessage>& reqHeaders)
-    noexcept
-{
-    try
-    {
+void X402Processor::onRequestStart(const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders)
+    noexcept {
+    try {
         CHECK_STATE(reqHeaders);
+
+        auto domain = reqHeaders->getHeaders().getSingleOrEmpty("host");
+
+        if (domain.empty()) {
+            reply400BadRequest("Missing Host header");
+            return;
+        }
+
+        // Check if domain is an IP address (IPv4 or IPv6)
+        auto isIpAddress = [](const std::string& host) {
+            // IPv4: 1.2.3.4
+            std::regex ipv4(R"(^\d{1,3}(?:\.\d{1,3}){3}$)");
+            // IPv6: [2001:db8::1] or 2001:db8::1
+            std::regex ipv6(R"(^\[?[0-9a-fA-F:]+\]?$)");
+            return std::regex_match(host, ipv4) || std::regex_match(host, ipv6);
+        };
+
+        if (isIpAddress(domain)) {
+            reply400BadRequest("Unknown host: " + domain + ". You need to access MachinePay using a hostname, not an IP address. "
+                               "Please use a valid hostname to access this service.");
+            return;
+        }
+
+
+        if (!domain.ends_with(config_->server()->hostName())) {
+            reply400BadRequest("Unknown host: " + domain);
+            return;
+        }
+
+
+
+
         auto path = reqHeaders->getPath();
         std::string errorMessage;
-        if (!decodePath(path, errorMessage))
-        {
+        if (!decodePath(path, errorMessage)) {
             reply400BadRequest(errorMessage);
         }
-    }
-    catch (std::exception& e)
-    {
+    } catch (std::exception &e) {
         state_ = State::ERROR;
         spdlog::critical("Error in onRequestStart: {}", e.what());
     };
 }
 
-bool X402Processor::proxyResponseToBackEnd(std::string settlementInfo)
-{
+bool X402Processor::proxyResponseToBackEnd(std::string settlementInfo) {
     std::string backendResponseBody;
     std::string errorMessage;
     bool success = BackendConnection::proxyToBackEnd(backendResponseBody, errorMessage);
-    if (!success)
-    {
+    if (!success) {
         reply502BadGateway(errorMessage.empty() ? "Failed to fetch content from upstream service." : errorMessage);
         return true;
     }
@@ -206,22 +208,17 @@ bool X402Processor::proxyResponseToBackEnd(std::string settlementInfo)
     return false;
 }
 
-void X402Processor::onRequestCompletion(const std::unique_ptr<proxygen::HTTPMessage>& reqHeaders) noexcept
-{
-    try
-    {
+void X402Processor::onRequestCompletion(const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders) noexcept {
+    try {
         if (state_ == State::ERROR) return;
         std::string settlementInfo;
-        if (!hasValidPaymentHeader(reqHeaders, settlementInfo))
-        {
+        if (!hasValidPaymentHeader(reqHeaders, settlementInfo)) {
             reply402PaymentRequired();
             return;
         }
         state_ = State::PAYMENT_HEADER_RECEIVED;
         if (proxyResponseToBackEnd(settlementInfo)) return;
-    }
-    catch (std::exception& e)
-    {
+    } catch (std::exception &e) {
         state_ = State::ERROR;
         spdlog::critical("Error in onRequestStart: {}", e.what());
     }
