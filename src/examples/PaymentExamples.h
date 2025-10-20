@@ -4,7 +4,7 @@ const std::string EXACT_UCDC_PAYMENT_REQ_CB_SEPOLIA = R"(
 {
         "scheme": "exact",
         "network": "base-sepolia",
-        "maxAmountRequired": "1000",
+        "maxAmountRequired": "12000000000000000000",
         "resource": "https://api.example.com/premium/data",
         "description": "Test API data",
         "mimeType": "application/json",

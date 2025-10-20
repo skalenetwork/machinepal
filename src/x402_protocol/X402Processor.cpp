@@ -16,8 +16,10 @@
 #include <sstream>
 #include <iomanip>
 
+#include "config/subconfigs/NetworkConfig.h"
 #include "config/subconfigs/OrganizationConfig.h"
 #include "config/subconfigs/ServerConfig.h"
+#include "datastructures/PaymentRequirements.h"
 
 
 X402Processor::X402Processor(MachinePayApp &app, ptr<IResponseSender> &responseSender)
@@ -54,11 +56,38 @@ void X402Processor::reply200Success(const std::string &settlementInfo,
 
 
 std::string X402Processor::getPaymentRequirementsAsString() {
-    auto paymentRequirements = EXACT_UCDC_PAYMENT_REQ_CB_SEPOLIA;
-    return paymentRequirements;
+    auto priceStr = resource_->priceStr();
+    auto scheme = "exact";
+    auto mimeType = "application/json";
+    auto network = config_->network()->name();
+    auto payTo = "0x2222222222222222222222222222222222222222";
+    auto asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e";
+    auto maxTimeoutSeconds = 10;
+    auto description = "Test API data";
+    auto extraName = "USDC";
+    auto extraVersion = "2";
+    //auto path = resource_->machinePayPath();
+    nlohmann::json extra;
+    extra["name"] = extraName;
+    extra["version"] = extraVersion;
+    PaymentRequirements req(
+        scheme,
+        network,
+        priceStr,
+        "https://api.example.com/premium/data",
+        description,
+        mimeType,
+        std::nullopt, // outputSchema
+        payTo,
+        maxTimeoutSeconds,
+        asset,
+        extra
+    );
+    return *PaymentRequirements::toString(req);
 }
 
 void X402Processor::reply402PaymentRequired() {
+    CHECK_STATE(resource_);
     folly::dynamic req = folly::dynamic::object;
     auto paymentRequirements = getPaymentRequirementsAsString();
     req = folly::parseJson(paymentRequirements);

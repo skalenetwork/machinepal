@@ -13,7 +13,7 @@ BOOST_AUTO_TEST_CASE(deserialize_payment_requirements) {
 
     BOOST_TEST(requirements->scheme() == "exact");
     BOOST_TEST(requirements->network() == "base-sepolia");
-    BOOST_TEST(requirements->maxAmountRequired() == "1000");
+    BOOST_TEST(requirements->maxAmountRequired() == "12000000000000000000");
     BOOST_TEST(requirements->resource() == "https://api.example.com/premium/data");
     BOOST_TEST(requirements->description() == "Test API data");
     BOOST_TEST(requirements->mimeType() == "application/json");

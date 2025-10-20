@@ -43,6 +43,9 @@ public:
     ResourceType type() const { return type_; }
     const boost::multiprecision::uint256_t price() const { return price_; }
     const std::string& token() const { return token_; }
+    const std::string priceStr() const {
+        return price_.str();
+    }
 
 
     static ResourceType mustContainType(const nlohmann::json &j);
