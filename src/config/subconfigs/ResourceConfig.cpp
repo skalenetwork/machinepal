@@ -14,6 +14,11 @@ ResourceType ResourceConfig::mustContainType(const nlohmann::json &j) {
     if (typeString == "api-jsonrpc") {
         return ResourceType::ApiJsonRpc;
     }
+
+    if (typeString == "api-rest") {
+        return ResourceType::ApiRest;
+    }
+
     throw JsonValidationException("Invalid resource type: " + typeString, j);
 }
 

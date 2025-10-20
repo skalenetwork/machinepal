@@ -51,3 +51,15 @@ resources:
     location: https://google.com/resources/hello_world.txt
     price: 1.545
     token: USDC
+
+  - name: hello_world_api_json_rpc
+    type: api-jsonrpc
+    location: https://google.com/resources/hello_world.txt
+    price: 1.545
+    token: USDC
+
+  - name: hello_world_api_rest
+    type: api-rest
+    location: https://jsonplaceholder.typicode.com/posts/1
+    price: 12
+    token: USDC

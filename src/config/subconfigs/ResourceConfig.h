@@ -8,7 +8,7 @@
 enum class ResourceType {
     LocalFile,
     ApiJsonRpc,
-    Unknown
+    ApiRest
 };
 
 
