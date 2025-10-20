@@ -30,7 +30,6 @@ public:
     ResourceType type() const { return type_; }
     const std::string& price() const { return price_; }
     const std::string& token() const { return token_; }
-    static string mustContainString(const nlohmann::json& j, string key);
     static ptr<ResourceConfig> createFromJson(const nlohmann::json &j, ptr<FileManager> fileManager);
     static ptr<vector<ptr<ResourceConfig>>> createVectorFromJsonArray(const nlohmann::json &j, ptr<FileManager> fileManager);
 

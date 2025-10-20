@@ -4,17 +4,12 @@
 
 class FileManager;
 
-string ResourceConfig::mustContainString(const nlohmann::json& j, string key)
-{
-    CHECK_STATE_JSON(j.contains(key), "Missing required " + key + " section", j);
-    CHECK_STATE_JSON(j.at(key).is_string(), "Invalid " + key + " section", j);
-    return j.at(key).get<std::string>();
-}
+
 
 ptr<ResourceConfig> ResourceConfig::createFromJson(const nlohmann::json &j, ptr<FileManager> fileManager) {
     try {
         CHECK_STATE(fileManager);
-        auto name = mustContainString(j, "name");
+        auto name = JsonUtils::mustContainString(j, "name");
         std::string location = j.value("location", "");
 
         CHECK_STATE(j.contains("type"));
