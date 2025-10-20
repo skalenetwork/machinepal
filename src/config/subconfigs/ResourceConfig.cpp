@@ -1,7 +1,7 @@
 #include "ResourceConfig.h"
 
 #include "config/JsonUtils.h"
-#include "exceptions/JSONValidationException.h"
+#include "exceptions/JsonValidationException.h"
 
 class FileManager;
 
@@ -14,7 +14,7 @@ ResourceType ResourceConfig::mustContainType(const nlohmann::json &j) {
     if (typeString == "api-jsonrpc") {
         return ResourceType::ApiJsonRpc;
     }
-    throw JSONValidationException("Invalid resource type: " + typeString, j);
+    throw JsonValidationException("Invalid resource type: " + typeString, j);
 }
 
 ptr<ResourceConfig> ResourceConfig::createFromJson(const nlohmann::json &j, ptr<FileManager> fileManager) {

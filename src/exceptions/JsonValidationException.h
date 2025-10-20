@@ -4,9 +4,9 @@
 #include <string>
 #include <nlohmann/json.hpp>
 
-class JSONValidationException : public std::exception {
+class JsonValidationException : public std::exception {
 public:
-    JSONValidationException(const std::string& message, const nlohmann::json& j)
+    JsonValidationException(const std::string& message, const nlohmann::json& j)
         : message_(message), json_(j) {}
 
     const char* what() const noexcept override {

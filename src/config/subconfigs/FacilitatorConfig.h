@@ -5,17 +5,37 @@
 class FileManager;
 class CanonicalPath;
 
+enum class FacilitatorType {
+    cdp,
+    base,
+};
+
+
 class FacilitatorConfig {
-    std::string type_;
+    FacilitatorType type_;
     std::string baseUrl_;
     std::optional<CanonicalPath> apiKeyFile_;
 
-    FacilitatorConfig(const std::string& type,
+    FacilitatorConfig(const FacilitatorType,
                       const std::string& baseUrl,
                       const std::optional<CanonicalPath>& apiKeyFile = std::nullopt);
 public:
-    const std::string& type() const;
+    const FacilitatorType type() const;
     const std::string& baseUrl() const;
     const std::optional<CanonicalPath>& apiKeyFile() const;
     static ptr<FacilitatorConfig> createFomJson(const nlohmann::json& j, ptr<FileManager> fileManager);
+
+
+
+    static FacilitatorType mustContainType(const nlohmann::json& j);
+
+
 };
+
+inline std::string to_string(FacilitatorType type) {
+    switch (type) {
+        case FacilitatorType::cdp: return "cdp";
+        case FacilitatorType::base: return "base";
+        throw std::invalid_argument("Unknown FacilitatorType");
+    }
+}

@@ -19,29 +19,7 @@
 #include "JsonUtils.h"
 
 
-ptr<FacilitatorConfig> FacilitatorConfig::createFomJson(const nlohmann::json& j, ptr<FileManager> fileManager)
-{
-    try {
-        CHECK_STATE(fileManager);
-        CHECK_STATE(j.is_object());
-        std::optional<CanonicalPath> apiKeyFile = std::nullopt;
-        auto userProvidedApiKeyFile = JsonUtils::getStringIfExists(j, "api_key_file");
-        if (userProvidedApiKeyFile.has_value())
-        {
-            auto resolved = fileManager->checkFileExistsAndReadableAndResolve(userProvidedApiKeyFile.value());
-            apiKeyFile = CanonicalPath(resolved);
-        }
-        return ptr<FacilitatorConfig>(new FacilitatorConfig(
-            JsonUtils::getStringWithDefault(j, "type", ""),
-            JsonUtils::getStringWithDefault(j, "base_url", ""),
-            apiKeyFile
-        ));
-    }
-    catch (const std::exception& ex)
-    {
-        RETHROW_NESTED;
-    }
-}
+
 
 
 ptr<MachinePayConfig> MachinePayConfig::createFromJson(const nlohmann::json& j, ptr<FileManager> fileManager)
