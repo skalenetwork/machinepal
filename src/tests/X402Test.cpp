@@ -64,7 +64,8 @@ struct X402ServerFixture {
             };
             app_ = MachinePayApp::makeInstance(configMap);
             auto config = app_->configManager()->latestConfig();
-            client = std::make_shared<X402Client>(config->server()->bindIp(), config->server()->http()->port());
+            client = std::make_shared<X402Client>(config->server()->hostName(),
+                config->server()->http()->port());
 
             srvThread = std::thread([this] {
                 app_->runUntilExit(); //

@@ -1,12 +1,12 @@
 #include "X402Client.h"
 
 X402Client::X402Client(const std::string &_connect_ip, uint16_t _port)
-    : connectIp(_connect_ip), port(_port) {}
+    : connectHost(_connect_ip), port(_port) {}
 
 X402Client::~X402Client() {}
 
 std::string X402Client::baseUrl() {
-    return "http://" + connectIp;
+    return "http://" + connectHost;
 }
 
 std::string X402Client::parseStatusLineAndHeaders(const std::vector<std::string> &_headersVector,

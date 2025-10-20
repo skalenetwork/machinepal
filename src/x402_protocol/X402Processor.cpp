@@ -155,6 +155,8 @@ void X402Processor::onRequestStart(const std::unique_ptr<proxygen::HTTPMessage> 
         CHECK_STATE(reqHeaders);
 
         auto domain = reqHeaders->getHeaders().getSingleOrEmpty("host");
+        // Remove port if present (e.g., example.com:8080 -> example.com)
+
 
         if (domain.empty()) {
             reply400BadRequest("Missing Host header");
@@ -162,7 +164,7 @@ void X402Processor::onRequestStart(const std::unique_ptr<proxygen::HTTPMessage> 
         }
 
         // Check if domain is an IP address (IPv4 or IPv6)
-        auto isIpAddress = [](const std::string& host) {
+        auto isIpAddress = [](const std::string &host) {
             // IPv4: 1.2.3.4
             std::regex ipv4(R"(^\d{1,3}(?:\.\d{1,3}){3}$)");
             // IPv6: [2001:db8::1] or 2001:db8::1
@@ -170,19 +172,36 @@ void X402Processor::onRequestStart(const std::unique_ptr<proxygen::HTTPMessage> 
             return std::regex_match(host, ipv4) || std::regex_match(host, ipv6);
         };
 
+
         if (isIpAddress(domain)) {
-            reply400BadRequest("Unknown host: " + domain + ". You need to access MachinePay using a hostname, not an IP address. "
-                               "Please use a valid hostname to access this service.");
+            reply400BadRequest(
+                "Unknown host: " + domain + ". You need to access MachinePay using a hostname, not an IP address. "
+                "Please use a valid hostname to access this service.");
+            return;
+        }
+
+        auto colonPos = domain.rfind(':');
+        if (colonPos != std::string::npos) {
+            domain = domain.substr(0, colonPos);
+        }
+
+        // check for IP address again
+
+        if (isIpAddress(domain)) {
+            reply400BadRequest(
+                "Unknown host: " + domain + ". You need to access MachinePay using a hostname, not an IP address. "
+                "Please use a valid hostname specified in machinepay config "
+                "(like localhost or xyz.com) to access this service.");
             return;
         }
 
 
         if (!domain.ends_with(config_->server()->hostName())) {
-            reply400BadRequest("Unknown host: " + domain);
+            reply400BadRequest("Unknown host: " + domain + " "
+                               "Please use a valid hostname specified in machinepay config "
+                               "(like localhost or xyz.com) to access this service.");
             return;
         }
-
-
 
 
         auto path = reqHeaders->getPath();

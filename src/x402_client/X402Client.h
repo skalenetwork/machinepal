@@ -20,7 +20,7 @@ struct HttpResponse {
 
 struct X402Client {
 private:
-    std::string connectIp;
+    std::string connectHost;
     uint16_t port;
 
 public:
