@@ -1,7 +1,7 @@
 #include "LogConfig.h"
 #include <stdexcept>
 
-#include "config/ConfigLoader.h"
+#include "config/JsonUtils.h"
 
 LogLevel parseLogLevel(const std::string& level) {
     if (level == "trace") return LogLevel::trace;
@@ -33,8 +33,8 @@ ptr<LogConfig> LogConfig::createFromJson(const nlohmann::json& j, ptr<FileManage
     try {
         CHECK_STATE(fileManager);
         CHECK_STATE(j.is_object());
-        return ptr<LogConfig>( new LogConfig( ConfigLoader::getStringWithDefault(j, "level", "info"),
-            ConfigLoader::getStringWithDefault(j, "type", "plain")));
+        return ptr<LogConfig>( new LogConfig( JsonUtils::getStringWithDefault(j, "level", "info"),
+            JsonUtils::getStringWithDefault(j, "type", "plain")));
     } catch (const std::exception& ex) {
         RETHROW_NESTED;
     }

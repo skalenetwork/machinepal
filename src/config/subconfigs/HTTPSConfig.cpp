@@ -2,7 +2,7 @@
 #include "crypto/CertManager.h"
 #include <stdexcept>
 
-#include "config/ConfigLoader.h"
+#include "config/JsonUtils.h"
 #include "filesystem/FileManager.h"
 
 HTTPSConfig::HTTPSConfig(bool isEnabled, uint16_t port, const CanonicalPath &certFile,
@@ -34,12 +34,12 @@ ptr<HTTPSConfig> HTTPSConfig::createFromJson(const nlohmann::json &j, ptr<FileMa
             keyPassFile = CanonicalPath(resolved);
         }
         auto certFile = CanonicalPath(
-            fileManager->checkFileExistsAndReadableAndResolve(ConfigLoader::getStringWithDefault(j, "cert_file", "")));
+            fileManager->checkFileExistsAndReadableAndResolve(JsonUtils::getStringWithDefault(j, "cert_file", "")));
         auto keyFile = CanonicalPath(
-            fileManager->checkFileExistsAndReadableAndResolve(ConfigLoader::getStringWithDefault(j, "key_file", "")));
+            fileManager->checkFileExistsAndReadableAndResolve(JsonUtils::getStringWithDefault(j, "key_file", "")));
         return ptr<HTTPSConfig>(new HTTPSConfig(
-            ConfigLoader::getBoolWithDefault(j, "enabled", true),
-            ConfigLoader::getUint16WithDefault(j, "port", 8080),
+            JsonUtils::getBoolWithDefault(j, "enabled", true),
+            JsonUtils::getUint16WithDefault(j, "port", 8080),
             certFile,
             keyFile,
             keyPassFile,

@@ -8,7 +8,6 @@ throw std::logic_error(__msg__ + "(): " + std::string(__MSG__)); \
 }
 
 
-
 #pragma once
 
 
@@ -21,20 +20,8 @@ class MachinePayConfig;
 
 class JsonUtils {
 public:
-
-
-
-    static bool getBoolWithDefault(
-            const nlohmann::json &j, const std::string &key, bool defaultValue);
-
-    static uint16_t getUint16WithDefault(const nlohmann::json &j, const std::string &key,
-                                                         uint16_t defaultValue);
-
-    static std::string getStringWithDefault(
-        const nlohmann::json &j, const std::string &key, const std::string &defaultValue);
-
-
-    static std::string findPath(const json& root, const json& target, const std::string& current = "") {
+    static std::string findPath(const nlohmann::json &root, const nlohmann::json &target,
+                                const std::string &current = "") {
         if (&root == &target) {
             return current.empty() ? "/" : current;
         }
@@ -57,22 +44,22 @@ public:
     }
 
 
-    static bool asBool(const std::string& s) {
+    static bool asBool(const std::string &s) {
         return s == "1" || s == "true" || s == "TRUE" || s == "yes" || s == "on";
     };
 
 
     // Helper to get a string from a json object with a default value
-    std::string ConfigLoader::getStringWithDefault(const nlohmann::json &j, const std::string &key,
-                                                             const std::string &defaultValue) {
+    static std::string getStringWithDefault(const nlohmann::json &j, const std::string &key,
+                                     const std::string &defaultValue) {
         if (j.contains(key) && !j.at(key).is_null()) {
             return j.at(key).get<std::string>();
         }
         return defaultValue;
     }
 
-    bool JsonUtils::getBoolWithDefault(const nlohmann::json &j, const std::string &key,
-                                                             bool defaultValue) {
+    static bool getBoolWithDefault(const nlohmann::json &j, const std::string &key,
+                            bool defaultValue) {
         if (j.contains(key) && !j.at(key).is_null()) {
             return j.at(key).get<bool>();
         }
@@ -80,18 +67,16 @@ public:
     }
 
 
-
-    uint16_t ConfigLoader::getUint16WithDefault(const nlohmann::json &j, const std::string &key,
-                                                         uint16_t defaultValue) {
+    static uint16_t getUint16WithDefault(const nlohmann::json &j, const std::string &key,
+                                  uint16_t defaultValue) {
         if (j.contains(key) && !j.at(key).is_null()) {
             auto value = j.at(key).get<int>();
             if (value <= 0 || value > 65535) {
-                throw std::out_of_range("Value for key '" + key + "' is out of range for uint16_t: " + std::to_string(value));
+                throw std::out_of_range(
+                    "Value for key '" + key + "' is out of range for uint16_t: " + std::to_string(value));
             }
             return static_cast<uint16_t>(value);
         }
         return defaultValue;
     }
-
-
 };

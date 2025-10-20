@@ -1,5 +1,7 @@
 #include "ResourceConfig.h"
 
+#include "config/JsonUtils.h"
+
 class FileManager;
 
 string ResourceConfig::mustContainString(const nlohmann::json& j, string key)
