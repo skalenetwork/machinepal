@@ -119,9 +119,9 @@ BOOST_FIXTURE_TEST_SUITE(X402Suite, X402ServerFixture)
         BOOST_TEST(headersMap["Content-Type"] == "application/json");
 
 
-        auto req = nlohmann::json::parse(resp.body).get<PaymentRequirements>();
-        auto expected = nlohmann::json::parse(EXACT_UCDC_PAYMENT_REQ_CB_SEPOLIA).get<PaymentRequirements>();
-        BOOST_TEST(req == expected);
+        auto req = PaymentRequirements::fromJson(nlohmann::json::parse(resp.body));
+        auto expected = PaymentRequirements::fromJson(nlohmann::json::parse(EXACT_UCDC_PAYMENT_REQ_CB_SEPOLIA));
+        BOOST_TEST(*req == *expected);
     }
 
     BOOST_AUTO_TEST_CASE(Returns200WhenPaymentHeaderPresent) {

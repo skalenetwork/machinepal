@@ -1,52 +1,62 @@
-
 #include "PaymentRequirements.h"
+#include "config/JsonUtils.h"
 
 /**
- * @brief Serializes a PaymentRequirements struct into a nlohmann::json object.
+ * @brief Serializes a PaymentRequirements struct into a JSON string.
  * Handles 'outputSchema' conditionally: the key is omitted if the optional is empty.
  */
-void to_json(json& j, const PaymentRequirements& p) {
-    // Mandatory Fields
-    j["scheme"] = p.scheme;
-    j["network"] = p.network;
-    j["maxAmountRequired"] = p.maxAmountRequired;
-    j["resource"] = p.resource;
-    j["description"] = p.description;
-    j["mimeType"] = p.mimeType;
-    j["payTo"] = p.payTo;
-    j["maxTimeoutSeconds"] = p.maxTimeoutSeconds;
-    j["asset"] = p.asset;
-    j["extra"] = p.extra; // json type handles null/object automatically
-
-    // Optional Field: outputSchema
-    if (p.outputSchema.has_value()) {
-        j["outputSchema"] = p.outputSchema.value();
-    }
+std::shared_ptr<std::string> PaymentRequirements::toString(const PaymentRequirements& p) {
+    return std::make_shared<std::string>(p.toJsonObject().dump());
 }
 
-// --- Custom JSON Deserialization (from_json) ---
+// --- Custom JSON Deserialization (fromJson) ---
 /**
  * @brief Deserializes a nlohmann::json object into a PaymentRequirements struct.
  * Handles 'outputSchema' conditionally: sets the optional to nullopt if the key is missing.
  */
-void from_json(const json& j, PaymentRequirements& p)
+std::shared_ptr<PaymentRequirements> PaymentRequirements::fromJson(const json& j)
 {
-    // Mandatory Fields (using at() for strict access)
-    j.at("scheme").get_to(p.scheme);
-    j.at("network").get_to(p.network);
-    j.at("maxAmountRequired").get_to(p.maxAmountRequired);
-    j.at("resource").get_to(p.resource);
-    j.at("description").get_to(p.description);
-    j.at("mimeType").get_to(p.mimeType);
-    j.at("payTo").get_to(p.payTo);
-    j.at("maxTimeoutSeconds").get_to(p.maxTimeoutSeconds);
-    j.at("asset").get_to(p.asset);
-    j.at("extra").get_to(p.extra);
+    auto scheme = JsonUtils::mustContainString(j, "scheme");
+    auto network = JsonUtils::mustContainString(j, "network");
+    auto maxAmountRequired = JsonUtils::mustContainString(j, "maxAmountRequired");
+    auto resource = JsonUtils::mustContainString(j, "resource");
+    auto description = JsonUtils::mustContainString(j, "description");
+    auto mimeType = JsonUtils::mustContainString(j, "mimeType");
+    std::optional<json> outputSchema = (j.contains("outputSchema") && !j.at("outputSchema").is_null()) ? std::optional<json>(j.at("outputSchema")) : std::nullopt;
+    auto payTo = JsonUtils::mustContainString(j, "payTo");
+    int maxTimeoutSeconds = j.at("maxTimeoutSeconds").get<int>();
+    std::string asset = JsonUtils::mustContainString(j, "asset");
+    json extra = j.at("extra");
+    auto p = std::make_shared<PaymentRequirements>(
+        scheme,
+        network,
+        maxAmountRequired,
+        resource,
+        description,
+        mimeType,
+        outputSchema,
+        payTo,
+        maxTimeoutSeconds,
+        asset,
+        extra
+    );
+    return p;
+}
 
-    // Optional Field: outputSchema (using contains() check)
-    if (j.contains("outputSchema")) {
-        p.outputSchema = j.at("outputSchema").get<json>();
-    } else {
-        p.outputSchema = std::nullopt;
+json PaymentRequirements::toJsonObject() const {
+    json j;
+    j["scheme"] = scheme_;
+    j["network"] = network_;
+    j["maxAmountRequired"] = maxAmountRequired_;
+    j["resource"] = resource_;
+    j["description"] = description_;
+    j["mimeType"] = mimeType_;
+    j["payTo"] = payTo_;
+    j["maxTimeoutSeconds"] = maxTimeoutSeconds_;
+    j["asset"] = asset_;
+    j["extra"] = extra_;
+    if (outputSchema_.has_value()) {
+        j["outputSchema"] = outputSchema_.value();
     }
+    return j;
 }

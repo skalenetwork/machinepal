@@ -129,4 +129,11 @@ public:
         return result;
     }
 
+    static uint64_t mustContainUint64(const nlohmann::json& j, const std::string& key) {
+        CHECK_STATE_JSON(j.contains(key), "Missing required: " + key, j);
+        CHECK_STATE_JSON(j.at(key).is_number_unsigned() || j.at(key).is_number_integer(), key + " must be unsigned integer", j);
+        uint64_t value = j.at(key).get<uint64_t>();
+        return value;
+    }
+
 };
