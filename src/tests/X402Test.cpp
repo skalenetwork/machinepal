@@ -73,9 +73,13 @@ struct X402ServerFixture {
             while (!app_->isStarted()) {
                 spdlog::info("Waiting for server to start...");
                 usleep(1000 * 100); // 100ms
+                if (app_->isExited()) {
+                    BOOST_FAIL("Server exited unexpectedly during startup.");
+                }
             }
 
-            spdlog::info(app_->isStarted());
+
+            spdlog::info("Test server started on port {}", config->server()->http()->port());
 
 
         } catch (const std::exception &ex) {
