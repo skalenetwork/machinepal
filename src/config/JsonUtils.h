@@ -52,7 +52,9 @@ public:
     // Helper to get a string from a json object with a default value
     static std::string getStringWithDefault(const nlohmann::json &j, const std::string &key,
                                      const std::string &defaultValue) {
-        if (j.contains(key) && !j.at(key).is_null()) {
+
+        if (j.contains(key)) {
+            CHECK_STATE_JSON(j.at(key).is_string(), "Expected string for key: " + key, j);
             return j.at(key).get<std::string>();
         }
         return defaultValue;
@@ -60,7 +62,8 @@ public:
 
     static bool getBoolWithDefault(const nlohmann::json &j, const std::string &key,
                             bool defaultValue) {
-        if (j.contains(key) && !j.at(key).is_null()) {
+        if (j.contains(key)) {
+            CHECK_STATE_JSON(j.at(key).is_boolean(), "Expected boolean for key: " + key, j);
             return j.at(key).get<bool>();
         }
         return defaultValue;
@@ -69,7 +72,8 @@ public:
 
     static uint16_t getUint16WithDefault(const nlohmann::json &j, const std::string &key,
                                   uint16_t defaultValue) {
-        if (j.contains(key) && !j.at(key).is_null()) {
+        if (j.contains(key)) {
+            CHECK_STATE_JSON(j.at(key).is_number_integer(), "Expected integer for key: " + key, j);
             auto value = j.at(key).get<int>();
             if (value <= 0 || value > 65535) {
                 throw std::out_of_range(
@@ -86,6 +90,29 @@ public:
         CHECK_STATE_JSON(j.contains(key), "Missing required " + key + " section", j);
         CHECK_STATE_JSON(j.at(key).is_string(), "Invalid " + key + " section", j);
         return j.at(key).get<std::string>();
+    }
+
+    static nlohmann::json mustContainObject(const nlohmann::json& j, const std::string& key)
+    {
+        CHECK_STATE_JSON(j.contains(key), "Missing required object: " + key, j);
+        CHECK_STATE_JSON(j.at(key).is_object(), "Expected object for key: " + key, j);
+        return j.at(key);
+    }
+
+    static nlohmann::json mustContainArray(const nlohmann::json& j, const std::string& key)
+    {
+        CHECK_STATE_JSON(j.contains(key), "Missing required array: " + key, j);
+        CHECK_STATE_JSON(j.at(key).is_array(), "Expected array for key: " + key, j);
+        return j.at(key);
+    }
+
+    static std::optional<std::string> getStringIfExists(const nlohmann::json &j, const std::string &key) {
+        if (j.contains(key)) {
+            if (j.at(key).is_string()) {
+                return j.at(key).get<std::string>();
+            }
+        }
+        return std::nullopt;
     }
 
 };

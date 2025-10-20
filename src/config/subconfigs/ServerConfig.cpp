@@ -4,6 +4,7 @@
 
 #include "config/ConfigLoader.h"
 #include "config/JsonUtils.h"
+#include "exceptions/JSONValidationException.h"
 
 static const std::regex ipv4_regex(R"(^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$)");
 static const std::regex ipv6_regex(R"(^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$)");
@@ -70,7 +71,7 @@ ptr<ServerConfig> ServerConfig::createFromJson(const nlohmann::json& j,  ptr<Fil
         }
         if (!httpConfig && !httpsConfig)
         {
-            throw std::runtime_error("At least one of HTTP or HTTPS must be configured in server config");
+            throw JSONValidationException("At least one of HTTP or HTTPS must be configured in server config", j);
         }
 
         return ptr<ServerConfig>(new ServerConfig(

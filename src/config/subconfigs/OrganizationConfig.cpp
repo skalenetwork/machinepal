@@ -1,10 +1,12 @@
 #include "OrganizationConfig.h"
 
+#include "config/JsonUtils.h"
+
 ptr<OrganizationConfig> OrganizationConfig::createFromJson(const nlohmann::json& j, ptr<FileManager> fileManager) {
     try {
         CHECK_STATE(fileManager);
-        std::string organizationName = j.value("name", "");
-        std::string subdomain = j.value("subdomain", "");
+        std::string organizationName = JsonUtils::mustContainString("name", j);
+        std::string subdomain = JsonUtils::mustContainString("subdomain", j);
         auto resources = ResourceConfig::createVectorFromJsonArray(j, fileManager);
         return ptr<OrganizationConfig>(new OrganizationConfig(resources, organizationName, subdomain));
     } catch (const std::exception& ex) {
