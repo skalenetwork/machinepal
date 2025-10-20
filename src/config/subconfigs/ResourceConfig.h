@@ -8,11 +8,7 @@ enum class ResourceType {
     Unknown
 };
 
-inline ResourceType resourceTypeFromString(const std::string& typeStr) {
-    if (typeStr == "local_file") return ResourceType::LocalFile;
-    if (typeStr == "api-jsonrpc") return ResourceType::ApiJsonRpc;
-    return ResourceType::Unknown;
-}
+
 
 class ResourceConfig {
     std::string name_;
@@ -30,6 +26,10 @@ public:
     ResourceType type() const { return type_; }
     const std::string& price() const { return price_; }
     const std::string& token() const { return token_; }
+
+
+    static ResourceType mustContainType(const nlohmann::json &j);
+
     static ptr<ResourceConfig> createFromJson(const nlohmann::json &j, ptr<FileManager> fileManager);
     static ptr<vector<ptr<ResourceConfig>>> createVectorFromJsonArray(const nlohmann::json &j, ptr<FileManager> fileManager);
 

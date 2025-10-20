@@ -1,26 +1,30 @@
 #include "ResourceConfig.h"
 
 #include "config/JsonUtils.h"
+#include "exceptions/JSONValidationException.h"
 
 class FileManager;
 
 
+ResourceType ResourceConfig::mustContainType(const nlohmann::json &j) {
+    auto typeString = JsonUtils::mustContainString(j, "type");
+    if (typeString == "local_file") {
+        return ResourceType::LocalFile;
+    }
+    if (typeString == "api-jsonrpc") {
+        return ResourceType::ApiJsonRpc;
+    }
+    throw JSONValidationException("Invalid resource type: " + typeString, j);
+}
 
 ptr<ResourceConfig> ResourceConfig::createFromJson(const nlohmann::json &j, ptr<FileManager> fileManager) {
     try {
         CHECK_STATE(fileManager);
         auto name = JsonUtils::mustContainString(j, "name");
-        std::string location = j.value("location", "");
-
-        CHECK_STATE(j.contains("type"));
-        CHECK_STATE(j.at("type").is_string());
-        ResourceType type = resourceTypeFromString(j.at("type").get<std::string>()) ;
-        CHECK_STATE(j.contains("price"));
-        CHECK_STATE(j.contains("token"));
-        CHECK_STATE(j.at("price").is_string());
-        CHECK_STATE(j.at("token").is_string());
-        string price = j.at("price").get<std::string>();
-        std::string token = j.at("token").get<std::string>();
+        auto type = mustContainType(j);
+        auto location = JsonUtils::mustContainString(j, "location");
+        auto price = JsonUtils::mustContainString(j, "price");
+        auto token = JsonUtils::mustContainString(j, "token");
         return ptr<ResourceConfig>(new ResourceConfig(name, location, type, price, token));
     } catch (const std::exception &ex) {
         RETHROW_NESTED;
