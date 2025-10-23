@@ -14,13 +14,18 @@ class OrganizationConfig {
     ptr<vector<ptr<ResourceConfig> > > resources_;
     std::string organizationName_;
     std::string subdomain_;
+    std::string payToAddressStr_;
 
     OrganizationConfig(const ptr<vector<ptr<ResourceConfig> > > &server, const std::string &organizationName,
         const std::string &subdomain)
     : resources_(server), organizationName_(organizationName), subdomain_(subdomain) {
+        payToAddressStr_ = "0x2222222222222222222222222222222222222222";
     }
 
 public:
+    [[nodiscard]] std::string payToAddressAsString() const {
+        return payToAddressStr_;
+    }
 
 
     const ptr<vector<ptr<ResourceConfig> > > &resources() const { return resources_; }

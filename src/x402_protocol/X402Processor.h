@@ -18,18 +18,9 @@ class MachinePayConfig;
 class OrganizationConfig;
 
 class X402Processor {
+
+
 public:
-    [[nodiscard]] ptr<MachinePayConfig> config1() const {
-        CHECK_STATE(config_);
-        return config_;
-    }
-
-    [[nodiscard]] ptr<ResourceConfig> resource() const {
-        CHECK_STATE(resource_);
-        return resource_;
-    }
-
-
     using State = x402::State;
     explicit X402Processor(MachinePayApp& app, ptr<IResponseSender>& responseSender);
 
@@ -60,10 +51,26 @@ private:
 
     std::string getPaymentRequirementsAsString();
 
+    [[nodiscard]] ptr<MachinePayConfig> config() const {
+        CHECK_STATE(config_);
+        return config_;
+    }
+
+    [[nodiscard]] ptr<ResourceConfig> resource() const {
+        CHECK_STATE(resource_);
+        return resource_;
+    }
+
+
+    [[nodiscard]] ptr<OrganizationConfig> organization() const {
+        CHECK_STATE(organization_);
+        return organization_;
+    }
+
+
 
     MachinePayApp& app_;
     ptr<MachinePayConfig> config_;
-    //std::string path_;
     std::string decodedPath_;
     std::string subDomainName_;
     ptr<OrganizationConfig> organization_;
@@ -73,11 +80,4 @@ private:
     // initially set to non-supported value
     proxygen::HTTPMethod method_ = proxygen::HTTPMethod::TRACE;
 
-
-
-    // Getter for config_
-    const std::shared_ptr<MachinePayConfig>& config() const {
-        CHECK_STATE(config_);
-        return config_;
-    }
 };

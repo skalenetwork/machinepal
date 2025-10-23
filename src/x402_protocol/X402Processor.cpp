@@ -58,10 +58,10 @@ void X402Processor::reply200Success(const std::string &settlementInfo,
 std::string X402Processor::getPaymentRequirementsAsString() {
 
     auto priceStr = resource()->priceStr();
-    auto scheme = "exact";
+    auto scheme = resource()->paymentScheme();
     auto mimeType = resource()->mimeType();
     auto network = config()->network()->name();
-    auto payTo = "0x2222222222222222222222222222222222222222";
+    auto payTo = organization()->payToAddressAsString();
     auto maxTimeoutSeconds = 600;
     auto description = resource()->description();
     auto tokenName = resource()->token();
