@@ -7,6 +7,7 @@
 
 Instantly add **crypto payments** to any website or API using the [x402 protocol](https://docs.cdp.coinbase.com/x402/docs/welcome).
 
+[![Build and test machinepay](https://github.com/skalenetwork/machinepay/actions/workflows/build_test_and_publish.yml/badge.svg)](https://github.com/skalenetwork/machinepay/actions/workflows/build_test_and_publish.yml)
 [![GitHub stars](https://img.shields.io/github/stars/skalenetwork/machinepay?style=social)](https://github.com/skalenetwork/machinepay/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/skalenetwork/machinepay?style=social)](https://github.com/skalenetwork/machinepay/network/members)
 [![GitHub issues](https://img.shields.io/github/issues/skalenetwork/machinepay)](https://github.com/skalenetwork/machinepay/issues)
