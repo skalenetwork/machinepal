@@ -40,13 +40,9 @@ bool X402Processor::validatePayment(const std::unique_ptr<proxygen::HTTPMessage>
         // the payment header should not be empty at this point - otherwise we would have replied 402 already
         CHECK_STATE(!payment.empty())
 
-
-        if (payment == "demo-ok") {
-            paymentInfo =
+        paymentInfo =
                     R"({\"txHash\":\"0xabc123...\",\"amount\":\"0.25\",\"asset\":\"USDC\",\"network\":\"base\"})";
-            return true;
-        }
-
+        return true;
     } catch (std::exception &e) {
         spdlog::error("hasValidPaymentHeader had exception while parsing X-PAYMENT header: {}", e.what());
         reply500InternalError("Error parsing X-PAYMENT header: ");
