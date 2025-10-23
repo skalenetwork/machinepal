@@ -37,14 +37,19 @@ bool X402Processor::validatePayment(const std::unique_ptr<proxygen::HTTPMessage>
     try {
         const auto &headerTable = req->getHeaders();
         std::string payment = headerTable.getSingleOrEmpty("X-PAYMENT");
-        if (payment.empty()) return false;
+        // the payment header should not be empty at this point - otherwise we would have replied 402 already
+        CHECK_STATE(!payment.empty())
+
+
         if (payment == "demo-ok") {
             paymentInfo =
                     R"({\"txHash\":\"0xabc123...\",\"amount\":\"0.25\",\"asset\":\"USDC\",\"network\":\"base\"})";
             return true;
         }
+
     } catch (std::exception &e) {
-        spdlog::error("[hasValidPaymentHeader] Exception while parsing X-PAYMENT header: {}", e.what());
+        spdlog::error("hasValidPaymentHeader had exception while parsing X-PAYMENT header: {}", e.what());
+        reply500InternalError("Error parsing X-PAYMENT header: ");
     }
     return false;
 }
