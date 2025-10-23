@@ -11,6 +11,7 @@
 #include "config/subconfigs/ServerConfig.h"
 #include "../payment/PaymentRequirements.h"
 #include "payment/PaymentRequiredResponse.h"
+#include <boost/beast/core/detail/base64.hpp>
 
 
 X402Processor::X402Processor(MachinePayApp &app, ptr<IResponseSender> &responseSender)
@@ -39,6 +40,34 @@ bool X402Processor::validatePayment(const std::unique_ptr<proxygen::HTTPMessage>
         std::string payment = headerTable.getSingleOrEmpty("X-PAYMENT");
         // the payment header should not be empty at this point - otherwise we would have replied 402 already
         CHECK_STATE(!payment.empty())
+
+
+        std::string decoded;
+        try {
+            decoded.resize(boost::beast::detail::base64::decoded_size(payment.size()));
+            auto len = boost::beast::detail::base64::decode(&decoded[0], payment.data(), payment.size());
+            if (len.first == 0) {
+                spdlog::error("Failed to decode X-PAYMENT header: base64 decode returned 0 length");
+                reply400BadRequest("X-PAYMENT header is not valid base64");
+                return false;
+            }
+            decoded.resize(len.first);
+        } catch (const std::exception& e) {
+            spdlog::error("Exception during base64 decode of X-PAYMENT header: {}", e.what());
+            reply400BadRequest("X-PAYMENT header is not valid base64");
+            return false;
+        }
+
+        // Parse decoded string as JSON
+        try {
+            auto j = nlohmann::json::parse(decoded);
+        } catch (const std::exception& e) {
+            spdlog::error("Failed to parse decoded X-PAYMENT header as JSON: {}", e.what());
+            reply400BadRequest("X-PAYMENT header is not valid JSON after base64 decoding");
+            return false;
+        }
+
+
 
         paymentInfo =
                     R"({\"txHash\":\"0xabc123...\",\"amount\":\"0.25\",\"asset\":\"USDC\",\"network\":\"base\"})";

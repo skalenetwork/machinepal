@@ -13,6 +13,7 @@
 
 
 // ---- libcurl helper ---------------------------------------------------------
+#include <boost/beast/core/detail/base64.hpp>
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
 
@@ -136,8 +137,15 @@ BOOST_FIXTURE_TEST_SUITE(X402Suite, X402ServerFixture)
     }
 
     BOOST_AUTO_TEST_CASE(Returns200WhenPaymentHeaderPresent) {
+        std::string xPaymentValue = "demo-ok";
+        // Base64 encode xPaymentValue using boost
+        std::string xPaymentBase64;
+        xPaymentBase64.resize(boost::beast::detail::base64::encoded_size(xPaymentValue.size()));
+        boost::beast::detail::base64::encode(&xPaymentBase64[0], xPaymentValue.data(), xPaymentValue.size());
+        // Remove any trailing nulls if present
+        xPaymentBase64.erase(std::find(xPaymentBase64.begin(), xPaymentBase64.end(), '\0'), xPaymentBase64.end());
         auto [headersMap, statusLine, resp] = client->sendRequestAndParseResult("/posts/1",
-            {"X-PAYMENT: demo-ok"}, true);
+            {"X-PAYMENT: " + xPaymentBase64}, true);
         BOOST_TEST(resp.status == 200);
         auto xPaymentTesponse = headersMap.at("X-PAYMENT-RESPONSE");
         BOOST_TEST(xPaymentTesponse.find("txHash") != std::string::npos);
