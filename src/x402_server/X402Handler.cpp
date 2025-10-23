@@ -50,7 +50,7 @@ void X402Handler::onEOM() noexcept {
             spdlog::critical("X402Handler::onEOM() called without processor_");
             return;
         }
-        processor_->onRequestCompletion(reqHeaders_, bodyBuffer_);
+        processor_->onRequestFullyReceived(reqHeaders_, bodyBuffer_);
     } catch (const std::exception& e)
     {
         spdlog::critical("Error in onEOM: {}", e.what());

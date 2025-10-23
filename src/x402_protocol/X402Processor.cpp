@@ -19,17 +19,21 @@ X402Processor::X402Processor(MachinePayApp &app, ptr<IResponseSender> &responseS
 }
 
 
-bool X402Processor::hasPaymentHeader(const std::unique_ptr<proxygen::HTTPMessage> &req) {
+bool X402Processor::reply402IfNoPaymentHeader(const std::unique_ptr<proxygen::HTTPMessage> &req) {
     try {
-        return req->getHeaders().exists("X-PAYMENT");
+        if (req->getHeaders().exists("X-PAYMENT"))
+            return false;
+
+        reply402PaymentRequired();
     } catch (std::exception &e) {
         spdlog::error("[hasPaymentHeader] Exception while checking X-PAYMENT header: {}", e.what());
     }
-    return false;
+
+    return true;
 }
 
 
-    bool X402Processor::hasValidPaymentHeader(const std::unique_ptr<proxygen::HTTPMessage> &req, std::string &paymentInfo) {
+bool X402Processor::validatePaymentHeader(const std::unique_ptr<proxygen::HTTPMessage> &req, std::string &paymentInfo) {
     try {
         const auto &headerTable = req->getHeaders();
         std::string payment = headerTable.getSingleOrEmpty("X-PAYMENT");
@@ -55,8 +59,6 @@ void X402Processor::reply200Success(const std::string &settlementInfo,
     sendResponse({200, "OK"}, headers, proxyBody);
     state_ = State::SUCCESS_RESOURCE_PROVIDED;
 }
-
-
 
 
 void X402Processor::reply402PaymentRequired() {
@@ -113,8 +115,6 @@ void X402Processor::sendResponse(
 }
 
 
-
-
 bool X402Processor::validateAndExtractSubDomainName(const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders) {
     auto domainName = reqHeaders->getHeaders().getSingleOrEmpty("host");
     // Remove port if present (e.g., example.com:8080 -> example.com)
@@ -160,12 +160,12 @@ bool X402Processor::validateAndExtractSubDomainName(const std::unique_ptr<proxyg
 
     if (domainName == hostName) {
         subDomainName_ = "";
-    }else if (domainName.ends_with("." + hostName)) {
+    } else if (domainName.ends_with("." + hostName)) {
         subDomainName_ = domainName.substr(0, domainName.size() - hostName.size() - 1);
     } else {
         reply400BadRequest("Unknown host: " + domainName + " "
-                       "Please use a valid hostname specified in machinepay config "
-                       "(like localhost or xyz.com) to access this service.");
+                           "Please use a valid hostname specified in machinepay config "
+                           "(like localhost or xyz.com) to access this service.");
         return false;
     }
 
@@ -197,7 +197,7 @@ bool X402Processor::matchOrganization() {
 bool X402Processor::validateMethod(const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders) {
     auto method = reqHeaders->getMethod();
 
-    if (!method.has_value() ) {
+    if (!method.has_value()) {
         reply400BadRequest("Missing HTTP method");
     }
 
@@ -247,8 +247,8 @@ bool X402Processor::proxyResponseToBackEnd(std::string settlementInfo) {
     return true;
 }
 
-void X402Processor::onRequestCompletion(const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
-    const string& body) noexcept {
+void X402Processor::onRequestFullyReceived(const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
+                                           const string &body) noexcept {
     try {
         if (state_ == State::ERROR) return;
 
@@ -262,14 +262,11 @@ void X402Processor::onRequestCompletion(const std::unique_ptr<proxygen::HTTPMess
 
         std::string settlementInfo;
 
-        if (!hasPaymentHeader(reqHeaders)) {
-            reply402PaymentRequired();
+        if (reply402IfNoPaymentHeader(reqHeaders)) {
             return;
         }
 
-
-        if (!hasValidPaymentHeader(reqHeaders, settlementInfo)) {
-            reply400BadRequest("Invalid format of X-PAYMENT header.");
+        if (!validatePaymentHeader(reqHeaders, settlementInfo)) {
             return;
         }
         state_ = State::PAYMENT_HEADER_RECEIVED;
@@ -286,6 +283,6 @@ void X402Processor::onBodySizeIncrease(size_t newSize) {
     spdlog::info("[onBodySizeIncrease] Request body size increased to {} bytes", newSize);
     if (newSize > MAX_BODY_SIZE) {
         reply400BadRequest("Request body too large. Maximum allowed is 1MByte. You can increase this limit in "
-                           "machinepay config if needed.");
+            "machinepay config if needed.");
     }
 }

@@ -24,16 +24,16 @@ public:
     using State = x402::State;
     explicit X402Processor(MachinePayApp& app, ptr<IResponseSender>& responseSender);
 
-    bool hasPaymentHeader(const std::unique_ptr<proxygen::HTTPMessage> &req);
+    bool reply402IfNoPaymentHeader(const std::unique_ptr<proxygen::HTTPMessage> &req);
 
     void onRequestStart(const std::unique_ptr<proxygen::HTTPMessage>& headers) noexcept;
     bool proxyResponseToBackEnd(std::string settlementInfo);
-    void onRequestCompletion(const std::unique_ptr<proxygen::HTTPMessage>& reqHeaders,
+    void onRequestFullyReceived(const std::unique_ptr<proxygen::HTTPMessage>& reqHeaders,
         const string& body) noexcept;
     void onBodySizeIncrease(size_t newSize);
 private:
 
-    bool hasValidPaymentHeader(const std::unique_ptr<proxygen::HTTPMessage>&  _req, std::string& paymentInfo);
+    bool validatePaymentHeader(const std::unique_ptr<proxygen::HTTPMessage>&  _req, std::string& paymentInfo);
     void reply402PaymentRequired();
     void sendResponse(const std::pair<uint16_t, std::string>& statusAndMessage,
                       const std::vector<std::pair<std::string, std::string>>& headers, const std::string& body);
