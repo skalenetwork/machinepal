@@ -28,7 +28,7 @@ bool X402Processor::hasValidPaymentHeader(const std::unique_ptr<proxygen::HTTPMe
             return true;
         }
     } catch (std::exception &e) {
-        spdlog::error("Error parsing payment header: {}", e.what());
+        spdlog::error("[hasValidPaymentHeader] Exception while parsing X-PAYMENT header: {}", e.what());
     }
     return false;
 }
@@ -206,7 +206,7 @@ void X402Processor::onRequestStart(const std::unique_ptr<proxygen::HTTPMessage> 
             return;
     } catch (std::exception &e) {
         state_ = State::ERROR;
-        spdlog::critical("Error in onRequestStart: {}", e.what());
+        spdlog::critical("[onRequestStart] Exception: {}", e.what());
     };
 }
 
@@ -216,10 +216,10 @@ bool X402Processor::proxyResponseToBackEnd(std::string settlementInfo) {
     bool success = BackendConnection::proxyToBackEnd(backendResponseBody, errorMessage);
     if (!success) {
         reply502BadGateway(errorMessage.empty() ? "Failed to fetch content from upstream service." : errorMessage);
-        return true;
+        return false;
     }
     reply200Success(settlementInfo, backendResponseBody);
-    return false;
+    return true;
 }
 
 void X402Processor::onRequestCompletion(const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
@@ -241,16 +241,16 @@ void X402Processor::onRequestCompletion(const std::unique_ptr<proxygen::HTTPMess
             return;
         }
         state_ = State::PAYMENT_HEADER_RECEIVED;
-        if (proxyResponseToBackEnd(settlementInfo)) return;
+        proxyResponseToBackEnd(settlementInfo);
     } catch (std::exception &e) {
         state_ = State::ERROR;
-        spdlog::critical("Error in onRequestStart: {}", e.what());
+        spdlog::critical("[onRequestCompletion] Exception: {}", e.what());
     }
 }
 
 void X402Processor::onBodySizeIncrease(size_t newSize) {
     constexpr size_t MAX_BODY_SIZE = 1024 * 1024; // 128 KB
-    spdlog::info("Request body size increased: {} bytes", newSize);
+    spdlog::info("[onBodySizeIncrease] Request body size increased to {} bytes", newSize);
     if (newSize > MAX_BODY_SIZE) {
         reply400BadRequest("Request body too large. Maximum allowed is 1MByte. You can increase this limit in "
                            "machinepay config if needed.");
