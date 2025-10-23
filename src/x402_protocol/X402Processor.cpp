@@ -13,6 +13,8 @@
 #include "payment/PaymentRequiredResponse.h"
 #include <boost/beast/core/detail/base64.hpp>
 
+#include "payment/PaymentPayload.h"
+
 
 X402Processor::X402Processor(MachinePayApp &app, ptr<IResponseSender> &responseSender)
     : app_(app), responseSender_(responseSender) {
@@ -51,9 +53,12 @@ bool X402Processor::validatePayment(const std::unique_ptr<proxygen::HTTPMessage>
             return false;
         }
 
+
+        nlohmann::json j;
+
         // Parse decoded string as JSON
         try {
-            auto j = nlohmann::json::parse(decoded);
+            j = nlohmann::json::parse(decoded);
         } catch (const std::exception& e) {
             spdlog::error("Failed to parse decoded X-PAYMENT header as JSON: {} {}", decoded, e.what());
             reply400BadRequest("X-PAYMENT header is not valid JSON after base64 decoding");
@@ -62,8 +67,8 @@ bool X402Processor::validatePayment(const std::unique_ptr<proxygen::HTTPMessage>
 
 
 
-        paymentInfo =
-                    R"({\"txHash\":\"0xabc123...\",\"amount\":\"0.25\",\"asset\":\"USDC\",\"network\":\"base\"})";
+        auto paymentPayload_ = PaymentPayload::fromJson(j);
+        CHECK_STATE(paymentPayload_);
         return true;
     } catch (std::exception &e) {
         spdlog::error("hasValidPaymentHeader had exception while parsing X-PAYMENT header: {}", e.what());

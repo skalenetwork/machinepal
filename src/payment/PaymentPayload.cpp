@@ -1,6 +1,8 @@
 #include "PaymentPayload.h"
 #include <stdexcept>
 
+#include "config/JsonUtils.h"
+
 // Payload implementations
 Payload::Payload() = default;
 
@@ -66,10 +68,13 @@ bool PaymentPayload::operator==(const PaymentPayload& other) const {
            payload_ == other.payload_;
 }
 
+
 std::shared_ptr<PaymentPayload> PaymentPayload::fromJson(const json& j) {
-    if (!j.contains("x402Version") || !j.contains("scheme") || !j.contains("network") || !j.contains("payload")) {
-        throw std::invalid_argument("Missing required field in PaymentPayload JSON");
-    }
+    CHECK_STATE_JSON(j.contains("x402Version"), "Missing required field 'x402Version' in PaymentPayload JSON", j);
+    CHECK_STATE_JSON(j.contains("scheme"), "Missing required field 'scheme' in PaymentPayload JSON", j);
+    CHECK_STATE_JSON(j.contains("network"), "Missing required field 'network' in PaymentPayload JSON", j);
+    CHECK_STATE_JSON(j.contains("payload"), "Missing required field 'payload' in PaymentPayload JSON", j);
+    CHECK_STATE_JSON(j.at("x402Version").get<int>() == 1, "x402Version must be 1 in PaymentPayload JSON", j);
     return std::make_shared<PaymentPayload>(
         j.at("x402Version").get<int>(),
         j.at("scheme").get<std::string>(),
