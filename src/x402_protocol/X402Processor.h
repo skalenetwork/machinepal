@@ -19,6 +19,16 @@ class OrganizationConfig;
 
 class X402Processor {
 public:
+    [[nodiscard]] ptr<MachinePayConfig> config1() const {
+        CHECK_STATE(config_);
+        return config_;
+    }
+
+    [[nodiscard]] ptr<ResourceConfig> resource() const {
+        CHECK_STATE(resource_);
+        return resource_;
+    }
+
     using State = x402::State;
     explicit X402Processor(MachinePayApp& app, ptr<IResponseSender>& responseSender);
 

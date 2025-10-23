@@ -56,15 +56,16 @@ void X402Processor::reply200Success(const std::string &settlementInfo,
 
 
 std::string X402Processor::getPaymentRequirementsAsString() {
-    auto priceStr = resource_->priceStr();
+
+    auto priceStr = resource()->priceStr();
     auto scheme = "exact";
     auto mimeType = "application/json";
-    auto network = config_->network()->name();
+    auto network = config()->network()->name();
     auto payTo = "0x2222222222222222222222222222222222222222";
     auto asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e";
     auto maxTimeoutSeconds = 10;
-    auto description = "Test API data";
-    auto extraName = "USDC";
+    auto description = "";
+    auto extraName = resource()->token();
     auto extraVersion = "2";
     //auto path = resource_->machinePayPath();
     nlohmann::json extra;
@@ -74,7 +75,7 @@ std::string X402Processor::getPaymentRequirementsAsString() {
         scheme,
         network,
         priceStr,
-        "https://api.example.com/premium/data",
+        resource()->location(),
         description,
         mimeType,
         std::nullopt, // outputSchema
