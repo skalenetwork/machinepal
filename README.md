@@ -8,7 +8,7 @@
 Instantly add **crypto payments** to any website or API using the [x402 protocol](https://docs.cdp.coinbase.com/x402/docs/welcome).
 
 
-[![Build and test proxy](https://github.com/skalenetwork/machinepay/actions/workflows/build_test_and_publish.yml/badge.svg)](https://github.com/kladkogex/machinepay/actions/workflows/build_test_and_publish.yml)
+[![Build and test machinepay](https://github.com/skalenetwork/machinepay/actions/workflows/build_test_and_publish.yml/badge.svg)](https://github.com/kladkogex/machinepay/actions/workflows/build_test_and_publish.yml)
 
 ---
 
