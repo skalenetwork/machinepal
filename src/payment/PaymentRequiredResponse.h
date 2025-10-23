@@ -29,7 +29,7 @@ public:
     }
     PaymentRequiredResponse(
         std::vector<PaymentRequirements>& accepts,
-        std::string&  error
+        optional<std::string>&  error
     ) :
         accepts_(accepts),
         error_(error) {
@@ -40,7 +40,7 @@ public:
     // Getters
     int x402Version() const { return x402Version_; }
     const std::vector<PaymentRequirements>& accepts() const { return accepts_; }
-    const std::string error() const { return error_; }
+    const optional<string> error() const { return error_; }
 
     // Equality and stream output for convenience/testing
     bool operator==(const PaymentRequiredResponse& other) const {
@@ -56,12 +56,12 @@ public:
 
 
 
-    static std::string getPaymentRequirementsAsString(ptr<OrganizationConfig> organization,
+    static std::string getPaymentRequiredResponseAsString(ptr<OrganizationConfig> organization,
                                                               ptr<ResourceConfig> resource,
                                                               ptr<MachinePayConfig> config);
 
 private:
     uint32_t x402Version_ {1};
     std::vector<PaymentRequirements> accepts_;
-    std::string error_;
+    optional<string> error_;
 };

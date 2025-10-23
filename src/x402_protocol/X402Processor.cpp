@@ -63,7 +63,7 @@ void X402Processor::reply402PaymentRequired() {
     try {
         CHECK_STATE(resource_);
         folly::dynamic req = folly::dynamic::object;
-        auto paymentRequirements = PaymentRequiredResponse::getPaymentRequirementsAsString(organization(),
+        auto paymentRequirements = PaymentRequiredResponse::getPaymentRequiredResponseAsString(organization(),
             resource(), config());
         req = folly::parseJson(paymentRequirements);
         auto json = folly::toJson(req);

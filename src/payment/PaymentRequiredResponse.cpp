@@ -1,6 +1,7 @@
 #include "MachinePayCommon.h"
 #include "PaymentRequiredResponse.h"
 
+#include "config/JsonUtils.h"
 #include "config/MachinePayConfig.h"
 #include "config/subconfigs/NetworkConfig.h"
 #include "config/subconfigs/OrganizationConfig.h"
@@ -9,51 +10,62 @@
 using json = nlohmann::json;
 
 PaymentRequiredResponse PaymentRequiredResponse::fromJson(const json &j) {
-    PaymentRequiredResponse out;
-    if (j.contains("x402Version") && j["x402Version"].is_number_integer()) {
-        out = PaymentRequiredResponse();
-        out = PaymentRequiredResponse( {});
-    }
-    // accepts (array of PaymentRequirements)
-    if (j.contains("accepts") && j["accepts"].is_array()) {
-        std::vector<PaymentRequirements> vec;
-        for (const auto &elem : j["accepts"]) {
-            // PaymentRequirements::fromJson returns shared_ptr
-            auto pr = PaymentRequirements::fromJson(elem);
-            if (pr) vec.push_back(*pr);
-        }
-        if (out.x402Version() == 0) {
-            // construct with default version 1 if not set earlier
-            out = PaymentRequiredResponse( vec);
-        } else {
-            out = PaymentRequiredResponse( vec);
-        }
-    }
-    // error
-    if (j.contains("error") && !j["error"].is_null()) {
-        auto err = j["error"].get<std::string>();
+
+    CHECK_STATE_JSON(
+        j.contains("x402Version") && j["x402Version"].is_number_integer(),
+        "PaymentRequiredResponse must contain integer x402Version",
+        j);
+
+
+    CHECK_STATE_JSON(j.at("x402Version").get<int>() == 1,
+                     "x402Version must be 1", j);
+
+    CHECK_STATE_JSON(
+        j.contains("accepts") && j["accepts"].is_array(),
+        "PaymentRequiredResponse must contain array accepts",
+        j);
+
+
+    std::optional<string> error = nullptr;
+
+    if (j.contains("error")) {
+        CHECK_STATE_JSON(j["error"].is_string(),
+       "PaymentRequiredResponse error must be string",
+       j);
+
+        error = j.at("error").get<std::string>();
     }
 
-    return out;
+
+    std::vector<PaymentRequirements> paymentRequirementsList;
+    for (const auto &elem: j["accepts"]) {
+        // PaymentRequirements::fromJson returns shared_ptr
+        auto pr = PaymentRequirements::fromJson(elem);
+        if (pr) paymentRequirementsList.push_back(*pr);
+    }
+
+
+    CHECK_STATE_JSON(!paymentRequirementsList.empty(), "Accepts array must not be empty", j);
+
+    return PaymentRequiredResponse(paymentRequirementsList, error);
 }
 
 json PaymentRequiredResponse::toJson() const {
     json j;
     j["x402Version"] = x402Version_;
     j["accepts"] = json::array();
-    for (const auto &p : accepts_) {
+    for (const auto &p: accepts_) {
         j["accepts"].push_back(p.toJson());
     }
 
     j["error"] = error_;
 
     return j;
-
 }
 
-std::string PaymentRequiredResponse::getPaymentRequirementsAsString(ptr<OrganizationConfig> organization,
-                                                                ptr<ResourceConfig> resource,
-                                                                ptr<MachinePayConfig> config) {
+std::string PaymentRequiredResponse::getPaymentRequiredResponseAsString(ptr<OrganizationConfig> organization,
+                                                                    ptr<ResourceConfig> resource,
+                                                                    ptr<MachinePayConfig> config) {
     CHECK_STATE(organization);
     CHECK_STATE(resource);
     CHECK_STATE(config);

@@ -23,6 +23,7 @@
 #include "config/ConfigLoader.h"
 #include "config/ConfigManager.h"
 #include "config/subconfigs/ServerConfig.h"
+#include "payment/PaymentRequiredResponse.h"
 
 
 const std::string BIND_IP = "0.0.0.0";
@@ -120,9 +121,12 @@ BOOST_FIXTURE_TEST_SUITE(X402Suite, X402ServerFixture)
         BOOST_TEST(headersMap["Content-Type"] == "application/json");
 
 
-        auto req = PaymentRequirements::fromJson(nlohmann::json::parse(resp.body));
-        auto expected = PaymentRequirements::fromJson(nlohmann::json::parse(EXACT_UCDC_PAYMENT_REQ_CB_SEPOLIA));
-        BOOST_TEST(*req == *expected);
+        auto response = PaymentRequiredResponse::fromJson(nlohmann::json::parse(resp.body));
+        auto accepts = response.accepts();
+        BOOST_CHECK(accepts.size() == 1);
+        auto req = accepts.front();
+    auto expected = PaymentRequirements::fromJson(nlohmann::json::parse(EXACT_UCDC_PAYMENT_REQ_CB_SEPOLIA));
+        BOOST_TEST(req == *expected);
     }
 
     BOOST_AUTO_TEST_CASE(Returns200WhenPaymentHeaderPresent) {
