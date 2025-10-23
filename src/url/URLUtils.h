@@ -13,4 +13,5 @@ namespace URLUtils {
     bool decodePath(const std::string &path, std::string& result, std::string &errorMessage);
 
     std::string base64Encode(const std::string& input);
+    std::string base64Decode(const std::string& input);
 }

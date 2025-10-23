@@ -138,7 +138,8 @@ BOOST_FIXTURE_TEST_SUITE(X402Suite, X402ServerFixture)
     }
 
     BOOST_AUTO_TEST_CASE(Returns200WhenPaymentHeaderPresent) {
-        std::string xPaymentValue = "demo-ok";
+        std::string xPaymentValue =
+            R"({"txHash":"0xabc123...","amount":"0.25","asset":"SDC","network":"base-1net"})";
         std::string xPaymentBase64 = URLUtils::base64Encode(xPaymentValue);
         auto [headersMap, statusLine, resp] = client->sendRequestAndParseResult("/posts/1",
             {"X-PAYMENT: " + xPaymentBase64}, true);

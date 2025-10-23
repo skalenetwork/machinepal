@@ -44,14 +44,7 @@ bool X402Processor::validatePayment(const std::unique_ptr<proxygen::HTTPMessage>
 
         std::string decoded;
         try {
-            decoded.resize(boost::beast::detail::base64::decoded_size(payment.size()));
-            auto len = boost::beast::detail::base64::decode(&decoded[0], payment.data(), payment.size());
-            if (len.first == 0) {
-                spdlog::error("Failed to decode X-PAYMENT header: base64 decode returned 0 length");
-                reply400BadRequest("X-PAYMENT header is not valid base64");
-                return false;
-            }
-            decoded.resize(len.first);
+            decoded = URLUtils::base64Decode(payment);
         } catch (const std::exception& e) {
             spdlog::error("Exception during base64 decode of X-PAYMENT header: {}", e.what());
             reply400BadRequest("X-PAYMENT header is not valid base64");
@@ -62,7 +55,7 @@ bool X402Processor::validatePayment(const std::unique_ptr<proxygen::HTTPMessage>
         try {
             auto j = nlohmann::json::parse(decoded);
         } catch (const std::exception& e) {
-            spdlog::error("Failed to parse decoded X-PAYMENT header as JSON: {}", e.what());
+            spdlog::error("Failed to parse decoded X-PAYMENT header as JSON: {} {}", decoded, e.what());
             reply400BadRequest("X-PAYMENT header is not valid JSON after base64 decoding");
             return false;
         }
