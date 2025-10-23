@@ -1,26 +1,23 @@
 #include "MachinePayCommon.h"
 #include "PaymentExamples.h"
 
-const std::string PaymentExamples::EXACT_UCDC_PAYMENT_REQ_CB_SEPOLIA = R"(
-{
-        "scheme": "exact",
-        "network": "base-sepolia",
-        "maxAmountRequired": "1000",
-        "resource": "https://api.example.com/premium/data",
-        "description": "Test API data",
-        "mimeType": "application/json",
-        "payTo": "0x2222222222222222222222222222222222222222",
-        "maxTimeoutSeconds": 10,
-        "asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-        "extra": {
-            "name": "USDC",
-            "version": "2"
-        }
-}
-)";
+
+const string  PaymentExamples::EXACT_UCDC_PAYMENT_REQ_CB_SEPOLIA = R"({
+  "scheme": "exact",
+  "network": "base-sepolia",
+  "maxAmountRequired": "12000000000000000000",
+  "resource": "https://jsonplaceholder.typicode.com/posts/1",
+  "description": "",
+  "mimeType": "application/json",
+  "outputSchema": null,
+  "payTo": "0x2222222222222222222222222222222222222222",
+  "maxTimeoutSeconds": 600,
+  "asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+  "extra": {"name":"USDC","version":"2"}
+})";
 
 
-const std::string PaymentExamples::EXACT_UCDC_PAYMENT_PAYLOAD_CB_SEPOLIA = R"(
+const string PaymentExamples::EXACT_UCDC_PAYMENT_PAYLOAD_CB_SEPOLIA = R"(
 {
     "paymentPayload": {
         "x402Version": 1,
