@@ -1,4 +1,4 @@
-#include "common.h"
+#include "MachinepayCommon.h"
 #include "URLUtils.h"
 
 #include <boost/locale/encoding.hpp>

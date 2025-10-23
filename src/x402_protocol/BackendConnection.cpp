@@ -1,7 +1,7 @@
 //
 // Created by stan on 11/10/25.
 //
-#include "common.h"
+#include "MachinepayCommon.h"
 #include "BackendConnection.h"
 #include "X402Processor.h"
 #include "curl/curl.h"

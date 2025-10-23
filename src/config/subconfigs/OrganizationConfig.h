@@ -1,5 +1,5 @@
 #pragma once
-#include "common.h"
+#include "MachinepayCommon.h"
 #include "OrganizationConfig.h"
 #include "ServerConfig.h"
 #include "ResourceConfig.h"

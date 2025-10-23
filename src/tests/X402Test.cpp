@@ -1,7 +1,7 @@
 // X402HandlerBoostTest.cpp
 #define BOOST_TEST_MODULE X402HandlerSelfTest
 
-#include "common.h"
+#include "MachinepayCommon.h"
 #include "init/Init.h"
 #include "x402_server/ServerFactory.h"
 #include <boost/test/included/unit_test.hpp> // or <boost/test/unit_test.hpp> if using dynamic link

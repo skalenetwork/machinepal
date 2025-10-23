@@ -1,4 +1,4 @@
-#include "common.h"
+#include "MachinepayCommon.h"
 #include "NetworkConfig.h"
 #include "FacilitatorConfig.h"
 

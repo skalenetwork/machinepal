@@ -1,5 +1,5 @@
 #pragma once
-#include "common.h"
+#include "MachinepayCommon.h"
 
 class FacilitatorConfig;
 class FileManager;

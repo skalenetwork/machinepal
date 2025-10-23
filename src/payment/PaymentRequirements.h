@@ -19,6 +19,10 @@
  * including optional fields like 'outputSchema' and 'extra'.
  */
 
+class OrganizationConfig;
+class ResourceConfig;
+class MachinePayConfig;
+
 using json = nlohmann::json;
 
 class PaymentRequirements {
@@ -92,6 +96,11 @@ public:
     uint64_t maxTimeoutSeconds() const { return maxTimeoutSeconds_; }
     const std::string& asset() const { return asset_; }
     const json& extra() const { return extra_; }
+
+
+    static std::string getPaymentRequirementsAsString(ptr<OrganizationConfig> organization,
+                                                              ptr<ResourceConfig> resource,
+                                                              ptr<MachinePayConfig> config);
 private:
     std::string scheme_;
     std::string network_;

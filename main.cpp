@@ -1,4 +1,4 @@
-#include <common.h>
+#include <MachinepayCommon.h>
 #include "src/x402_server/X402Handler.h"
 #include "src/x402_server/ServerFactory.h"
 #include "src/MachinePayApp.h"

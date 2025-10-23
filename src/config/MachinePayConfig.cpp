@@ -2,7 +2,7 @@
 // Created by kladko on 9/29/25.
 //
 
-#include "common.h"
+#include "MachinepayCommon.h"
 
 #include "MachinePayConfig.h"
 #include "ConfigLoader.h"

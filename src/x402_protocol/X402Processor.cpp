@@ -1,4 +1,4 @@
-#include "common.h"
+#include "MachinepayCommon.h"
 #include "X402Processor.h"
 #include "MachinePayApp.h"
 #include "IResponseSender.h"
@@ -51,7 +51,7 @@ void X402Processor::reply200Success(const std::string &settlementInfo,
 void X402Processor::reply402PaymentRequired() {
     CHECK_STATE(resource_);
     folly::dynamic req = folly::dynamic::object;
-    auto paymentRequirements = X402PaymentRequirements::getPaymentRequirementsAsString(organization(),
+    auto paymentRequirements = PaymentRequirements::getPaymentRequirementsAsString(organization(),
         resource(), config());
     req = folly::parseJson(paymentRequirements);
     auto json = folly::toJson(req);

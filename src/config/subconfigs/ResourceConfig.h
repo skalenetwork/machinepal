@@ -2,7 +2,7 @@
 #include <memory>
 #include <boost/multiprecision/cpp_int.hpp>
 
-#include "common.h"
+#include "MachinepayCommon.h"
 #include "filesystem/FileManager.h"
 #include "url/URLUtils.h"
 

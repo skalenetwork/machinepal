@@ -1,4 +1,4 @@
-#include "common.h"
+#include "MachinepayCommon.h"
 #include "ServerFactory.h"
 #include "X402HandlerFactory.h"
 #include "crypto/CertManager.h"
