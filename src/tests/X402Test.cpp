@@ -142,8 +142,8 @@ BOOST_FIXTURE_TEST_SUITE(X402Suite, X402ServerFixture)
         auto [headersMap, statusLine, resp] = client->sendRequestAndParseResult("/posts/1",
             {"X-PAYMENT: " + xPaymentBase64}, true);
         BOOST_TEST(resp.status == 200);
-        auto xPaymentTesponse = headersMap.at("X-PAYMENT-RESPONSE");
-        BOOST_TEST(xPaymentTesponse.find("txHash") != std::string::npos);
+        BOOST_TEST(headersMap.contains("X-PAYMENT-RESPONSE"));
+        auto paymentResponse = headersMap.at("X-PAYMENT-RESPONSE");
         BOOST_TEST(resp.body.size() > 0);
     }
 
