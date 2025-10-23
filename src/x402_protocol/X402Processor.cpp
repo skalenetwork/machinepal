@@ -6,19 +6,10 @@
 #include "BackendConnection.h"
 #include "examples/PaymentExamples.h"
 
-#include "boost/url/decode_view.hpp"
-#include <boost/locale.hpp>
-#include <boost/locale/conversion.hpp>
-#include <algorithm>
-#include <cctype>
-#include <string>
-#include <stdexcept>
-#include <sstream>
-#include <iomanip>
-
 #include "config/subconfigs/NetworkConfig.h"
 #include "config/subconfigs/OrganizationConfig.h"
 #include "config/subconfigs/ServerConfig.h"
+#include "payment/X402PaymentRequirements.h"
 #include "datastructures/PaymentRequirements.h"
 
 
@@ -55,44 +46,13 @@ void X402Processor::reply200Success(const std::string &settlementInfo,
 }
 
 
-std::string X402Processor::getPaymentRequirementsAsString() {
 
-    auto priceStr = resource()->priceStr();
-    auto scheme = resource()->paymentScheme();
-    auto mimeType = resource()->mimeType();
-    auto network = config()->network()->name();
-    auto payTo = organization()->payToAddressAsString();
-    auto maxTimeoutSeconds = 600;
-    auto description = resource()->description();
-    auto tokenName = resource()->token();
-    auto asset = config()->network()->getTokenAddress(tokenName);
-    auto extraVersion = config()->network()->getTokenVersion(tokenName);;
-    //auto path = resource_->machinePayPath();
-    nlohmann::json extra;
-    extra["name"] = tokenName;
-    if (!extraVersion.empty()) {
-        extra["version"] = extraVersion;
-    }
-    PaymentRequirements req(
-        scheme,
-        network,
-        priceStr,
-        resource()->location(),
-        description,
-        mimeType,
-        std::nullopt, // outputSchema
-        payTo,
-        maxTimeoutSeconds,
-        asset,
-        extra
-    );
-    return *PaymentRequirements::toString(req);
-}
 
 void X402Processor::reply402PaymentRequired() {
     CHECK_STATE(resource_);
     folly::dynamic req = folly::dynamic::object;
-    auto paymentRequirements = getPaymentRequirementsAsString();
+    auto paymentRequirements = X402PaymentRequirements::getPaymentRequirementsAsString(organization(),
+        resource(), config());
     req = folly::parseJson(paymentRequirements);
     auto json = folly::toJson(req);
     std::vector<std::pair<std::string, std::string> > headers = {

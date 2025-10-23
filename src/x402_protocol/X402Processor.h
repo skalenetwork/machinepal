@@ -49,8 +49,6 @@ private:
     void reply200Success(const std::string& settlementInfo,
                          std::string proxyBody);
 
-    std::string getPaymentRequirementsAsString();
-
     [[nodiscard]] ptr<MachinePayConfig> config() const {
         CHECK_STATE(config_);
         return config_;

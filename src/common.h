@@ -8,15 +8,21 @@
 #include <cstdint>
 #include <filesystem>
 #include <optional>
-#include <string>
 #include <shared_mutex>
 #include <atomic>
 #include <chrono>
 #include <memory>
 #include <regex>
-#include <memory>
 #include <set>
 #include <nlohmann/json_fwd.hpp>
+#include "boost/url/decode_view.hpp"
+#include <boost/locale.hpp>
+#include <boost/locale/conversion.hpp>
+#include <algorithm>
+#include <cctype>
+#include <stdexcept>
+#include <sstream>
+#include <iomanip>
 #include <nlohmann/json.hpp>
 
 #if defined(__cpp_exceptions) || defined(__EXCEPTIONS) || defined(_CPPUNWIND)
