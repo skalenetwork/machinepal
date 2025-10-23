@@ -10,6 +10,7 @@
 #include "config/subconfigs/OrganizationConfig.h"
 #include "config/subconfigs/ServerConfig.h"
 #include "../payment/PaymentRequirements.h"
+#include "payment/PaymentRequiredResponse.h"
 
 
 X402Processor::X402Processor(MachinePayApp &app, ptr<IResponseSender> &responseSender)
@@ -59,17 +60,21 @@ void X402Processor::reply200Success(const std::string &settlementInfo,
 
 
 void X402Processor::reply402PaymentRequired() {
-    CHECK_STATE(resource_);
-    folly::dynamic req = folly::dynamic::object;
-    auto paymentRequirements = PaymentRequirements::getPaymentRequirementsAsString(organization(),
-        resource(), config());
-    req = folly::parseJson(paymentRequirements);
-    auto json = folly::toJson(req);
-    std::vector<std::pair<std::string, std::string> > headers = {
-        {"Content-Type", "application/json"}
-    };
-    sendResponse({402, "Payment Required"}, headers, json);
-    state_ = State::SUCCESS_PAYMENT_REQUIRED_SENT;
+    try {
+        CHECK_STATE(resource_);
+        folly::dynamic req = folly::dynamic::object;
+        auto paymentRequirements = PaymentRequiredResponse::getPaymentRequirementsAsString(organization(),
+            resource(), config());
+        req = folly::parseJson(paymentRequirements);
+        auto json = folly::toJson(req);
+        std::vector<std::pair<std::string, std::string> > headers = {
+            {"Content-Type", "application/json"}
+        };
+        sendResponse({402, "Payment Required"}, headers, json);
+        state_ = State::SUCCESS_PAYMENT_REQUIRED_SENT;
+    } catch (std::exception &e) {
+        RETHROW_NESTED;
+    }
 }
 
 void X402Processor::reply400BadRequest(const std::string &message) {
@@ -80,6 +85,14 @@ void X402Processor::reply400BadRequest(const std::string &message) {
     state_ = State::ERROR;
 }
 
+
+void X402Processor::reply500InternalError(const std::string &message) {
+    std::vector<std::pair<std::string, std::string> > headers = {
+        {"Content-Type", "text/plain"}
+    };
+    sendResponse({500, "Internal server error"}, headers, message);
+    state_ = State::ERROR;
+}
 
 void X402Processor::reply502BadGateway(const std::string &message) {
     std::vector<std::pair<std::string, std::string> > headers = {
@@ -216,8 +229,9 @@ void X402Processor::onRequestStart(const std::unique_ptr<proxygen::HTTPMessage> 
         if (!validateAndDecodePath(reqHeaders))
             return;
     } catch (std::exception &e) {
-        state_ = State::ERROR;
-        spdlog::critical("[onRequestStart] Exception: {}", e.what());
+        spdlog::critical("onRequestStart exception");
+        printNestedException(e);
+        reply500InternalError("Could not process x402 request start.");
     };
 }
 
@@ -261,8 +275,9 @@ void X402Processor::onRequestCompletion(const std::unique_ptr<proxygen::HTTPMess
         state_ = State::PAYMENT_HEADER_RECEIVED;
         proxyResponseToBackEnd(settlementInfo);
     } catch (std::exception &e) {
-        state_ = State::ERROR;
-        spdlog::critical("[onRequestCompletion] Exception: {}", e.what());
+        spdlog::critical("onRequestCompletion exception");
+        printNestedException(e);
+        reply500InternalError("Could not process x402 request.");
     }
 }
 
@@ -272,6 +287,5 @@ void X402Processor::onBodySizeIncrease(size_t newSize) {
     if (newSize > MAX_BODY_SIZE) {
         reply400BadRequest("Request body too large. Maximum allowed is 1MByte. You can increase this limit in "
                            "machinepay config if needed.");
-        state_ = State::ERROR;
     }
 }

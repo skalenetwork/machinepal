@@ -82,10 +82,6 @@ public:
 
 
 
-    static std::string getPaymentRequirementsAsString(ptr<OrganizationConfig> organization,
-                                                              ptr<ResourceConfig> resource,
-                                                              ptr<MachinePayConfig> config);
-
     // Getters
     const std::string& scheme() const { return scheme_; }
     const std::string& network() const { return network_; }
@@ -108,7 +104,6 @@ public:
 private:
 
     static std::shared_ptr<std::string> toString(const PaymentRequirements& p);
-
 
 
     std::string scheme_;

@@ -67,6 +67,12 @@ public:
     static PaymentRequiredResponse fromJson(const json& j);
     json toJson() const;
 
+
+
+    static std::string getPaymentRequirementsAsString(ptr<OrganizationConfig> organization,
+                                                              ptr<ResourceConfig> resource,
+                                                              ptr<MachinePayConfig> config);
+
 private:
     uint32_t x402Version_ {1};
     std::vector<PaymentRequirements> accepts_;
