@@ -25,6 +25,7 @@
 #include "config/ConfigManager.h"
 #include "config/subconfigs/ServerConfig.h"
 #include "payment/PaymentRequiredResponse.h"
+#include "url/URLUtils.h"
 
 
 const std::string BIND_IP = "0.0.0.0";
@@ -138,12 +139,7 @@ BOOST_FIXTURE_TEST_SUITE(X402Suite, X402ServerFixture)
 
     BOOST_AUTO_TEST_CASE(Returns200WhenPaymentHeaderPresent) {
         std::string xPaymentValue = "demo-ok";
-        // Base64 encode xPaymentValue using boost
-        std::string xPaymentBase64;
-        xPaymentBase64.resize(boost::beast::detail::base64::encoded_size(xPaymentValue.size()));
-        boost::beast::detail::base64::encode(&xPaymentBase64[0], xPaymentValue.data(), xPaymentValue.size());
-        // Remove any trailing nulls if present
-        xPaymentBase64.erase(std::find(xPaymentBase64.begin(), xPaymentBase64.end(), '\0'), xPaymentBase64.end());
+        std::string xPaymentBase64 = URLUtils::base64Encode(xPaymentValue);
         auto [headersMap, statusLine, resp] = client->sendRequestAndParseResult("/posts/1",
             {"X-PAYMENT: " + xPaymentBase64}, true);
         BOOST_TEST(resp.status == 200);

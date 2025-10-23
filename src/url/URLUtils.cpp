@@ -6,6 +6,8 @@
 #include <boost/url/url.hpp>
 #include <boost/url/parse.hpp>
 #include <boost/url/error.hpp>
+#include <boost/beast/core/detail/base64.hpp>
+#include <cstring>
 
 using namespace boost::urls;
 
@@ -118,4 +120,12 @@ bool URLUtils::decodePath(const std::string &path, std::string& result, std::str
     error:
         spdlog::error("Error parsing user submitted URL path in X402Processor: {}", errorMessage);
     return false;
+}
+
+std::string URLUtils::base64Encode(const std::string& input) {
+    std::string encoded;
+    encoded.resize(boost::beast::detail::base64::encoded_size(input.size()));
+    boost::beast::detail::base64::encode(&encoded[0], input.data(), input.size());
+    encoded.resize(strnlen(encoded.c_str(), encoded.size()));
+    return encoded;
 }
