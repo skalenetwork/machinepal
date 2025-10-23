@@ -1,4 +1,4 @@
-name: Build and test proxy
+name: Build, test and publish machinepay
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
