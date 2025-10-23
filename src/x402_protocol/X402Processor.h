@@ -24,6 +24,8 @@ public:
     using State = x402::State;
     explicit X402Processor(MachinePayApp& app, ptr<IResponseSender>& responseSender);
 
+    bool hasPaymentHeader(const std::unique_ptr<proxygen::HTTPMessage> &req);
+
     void onRequestStart(const std::unique_ptr<proxygen::HTTPMessage>& headers) noexcept;
     bool proxyResponseToBackEnd(std::string settlementInfo);
     void onRequestCompletion(const std::unique_ptr<proxygen::HTTPMessage>& reqHeaders,

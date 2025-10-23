@@ -17,7 +17,18 @@ X402Processor::X402Processor(MachinePayApp &app, ptr<IResponseSender> &responseS
     config_ = app_.configManager()->latestConfig();
 }
 
-bool X402Processor::hasValidPaymentHeader(const std::unique_ptr<proxygen::HTTPMessage> &req, std::string &paymentInfo) {
+
+bool X402Processor::hasPaymentHeader(const std::unique_ptr<proxygen::HTTPMessage> &req) {
+    try {
+        return req->getHeaders().exists("X-PAYMENT");
+    } catch (std::exception &e) {
+        spdlog::error("[hasPaymentHeader] Exception while checking X-PAYMENT header: {}", e.what());
+    }
+    return false;
+}
+
+
+    bool X402Processor::hasValidPaymentHeader(const std::unique_ptr<proxygen::HTTPMessage> &req, std::string &paymentInfo) {
     try {
         const auto &headerTable = req->getHeaders();
         std::string payment = headerTable.getSingleOrEmpty("X-PAYMENT");
@@ -236,6 +247,13 @@ void X402Processor::onRequestCompletion(const std::unique_ptr<proxygen::HTTPMess
         }
 
         std::string settlementInfo;
+
+        if (!hasPaymentHeader(reqHeaders)) {
+            reply402PaymentRequired();
+            return;
+        }
+
+
         if (!hasValidPaymentHeader(reqHeaders, settlementInfo)) {
             reply402PaymentRequired();
             return;
