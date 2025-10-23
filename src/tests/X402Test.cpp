@@ -5,17 +5,10 @@
 #include "init/Init.h"
 #include "x402_server/ServerFactory.h"
 #include <boost/test/included/unit_test.hpp> // or <boost/test/unit_test.hpp> if using dynamic link
-#include <folly/SocketAddress.h>
-#include <proxygen/httpserver/HTTPServer.h>
-
 
 #include "x402_client/X402Client.h"
 
 
-// ---- libcurl helper ---------------------------------------------------------
-#include <boost/beast/core/detail/base64.hpp>
-#include <curl/curl.h>
-#include <nlohmann/json.hpp>
 
 
 #include "MachinePayApp.h"
@@ -25,7 +18,12 @@
 #include "config/ConfigManager.h"
 #include "config/subconfigs/ServerConfig.h"
 #include "payment/PaymentRequiredResponse.h"
+#include "examples/PaymentExamples.h"
 #include "url/URLUtils.h"
+#include <folly/SocketAddress.h>
+#include <proxygen/httpserver/HTTPServer.h>
+#include <curl/curl.h>
+#include <nlohmann/json.hpp>
 
 
 const std::string BIND_IP = "0.0.0.0";
@@ -133,13 +131,13 @@ BOOST_FIXTURE_TEST_SUITE(X402Suite, X402ServerFixture)
         auto accepts = response.accepts();
         BOOST_CHECK(accepts.size() == 1);
         auto req = accepts.front();
-    auto expected = PaymentRequirements::fromJson(nlohmann::json::parse(EXACT_UCDC_PAYMENT_REQ_CB_SEPOLIA));
+    auto expected = PaymentRequirements::fromJson(
+        nlohmann::json::parse(PaymentExamples::EXACT_UCDC_PAYMENT_REQ_CB_SEPOLIA));
         BOOST_TEST(req == *expected);
     }
 
     BOOST_AUTO_TEST_CASE(Returns200WhenPaymentHeaderPresent) {
-        std::string xPaymentValue =
-            R"({"txHash":"0xabc123...","amount":"0.25","asset":"SDC","network":"base-1net"})";
+        std::string xPaymentValue = PaymentExamples::EXACT_UCDC_PAYMENT_PAYLOAD_CB_SEPOLIA;
         std::string xPaymentBase64 = URLUtils::base64Encode(xPaymentValue);
         auto [headersMap, statusLine, resp] = client->sendRequestAndParseResult("/posts/1",
             {"X-PAYMENT: " + xPaymentBase64}, true);

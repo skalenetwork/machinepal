@@ -9,7 +9,7 @@ using json = nlohmann::json;
 BOOST_AUTO_TEST_CASE(deserialize_payment_requirements) {
 
 
-    json j_data = json::parse(EXACT_UCDC_PAYMENT_REQ_CB_SEPOLIA);
+    json j_data = json::parse(PaymentExamples::EXACT_UCDC_PAYMENT_REQ_CB_SEPOLIA);
     auto requirements = PaymentRequirements::fromJson(j_data);
 
     BOOST_TEST(requirements->scheme() == "exact");

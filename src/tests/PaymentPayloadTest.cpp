@@ -11,7 +11,7 @@ BOOST_AUTO_TEST_CASE(deserialize_payment_payload) {
 
 
 
-    json j_data = json::parse(EXACT_UCDC_PAYMENT_PAYLOAD_CB_SEPOLIA);
+    json j_data = json::parse(PaymentExamples::EXACT_UCDC_PAYMENT_PAYLOAD_CB_SEPOLIA);
     json j_payload = j_data["paymentPayload"];
     PaymentPayload p_payload = j_payload.get<PaymentPayload>();
 
