@@ -4,7 +4,7 @@
 #include "config/subconfigs/NetworkConfig.h"
 #include "config/subconfigs/OrganizationConfig.h"
 #include "config/subconfigs/ResourceConfig.h"
-#include "datastructures/PaymentRequirements.h"
+#include "PaymentRequirements.h"
 
 
 #include "X402PaymentRequirements.h"

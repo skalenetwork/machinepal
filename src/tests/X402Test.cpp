@@ -18,7 +18,7 @@
 
 
 #include "MachinePayApp.h"
-#include "../datastructures/PaymentRequirements.h"
+#include "../payment/PaymentRequirements.h"
 #include "../examples/PaymentExamples.h"
 #include "config/ConfigLoader.h"
 #include "config/ConfigManager.h"

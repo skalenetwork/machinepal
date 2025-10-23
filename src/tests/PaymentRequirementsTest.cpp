@@ -1,4 +1,4 @@
-#include "../datastructures/PaymentRequirements.h"
+#include "../payment/PaymentRequirements.h"
 #include "../examples/PaymentExamples.h"
 #include "nlohmann/json.hpp"
 #include <boost/test/unit_test.hpp>

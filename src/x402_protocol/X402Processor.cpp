@@ -10,7 +10,7 @@
 #include "config/subconfigs/OrganizationConfig.h"
 #include "config/subconfigs/ServerConfig.h"
 #include "payment/X402PaymentRequirements.h"
-#include "datastructures/PaymentRequirements.h"
+#include "../payment/PaymentRequirements.h"
 
 
 X402Processor::X402Processor(MachinePayApp &app, ptr<IResponseSender> &responseSender)
