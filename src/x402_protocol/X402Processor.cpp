@@ -1,4 +1,4 @@
-#include "MachinepayCommon.h"
+#include "MachinePayCommon.h"
 #include "X402Processor.h"
 #include "MachinePayApp.h"
 #include "IResponseSender.h"

@@ -1,5 +1,5 @@
 #pragma once
-#include "MachinepayCommon.h"
+#include "MachinePayCommon.h"
 #include "filesystem/CanonicalPath.h"
 
 class FileManager;

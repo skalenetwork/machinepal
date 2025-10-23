@@ -1,6 +1,6 @@
 #include "ConfigManager.h"
 
-#include "MachinepayCommon.h"
+#include "MachinePayCommon.h"
 #include "ConfigLoader.h"
 #include "MachinePayConfig.h"
 #include "config/MachinePayConfigSchema.h"

@@ -1,4 +1,4 @@
-#include "MachinepayCommon.h"
+#include "MachinePayCommon.h"
 #include <openssl/evp.h>
 #include "CryptoManager.h"
 

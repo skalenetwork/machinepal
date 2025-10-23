@@ -1,4 +1,4 @@
-#include "MachinepayCommon.h"
+#include "MachinePayCommon.h"
 #include "X402Handler.h"
 #include <folly/json.h>
 #include <curl/curl.h>

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MachinepayCommon.h"
+#include "MachinePayCommon.h"
 #include "MachinePayConfig.h"
 
 

@@ -1,7 +1,7 @@
 //
 // Created by stan on 08/10/25.
 //
-#include "MachinepayCommon.h"
+#include "MachinePayCommon.h"
 #include "FileManager.h"
 #include <filesystem>
 #include <openssl/ssl.h>

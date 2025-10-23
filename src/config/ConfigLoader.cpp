@@ -1,4 +1,4 @@
-#include "MachinepayCommon.h"
+#include "MachinePayCommon.h"
 #include "ConfigLoader.h"
 #include "MachinePayConfig.h"
 #include "JsonUtils.h"

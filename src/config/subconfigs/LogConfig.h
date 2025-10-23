@@ -1,5 +1,5 @@
 #pragma once
-#include "MachinepayCommon.h"
+#include "MachinePayCommon.h"
 
 
 enum class LogLevel {

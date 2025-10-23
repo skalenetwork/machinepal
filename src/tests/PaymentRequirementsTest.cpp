@@ -1,4 +1,4 @@
-#include "MachinepayCommon.h"
+#include "MachinePayCommon.h"
 #include "../payment/PaymentRequirements.h"
 #include "../examples/PaymentExamples.h"
 #include "nlohmann/json.hpp"
