@@ -29,6 +29,7 @@ public:
         return resource_;
     }
 
+
     using State = x402::State;
     explicit X402Processor(MachinePayApp& app, ptr<IResponseSender>& responseSender);
 
