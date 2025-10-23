@@ -102,6 +102,7 @@ int main(int argc, char *argv[]) {
     try {
         Init::initAllLibs(1, argv);
         auto configValueOverloads = parseConfigValueOverloadsFromCommandLineAndEnvironment(argc, argv);
+        Init::checkOperatingSystemConfiguration();
         auto machinePayApp = MachinePayApp::makeInstance(configValueOverloads);
         machinePayApp->runUntilExit();
         return 0;
