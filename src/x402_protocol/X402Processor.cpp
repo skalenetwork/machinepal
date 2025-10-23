@@ -255,7 +255,7 @@ void X402Processor::onRequestCompletion(const std::unique_ptr<proxygen::HTTPMess
 
 
         if (!hasValidPaymentHeader(reqHeaders, settlementInfo)) {
-            reply402PaymentRequired();
+            reply400BadRequest("Invalid format of X-PAYMENT header.");
             return;
         }
         state_ = State::PAYMENT_HEADER_RECEIVED;
