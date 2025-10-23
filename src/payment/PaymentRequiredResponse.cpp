@@ -11,43 +11,47 @@ using json = nlohmann::json;
 
 PaymentRequiredResponse PaymentRequiredResponse::fromJson(const json &j) {
 
-    CHECK_STATE_JSON(
-        j.contains("x402Version") && j["x402Version"].is_number_integer(),
-        "PaymentRequiredResponse must contain integer x402Version",
-        j);
+    try {
+        CHECK_STATE_JSON(
+            j.contains("x402Version") && j["x402Version"].is_number_integer(),
+            "PaymentRequiredResponse must contain integer x402Version",
+            j);
 
 
-    CHECK_STATE_JSON(j.at("x402Version").get<int>() == 1,
-                     "x402Version must be 1", j);
+        CHECK_STATE_JSON(j.at("x402Version").get<int>() == 1,
+                         "x402Version must be 1", j);
 
-    CHECK_STATE_JSON(
-        j.contains("accepts") && j["accepts"].is_array(),
-        "PaymentRequiredResponse must contain array accepts",
-        j);
+        CHECK_STATE_JSON(
+            j.contains("accepts") && j["accepts"].is_array(),
+            "PaymentRequiredResponse must contain array accepts",
+            j);
 
 
-    std::optional<string> error = nullptr;
+        std::optional<string> error = nullptr;
 
-    if (j.contains("error")) {
-        CHECK_STATE_JSON(j["error"].is_string(),
-       "PaymentRequiredResponse error must be string",
-       j);
+        if (j.contains("error")) {
+            CHECK_STATE_JSON(j["error"].is_string(),
+           "PaymentRequiredResponse error must be string",
+           j);
 
-        error = j.at("error").get<std::string>();
+            error = j.at("error").get<std::string>();
+        }
+
+
+        std::vector<PaymentRequirements> paymentRequirementsList;
+        for (const auto &elem: j["accepts"]) {
+            // PaymentRequirements::fromJson returns shared_ptr
+            auto pr = PaymentRequirements::fromJson(elem);
+            if (pr) paymentRequirementsList.push_back(*pr);
+        }
+
+
+        CHECK_STATE_JSON(!paymentRequirementsList.empty(), "Accepts array must not be empty", j);
+
+        return PaymentRequiredResponse(paymentRequirementsList, error);
+    } catch (std::exception e) {
+        RETHROW_NESTED;
     }
-
-
-    std::vector<PaymentRequirements> paymentRequirementsList;
-    for (const auto &elem: j["accepts"]) {
-        // PaymentRequirements::fromJson returns shared_ptr
-        auto pr = PaymentRequirements::fromJson(elem);
-        if (pr) paymentRequirementsList.push_back(*pr);
-    }
-
-
-    CHECK_STATE_JSON(!paymentRequirementsList.empty(), "Accepts array must not be empty", j);
-
-    return PaymentRequiredResponse(paymentRequirementsList, error);
 }
 
 json PaymentRequiredResponse::toJson() const {

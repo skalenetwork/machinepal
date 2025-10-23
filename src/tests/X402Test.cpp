@@ -120,8 +120,14 @@ BOOST_FIXTURE_TEST_SUITE(X402Suite, X402ServerFixture)
         BOOST_TEST(statusLine == "HTTP/1.1 402 Payment Required");
         BOOST_TEST(headersMap["Content-Type"] == "application/json");
 
+        PaymentRequiredResponse response;
 
-        auto response = PaymentRequiredResponse::fromJson(nlohmann::json::parse(resp.body));
+        try {
+            response = PaymentRequiredResponse::fromJson(nlohmann::json::parse(resp.body));
+        } catch (const std::exception &ex) {
+            printNestedException(ex);
+            BOOST_FAIL("Failed to parse 402 response body as PaymentRequiredResponse");
+        }
         auto accepts = response.accepts();
         BOOST_CHECK(accepts.size() == 1);
         auto req = accepts.front();

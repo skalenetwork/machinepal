@@ -24,7 +24,7 @@ public:
     PaymentRequiredResponse(
         std::vector<PaymentRequirements>& accepts
     ) : accepts_(accepts) {
-        CHECK_STATE(!accepts.empty());
+        CHECK_STATE2(!accepts.empty(), "Accepts array must not be empty");
         error_ = "X-PAYMENT header is required";
     }
     PaymentRequiredResponse(
