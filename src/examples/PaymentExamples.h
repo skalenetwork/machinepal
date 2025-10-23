@@ -9,7 +9,7 @@ const std::string EXACT_UCDC_PAYMENT_REQ_CB_SEPOLIA = R"(
         "description": "",
         "mimeType": "application/json",
         "payTo": "0x2222222222222222222222222222222222222222",
-        "maxTimeoutSeconds": 10,
+        "maxTimeoutSeconds": 600,
         "asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
         "extra": {
             "name": "USDC",

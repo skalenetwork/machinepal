@@ -32,3 +32,19 @@ std::shared_ptr<NetworkConfig> NetworkConfig::createFromJson(const nlohmann::jso
         RETHROW_NESTED;
     }
 }
+
+
+string NetworkConfig::getTokenVersion(const string& tokenName)  {
+    if (tokenName == "USDC") {
+        return "2";
+    }
+    return "";
+}
+
+string NetworkConfig::getTokenAddress(const string& tokenName)  {
+    if (tokenName == "USDC") {
+        return "0x036CbD53842c5426634e7929541eC2318f3dCF7e";
+    }
+    return "";
+}
+

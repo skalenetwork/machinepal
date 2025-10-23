@@ -19,7 +19,7 @@ BOOST_AUTO_TEST_CASE(deserialize_payment_requirements) {
     BOOST_TEST(requirements->mimeType() == "application/json");
     BOOST_TEST(!requirements->outputSchema().has_value());
     BOOST_TEST(requirements->payTo() == "0x2222222222222222222222222222222222222222");
-    BOOST_TEST(requirements->maxTimeoutSeconds() == 10);
+    BOOST_TEST(requirements->maxTimeoutSeconds() == 600);
     BOOST_TEST(requirements->asset() == "0x036CbD53842c5426634e7929541eC2318f3dCF7e");
     BOOST_TEST(!requirements->extra().is_null());
 }

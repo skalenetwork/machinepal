@@ -97,3 +97,5 @@ const ptr<ServerConfig>& MachinePayConfig::server() const {
     CHECK_STATE(server_);
     return server_;
 }
+
+

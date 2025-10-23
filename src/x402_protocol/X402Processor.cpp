@@ -59,18 +59,20 @@ std::string X402Processor::getPaymentRequirementsAsString() {
 
     auto priceStr = resource()->priceStr();
     auto scheme = "exact";
-    auto mimeType = "application/json";
+    auto mimeType = resource()->mimeType();
     auto network = config()->network()->name();
     auto payTo = "0x2222222222222222222222222222222222222222";
-    auto asset = "0x036CbD53842c5426634e7929541eC2318f3dCF7e";
-    auto maxTimeoutSeconds = 10;
-    auto description = "";
-    auto extraName = resource()->token();
-    auto extraVersion = "2";
+    auto maxTimeoutSeconds = 600;
+    auto description = resource()->description();
+    auto tokenName = resource()->token();
+    auto asset = config()->network()->getTokenAddress(tokenName);
+    auto extraVersion = config()->network()->getTokenVersion(tokenName);;
     //auto path = resource_->machinePayPath();
     nlohmann::json extra;
-    extra["name"] = extraName;
-    extra["version"] = extraVersion;
+    extra["name"] = tokenName;
+    if (!extraVersion.empty()) {
+        extra["version"] = extraVersion;
+    }
     PaymentRequirements req(
         scheme,
         network,

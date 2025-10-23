@@ -27,17 +27,17 @@ private:
     ResourceType type_;
     boost::multiprecision::uint256_t price_;
     std::string token_;
-    std::string mime_type;
+    std::string mimeType_;
     std::string description_;
 
     ResourceConfig(const std::string& name, const std::string& location, ResourceType type, boost::multiprecision::uint256_t price, const std::string& token)
         : name_(name), location_(location), type_(type), price_(price), token_(token) {
         if (type_ == ResourceType::LocalFile) {
             machinePayPath_ = location_;
-            mime_type = "application/octet-stream";
+            mimeType_ = "application/octet-stream";
         } else {
             machinePayPath_ = URLUtils::getLocationFromUrl(location_);
-            mime_type = "application/json";
+            mimeType_ = "application/json";
         }
     }
 
@@ -51,6 +51,13 @@ public:
         return price_.str();
     }
 
+    [[nodiscard]] std::string mimeType() const {
+        return mimeType_;
+    }
+
+    [[nodiscard]] std::string description() const {
+        return description_;
+    }
 
     static ResourceType mustContainType(const nlohmann::json &j);
 
