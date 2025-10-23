@@ -80,7 +80,7 @@ void X402Processor::reply200Success(const std::string &settlementInfo,
         {"X-PAYMENT-RESPONSE", settlementInfo}
     };
     sendResponse({200, "OK"}, headers, proxyBody);
-    state_ = State::SUCCESS_RESOURCE_PROVIDED;
+    state_ = State::SUCCESS_RESOURCE_SENT;
 }
 
 
@@ -107,7 +107,7 @@ void X402Processor::reply400BadRequest(const std::string &message) {
         {"Content-Type", "text/plain"}
     };
     sendResponse({400, "Bad Request"}, headers, message);
-    state_ = State::ERROR;
+    state_ = State::ERROR_SENT;
 }
 
 
@@ -116,7 +116,7 @@ void X402Processor::reply500InternalError(const std::string &message) {
         {"Content-Type", "text/plain"}
     };
     sendResponse({500, "Internal server error"}, headers, message);
-    state_ = State::ERROR;
+    state_ = State::ERROR_SENT;
 }
 
 void X402Processor::reply502BadGateway(const std::string &message) {
@@ -124,7 +124,7 @@ void X402Processor::reply502BadGateway(const std::string &message) {
         {"Content-Type", "text/plain"}
     };
     sendResponse({502, "Bad Gateway"}, headers, message);
-    state_ = State::ERROR;
+    state_ = State::ERROR_SENT;
 }
 
 
@@ -132,9 +132,34 @@ void X402Processor::sendResponse(
     const std::pair<uint16_t, std::string> &statusAndMessage,
     const std::vector<std::pair<std::string, std::string> > &headers,
     const std::string &body = "") {
-    CHECK_STATE(state_ != State::ERROR);
+    if (state_ == State::ERROR_SENT)
+    {
+        spdlog::info("Attempted to send response after error response already sent.");
+        return;
+    }
+
+    if (state_ == State::SUCCESS_RESOURCE_SENT)
+    {
+        spdlog::info("Attempted to send response after resource already sent.");
+        return;
+    }
+
+    if (state_ == State::SUCCESS_PAYMENT_REQUIRED_SENT)
+    {
+        spdlog::info("Attempted to send response after payment required already sent.");
+        return;
+    }
+
+
     CHECK_STATE(responseSender_);
-    responseSender_->sendResponse(statusAndMessage, headers, body);
+    try
+    {
+        responseSender_->sendResponse(statusAndMessage, headers, body);
+    } catch (std::exception &e)
+    {
+        spdlog::error("Exception while sending response: {}", e.what());
+        // nothing can be done so we consider response as sent
+    }
 }
 
 
@@ -258,22 +283,20 @@ void X402Processor::onRequestStart(const std::unique_ptr<proxygen::HTTPMessage> 
     };
 }
 
-bool X402Processor::proxyResponseToBackEnd(std::string settlementInfo) {
-    std::string backendResponseBody;
+bool X402Processor::proxyResponseToBackEnd(std::string& responseBody) {
     std::string errorMessage;
-    bool success = BackendConnection::proxyToBackEnd(backendResponseBody, errorMessage);
+    bool success = BackendConnection::proxyToBackEnd(responseBody, errorMessage);
     if (!success) {
         reply502BadGateway(errorMessage.empty() ? "Failed to fetch content from upstream service." : errorMessage);
         return false;
     }
-    reply200Success(settlementInfo, backendResponseBody);
     return true;
 }
 
 void X402Processor::onRequestFullyReceived(const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
                                            const string &body) noexcept {
     try {
-        if (state_ == State::ERROR) return;
+        if (state_ == State::ERROR_SENT) return;
 
         CHECK_STATE(organization_);
         resource_ = organization_->getResourceByPath(decodedPath_, method_, body);
@@ -293,7 +316,12 @@ void X402Processor::onRequestFullyReceived(const std::unique_ptr<proxygen::HTTPM
             return;
         }
         state_ = State::PAYMENT_HEADER_RECEIVED;
-        proxyResponseToBackEnd(settlementInfo);
+
+        string responseBody;
+        if (!proxyResponseToBackEnd(responseBody)) {
+            return;
+        }
+        reply200Success(settlementInfo, responseBody);
     } catch (std::exception &e) {
         spdlog::critical("onRequestCompletion exception");
         printNestedException(e);

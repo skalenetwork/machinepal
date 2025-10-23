@@ -27,7 +27,7 @@ public:
     bool reply402IfNoPaymentHeader(const std::unique_ptr<proxygen::HTTPMessage> &req);
 
     void onRequestStart(const std::unique_ptr<proxygen::HTTPMessage>& headers) noexcept;
-    bool proxyResponseToBackEnd(std::string settlementInfo);
+    bool proxyResponseToBackEnd(std::string& responseBody);
     void onRequestFullyReceived(const std::unique_ptr<proxygen::HTTPMessage>& reqHeaders,
         const string& body) noexcept;
     void onBodySizeIncrease(size_t newSize);
