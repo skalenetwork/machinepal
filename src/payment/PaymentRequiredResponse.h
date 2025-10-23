@@ -23,11 +23,21 @@ public:
     PaymentRequiredResponse() = default;
     PaymentRequiredResponse(
         int x402Version,
+        std::vector<PaymentRequirements> accepts
+    ) : x402Version_(x402Version),
+        accepts_(std::move(accepts)) {
+        CHECK_STATE(accepts.size() > 0)
+    }
+    PaymentRequiredResponse(
+        int x402Version,
         std::vector<PaymentRequirements> accepts,
-        std::optional<std::string> error = std::nullopt
+        std::optional<std::string> error
     ) : x402Version_(x402Version),
         accepts_(std::move(accepts)),
-        error_(std::move(error)) {}
+        error_(std::move(error)) {
+        // Accept either non-empty accepts or an error message explaining why accepts may be empty
+        CHECK_STATE(!accepts_.empty() || error_.has_value())
+    }
 
     // Getters
     int x402Version() const { return x402Version_; }
@@ -58,7 +68,7 @@ public:
     json toJson() const;
 
 private:
-    int x402Version_ {1};
+    uint32_t x402Version_ {1};
     std::vector<PaymentRequirements> accepts_;
-    std::optional<std::string> error_;
+    std::optional<std::string> error_ {std::nullopt};
 };

@@ -47,10 +47,9 @@ json PaymentRequiredResponse::toJson() const {
     for (const auto &p : accepts_) {
         j["accepts"].push_back(p.toJson());
     }
-    if (error_.has_value()) {
-        j["error"] = *error_;
-    } else {
-        j["error"] = nullptr;
-    }
+
+    j["error"] = error_;
+
     return j;
+
 }
