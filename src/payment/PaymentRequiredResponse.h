@@ -22,27 +22,25 @@ public:
 
     PaymentRequiredResponse() = default;
     PaymentRequiredResponse(
-        int x402Version,
-        std::vector<PaymentRequirements> accepts
-    ) : x402Version_(x402Version),
-        accepts_(std::move(accepts)) {
-        CHECK_STATE(accepts.size() > 0)
+        std::vector<PaymentRequirements>& accepts
+    ) : accepts_(accepts) {
+        CHECK_STATE(!accepts.empty());
+        error_ = "X-PAYMENT header is required";
     }
     PaymentRequiredResponse(
-        int x402Version,
-        std::vector<PaymentRequirements> accepts,
-        std::optional<std::string> error
-    ) : x402Version_(x402Version),
-        accepts_(std::move(accepts)),
-        error_(std::move(error)) {
+        std::vector<PaymentRequirements>& accepts,
+        std::string&  error
+    ) :
+        accepts_(accepts),
+        error_(error) {
         // Accept either non-empty accepts or an error message explaining why accepts may be empty
-        CHECK_STATE(!accepts_.empty() || error_.has_value())
+        CHECK_STATE(!accepts_.empty())
     }
 
     // Getters
     int x402Version() const { return x402Version_; }
     const std::vector<PaymentRequirements>& accepts() const { return accepts_; }
-    const std::optional<std::string>& error() const { return error_; }
+    const std::string error() const { return error_; }
 
     // Equality and stream output for convenience/testing
     bool operator==(const PaymentRequiredResponse& other) const {
@@ -50,18 +48,7 @@ public:
                accepts_ == other.accepts_ &&
                error_ == other.error_;
     }
-    friend std::ostream& operator<<(std::ostream& os, const PaymentRequiredResponse& r) {
-        os << "{x402Version: " << r.x402Version_
-           << ", accepts: [";
-        for (size_t i = 0; i < r.accepts_.size(); ++i) {
-            if (i) os << ", ";
-            os << r.accepts_[i];
-        }
-        os << "]";
-        os << ", error: " << (r.error_ ? ('"' + *r.error_ + '"') : std::string("null"))
-           << "}";
-        return os;
-    }
+
 
     // JSON serialization/deserialization
     static PaymentRequiredResponse fromJson(const json& j);
@@ -76,5 +63,5 @@ public:
 private:
     uint32_t x402Version_ {1};
     std::vector<PaymentRequirements> accepts_;
-    std::optional<std::string> error_ {std::nullopt};
+    std::string error_;
 };

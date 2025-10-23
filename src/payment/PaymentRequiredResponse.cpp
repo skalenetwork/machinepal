@@ -12,7 +12,7 @@ PaymentRequiredResponse PaymentRequiredResponse::fromJson(const json &j) {
     PaymentRequiredResponse out;
     if (j.contains("x402Version") && j["x402Version"].is_number_integer()) {
         out = PaymentRequiredResponse();
-        out = PaymentRequiredResponse(j["x402Version"].get<int>(), {}, std::nullopt);
+        out = PaymentRequiredResponse( {});
     }
     // accepts (array of PaymentRequirements)
     if (j.contains("accepts") && j["accepts"].is_array()) {
@@ -24,24 +24,16 @@ PaymentRequiredResponse PaymentRequiredResponse::fromJson(const json &j) {
         }
         if (out.x402Version() == 0) {
             // construct with default version 1 if not set earlier
-            out = PaymentRequiredResponse(1, std::move(vec), std::nullopt);
+            out = PaymentRequiredResponse( vec);
         } else {
-            out = PaymentRequiredResponse(out.x402Version(), std::move(vec), std::nullopt);
+            out = PaymentRequiredResponse( vec);
         }
     }
     // error
     if (j.contains("error") && !j["error"].is_null()) {
         auto err = j["error"].get<std::string>();
-        if (out.accepts().empty() && out.x402Version() == 0) {
-            out = PaymentRequiredResponse(1, {}, err);
-        } else {
-            out = PaymentRequiredResponse(out.x402Version() == 0 ? 1 : out.x402Version(), out.accepts(), err);
-        }
     }
-    // If nothing was parsed, ensure defaults
-    if (out.x402Version() == 0 && out.accepts().empty() && !out.error().has_value()) {
-        return PaymentRequiredResponse(1, {}, std::nullopt);
-    }
+
     return out;
 }
 
@@ -96,9 +88,8 @@ std::string PaymentRequiredResponse::getPaymentRequirementsAsString(ptr<Organiza
         extra
     );
 
-    auto response = PaymentRequiredResponse(
-        1,
-        std::vector<PaymentRequirements>{req}
-    );
+    std::vector<PaymentRequirements> reqs({req});
+
+    auto response = PaymentRequiredResponse(reqs);
     return response.toJson().dump();
 }
