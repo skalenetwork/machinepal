@@ -50,7 +50,7 @@ add_executable(machinepay
 target_include_directories(machinepay PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(machinepay PRIVATE CLI11::CLI11)
 
-set (PROXY_COMMON_LIBS
+set (MACHINEPAY_COMMON_LIBS
         CURL::libcurl
         proxygen::proxygenhttpserver
         wangle::wangle
@@ -69,7 +69,7 @@ set (PROXY_COMMON_LIBS
 
 target_link_libraries(machinepay
         PRIVATE
-        ${PROXY_COMMON_LIBS}
+        ${MACHINEPAY_COMMON_LIBS}
 )
 
 option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
@@ -96,14 +96,14 @@ if(BUILD_TESTING)
 
     target_link_libraries(mptest
             PRIVATE
-            ${PROXY_COMMON_LIBS}
+            ${MACHINEPAY_COMMON_LIBS}
             Boost::unit_test_framework
     )
 
     if(ENABLE_ASAN)
-        target_compile_options(machinepayt PRIVATE -fsanitize=address -fno-omit-frame-pointer)
-        target_link_options(machinepayt PRIVATE -fsanitize=address)
+        target_compile_options(mptest PRIVATE -fsanitize=address -fno-omit-frame-pointer)
+        target_link_options(mptest PRIVATE -fsanitize=address)
     endif()
 
-    add_test(NAME machinepayt COMMAND machinepayt)
+    add_test(NAME mptest COMMAND mptest)
 endif()
