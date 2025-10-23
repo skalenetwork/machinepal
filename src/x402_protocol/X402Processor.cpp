@@ -9,7 +9,6 @@
 #include "config/subconfigs/NetworkConfig.h"
 #include "config/subconfigs/OrganizationConfig.h"
 #include "config/subconfigs/ServerConfig.h"
-#include "payment/X402PaymentRequirements.h"
 #include "../payment/PaymentRequirements.h"
 
 

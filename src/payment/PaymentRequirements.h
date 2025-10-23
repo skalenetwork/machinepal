@@ -79,10 +79,12 @@ public:
            << "}";
         return os;
     }
-    static std::shared_ptr<std::string> toString(const PaymentRequirements& p);
-    static std::shared_ptr<PaymentRequirements> fromJson(const json& j);
 
-    json toJsonObject() const;
+
+
+    static std::string getPaymentRequirementsAsString(ptr<OrganizationConfig> organization,
+                                                              ptr<ResourceConfig> resource,
+                                                              ptr<MachinePayConfig> config);
 
     // Getters
     const std::string& scheme() const { return scheme_; }
@@ -98,10 +100,17 @@ public:
     const json& extra() const { return extra_; }
 
 
-    static std::string getPaymentRequirementsAsString(ptr<OrganizationConfig> organization,
-                                                              ptr<ResourceConfig> resource,
-                                                              ptr<MachinePayConfig> config);
+
+    static std::shared_ptr<PaymentRequirements> fromJson(const json& j);
+
+    json toJson() const;
+
 private:
+
+    static std::shared_ptr<std::string> toString(const PaymentRequirements& p);
+
+
+
     std::string scheme_;
     std::string network_;
     std::string maxAmountRequired_;

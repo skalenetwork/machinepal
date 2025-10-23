@@ -41,7 +41,7 @@ BOOST_AUTO_TEST_CASE(serialize_payment_requirements) {
     );
 
     json j_output;
-    j_output["paymentRequirements"] = new_req.toJsonObject();
+    j_output["paymentRequirements"] = new_req.toJson();
 
     BOOST_TEST(j_output["paymentRequirements"]["scheme"] == "streaming");
     BOOST_TEST(j_output["paymentRequirements"]["network"] == "base");

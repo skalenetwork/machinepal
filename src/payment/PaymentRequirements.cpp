@@ -9,8 +9,8 @@
  * @brief Serializes a PaymentRequirements struct into a JSON string.
  * Handles 'outputSchema' conditionally: the key is omitted if the optional is empty.
  */
-std::shared_ptr<std::string> PaymentRequirements::toString(const PaymentRequirements& p) {
-    return std::make_shared<std::string>(p.toJsonObject().dump());
+std::shared_ptr<std::string> PaymentRequirements::toString(const PaymentRequirements &p) {
+    return std::make_shared<std::string>(p.toJson().dump());
 }
 
 // --- Custom JSON Deserialization (fromJson) ---
@@ -18,15 +18,16 @@ std::shared_ptr<std::string> PaymentRequirements::toString(const PaymentRequirem
  * @brief Deserializes a nlohmann::json object into a PaymentRequirements struct.
  * Handles 'outputSchema' conditionally: sets the optional to nullopt if the key is missing.
  */
-std::shared_ptr<PaymentRequirements> PaymentRequirements::fromJson(const json& j)
-{
+std::shared_ptr<PaymentRequirements> PaymentRequirements::fromJson(const json &j) {
     auto scheme = JsonUtils::mustContainString(j, "scheme");
     auto network = JsonUtils::mustContainString(j, "network");
     auto maxAmountRequired = JsonUtils::mustContainString(j, "maxAmountRequired");
     auto resource = JsonUtils::mustContainString(j, "resource");
     auto description = JsonUtils::mustContainString(j, "description");
     auto mimeType = JsonUtils::mustContainString(j, "mimeType");
-    std::optional<json> outputSchema = (j.contains("outputSchema") && !j.at("outputSchema").is_null()) ? std::optional<json>(j.at("outputSchema")) : std::nullopt;
+    std::optional<json> outputSchema = (j.contains("outputSchema") && !j.at("outputSchema").is_null())
+                                           ? std::optional<json>(j.at("outputSchema"))
+                                           : std::nullopt;
     auto payTo = JsonUtils::mustContainString(j, "payTo");
     int maxTimeoutSeconds = j.at("maxTimeoutSeconds").get<int>();
     std::string asset = JsonUtils::mustContainString(j, "asset");
@@ -47,7 +48,7 @@ std::shared_ptr<PaymentRequirements> PaymentRequirements::fromJson(const json& j
     return p;
 }
 
-json PaymentRequirements::toJsonObject() const {
+json PaymentRequirements::toJson() const {
     json j;
     j["scheme"] = scheme_;
     j["network"] = network_;
@@ -67,9 +68,8 @@ json PaymentRequirements::toJsonObject() const {
 
 
 std::string PaymentRequirements::getPaymentRequirementsAsString(ptr<OrganizationConfig> organization,
-                                                          ptr<ResourceConfig> resource,
-                                                          ptr<MachinePayConfig> config) {
-
+                                                                ptr<ResourceConfig> resource,
+                                                                ptr<MachinePayConfig> config) {
     CHECK_STATE(organization);
     CHECK_STATE(resource);
     CHECK_STATE(config);
