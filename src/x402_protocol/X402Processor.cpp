@@ -33,7 +33,7 @@ bool X402Processor::reply402IfNoPaymentHeader(const std::unique_ptr<proxygen::HT
 }
 
 
-bool X402Processor::validatePaymentHeader(const std::unique_ptr<proxygen::HTTPMessage> &req, std::string &paymentInfo) {
+bool X402Processor::validatePayment(const std::unique_ptr<proxygen::HTTPMessage> &req, std::string &paymentInfo) {
     try {
         const auto &headerTable = req->getHeaders();
         std::string payment = headerTable.getSingleOrEmpty("X-PAYMENT");
@@ -266,7 +266,7 @@ void X402Processor::onRequestFullyReceived(const std::unique_ptr<proxygen::HTTPM
             return;
         }
 
-        if (!validatePaymentHeader(reqHeaders, settlementInfo)) {
+        if (!validatePayment(reqHeaders, settlementInfo)) {
             return;
         }
         state_ = State::PAYMENT_HEADER_RECEIVED;

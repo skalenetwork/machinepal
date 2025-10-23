@@ -33,7 +33,7 @@ public:
     void onBodySizeIncrease(size_t newSize);
 private:
 
-    bool validatePaymentHeader(const std::unique_ptr<proxygen::HTTPMessage>&  _req, std::string& paymentInfo);
+    bool validatePayment(const std::unique_ptr<proxygen::HTTPMessage>&  _req, std::string& paymentInfo);
     void reply402PaymentRequired();
     void sendResponse(const std::pair<uint16_t, std::string>& statusAndMessage,
                       const std::vector<std::pair<std::string, std::string>>& headers, const std::string& body);
