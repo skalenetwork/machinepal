@@ -35,7 +35,7 @@ bool X402Processor::hasPaymentHeader(const std::unique_ptr<proxygen::HTTPMessage
         if (payment.empty()) return false;
         if (payment == "demo-ok") {
             paymentInfo =
-                    R"({\"txHash\":\"0xabc123...\",\"amount\":\"0.25\",\"asset\":\"SDC\",\"network\":\"base-1net\"})";
+                    R"({\"txHash\":\"0xabc123...\",\"amount\":\"0.25\",\"asset\":\"USDC\",\"network\":\"base\"})";
             return true;
         }
     } catch (std::exception &e) {
