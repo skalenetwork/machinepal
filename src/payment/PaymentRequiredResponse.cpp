@@ -27,7 +27,7 @@ PaymentRequiredResponse PaymentRequiredResponse::fromJson(const json &j) {
             j);
 
 
-        std::optional<string> error = nullptr;
+        std::optional<string> error = std::nullopt;
 
         if (j.contains("error")) {
             CHECK_STATE_JSON(j["error"].is_string(),
