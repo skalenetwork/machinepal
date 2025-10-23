@@ -12,6 +12,7 @@ Instantly add **crypto payments** to any website or API using the [x402 protocol
 [![GitHub forks](https://img.shields.io/github/forks/skalenetwork/machinepay?style=social)](https://github.com/skalenetwork/machinepay/network/members)
 [![GitHub issues](https://img.shields.io/github/issues/skalenetwork/machinepay)](https://github.com/skalenetwork/machinepay/issues)
 [![GitHub license](https://img.shields.io/github/license/skalenetwork/machinepay)](https://github.com/skalenetwork/machinepay/blob/main/LICENSE)
+[![Love this project? Give it a heart!](https://img.shields.io/badge/%E2%9D%A4%EF%B8%8F%20Love%20this%20project%3F%20Give%20it%20a%20heart!-ff69b4?style=flat-square)](https://github.com/skalenetwork/machinepay/stargazers)
 
 ---
 
