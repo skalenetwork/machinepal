@@ -6,21 +6,7 @@
 #include <stdexcept>
 #include <cctype>
 #include <sstream>
-
-static uint8_t hexNibble(char c) {
-    if (c >= '0' && c <= '9') return static_cast<uint8_t>(c - '0');
-    if (c >= 'a' && c <= 'f') return static_cast<uint8_t>(10 + (c - 'a'));
-    if (c >= 'A' && c <= 'F') return static_cast<uint8_t>(10 + (c - 'A'));
-    throw std::invalid_argument("Invalid hex character");
-}
-
-static std::string toLowerHex(uint8_t v) {
-    const char* hex = "0123456789abcdef";
-    std::string s;
-    s.push_back(hex[(v >> 4) & 0xF]);
-    s.push_back(hex[v & 0xF]);
-    return s;
-}
+#include <boost/algorithm/hex.hpp>
 
 Authorization::Authorization() = default;
 
@@ -127,19 +113,19 @@ Address Authorization::parseHexAddress(const std::string& hex) {
         throw std::invalid_argument("Address hex must be 40 characters (20 bytes)");
     }
     Address addr{};
-    for (size_t i = 0; i < 20; ++i) {
-        uint8_t high = hexNibble(s[2*i]);
-        uint8_t low = hexNibble(s[2*i + 1]);
-        addr[i] = static_cast<uint8_t>((high << 4) | low);
+    try {
+        // decode into addr; boost::algorithm::unhex throws hex_decode_error on invalid input
+        boost::algorithm::unhex(s.begin(), s.end(), addr.begin());
+    } catch (const boost::algorithm::hex_decode_error& e) {
+        throw std::invalid_argument(std::string("Invalid hex character in address: ") + e.what());
     }
     return addr;
 }
 
 std::string Authorization::addressToHex(const Address& addr) {
-    std::string out = "0x";
-    out.reserve(2 + 40);
-    for (uint8_t b : addr) {
-        out += toLowerHex(b);
-    }
+    std::string out;
+    out.reserve(42);
+    out += "0x";
+    boost::algorithm::hex_lower(addr.begin(), addr.end(), std::back_inserter(out));
     return out;
 }
