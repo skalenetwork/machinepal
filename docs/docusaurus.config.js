@@ -32,7 +32,7 @@ const config = {
             'classic',
             ({
                 docs: {
-                    path: 'docs',
+                    path: '.',
                     routeBasePath: '/', // Serve docs at site root
                     sidebarPath: require.resolve('./sidebars.js'),
                     editUrl: 'https://github.com/skalenetwork/machinepay/edit/main/',
