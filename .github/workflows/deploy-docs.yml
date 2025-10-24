@@ -6,40 +6,56 @@ on:
       - main
       - develop
 
+permissions:
+  contents: write
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: 18
 
       - name: Install dependencies
-        run: npm ci
+        working-directory: docs
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
 
       - name: Build Docusaurus site
+        working-directory: docs
         run: npm run build
 
       - name: Deploy to GitHub Pages
+        working-directory: docs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx docusaurus deploy
 
       - name: Push docs/README.md to gh-pages
         run: |
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git config --global user.name "github-actions[bot]"
-          git fetch origin gh-pages || git checkout --orphan gh-pages
+          git fetch origin gh-pages || true
           git checkout gh-pages || git checkout --orphan gh-pages
           cp docs/README.md README.md
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
           git add README.md
           git commit -m "Update docs/README.md from main branch" || echo "No changes to commit"
           git push origin gh-pages
 
-      - name: Verify docs/README.md is on gh-pages
+      - name: Verify README.md on gh-pages
         run: |
-          curl -sSfL https://raw.githubusercontent.com/${{ github.repository }}/gh-pages/README.md | grep -q "Welcome to MachinePay Docs" && echo "README.md found on gh-pages" || (echo "README.md not found on gh-pages" && exit 1)
+          curl -sSfL https://raw.githubusercontent.com/${{ github.repository }}/gh-pages/README.md | \
+          grep -q "Welcome to MachinePay Docs" && \
+          echo "✅ README.md found on gh-pages" || \
+          (echo "❌ README.md not found on gh-pages" && exit 1)
