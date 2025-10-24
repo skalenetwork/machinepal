@@ -31,6 +31,10 @@ class MachinePayConfig {
 
 public:
 
+    bool isSchemeSupported(const std::string& scheme) const {
+        return scheme == "exact";
+    }
+
     const ptr<ServerConfig>& server() const;
 
     const ptr<LogConfig>& log() const;
