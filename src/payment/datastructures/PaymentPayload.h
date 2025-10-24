@@ -5,6 +5,10 @@
 #include <memory>
 #include "nlohmann/json.hpp"
 #include <ostream>
+#include <optional>
+#include "x402_protocol/HttpError.h"
+#include "config/MachinePayConfig.h"
+#include "config/subconfigs/ResourceConfig.h"
 
 using json = nlohmann::json;
 
@@ -21,6 +25,7 @@ public:
     bool operator==(const PaymentPayload& other) const;
     static std::shared_ptr<PaymentPayload> fromJson(const json& j);
     [[nodiscard]] json toJson() const;
+    std::optional<HttpError> validate(const MachinePayConfig& config, const ResourceConfig& resource) const;
 private:
     int x402Version_;
     std::string scheme_;
