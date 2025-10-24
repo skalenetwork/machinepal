@@ -11,10 +11,10 @@ const config = {
     favicon: 'img/favicon.ico',
 
     // GitHub Pages deployment config
-    url: 'https://machinepay.github.io', // Your GitHub Pages URL
-    baseUrl: '/docs/',                   // Base URL path for your site
+    url: 'https://skalenetwork.github.io/machinepay/', // Your GitHub Pages URL
+    baseUrl: '/',                   // Base URL path for your site
     organizationName: 'skalenetwork',      // GitHub org/user name
-    projectName: 'docs',                 // Repo name
+    projectName: 'machinepay',                 // Repo name
     trailingSlash: false,
 
     onBrokenLinks: 'throw',
@@ -33,7 +33,7 @@ const config = {
                     path: 'docs',
                     routeBasePath: '/', // Serve docs at site root
                     sidebarPath: require.resolve('./sidebars.js'),
-                    editUrl: 'https://github.com/machinepay/docs/edit/main/',
+                    editUrl: 'https://github.com/skalenetwork/machinepay/edit/main/',
                     include: ['**/*.md', '**/*.mdx', 'README.md'], // include README.md
                     showLastUpdateAuthor: true,
                     showLastUpdateTime: true,
