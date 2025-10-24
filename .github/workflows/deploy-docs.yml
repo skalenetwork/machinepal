@@ -8,10 +8,13 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -22,34 +25,39 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 18
+          cache: npm
+          cache-dependency-path: docs/package-lock.json
 
       - name: Install dependencies
         working-directory: docs
         run: |
-          if [ -f package-lock.json ]; then
-            npm ci
-          else
-            npm install
-          fi
+          npm ci || npm install
 
+      - name: Build Docusaurus site
         working-directory: docs
         run: npm run build
 
-      - name: Build Docusaurus site
       - name: Deploy to GitHub Pages
         working-directory: docs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx docusaurus deploy
+        run: |
+          # Use --yes to skip confirmation and ensure deploy works in CI
+          npx docusaurus deploy --yes --git-protocol https
 
       - name: Verify deployed site is reachable
         run: |
           echo "🔍 Checking if site is live..."
-          # The base URL is derived from your repo name and owner.
-          # Example: https://<owner>.github.io/<repo>/
-          DEPLOY_URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
+          REPO_NAME=$(basename "${{ github.event.repository.name }}")
+          OWNER="${{ github.repository_owner }}"
+          DEPLOY_URL="https://${OWNER}.github.io/${REPO_NAME}/"
+
           echo "Testing $DEPLOY_URL ..."
-          sleep 20  # Wait a few seconds for GitHub Pages to update
-          curl -sSfL "$DEPLOY_URL" | grep -q "html" && \
-            echo "✅ Site is live at $DEPLOY_URL" || \
-            (echo "❌ Could not verify site at $DEPLOY_URL" && exit 1)
+          sleep 30  # Give GitHub Pages a moment to update
+
+          if curl -sSfL "$DEPLOY_URL" | grep -q "<html"; then
+            echo "✅ Site is live at $DEPLOY_URL"
+          else
+            echo "❌ Could not verify site at $DEPLOY_URL"
+            exit 1
+          fi
