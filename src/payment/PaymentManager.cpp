@@ -44,14 +44,13 @@ std::optional<HttpError> PaymentManager::validatePayment(const std::unique_ptr<p
     (void)config; // currently unused
     (void)resource; // currently unused
     try {
-        std::shared_ptr<PaymentPayload> paymentPayload;
-        std::optional<HttpError> value1;
+
         auto result = decodeAndParsePayment(req);
         if (holds_alternative<HttpError>(result)) {
             return std::get<HttpError>(result);
         }
 
-        paymentPayload = std::get<ptr<PaymentPayload>>(result);
+        auto paymentPayload = std::get<ptr<PaymentPayload>>(result);
 
         try {
             settlementInfo = paymentPayload->toJson().dump();
