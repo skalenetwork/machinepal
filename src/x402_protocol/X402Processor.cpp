@@ -2,18 +2,15 @@
 #include "X402Processor.h"
 #include "MachinePayApp.h"
 #include "IResponseSender.h"
-#include <folly/json.h>
 #include "BackendConnection.h"
-#include "examples/PaymentExamples.h"
-
-#include "config/subconfigs/NetworkConfig.h"
 #include "config/subconfigs/OrganizationConfig.h"
 #include "config/subconfigs/ServerConfig.h"
-#include "../payment/PaymentRequirements.h"
-#include "payment/PaymentRequiredResponse.h"
+#include "payment/datastructures/PaymentPayload.h"
+#include "payment/datastructures/PaymentRequirements.h"
+#include "payment/datastructures/PaymentRequiredResponse.h"
 #include <boost/beast/core/detail/base64.hpp>
+#include <folly/json.h>
 
-#include "payment/PaymentPayload.h"
 
 
 X402Processor::X402Processor(MachinePayApp &app, ptr<IResponseSender> &responseSender)

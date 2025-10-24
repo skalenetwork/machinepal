@@ -12,12 +12,12 @@
 
 
 #include "MachinePayApp.h"
-#include "../payment/PaymentRequirements.h"
+#include "../payment/datastructures/PaymentRequirements.h"
 #include "../examples/PaymentExamples.h"
 #include "config/ConfigLoader.h"
 #include "config/ConfigManager.h"
 #include "config/subconfigs/ServerConfig.h"
-#include "payment/PaymentRequiredResponse.h"
+#include "../payment/datastructures/PaymentRequiredResponse.h"
 #include "examples/PaymentExamples.h"
 #include "url/URLUtils.h"
 #include <folly/SocketAddress.h>

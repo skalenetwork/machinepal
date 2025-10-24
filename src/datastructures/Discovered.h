@@ -4,7 +4,7 @@
 #include <optional>
 #include <ostream>
 #include "nlohmann/json.hpp"
-#include "../payment/PaymentRequirements.h"
+#include "../payment/datastructures/PaymentRequirements.h"
 using json = nlohmann::json;
 
 struct DiscoveredPagination {

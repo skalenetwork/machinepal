@@ -1,5 +1,5 @@
 #include "MachinePayCommon.h"
-#include "../payment/PaymentRequirements.h"
+#include "../payment/datastructures/PaymentRequirements.h"
 #include "../examples/PaymentExamples.h"
 #include "nlohmann/json.hpp"
 #include <boost/test/unit_test.hpp>

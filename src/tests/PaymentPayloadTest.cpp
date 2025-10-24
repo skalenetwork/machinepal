@@ -1,4 +1,4 @@
-#include "../payment/PaymentPayload.h"
+#include "../payment/datastructures/PaymentPayload.h"
 #include "../examples/PaymentExamples.h"
 
 #include <boost/test/unit_test.hpp>
