@@ -11,8 +11,9 @@ const config = {
     favicon: 'img/favicon.ico',
 
     // GitHub Pages deployment config
-    url: 'https://skalenetwork.github.io/machinepay/', // Your GitHub Pages URL
-    baseUrl: '/',                   // Base URL path for your site
+    // GitHub Pages deployment config
+    url: 'https://skalenetwork.github.io/', // Your GitHub Pages URL
+    baseUrl: '/machinepay',                   // Base URL path for your site
     organizationName: 'skalenetwork',      // GitHub org/user name
     projectName: 'machinepay',                 // Repo name
     trailingSlash: false,
