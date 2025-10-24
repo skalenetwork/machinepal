@@ -80,8 +80,8 @@ const config = {
                 {
                     title: 'Community',
                     items: [
-                        { label: 'GitHub', href: 'https://github.com/machinepay' },
-                        { label: 'Twitter', href: 'https://twitter.com/machinepay' },
+                        { label: 'GitHub', href: 'https://github.com/skalenetwork/machinepay' },
+                        { label: 'Twitter', href: 'https://twitter.com/skalenetwork'},
                     ],
                 },
             ],
