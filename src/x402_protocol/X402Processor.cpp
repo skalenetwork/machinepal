@@ -33,46 +33,7 @@ bool X402Processor::reply402IfNoPaymentHeader(const std::unique_ptr<proxygen::HT
 }
 
 
-bool X402Processor::validatePayment(const std::unique_ptr<proxygen::HTTPMessage> &req, std::string &paymentInfo) {
-    try {
-        const auto &headerTable = req->getHeaders();
-        std::string payment = headerTable.getSingleOrEmpty("X-PAYMENT");
-        // the payment header should not be empty at this point - otherwise we would have replied 402 already
-        CHECK_STATE(!payment.empty())
 
-
-        std::string decoded;
-        try {
-            decoded = URLUtils::base64Decode(payment);
-        } catch (const std::exception& e) {
-            spdlog::error("Exception during base64 decode of X-PAYMENT header: {}", e.what());
-            reply400BadRequest("X-PAYMENT header is not valid base64");
-            return false;
-        }
-
-
-        nlohmann::json j;
-
-        // Parse decoded string as JSON
-        try {
-            j = nlohmann::json::parse(decoded);
-        } catch (const std::exception& e) {
-            spdlog::error("Failed to parse decoded X-PAYMENT header as JSON: {} {}", decoded, e.what());
-            reply400BadRequest("X-PAYMENT header is not valid JSON after base64 decoding");
-            return false;
-        }
-
-
-
-        auto paymentPayload_ = PaymentPayload::fromJson(j);
-        CHECK_STATE(paymentPayload_);
-        return true;
-    } catch (std::exception &e) {
-        spdlog::error("hasValidPaymentHeader had exception while parsing X-PAYMENT header: {}", e.what());
-        reply500InternalError("Error parsing X-PAYMENT header: ");
-    }
-    return false;
-}
 
 
 void X402Processor::reply200Success(const std::string &settlementInfo,
@@ -295,6 +256,24 @@ bool X402Processor::proxyResponseToBackEnd(std::string& responseBody) {
     return true;
 }
 
+void X402Processor::replyToClientWithError(const HttpError& httpError) {
+    auto httpErrorMessage = httpError.message();
+    switch (httpError.type()) {
+        case ErrorType::ERR_BAD_REQUEST:
+            reply400BadRequest(httpErrorMessage);
+            break;
+        case ErrorType::ERR_INTERNAL_SERVER_ERROR:
+            reply500InternalError(httpErrorMessage);
+            break;
+        case ErrorType::ERR_BAD_GATEWAY:
+            reply502BadGateway(httpErrorMessage);
+            break;
+        default:
+            // cant happen
+            CHECK_STATE(false);
+    }
+}
+
 void X402Processor::onRequestFullyReceived(const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
                                            const string &body) noexcept {
     try {
@@ -309,14 +288,16 @@ void X402Processor::onRequestFullyReceived(const std::unique_ptr<proxygen::HTTPM
         }
 
         std::string settlementInfo;
-
         if (reply402IfNoPaymentHeader(reqHeaders)) {
             return;
         }
 
-        if (!validatePayment(reqHeaders, settlementInfo)) {
+        // Simplified validatePayment error handling
+        if (auto error = app_.paymentManager()->validatePayment(reqHeaders, settlementInfo)) {
+            replyToClientWithError(*error);
             return;
         }
+
         state_ = State::PAYMENT_HEADER_RECEIVED;
 
         string responseBody;

@@ -1,6 +1,8 @@
 #pragma once
+#include <optional>
 #include <proxygen/lib/http/HTTPMethod.h>
 
+#include "HttpError.h"
 #include "IResponseSender.h"
 #include "X402ProcessorState.h"
 
@@ -28,12 +30,15 @@ public:
 
     void onRequestStart(const std::unique_ptr<proxygen::HTTPMessage>& headers) noexcept;
     bool proxyResponseToBackEnd(std::string& responseBody);
+
+    void replyToClientWithError(const HttpError& httpError);
+
     void onRequestFullyReceived(const std::unique_ptr<proxygen::HTTPMessage>& reqHeaders,
-        const string& body) noexcept;
+                                const string& body) noexcept;
     void onBodySizeIncrease(size_t newSize);
 private:
 
-    bool validatePayment(const std::unique_ptr<proxygen::HTTPMessage>&  _req, std::string& paymentInfo);
+
     void reply402PaymentRequired();
     void sendResponse(const std::pair<uint16_t, std::string>& statusAndMessage,
                       const std::vector<std::pair<std::string, std::string>>& headers, const std::string& body);
