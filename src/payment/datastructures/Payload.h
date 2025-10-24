@@ -6,6 +6,8 @@
 #include "nlohmann/json.hpp"
 #include <ostream>
 
+class HttpError;
+class ResourceConfig;
 using json = nlohmann::json;
 
 class Payload {
@@ -20,6 +22,9 @@ public:
     bool operator==(const Payload& other) const;
     static std::shared_ptr<Payload> fromJson(const json& j);
     [[nodiscard]] json toJson() const;
+
+    std::optional<HttpError> validate(const MachinePayConfig &config, const ResourceConfig &resource);
+
 private:
     std::string signature_;
     std::shared_ptr<Authorization> authorization_;

@@ -89,5 +89,6 @@ std::optional<HttpError> PaymentPayload::validate(const MachinePayConfig& config
         return HttpError(ERR_BAD_REQUEST, std::string("Payment network does not match configured network ") +
             network_ + " != " + config.network()->name());
     }
-    return std::nullopt;
+
+    return this->payload()->validate(config, resource);
 }

@@ -3,6 +3,8 @@
 
 #include "config/JsonUtils.h"
 
+class HttpError;
+
 // Payload implementations
 Payload::Payload() = default;
 
@@ -55,4 +57,7 @@ std::shared_ptr<Payload> Payload::fromJson(const json& j) {
     CHECK_STATE(authorization());
     j["authorization"] = authorization_->toJson();
     return j;
+}
+
+std::optional<HttpError> validate(const MachinePayConfig &config, const ResourceConfig &resource);
 }
