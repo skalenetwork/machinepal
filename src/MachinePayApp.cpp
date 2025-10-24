@@ -7,6 +7,7 @@ MachinePayApp::MachinePayApp(const std::map<std::string, std::string>& configVal
     spdlog::info("Looking for config");
     configManager_  = ConfigManager::initManager(configValuesFromCliAndEnv);
     Init::initLogLevelFromConfig(configManager());
+    paymentManager_ = std::make_shared<PaymentManager>(*this);
 }
 
 

@@ -6,6 +6,7 @@
 #include "init/Init.h"
 #include "x402_server/ServerFactory.h"
 #include "x402_protocol/X402Processor.h"
+#include "payment/PaymentManager.h"
 
 
 
@@ -18,6 +19,10 @@ public:
     [[nodiscard]] ptr<ServerFactory> serverFactory() const {
         CHECK_STATE(serverFactory_);
         return serverFactory_;
+    }
+    [[nodiscard]] ptr<PaymentManager> paymentManager() const {
+        CHECK_STATE(paymentManager_);
+        return paymentManager_;
     }
 
     std::shared_ptr<X402Processor> makeX402Processor(ptr<IResponseSender>& _responseSender)
@@ -101,6 +106,7 @@ private:
     ptr<ConfigManager> configManager_;
     ptr<ServerFactory> serverFactory_;
     ptr<proxygen::HTTPServer> proxygenServer_;
+    ptr<PaymentManager> paymentManager_;
     std::atomic<bool> isStarted_{false};
     std::atomic<bool> serverStopCalled_{false};
 
