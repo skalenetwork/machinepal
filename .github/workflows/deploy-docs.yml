@@ -32,10 +32,10 @@ jobs:
             npm install
           fi
 
-      - name: Build Docusaurus site
         working-directory: docs
         run: npm run build
 
+      - name: Build Docusaurus site
       - name: Deploy to GitHub Pages
         working-directory: docs
         env:

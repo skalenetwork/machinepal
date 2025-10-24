@@ -13,7 +13,7 @@ const config = {
     // GitHub Pages deployment config
     url: 'https://machinepay.github.io', // Your GitHub Pages URL
     baseUrl: '/docs/',                   // Base URL path for your site
-    organizationName: 'machinepay',      // GitHub org/user name
+    organizationName: 'skalenetwork',      // GitHub org/user name
     projectName: 'docs',                 // Repo name
     trailingSlash: false,
 
