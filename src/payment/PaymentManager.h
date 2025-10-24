@@ -2,6 +2,9 @@
 
 #include <memory>
 #include <optional>
+#include <variant>
+
+#include "datastructures/PaymentPayload.h"
 #include "x402_protocol/HttpError.h"
 
 class HttpError;
@@ -11,14 +14,22 @@ namespace proxygen {
 }
 
 class MachinePayApp; // forward declaration
+class MachinePayConfig; // forward declaration
+class ResourceConfig;   // forward declaration
 
 class PaymentManager {
 public:
     explicit PaymentManager(MachinePayApp& app);
+
+    variant<ptr<PaymentPayload>, HttpError> decodeAndParsePayment(const std::unique_ptr<proxygen::HTTPMessage> &req);
+
     [[nodiscard]] MachinePayApp& app() const { return app_; }
 
     std::optional<HttpError> validatePayment(
-        const std::unique_ptr<proxygen::HTTPMessage> &req, std::string &settlementInfo);
+        const std::unique_ptr<proxygen::HTTPMessage> &req,
+        std::string &settlementInfo,
+        const MachinePayConfig& config,
+        const ResourceConfig& resource);
 private:
     MachinePayApp& app_;
 };

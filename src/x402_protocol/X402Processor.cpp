@@ -292,8 +292,7 @@ void X402Processor::onRequestFullyReceived(const std::unique_ptr<proxygen::HTTPM
             return;
         }
 
-        // Simplified validatePayment error handling
-        if (auto error = app_.paymentManager()->validatePayment(reqHeaders, settlementInfo)) {
+        if (auto error = app_.paymentManager()->validatePayment(reqHeaders, settlementInfo, *config(), *resource())) {
             replyToClientWithError(*error);
             return;
         }

@@ -5,8 +5,7 @@
 
 PaymentManager::PaymentManager(MachinePayApp& app) : app_(app) {}
 
-std::optional<HttpError> PaymentManager::validatePayment(const std::unique_ptr<proxygen::HTTPMessage> &req,
-    std::string &settlementInfo) {
+variant<ptr<PaymentPayload>, HttpError> PaymentManager::decodeAndParsePayment(const std::unique_ptr<proxygen::HTTPMessage> &req) {
     try {
         const auto &headerTable = req->getHeaders();
         std::string payment = headerTable.getSingleOrEmpty("X-PAYMENT");
@@ -29,13 +28,33 @@ std::optional<HttpError> PaymentManager::validatePayment(const std::unique_ptr<p
             return HttpError(ERR_BAD_REQUEST, "X-PAYMENT header is not valid JSON after base64 decoding");
         }
 
-        auto paymentPayloadPtr = PaymentPayload::fromJson(j);
-        if (!paymentPayloadPtr) {
-            return HttpError(ERR_INTERNAL_SERVER_ERROR, "Parsed payment payload is null");
+        auto paymentPayloadP = PaymentPayload::fromJson(j);
+        CHECK_STATE(paymentPayloadP);
+        return paymentPayloadP;
+    } catch (std::exception &e) {
+        return HttpError(ERR_INTERNAL_SERVER_ERROR,
+            std::string("Error parsing X-PAYMENT header: ") + e.what());
+    }
+}
+
+std::optional<HttpError> PaymentManager::validatePayment(const std::unique_ptr<proxygen::HTTPMessage> &req,
+                                                         std::string &settlementInfo,
+                                                         const MachinePayConfig& config,
+                                                         const ResourceConfig& resource) {
+    (void)config; // currently unused
+    (void)resource; // currently unused
+    try {
+        std::shared_ptr<PaymentPayload> paymentPayload;
+        std::optional<HttpError> value1;
+        auto result = decodeAndParsePayment(req);
+        if (holds_alternative<HttpError>(result)) {
+            return std::get<HttpError>(result);
         }
-        // For now settlementInfo is the re-serialized payment payload JSON.
+
+        paymentPayload = std::get<ptr<PaymentPayload>>(result);
+
         try {
-            settlementInfo = paymentPayloadPtr->toJson().dump();
+            settlementInfo = paymentPayload->toJson().dump();
         } catch (const std::exception& e) {
             spdlog::error("Failed serializing payment payload to JSON: {}", e.what());
             return HttpError(ERR_INTERNAL_SERVER_ERROR, "Failed serializing payment payload");
