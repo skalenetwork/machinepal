@@ -24,6 +24,7 @@
 #include <sstream>
 #include <iomanip>
 #include <nlohmann/json.hpp>
+#include <array>
 
 #if defined(__cpp_exceptions) || defined(__EXCEPTIONS) || defined(_CPPUNWIND)
     constexpr bool exceptions_enabled = true;
@@ -93,5 +94,6 @@ do { std::throw_with_nested(std::runtime_error(std::string(__FILE__) + ":" \
 template<typename T>
 using ptr = std::shared_ptr<T>;
 
-
 using namespace std;
+
+using Address = std::array<uint8_t, 20>;

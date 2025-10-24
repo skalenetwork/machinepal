@@ -1,30 +1,53 @@
+#include "MachinePayCommon.h"
 #include "Authorization.h"
 #include "x402_protocol/HttpError.h"
 #include <chrono>
 #include <ctime>
+#include <stdexcept>
+#include <cctype>
+#include <sstream>
+
+static uint8_t hexNibble(char c) {
+    if (c >= '0' && c <= '9') return static_cast<uint8_t>(c - '0');
+    if (c >= 'a' && c <= 'f') return static_cast<uint8_t>(10 + (c - 'a'));
+    if (c >= 'A' && c <= 'F') return static_cast<uint8_t>(10 + (c - 'A'));
+    throw std::invalid_argument("Invalid hex character");
+}
+
+static std::string toLowerHex(uint8_t v) {
+    const char* hex = "0123456789abcdef";
+    std::string s;
+    s.push_back(hex[(v >> 4) & 0xF]);
+    s.push_back(hex[v & 0xF]);
+    return s;
+}
 
 Authorization::Authorization() = default;
 
-Authorization::Authorization(const std::string &from,
-                             const std::string &to,
+Authorization::Authorization(const std::string &fromStr,
+                             const std::string &toStr,
                              const std::string &value,
                              const std::string &validAfter,
                              const std::string &validBefore,
-                             const std::string &nonce)
-    : from_(from),
-      to_(to),
+                             const std::string &nonce) :
       value_(value),
       validAfter_(validAfter),
       validBefore_(validBefore),
       nonce_(nonce) {
+    from_ = parseHexAddress(fromStr);
+    to_ = parseHexAddress(toStr);
+    fromHex_ = addressToHex(from_); // normalized 0x lowercase
+    toHex_ = addressToHex(to_);
 }
 
-const std::string &Authorization::from() const { return from_; }
-const std::string &Authorization::to() const { return to_; }
 const std::string &Authorization::value() const { return value_; }
 const std::string &Authorization::validAfter() const { return validAfter_; }
 const std::string &Authorization::validBefore() const { return validBefore_; }
 const std::string &Authorization::nonce() const { return nonce_; }
+
+// Return hex strings (updated to match header)
+const std::string& Authorization::from() const { return fromHex_; }
+const std::string& Authorization::to() const { return toHex_; }
 
 bool Authorization::operator==(const Authorization &other) const {
     return from_ == other.from_ &&
@@ -62,8 +85,8 @@ std::shared_ptr<Authorization> Authorization::fromJson(const json &j) {
 
 json Authorization::toJson() const {
     json j;
-    j["from"] = from_;
-    j["to"] = to_;
+    j["from"] = fromHex_;
+    j["to"] = toHex_;
     j["value"] = value_;
     j["validAfter"] = validAfter_;
     j["validBefore"] = validBefore_;
@@ -93,4 +116,30 @@ std::optional<HttpError> Authorization::validate(const MachinePayConfig &config,
                          std::string("Authorization failed to validate") + e.what());
     }
     return std::nullopt; // no error
+}
+
+Address Authorization::parseHexAddress(const std::string& hex) {
+    std::string s = hex;
+    if (s.rfind("0x", 0) == 0 || s.rfind("0X", 0) == 0) {
+        s = s.substr(2);
+    }
+    if (s.size() != 40) {
+        throw std::invalid_argument("Address hex must be 40 characters (20 bytes)");
+    }
+    Address addr{};
+    for (size_t i = 0; i < 20; ++i) {
+        uint8_t high = hexNibble(s[2*i]);
+        uint8_t low = hexNibble(s[2*i + 1]);
+        addr[i] = static_cast<uint8_t>((high << 4) | low);
+    }
+    return addr;
+}
+
+std::string Authorization::addressToHex(const Address& addr) {
+    std::string out = "0x";
+    out.reserve(2 + 40);
+    for (uint8_t b : addr) {
+        out += toLowerHex(b);
+    }
+    return out;
 }

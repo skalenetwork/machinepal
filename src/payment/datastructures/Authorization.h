@@ -6,28 +6,35 @@
 #include "nlohmann/json.hpp"
 #include <ostream>
 #include "config/JsonUtils.h"
+#include "MachinePayCommon.h"
 
 class ResourceConfig;
 class HttpError;
+class MachinePayConfig; // forward declaration added
 using json = nlohmann::json;
 
 class Authorization {
 public:
     Authorization();
-    Authorization(const std::string& from,
-                  const std::string& to,
+    Authorization(const std::string& fromStr,
+                  const std::string& toStr,
                   const std::string& value,
                   const std::string& validAfter,
                   const std::string& validBefore,
                   const std::string& nonce);
 
-    // Getters
-    [[nodiscard]] const std::string& from() const;
-    [[nodiscard]] const std::string& to() const;
     [[nodiscard]] const std::string& value() const;
     [[nodiscard]] const std::string& validAfter() const;
     [[nodiscard]] const std::string& validBefore() const;
     [[nodiscard]] const std::string& nonce() const;
+
+    // Hex string accessors (tests expect these)
+    [[nodiscard]] const std::string& from() const; // returns 0x-prefixed lowercase hex
+    [[nodiscard]] const std::string& to() const;   // returns 0x-prefixed lowercase hex
+
+    // Raw address bytes
+    [[nodiscard]] const Address& fromAddress() const { return from_; }
+    [[nodiscard]] const Address& toAddress() const { return to_; }
 
     bool operator==(const Authorization& other) const;
 
@@ -38,8 +45,13 @@ public:
 
     std::optional<HttpError> validate(const MachinePayConfig& config, const ResourceConfig& resource);
 private:
-    std::string from_;
-    std::string to_;
+    static Address parseHexAddress(const std::string& hex);
+    static std::string addressToHex(const Address& addr);
+
+    Address from_{};
+    Address to_{};
+    std::string fromHex_;
+    std::string toHex_;
     std::string value_;
     std::string validAfter_;
     std::string validBefore_;
