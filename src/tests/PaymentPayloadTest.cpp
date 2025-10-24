@@ -13,18 +13,18 @@ BOOST_AUTO_TEST_CASE(deserialize_payment_payload) {
 
 
     json jData = json::parse(PaymentExamples::EXACT_UCDC_PAYMENT_PAYLOAD_CB_SEPOLIA);
-    PaymentPayload pPayload = *PaymentPayload::fromJson(jData);
+    PaymentPayload paymentPayload = *PaymentPayload::fromJson(jData);
 
-    BOOST_TEST(pPayload.x402Version() == 1);
-    BOOST_TEST(pPayload.scheme() == "exact");
-    BOOST_TEST(pPayload.network() == "base-sepolia");
-    BOOST_TEST(pPayload.payload().signature() == "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef1b");
-    BOOST_TEST(pPayload.payload().authorization()->from() == "0x1111111111111111111111111111111111111111");
-    BOOST_TEST(pPayload.payload().authorization()->to() == "0x2222222222222222222222222222222222222222");
-    BOOST_TEST(pPayload.payload().authorization()->value() == "1000");
-    BOOST_TEST(pPayload.payload().authorization()->validAfter() == "1716150000");
-    BOOST_TEST(pPayload.payload().authorization()->validBefore() == "1716153600");
-    BOOST_TEST(pPayload.payload().authorization()->nonce() == "0x1234567890abcdef");
+    BOOST_TEST(paymentPayload.x402Version() == 1);
+    BOOST_TEST(paymentPayload.scheme() == "exact");
+    BOOST_TEST(paymentPayload.network() == "base-sepolia");
+    BOOST_TEST(paymentPayload.payload()->signature() == "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef1b");
+    BOOST_TEST(paymentPayload.payload()->authorization()->from() == "0x1111111111111111111111111111111111111111");
+    BOOST_TEST(paymentPayload.payload()->authorization()->to() == "0x2222222222222222222222222222222222222222");
+    BOOST_TEST(paymentPayload.payload()->authorization()->value() == "1000");
+    BOOST_TEST(paymentPayload.payload()->authorization()->validAfter() == "1716150000");
+    BOOST_TEST(paymentPayload.payload()->authorization()->validBefore() == "1716153600");
+    BOOST_TEST(paymentPayload.payload()->authorization()->nonce() == "0x1234567890abcdef");
 }
 
 BOOST_AUTO_TEST_CASE(serialize_payment_payload) {
@@ -36,11 +36,11 @@ BOOST_AUTO_TEST_CASE(serialize_payment_payload) {
         "1727283600",
         "0xfee1deadbeef"
     );
-    Payload payload(
+    auto payloadPtr = std::make_shared<Payload>(
         "0xfee1deadfee1deadfee1deadfee1deadfee1deadfee1deadfee1deadfee1deadfee1dead",
         auth
     );
-    PaymentPayload newPayload(2, "streaming", "optimism", payload);
+    PaymentPayload newPayload(2, "streaming", "optimism", payloadPtr);
 
     json jOutput;
     jOutput["paymentPayload"] = newPayload.toJson();

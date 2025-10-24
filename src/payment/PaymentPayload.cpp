@@ -6,7 +6,7 @@
 // PaymentPayload implementations
 PaymentPayload::PaymentPayload() : x402Version_(1) {}
 
-PaymentPayload::PaymentPayload(int x402Version, const std::string& scheme, const std::string& network, const Payload& payload)
+PaymentPayload::PaymentPayload(int x402Version, const std::string& scheme, const std::string& network, std::shared_ptr<Payload> payload)
     : x402Version_(x402Version), scheme_(scheme), network_(network), payload_(payload) {}
 
 int PaymentPayload::x402Version() const {
@@ -21,15 +21,18 @@ const std::string& PaymentPayload::network() const {
     return network_;
 }
 
-const Payload& PaymentPayload::payload() const {
+std::shared_ptr<Payload> PaymentPayload::payload() const {
+    CHECK_STATE(payload_);
     return payload_;
 }
 
 bool PaymentPayload::operator==(const PaymentPayload& other) const {
+    CHECK_STATE(payload_);
+    CHECK_STATE(other.payload_);
     return x402Version_ == other.x402Version_ &&
            scheme_ == other.scheme_ &&
            network_ == other.network_ &&
-           payload_ == other.payload_;
+           ((payload_ && other.payload_ && *payload_ == *other.payload_) || (!payload_ && !other.payload_));
 }
 
 
@@ -51,7 +54,7 @@ std::shared_ptr<PaymentPayload> PaymentPayload::fromJson(const json& j) {
             j.at("x402Version").get<int>(),
             j.at("scheme").get<std::string>(),
             j.at("network").get<std::string>(),
-            *Payload::fromJson(j.at("payload"))
+            Payload::fromJson(j.at("payload"))
         );
     } catch (std::exception& e) {
         RETHROW_NESTED;
@@ -63,6 +66,8 @@ json PaymentPayload::toJson() const {
     j["x402Version"] = x402Version_;
     j["scheme"] = scheme_;
     j["network"] = network_;
-    j["payload"] = payload_.toJson();
+    if (payload_) {
+        j["payload"] = payload_->toJson();
+    }
     return j;
 }
