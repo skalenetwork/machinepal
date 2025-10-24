@@ -23,7 +23,7 @@ public:
     static std::shared_ptr<Payload> fromJson(const json& j);
     [[nodiscard]] json toJson() const;
 
-    std::optional<HttpError> validate(const MachinePayConfig &config, const ResourceConfig &resource);
+    std::optional<HttpError> validate(const MachinePayConfig& config, const ResourceConfig& resource);
 
 private:
     std::string signature_;

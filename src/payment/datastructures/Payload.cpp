@@ -2,6 +2,7 @@
 #include <stdexcept>
 
 #include "config/JsonUtils.h"
+#include "x402_protocol/HttpError.h"
 
 class HttpError;
 
@@ -59,5 +60,8 @@ std::shared_ptr<Payload> Payload::fromJson(const json& j) {
     return j;
 }
 
-std::optional<HttpError> validate(const MachinePayConfig &config, const ResourceConfig &resource);
+std::optional<HttpError> Payload::validate(const MachinePayConfig& config, const ResourceConfig& resource) {
+    // TODO: Implement actual validation logic based on config and resource
+    // For now, always return std::nullopt (success)
+    return std::nullopt;
 }
