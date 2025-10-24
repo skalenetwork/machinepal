@@ -37,6 +37,7 @@ const config = {
                     sidebarPath: require.resolve('./sidebars.js'),
                     editUrl: 'https://github.com/skalenetwork/machinepay/edit/main/',
                     include: ['**/*.md', '**/*.mdx', 'README.md'], // include README.md
+                    exclude: ['**/node_modules/**'], // ignore dependency markdown to suppress unresolved link warnings
                     showLastUpdateAuthor: true,
                     showLastUpdateTime: true,
                 },
