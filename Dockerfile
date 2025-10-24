@@ -9,11 +9,11 @@ RUN apt-get update && \
         && rm -rf /var/lib/apt/lists/*
 
 # Create app directory
-WORKDIR /app
+WORKDIR /machinepay
 
 # Copy the built executable from the build context
-COPY build/machinepay /usr/local/bin/machinepay
-COPY build/mptest /usr/local/bin/mptest
+COPY build/machinepay /usr/bin/machinepay
+COPY build/mptest /usr/bin/mptest
 
 # Set entrypoint
-ENTRYPOINT ["./machinepay"]
+ENTRYPOINT ["/usr/bin/machinepay"]
