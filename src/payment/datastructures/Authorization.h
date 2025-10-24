@@ -1,12 +1,14 @@
 #pragma once
 
+#include "MachinePayCommon.h"
+#include "crypto/Address.h"
 #include <string>
 #include <optional>
 #include <memory>
 #include "nlohmann/json.hpp"
 #include <ostream>
 #include "config/JsonUtils.h"
-#include "MachinePayCommon.h"
+
 
 class ResourceConfig;
 class HttpError;
@@ -28,13 +30,10 @@ public:
     [[nodiscard]] const std::string& validBefore() const;
     [[nodiscard]] const std::string& nonce() const;
 
-    // Hex string accessors (tests expect these)
-    [[nodiscard]] std::string fromAsStr();  // returns 0x-prefixed lowercase hex
-    [[nodiscard]] std::string toAsStr();   // returns 0x-prefixed lowercase hex
 
     // Raw address bytes
-    [[nodiscard]] const Address& from() const { return from_; }
-    [[nodiscard]] const Address& to() const { return to_; }
+    [[nodiscard]] Address from() const { return from_; }
+    [[nodiscard]] Address to() const { return to_; }
 
     bool operator==(const Authorization& other) const;
 
@@ -45,8 +44,7 @@ public:
 
     std::optional<HttpError> validate(const MachinePayConfig& config, const ResourceConfig& resource);
 private:
-    static Address parseHexAddress(const std::string& hex);
-    static std::string addressToHex(const Address& addr);
+
 
     Address from_{};
     Address to_{};

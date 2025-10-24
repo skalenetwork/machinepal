@@ -19,8 +19,8 @@ BOOST_AUTO_TEST_CASE(deserialize_payment_payload) {
     BOOST_TEST(paymentPayload.scheme() == "exact");
     BOOST_TEST(paymentPayload.network() == "base-sepolia");
     BOOST_TEST(paymentPayload.payload()->signature() == "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef1b");
-    BOOST_TEST(paymentPayload.payload()->authorization()->fromAsStr() == "0x1111111111111111111111111111111111111111");
-    BOOST_TEST(paymentPayload.payload()->authorization()->toAsStr() == "0x2222222222222222222222222222222222222222");
+    BOOST_TEST(paymentPayload.payload()->authorization()->from().toHex() == "0x1111111111111111111111111111111111111111");
+    BOOST_TEST(paymentPayload.payload()->authorization()->to().toHex() == "0x2222222222222222222222222222222222222222");
     BOOST_TEST(paymentPayload.payload()->authorization()->value() == "1000");
     BOOST_TEST(paymentPayload.payload()->authorization()->validAfter() == "1716150000");
     BOOST_TEST(paymentPayload.payload()->authorization()->validBefore() == "1716153600");

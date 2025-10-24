@@ -20,10 +20,10 @@ Authorization::Authorization(const std::string &fromStr,
       validAfter_(validAfter),
       validBefore_(validBefore),
       nonce_(nonce) {
-    from_ = parseHexAddress(fromStr);
-    to_ = parseHexAddress(toStr);
-    fromHex_ = addressToHex(from_); // normalized 0x lowercase
-    toHex_ = addressToHex(to_);
+    from_ = Address::parseHexAddress(fromStr);
+    to_ = Address::parseHexAddress(toStr);
+    fromHex_ = from_.toHex(); // normalized 0x lowercase
+    toHex_ = to_.toHex();
 }
 
 const std::string &Authorization::value() const { return value_; }
@@ -31,9 +31,6 @@ const std::string &Authorization::validAfter() const { return validAfter_; }
 const std::string &Authorization::validBefore() const { return validBefore_; }
 const std::string &Authorization::nonce() const { return nonce_; }
 
-// Return hex strings (updated to match header)
-std::string Authorization::fromAsStr()  { return addressToHex(from_); }
-std::string Authorization::toAsStr()  { return addressToHex(to_); }
 
 bool Authorization::operator==(const Authorization &other) const {
     return from_ == other.from_ &&
@@ -104,28 +101,4 @@ std::optional<HttpError> Authorization::validate(const MachinePayConfig &config,
     return std::nullopt; // no error
 }
 
-Address Authorization::parseHexAddress(const std::string& hex) {
-    std::string s = hex;
-    if (s.rfind("0x", 0) == 0 || s.rfind("0X", 0) == 0) {
-        s = s.substr(2);
-    }
-    if (s.size() != 40) {
-        throw std::invalid_argument("Address hex must be 40 characters (20 bytes)");
-    }
-    Address addr{};
-    try {
-        // decode into addr; boost::algorithm::unhex throws hex_decode_error on invalid input
-        boost::algorithm::unhex(s.begin(), s.end(), addr.begin());
-    } catch (const boost::algorithm::hex_decode_error& e) {
-        throw std::invalid_argument(std::string("Invalid hex character in address: ") + e.what());
-    }
-    return addr;
-}
 
-std::string Authorization::addressToHex(const Address& addr) {
-    std::string out;
-    out.reserve(42);
-    out += "0x";
-    boost::algorithm::hex_lower(addr.begin(), addr.end(), std::back_inserter(out));
-    return out;
-}

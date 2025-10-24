@@ -96,4 +96,3 @@ using ptr = std::shared_ptr<T>;
 
 using namespace std;
 
-using Address = std::array<uint8_t, 20>;
