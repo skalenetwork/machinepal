@@ -292,7 +292,7 @@ void X402Processor::onRequestFullyReceived(const std::unique_ptr<proxygen::HTTPM
             return;
         }
 
-        if (auto error = app_.paymentManager()->validatePayment(reqHeaders, settlementInfo, *config(), *resource())) {
+        if (auto error = app_.paymentManager()->decodeValidateAndSettlePayment(reqHeaders, settlementInfo, *config(), *resource())) {
             replyToClientWithError(*error);
             return;
         }

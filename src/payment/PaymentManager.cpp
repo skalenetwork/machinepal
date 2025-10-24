@@ -1,5 +1,7 @@
 #include "PaymentManager.h"
 #include "MachinePayApp.h"
+#include "config/subconfigs/NetworkConfig.h"
+#include "config/subconfigs/ResourceConfig.h"
 #include "datastructures/PaymentPayload.h"
 #include "url/URLUtils.h"
 
@@ -37,10 +39,34 @@ variant<ptr<PaymentPayload>, HttpError> PaymentManager::decodeAndParsePayment(co
     }
 }
 
-std::optional<HttpError> PaymentManager::validatePayment(const std::unique_ptr<proxygen::HTTPMessage> &req,
-                                                         std::string &settlementInfo,
-                                                         const MachinePayConfig& config,
-                                                         const ResourceConfig& resource) {
+std::optional<HttpError> PaymentManager::validatePaymentPayload(const MachinePayConfig &config,
+    const ResourceConfig &resource, shared_ptr<PaymentPayload> paymentPayload) {
+    CHECK_STATE(paymentPayload);
+    if (paymentPayload->x402Version() != 1) {
+        spdlog::error("Unsupported x402Version in payment payload: {}", paymentPayload->x402Version());
+        return  HttpError(ERR_BAD_REQUEST, "Unsupported x402Version in payment payload");
+    }
+
+    if (!config.isSchemeSupported(paymentPayload->scheme())) {
+        return HttpError(ERR_BAD_REQUEST, "Payment scheme is not supported");
+    }
+
+    if (paymentPayload->scheme() != resource.paymentScheme()) {
+        return HttpError(ERR_BAD_REQUEST, "Payment scheme does not match resource's required scheme"
+                                            + paymentPayload->scheme() + " != " + resource.paymentScheme());
+    }
+
+    if (paymentPayload->network() != config.network()->name()) {
+        return HttpError(ERR_BAD_REQUEST, "Payment network does not match configured network"
+                                            + paymentPayload->network() + " != " + config.network()->name());
+    }
+    return std::nullopt; // success
+}
+
+std::optional<HttpError> PaymentManager::decodeValidateAndSettlePayment(const std::unique_ptr<proxygen::HTTPMessage> &req,
+                                                                        std::string &settlementInfo,
+                                                                        const MachinePayConfig& config,
+                                                                        const ResourceConfig& resource) {
     (void)config; // currently unused
     (void)resource; // currently unused
     try {
@@ -51,6 +77,12 @@ std::optional<HttpError> PaymentManager::validatePayment(const std::unique_ptr<p
         }
 
         auto paymentPayload = std::get<ptr<PaymentPayload>>(result);
+
+        std::optional<HttpError> error = validatePaymentPayload(config, resource, paymentPayload);
+
+        if (error) {
+            return error;
+        }
 
         try {
             settlementInfo = paymentPayload->toJson().dump();

@@ -23,9 +23,13 @@ public:
 
     variant<ptr<PaymentPayload>, HttpError> decodeAndParsePayment(const std::unique_ptr<proxygen::HTTPMessage> &req);
 
+    std::optional<HttpError> validatePaymentPayload(
+        const MachinePayConfig &config, const ResourceConfig &resource, shared_ptr<PaymentPayload> paymentPayload);
+
+
     [[nodiscard]] MachinePayApp& app() const { return app_; }
 
-    std::optional<HttpError> validatePayment(
+    std::optional<HttpError> decodeValidateAndSettlePayment(
         const std::unique_ptr<proxygen::HTTPMessage> &req,
         std::string &settlementInfo,
         const MachinePayConfig& config,
