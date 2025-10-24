@@ -1,29 +1,32 @@
 #include "Authorization.h"
 #include "x402_protocol/HttpError.h"
+#include <chrono>
+#include <ctime>
 
 Authorization::Authorization() = default;
 
-Authorization::Authorization(const std::string& from,
-                             const std::string& to,
-                             const std::string& value,
-                             const std::string& validAfter,
-                             const std::string& validBefore,
-                             const std::string& nonce)
+Authorization::Authorization(const std::string &from,
+                             const std::string &to,
+                             const std::string &value,
+                             const std::string &validAfter,
+                             const std::string &validBefore,
+                             const std::string &nonce)
     : from_(from),
       to_(to),
       value_(value),
       validAfter_(validAfter),
       validBefore_(validBefore),
-      nonce_(nonce) {}
+      nonce_(nonce) {
+}
 
-const std::string& Authorization::from() const { return from_; }
-const std::string& Authorization::to() const { return to_; }
-const std::string& Authorization::value() const { return value_; }
-const std::string& Authorization::validAfter() const { return validAfter_; }
-const std::string& Authorization::validBefore() const { return validBefore_; }
-const std::string& Authorization::nonce() const { return nonce_; }
+const std::string &Authorization::from() const { return from_; }
+const std::string &Authorization::to() const { return to_; }
+const std::string &Authorization::value() const { return value_; }
+const std::string &Authorization::validAfter() const { return validAfter_; }
+const std::string &Authorization::validBefore() const { return validBefore_; }
+const std::string &Authorization::nonce() const { return nonce_; }
 
-bool Authorization::operator==(const Authorization& other) const {
+bool Authorization::operator==(const Authorization &other) const {
     return from_ == other.from_ &&
            to_ == other.to_ &&
            value_ == other.value_ &&
@@ -32,7 +35,7 @@ bool Authorization::operator==(const Authorization& other) const {
            nonce_ == other.nonce_;
 }
 
-std::shared_ptr<Authorization> Authorization::fromJson(const json& j) {
+std::shared_ptr<Authorization> Authorization::fromJson(const json &j) {
     CHECK_STATE_JSON(j.contains("from"), "Missing required field 'from' in Authorization JSON", j);
     CHECK_STATE_JSON(j.contains("to"), "Missing required field 'to' in Authorization JSON", j);
     CHECK_STATE_JSON(j.contains("value"), "Missing required field 'value' in Authorization JSON", j);
@@ -69,8 +72,25 @@ json Authorization::toJson() const {
 }
 
 std::optional<HttpError> Authorization::validate(const MachinePayConfig &config, const ResourceConfig &resource) {
-    (void)config; // currently unused
-    (void)resource; // currently unused
-    // Add validation logic as needed
+    // Check validAfter is less than or equal to current time
+    // Check validBefore is greater than current time
+    try {
+        std::time_t validAfterTs = std::stoll(validAfter_);
+        std::time_t validBeforeTs = std::stoll(validBefore_);
+        std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+        if (validAfterTs > now) {
+            return HttpError(ErrorType::ERR_BAD_REQUEST,
+                             "Authorization not yet valid: current time (" + std::to_string(now) +
+                             ") is less than validAfter (" + std::to_string(validAfterTs) + ")");
+        }
+        if (validBeforeTs < now) {
+            return HttpError(ErrorType::ERR_BAD_REQUEST,
+                             "Authorization expired: current time (" + std::to_string(now) + ") is after validBefore ("
+                             + std::to_string(validBeforeTs) + ")");
+        }
+    } catch (const std::exception &e) {
+        return HttpError(ErrorType::ERR_INTERNAL_SERVER_ERROR,
+                         std::string("Authorization failed to validate") + e.what());
+    }
     return std::nullopt; // no error
 }

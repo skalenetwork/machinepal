@@ -74,21 +74,26 @@ json PaymentPayload::toJson() const {
 }
 
 std::optional<HttpError> PaymentPayload::validate(const MachinePayConfig& config, const ResourceConfig& resource) const {
-    if (x402Version_ != 1) {
-        spdlog::error("Unsupported x402Version in payment payload: {}", x402Version_);
-        return HttpError(ERR_BAD_REQUEST, "Unsupported x402Version in payment payload");
-    }
-    if (!config.isSchemeSupported(scheme_)) {
-        return HttpError(ERR_BAD_REQUEST, "Payment scheme is not supported");
-    }
-    if (scheme_ != resource.paymentScheme()) {
-        return HttpError(ERR_BAD_REQUEST, std::string("Payment scheme does not match resource's required scheme ") +
-            scheme_ + " != " + resource.paymentScheme());
-    }
-    if (network_ != config.network()->name()) {
-        return HttpError(ERR_BAD_REQUEST, std::string("Payment network does not match configured network ") +
-            network_ + " != " + config.network()->name());
-    }
+    try {
+        if (x402Version_ != 1) {
+            spdlog::error("Unsupported x402Version in payment payload: {}", x402Version_);
+            return HttpError(ERR_BAD_REQUEST, "Unsupported x402Version in payment payload");
+        }
+        if (!config.isSchemeSupported(scheme_)) {
+            return HttpError(ERR_BAD_REQUEST, "Payment scheme is not supported");
+        }
+        if (scheme_ != resource.paymentScheme()) {
+            return HttpError(ERR_BAD_REQUEST, std::string("Payment scheme does not match resource's required scheme ") +
+                scheme_ + " != " + resource.paymentScheme());
+        }
+        if (network_ != config.network()->name()) {
+            return HttpError(ERR_BAD_REQUEST, std::string("Payment network does not match configured network ") +
+                network_ + " != " + config.network()->name());
+        }
 
-    return this->payload()->validate(config, resource);
+        return this->payload()->validate(config, resource);
+    } catch (const std::exception& e) {
+        spdlog::error("Exception validating payment payload: {}", e.what());
+        return HttpError(ERR_INTERNAL_SERVER_ERROR, "Exception validating payment payload");
+    }
 }

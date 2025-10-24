@@ -9,8 +9,6 @@
 #include "x402_client/X402Client.h"
 
 
-
-
 #include "MachinePayApp.h"
 #include "../payment/datastructures/PaymentRequirements.h"
 #include "../examples/PaymentExamples.h"
@@ -56,17 +54,14 @@ BOOST_GLOBAL_FIXTURE(X402GlobalFixture);
 // ---- Test fixture that starts/stops the proxygen server ---------------------
 struct X402ServerFixture {
     X402ServerFixture() {
-
-
         try {
-
             std::map<std::string, std::string> configMap = {
                 {"CONFIG", "src/tests/configs/basic/machinepay.yml"}
             };
             app_ = MachinePayApp::makeInstance(configMap);
             auto config = app_->configManager()->latestConfig();
             client = std::make_shared<X402Client>(config->server()->hostName(),
-                config->server()->http()->port());
+                                                  config->server()->http()->port());
 
             srvThread = std::thread([this] {
                 app_->runUntilExit(); //
@@ -82,8 +77,6 @@ struct X402ServerFixture {
 
 
             spdlog::info("Test server started on port {}", config->server()->http()->port());
-
-
         } catch (const std::exception &ex) {
             printNestedException(ex);
             BOOST_FAIL("Exception starting test server");
@@ -131,13 +124,21 @@ BOOST_FIXTURE_TEST_SUITE(X402Suite, X402ServerFixture)
         auto accepts = response.accepts();
         BOOST_CHECK(accepts.size() == 1);
         auto req = accepts.front();
-    auto expected = PaymentRequirements::fromJson(
-        nlohmann::json::parse(PaymentExamples::EXACT_UCDC_PAYMENT_REQ_CB_SEPOLIA));
+        auto expected = PaymentRequirements::fromJson(
+            nlohmann::json::parse(PaymentExamples::EXACT_UCDC_PAYMENT_REQ_CB_SEPOLIA));
         BOOST_TEST(req == *expected);
     }
 
     BOOST_AUTO_TEST_CASE(Returns200WhenPaymentHeaderPresent) {
         std::string xPaymentValue = PaymentExamples::EXACT_UCDC_PAYMENT_PAYLOAD_CB_SEPOLIA;
+        // Set current time as validAfter
+        nlohmann::json paymentJson = nlohmann::json::parse(xPaymentValue);
+        std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+        paymentJson["authorization"]["validAfter"] = std::to_string(now);
+        paymentJson["authorization"]["validBefore"] = std::to_string(now + 3600);
+        xPaymentValue = paymentJson.dump();
+
+
         std::string xPaymentBase64 = URLUtils::base64Encode(xPaymentValue);
         auto [headersMap, statusLine, resp] = client->sendRequestAndParseResult("/posts/1",
             {"X-PAYMENT: " + xPaymentBase64}, true);
