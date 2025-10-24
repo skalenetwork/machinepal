@@ -6,13 +6,6 @@ FROM ubuntu:22.04
 RUN apt-get update && \
     apt-get install -y \
         libstdc++6 \
-        libboost-system1.74.0 \
-        libboost-thread1.74.0 \
-        libboost-locale1.74.0 \
-        libboost-url1.74.0 \
-        libboost-multiprecision1.74.0 \
-        libcurl4 \
-        libyaml-cpp0.7 \
         && rm -rf /var/lib/apt/lists/*
 
 # Create app directory
