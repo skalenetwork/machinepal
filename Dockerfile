@@ -12,7 +12,8 @@ RUN apt-get update && \
 WORKDIR /app
 
 # Copy the built executable from the build context
-COPY build/machinepay .
+COPY build/machinepay /usr/local/bin/machinepay
+COPY build/mptest /usr/local/bin/mptest
 
 # Set entrypoint
 ENTRYPOINT ["./machinepay"]

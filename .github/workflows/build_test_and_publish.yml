@@ -107,7 +107,12 @@ jobs:
           images: ghcr.io/${{ github.repository_owner }}/machinepay
           tags: |
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/develop' }}
+            type=raw,value=1.0
             type=sha
+            type=ref,event=branch
+          labels: |
+            org.opencontainers.image.version=1.0
+            org.opencontainers.image.revision=${{ github.sha }}
 
       - name: Build and push Docker image (machinepay)
         if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
@@ -117,3 +122,24 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Build Debian package
+        run: |
+          mkdir -p build/deb
+          cpack -G DEB --config build/CPackConfig.cmake
+          mv *.deb build/deb/
+
+      - name: Upload Debian package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: machinepay-deb
+          path: build/deb/*.deb
+
+      - name: Publish Debian package to GitHub Releases
+        if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+        uses: softprops/action-gh-release@v1
+        with:
+          files: build/deb/*.deb
+          tag_name: v1.0
+          name: "MachinePay v1.0 Debian Package"
+          body: "Release of MachinePay v1.0 as a Debian package."
