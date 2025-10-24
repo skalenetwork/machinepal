@@ -107,3 +107,14 @@ if(BUILD_TESTING)
 
     add_test(NAME mptest COMMAND mptest)
 endif()
+
+# ---- CPack/DEB packaging ----
+include(CPack)
+set(CPACK_GENERATOR "DEB")
+set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Your Name <your@email.com>")
+set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "MachinePay core and test binaries")
+set(CPACK_DEBIAN_PACKAGE_VERSION "1.0")
+set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "amd64")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "libstdc++6 (>= 11.2)")
+set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+install(TARGETS machinepay mptest DESTINATION bin)
