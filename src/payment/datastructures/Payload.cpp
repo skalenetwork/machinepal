@@ -63,5 +63,5 @@ std::shared_ptr<Payload> Payload::fromJson(const json& j) {
 std::optional<HttpError> Payload::validate(const MachinePayConfig& config, const ResourceConfig& resource) {
     // TODO: Implement actual validation logic based on config and resource
     // For now, always return std::nullopt (success)
-    return std::nullopt;
+    return authorization()->validate(config, resource);
 }

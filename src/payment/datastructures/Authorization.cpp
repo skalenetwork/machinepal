@@ -1,4 +1,5 @@
 #include "Authorization.h"
+#include "x402_protocol/HttpError.h"
 
 Authorization::Authorization() = default;
 
@@ -67,3 +68,9 @@ json Authorization::toJson() const {
     return j;
 }
 
+std::optional<HttpError> Authorization::validate(const MachinePayConfig &config, const ResourceConfig &resource) {
+    (void)config; // currently unused
+    (void)resource; // currently unused
+    // Add validation logic as needed
+    return std::nullopt; // no error
+}

@@ -7,6 +7,8 @@
 #include <ostream>
 #include "config/JsonUtils.h"
 
+class ResourceConfig;
+class HttpError;
 using json = nlohmann::json;
 
 class Authorization {
@@ -33,6 +35,8 @@ public:
     static std::shared_ptr<Authorization> fromJson(const json& j);
     [[nodiscard]] json toJson() const;
 
+
+    std::optional<HttpError> validate(const MachinePayConfig& config, const ResourceConfig& resource);
 private:
     std::string from_;
     std::string to_;
