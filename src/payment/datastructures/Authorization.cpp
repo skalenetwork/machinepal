@@ -46,8 +46,8 @@ const std::string &Authorization::validBefore() const { return validBefore_; }
 const std::string &Authorization::nonce() const { return nonce_; }
 
 // Return hex strings (updated to match header)
-const std::string& Authorization::from() const { return fromHex_; }
-const std::string& Authorization::to() const { return toHex_; }
+std::string Authorization::fromAsStr()  { return addressToHex(from_); }
+std::string Authorization::toAsStr()  { return addressToHex(to_); }
 
 bool Authorization::operator==(const Authorization &other) const {
     return from_ == other.from_ &&

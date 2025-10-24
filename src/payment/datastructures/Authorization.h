@@ -29,12 +29,12 @@ public:
     [[nodiscard]] const std::string& nonce() const;
 
     // Hex string accessors (tests expect these)
-    [[nodiscard]] const std::string& from() const; // returns 0x-prefixed lowercase hex
-    [[nodiscard]] const std::string& to() const;   // returns 0x-prefixed lowercase hex
+    [[nodiscard]] std::string fromAsStr();  // returns 0x-prefixed lowercase hex
+    [[nodiscard]] std::string toAsStr();   // returns 0x-prefixed lowercase hex
 
     // Raw address bytes
-    [[nodiscard]] const Address& fromAddress() const { return from_; }
-    [[nodiscard]] const Address& toAddress() const { return to_; }
+    [[nodiscard]] const Address& from() const { return from_; }
+    [[nodiscard]] const Address& to() const { return to_; }
 
     bool operator==(const Authorization& other) const;
 
