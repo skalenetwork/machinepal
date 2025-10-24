@@ -134,8 +134,8 @@ BOOST_FIXTURE_TEST_SUITE(X402Suite, X402ServerFixture)
         // Set current time as validAfter
         nlohmann::json paymentJson = nlohmann::json::parse(xPaymentValue);
         std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-        paymentJson["authorization"]["validAfter"] = std::to_string(now);
-        paymentJson["authorization"]["validBefore"] = std::to_string(now + 3600);
+        paymentJson["payload"]["authorization"]["validAfter"] = std::to_string(now);
+        paymentJson["payload"]["authorization"]["validBefore"] = std::to_string(now + 3600);
         xPaymentValue = paymentJson.dump();
 
 
