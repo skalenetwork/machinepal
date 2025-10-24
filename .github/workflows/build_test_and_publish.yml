@@ -65,7 +65,7 @@ jobs:
         run: cmake --build build --config Debug -j 2
 
       - name: Run tests
-        run: ctest --test-dir build --output-on-failure
+        run: build/mptest
 
       # Save cache only if we didn't hit it (prevents save conflicts)
       - name: Save vcpkg cache
