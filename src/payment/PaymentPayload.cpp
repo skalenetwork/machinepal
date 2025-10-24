@@ -4,7 +4,7 @@
 #include "config/JsonUtils.h"
 
 // PaymentPayload implementations
-PaymentPayload::PaymentPayload() = default;
+PaymentPayload::PaymentPayload() : x402Version_(1) {}
 
 PaymentPayload::PaymentPayload(int x402Version, const std::string& scheme, const std::string& network, const Payload& payload)
     : x402Version_(x402Version), scheme_(scheme), network_(network), payload_(payload) {}
@@ -34,17 +34,28 @@ bool PaymentPayload::operator==(const PaymentPayload& other) const {
 
 
 std::shared_ptr<PaymentPayload> PaymentPayload::fromJson(const json& j) {
-    CHECK_STATE_JSON(j.contains("x402Version"), "Missing required field 'x402Version' in PaymentPayload JSON", j);
-    CHECK_STATE_JSON(j.contains("scheme"), "Missing required field 'scheme' in PaymentPayload JSON", j);
-    CHECK_STATE_JSON(j.contains("network"), "Missing required field 'network' in PaymentPayload JSON", j);
-    CHECK_STATE_JSON(j.contains("payload"), "Missing required field 'payload' in PaymentPayload JSON", j);
-    CHECK_STATE_JSON(j.at("x402Version").get<int>() == 1, "x402Version must be 1 in PaymentPayload JSON", j);
-    return std::make_shared<PaymentPayload>(
-        j.at("x402Version").get<int>(),
-        j.at("scheme").get<std::string>(),
-        j.at("network").get<std::string>(),
-        *Payload::fromJson(j.at("payload"))
-    );
+
+    try {
+        CHECK_STATE_JSON(j.contains("x402Version"), "Missing required field 'x402Version' in PaymentPayload JSON", j);
+        CHECK_STATE_JSON(j.contains("scheme"), "Missing required field 'scheme' in PaymentPayload JSON", j);
+        CHECK_STATE_JSON(j.contains("network"), "Missing required field 'network' in PaymentPayload JSON", j);
+        CHECK_STATE_JSON(j.contains("payload"), "Missing required field 'payload' in PaymentPayload JSON", j);
+
+        CHECK_STATE_JSON(j.at("x402Version").is_number_integer(), "'x402Version' must be an integer in PaymentPayload JSON", j);
+        CHECK_STATE_JSON(j.at("scheme").is_string(), "'scheme' must be a string in PaymentPayload JSON", j);
+        CHECK_STATE_JSON(j.at("network").is_string(), "'network' must be a string in PaymentPayload JSON", j);
+        CHECK_STATE_JSON(j.at("payload").is_object(), "'payload' must be an object in PaymentPayload JSON", j);
+
+        CHECK_STATE_JSON(j.at("x402Version").get<int>() == 1, "x402Version must be 1 in PaymentPayload JSON", j);
+        return std::make_shared<PaymentPayload>(
+            j.at("x402Version").get<int>(),
+            j.at("scheme").get<std::string>(),
+            j.at("network").get<std::string>(),
+            *Payload::fromJson(j.at("payload"))
+        );
+    } catch (std::exception& e) {
+        RETHROW_NESTED;
+    }
 }
 
 json PaymentPayload::toJson() const {
