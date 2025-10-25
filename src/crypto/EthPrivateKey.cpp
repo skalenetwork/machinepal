@@ -95,9 +95,11 @@ EthPrivateKey EthPrivateKey::parseFlexible(const std::string& hex) {
 EthPrivateKey EthPrivateKey::parseHex(const std::string& hex) { return parseFlexible(hex); }
 
 std::string EthPrivateKey::toHex() const {
-    std::stringstream ss; ss << "0x";
-    for (auto b: bytes_) ss << std::hex << std::setw(2) << std::setfill('0') << (int)b;
-    return ss.str();
+    std::string out;
+    out.reserve(66); // 2 for '0x' + 64 for 32 bytes
+    out += "0x";
+    boost::algorithm::hex_lower(bytes_.begin(), bytes_.end(), std::back_inserter(out));
+    return out;
 }
 
 bool operator==(const EthPrivateKey& a, const EthPrivateKey& b) { return a.bytes_ == b.bytes_; }
