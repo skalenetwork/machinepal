@@ -72,32 +72,52 @@ std::string EthAddress::toHex() const {
     boost::algorithm::hex_lower(bytes().begin(), bytes().end(), std::back_inserter(out));
     return out;
 }
+#include <boost/algorithm/hex.hpp>
+#include <cctype>
+#include <string>
+
+// keccak::keccak256(std::string_view) -> std::array<uint8_t, 32>
+#include <boost/algorithm/hex.hpp>
+#include <cctype>
+
 
 std::string EthAddress::toChecksumHex() const {
-    // EIP-55 checksum
+    // Pre-calculated hex character tables
+    static constexpr char lower_hex[] = "0123456789abcdef";
+    static constexpr char upper_hex[] = "0123456789ABCDEF";
+
+    // 1) Convert address bytes to a lowercase hex string for hashing
     std::string lower;
     lower.reserve(40);
-    for (auto b : bytes_) {
-        const char hexDigits[] = "0123456789abcdef";
-        lower.push_back(hexDigits[(b >> 4) & 0xF]);
-        lower.push_back(hexDigits[b & 0xF]);
-    }
-    auto hashArr = keccak::keccak256(lower); // hash of lowercase hex string (no 0x)
+    boost::algorithm::hex_lower(bytes_.begin(), bytes_.end(), std::back_inserter(lower));
+
+    // 2) Compute the Keccak-256 hash of the lowercase hex string
+    const auto hash = keccak::keccak256(lower);
+
+    // 3) Build the checksummed address
     std::string out = "0x";
     out.reserve(42);
-    for (size_t i = 0; i < lower.size(); ++i) {
-        char c = lower[i];
-        if (std::isalpha(static_cast<unsigned char>(c))) {
-            // Determine nibble from hash
-            uint8_t byte = hashArr[i / 2];
-            uint8_t nibble = (i % 2 == 0) ? (byte >> 4) & 0xF : byte & 0xF;
-            out.push_back(nibble >= 8 ? static_cast<char>(std::toupper(static_cast<unsigned char>(c))) : c);
-        } else {
-            out.push_back(c);
-        }
+    for (std::size_t i = 0; i < bytes_.size(); ++i) {
+        // Get the two nibbles for the current byte of the address
+        const uint8_t addr_nibble_1 = bytes_[i] >> 4;
+        const uint8_t addr_nibble_2 = bytes_[i] & 0x0F;
+
+        // Get the two corresponding nibbles from the hash
+        const uint8_t hash_nibble_1 = hash[i] >> 4;
+        const uint8_t hash_nibble_2 = hash[i] & 0x0F;
+
+        // Determine character case based on hash nibble and append
+        out.push_back(hash_nibble_1 >= 8 ? upper_hex[addr_nibble_1] : lower_hex[addr_nibble_1]);
+        out.push_back(hash_nibble_2 >= 8 ? upper_hex[addr_nibble_2] : lower_hex[addr_nibble_2]);
     }
     return out;
 }
+
+
+
+
+
+
 
 // Constructors
 EthAddress::EthAddress() = default;

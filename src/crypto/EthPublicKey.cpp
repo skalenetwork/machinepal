@@ -67,12 +67,8 @@ std::string EthPublicKey::toHex() const {
 }
 
 EthAddress EthPublicKey::getAddress() const {
-    std::array<uint8_t, 65> uncompressed{};
-    uncompressed[0] = 0x04;
-    std::copy(bytes_.begin(), bytes_.end(), uncompressed.begin() + 1);
-    auto hash = keccak::keccak256(std::span<const uint8_t>(uncompressed.data(), 65));
+    auto hash = keccak::keccak256(std::span<const uint8_t>(bytes_.data(), 64));
     return EthAddress(hash.data() + 12, 20);
 }
-
 bool operator==(const EthPublicKey& a, const EthPublicKey& b) { return a.bytes_ == b.bytes_; }
 bool operator!=(const EthPublicKey& a, const EthPublicKey& b) { return !(a == b); }

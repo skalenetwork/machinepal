@@ -53,8 +53,8 @@ BOOST_AUTO_TEST_CASE(private_key_scalar_one) {
 
     auto addr = publicKey.getAddress();
 
-    BOOST_TEST(addr.toHex() == "0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199");
-    BOOST_TEST(addr.toChecksumHex() == "0x8626f6940E2eb28930eFb4CeF49B2d1F2C9C1199");
+    BOOST_TEST(addr.toHex() == "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf");
+    BOOST_TEST(addr.toChecksumHex() == "0x7E5f4552091A69125d5DfCb7b8C2659029395Bdf");
 }
 
 BOOST_AUTO_TEST_CASE(private_key_no_prefix_scalar_one) {
