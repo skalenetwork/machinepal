@@ -1,7 +1,7 @@
 #pragma once
 
 #include "MachinePayCommon.h"
-#include "crypto/Address.h"
+#include "crypto/EthAddress.h"
 #include <string>
 #include <optional>
 #include <memory>
@@ -32,8 +32,8 @@ public:
 
 
     // Raw address bytes
-    [[nodiscard]] Address from() const { return from_; }
-    [[nodiscard]] Address to() const { return to_; }
+    [[nodiscard]] EthAddress from() const { return from_; }
+    [[nodiscard]] EthAddress to() const { return to_; }
 
     bool operator==(const Authorization& other) const;
 
@@ -46,8 +46,8 @@ public:
 private:
 
 
-    Address from_{};
-    Address to_{};
+    EthAddress from_{};
+    EthAddress to_{};
     std::string fromHex_;
     std::string toHex_;
     std::string value_;

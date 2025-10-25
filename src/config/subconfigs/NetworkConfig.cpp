@@ -21,7 +21,7 @@ std::shared_ptr<NetworkConfig> NetworkConfig::createFromJson(const nlohmann::jso
 
         auto walletAddressStr = networkJson["wallet_address"].get<std::string>();
 
-        auto walletAddress = Address::parseHexAddress(walletAddressStr);
+        auto walletAddress = EthAddress::parseHexAddress(walletAddressStr);
 
         std::string name = networkJson.value("name", "machinepay-easy-test");
         std::set<std::string> supportedNetworks = {

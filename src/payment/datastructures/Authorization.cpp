@@ -22,8 +22,8 @@ Authorization::Authorization(const std::string &fromStr,
       validAfter_(validAfter),
       validBefore_(validBefore),
       nonce_(nonce) {
-    from_ = Address::parseHexAddress(fromStr);
-    to_ = Address::parseHexAddress(toStr);
+    from_ = EthAddress::parseHexAddress(fromStr);
+    to_ = EthAddress::parseHexAddress(toStr);
     fromHex_ = from_.toHex(); // normalized 0x lowercase
     toHex_ = to_.toHex();
 }

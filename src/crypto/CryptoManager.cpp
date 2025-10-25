@@ -3,14 +3,17 @@
 #include "CryptoManager.h"
 #include <fstream>
 #include <iomanip>
-#include <openssl/sha.h>
 #include <random>
 #include <sstream>
 #include <utility>
 #include <openssl/core_names.h>
 #include <memory>
+#include <openssl/ec.h>
+#include <openssl/obj_mac.h>
+#include <openssl/bn.h>
 #include "EthPrivateKey.h"
-#include "Address.h"
+#include "EthAddress.h"
+#include "Keccak.h"
 
 
 std::string CryptoManager::computeBlakeHash(const std::string &filePath) {
@@ -56,80 +59,70 @@ std::string CryptoManager::computeBlakeHash(const std::string &filePath) {
     return oss.str();
 }
 
-// Helper to convert bytes to hex string
-static std::string toHex(const unsigned char *data, size_t len) {
-    std::ostringstream oss;
-    oss << std::hex << std::setfill('0');
-    for (size_t i = 0; i < len; ++i)
-        oss << std::setw(2) << (int)data[i];
-    return oss.str();
+EthAddress CryptoManager::deriveAddressFromPrivateKey(const EthPrivateKey& key) {
+    EC_GROUP* group = EC_GROUP_new_by_curve_name(NID_secp256k1);
+    if (!group) throw std::runtime_error("Failed to create EC_GROUP");
+    BN_CTX* bnCtx = BN_CTX_new();
+    if (!bnCtx) { EC_GROUP_free(group); throw std::runtime_error("Failed to create BN_CTX"); }
+    BIGNUM* priv = BN_bin2bn(key.bytes().data(), 32, nullptr);
+    if (!priv) { BN_CTX_free(bnCtx); EC_GROUP_free(group); throw std::runtime_error("Failed to create BIGNUM for private key"); }
+    EC_POINT* pub = EC_POINT_new(group);
+    if (!pub) { BN_free(priv); BN_CTX_free(bnCtx); EC_GROUP_free(group); throw std::runtime_error("Failed to create EC_POINT"); }
+    if (EC_POINT_mul(group, pub, priv, nullptr, nullptr, bnCtx) != 1) {
+        EC_POINT_free(pub); BN_free(priv); BN_CTX_free(bnCtx); EC_GROUP_free(group); throw std::runtime_error("EC_POINT_mul failed"); }
+
+    BIGNUM* x = BN_new(); BIGNUM* y = BN_new();
+    if (!x || !y) { if (x) BN_free(x); if (y) BN_free(y); EC_POINT_free(pub); BN_free(priv); BN_CTX_free(bnCtx); EC_GROUP_free(group); throw std::runtime_error("BN_new failed"); }
+    if (EC_POINT_get_affine_coordinates(group, pub, x, y, bnCtx) != 1) {
+        BN_free(x); BN_free(y); EC_POINT_free(pub); BN_free(priv); BN_CTX_free(bnCtx); EC_GROUP_free(group); throw std::runtime_error("EC_POINT_get_affine_coordinates failed"); }
+
+    std::array<uint8_t,64> pubBytes{}; // uncompressed without prefix
+    BN_bn2binpad(x, pubBytes.data(), 32);
+    BN_bn2binpad(y, pubBytes.data()+32, 32);
+
+    auto hash = keccak::keccak256(std::span<const uint8_t>(pubBytes.data(), 64));
+    EthAddress address(hash.data()+12, 20);
+
+    BN_free(x); BN_free(y); EC_POINT_free(pub); BN_free(priv); BN_CTX_free(bnCtx); EC_GROUP_free(group);
+    return address;
 }
 
-std::pair<EthPrivateKey, Address>
+std::pair<EthPrivateKey, EthAddress>
 CryptoManager::generateHardHatCompatibleEthereumPrivateKeyAndAddressAsPair() {
-    // Define custom deleters for OpenSSL objects to ensure cleanup
-    auto pkeyDeleter = [](EVP_PKEY *p) {
-        EVP_PKEY_free(p);
-    };
-    auto pctxDeleter = [](EVP_PKEY_CTX *p) {
-        EVP_PKEY_CTX_free(p);
-    };
-    auto mdctxDeleter = [](EVP_MD_CTX *p) {
-        EVP_MD_CTX_free(p);
-    };
+    auto pkeyDeleter = [](EVP_PKEY *p) { EVP_PKEY_free(p); };
+    auto pctxDeleter = [](EVP_PKEY_CTX *p) { EVP_PKEY_CTX_free(p); };
 
-    // Generate secp256k1 keypair using EVP_PKEY and OSSL_PARAM (OpenSSL 3.x compatible)
     std::unique_ptr<EVP_PKEY_CTX, decltype(pctxDeleter)> pctx(
-        EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL),
+        EVP_PKEY_CTX_new_id(EVP_PKEY_EC, nullptr),
         pctxDeleter);
-    if (!pctx)
-        throw std::runtime_error("Failed to create EVP_PKEY_CTX");
+    if (!pctx) throw std::runtime_error("Failed to create EVP_PKEY_CTX");
 
     if (EVP_PKEY_keygen_init(pctx.get()) <= 0)
         throw std::runtime_error("EVP_PKEY_keygen_init failed");
 
     OSSL_PARAM params[2];
-    params[0] =
-        OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME, (char *)"secp256k1", 0);
+    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME, (char*)"secp256k1", 0);
     params[1] = OSSL_PARAM_construct_end();
     if (EVP_PKEY_CTX_set_params(pctx.get(), params) <= 0)
         throw std::runtime_error("Failed to set EC curve params");
 
-    EVP_PKEY *pkeyRaw = NULL;
+    EVP_PKEY *pkeyRaw = nullptr;
     if (EVP_PKEY_keygen(pctx.get(), &pkeyRaw) <= 0)
         throw std::runtime_error("EVP_PKEY_keygen failed");
     std::unique_ptr<EVP_PKEY, decltype(pkeyDeleter)> pkey(pkeyRaw, pkeyDeleter);
 
-    // Extract raw private key
-    unsigned char privKey[32];
-    size_t        privLen = sizeof(privKey);
+    unsigned char privKey[32]; size_t privLen = sizeof(privKey);
     if (EVP_PKEY_get_raw_private_key(pkey.get(), privKey, &privLen) <= 0 || privLen != 32)
         throw std::runtime_error("Failed to get raw private key");
 
-    // Extract raw public key (uncompressed)
-    unsigned char pubKey[65];
-    size_t        pubLen = sizeof(pubKey);
+    unsigned char pubKey[65]; size_t pubLen = sizeof(pubKey);
     if (EVP_PKEY_get_raw_public_key(pkey.get(), pubKey, &pubLen) <= 0 || pubLen != 65)
         throw std::runtime_error("Failed to get raw public key");
 
-    // Keccak-256 hash (OpenSSL SHA3)
-    std::unique_ptr<EVP_MD_CTX, decltype(mdctxDeleter)> mdctx(EVP_MD_CTX_new(), mdctxDeleter);
-    if (!mdctx)
-        throw std::runtime_error("Failed to create EVP_MD_CTX");
+    // Skip 0x04 prefix, keccak hash of 64 bytes
+    auto hash = keccak::keccak256(std::span<const uint8_t>(pubKey + 1, 64));
 
-    if (EVP_DigestInit_ex(mdctx.get(), EVP_sha3_256(), NULL) <= 0)
-        throw std::runtime_error("EVP_DigestInit_ex failed");
-    if (EVP_DigestUpdate(mdctx.get(), pubKey + 1, 64) <= 0)
-        throw std::runtime_error("EVP_DigestUpdate failed");
-    // skip 0x04 prefix
-    unsigned char hash[32];
-    unsigned int  hashLen;
-    if (EVP_DigestFinal_ex(mdctx.get(), hash, &hashLen) <= 0)
-        throw std::runtime_error("EVP_DigestFinal_ex failed");
-
-    // Create EthPrivateKey and Address objects from the raw bytes
     EthPrivateKey privateKey(privKey, 32);
-    Address       address(hash + 12, 20);
-
+    EthAddress address(hash.data() + 12, 20);
     return std::make_pair(privateKey, address);
 }

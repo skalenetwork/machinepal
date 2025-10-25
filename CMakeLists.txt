@@ -40,6 +40,7 @@ endforeach()
 
 
 find_package(Boost REQUIRED CONFIG COMPONENTS unit_test_framework system thread url locale multiprecision)
+find_package(OpenSSL REQUIRED)
 
 
 # ---- App target ----
@@ -62,6 +63,8 @@ set (MACHINEPAY_COMMON_LIBS
         Boost::locale
         Boost::url
         Boost::multiprecision
+        OpenSSL::Crypto
+        OpenSSL::SSL
         nlohmann_json_schema_validator
         yaml-cpp
         spdlog::spdlog

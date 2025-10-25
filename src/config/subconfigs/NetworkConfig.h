@@ -1,21 +1,21 @@
 #pragma once
 #include "MachinePayCommon.h"
-#include "crypto/Address.h"
+#include "crypto/EthAddress.h"
 
 class FacilitatorConfig;
 class FileManager;
 
 class NetworkConfig {
     std::string name_;
-    Address walletAddress_;
+    EthAddress walletAddress_;
     std::shared_ptr<FacilitatorConfig> facilitator_;
-    NetworkConfig(const std::string& name, const Address& walletAddress, std::shared_ptr<FacilitatorConfig>& facilitator)
+    NetworkConfig(const std::string& name, const EthAddress& walletAddress, std::shared_ptr<FacilitatorConfig>& facilitator)
         : name_(name), walletAddress_(walletAddress), facilitator_(facilitator) {}
 public:
     const std::string& name() const { return name_; }
     const std::shared_ptr<FacilitatorConfig>& facilitator() const { return facilitator_; }
 
-    [[nodiscard]] Address walletAddress() const
+    [[nodiscard]] EthAddress walletAddress() const
     {
         return walletAddress_;
     }
