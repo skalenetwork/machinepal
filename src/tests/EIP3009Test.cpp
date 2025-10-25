@@ -2,11 +2,12 @@
 #include "crypto/EIP3009.h"
 #include "crypto/EthPrivateKey.h"
 #include "crypto/EthPublicKey.h"
+#include "crypto/EthAddress.h"
 
 BOOST_AUTO_TEST_CASE(EIP3009_SignAndVerify_ReferenceValues) {
     // Reference values (example test vectors)
-    std::string from = "0x90f8bf6a479f320ead074411a4b0e7944ea8c9c1";
-    std::string to = "0xffcf8fdee72ac11b5c542428b35eef5769c409f0";
+    EthAddress from("0x90f8bf6a479f320ead074411a4b0e7944ea8c9c1");
+    EthAddress to("0xffcf8fdee72ac11b5c542428b35eef5769c409f0");
     uint64_t value = 1000000000000000000ULL; // 1 ETH in wei
     uint64_t validAfter = 1633046400; // 2021-10-01
     uint64_t validBefore = 1733046400; // 2024-10-01
@@ -29,4 +30,3 @@ BOOST_AUTO_TEST_CASE(EIP3009_SignAndVerify_ReferenceValues) {
     // std::string expectedSignature = "...";
     // BOOST_TEST(signature == expectedSignature);
 }
-

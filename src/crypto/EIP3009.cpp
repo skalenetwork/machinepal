@@ -6,19 +6,20 @@
 #include <openssl/bn.h>
 #include <sstream>
 #include <iomanip>
+#include "EthAddress.h"
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
 // Helper to encode and hash the authorization message
-static std::array<uint8_t, 32> hashAuthorization(const std::string& from,
-                                              const std::string& to,
+static std::array<uint8_t, 32> hashAuthorization(const EthAddress& from,
+                                              const EthAddress& to,
                                               uint64_t value,
                                               uint64_t validAfter,
                                               uint64_t validBefore,
                                               const std::string& nonce) {
     // Concatenate and encode fields as per EIP-3009
-    std::string message = from + to + std::to_string(value) +
+    std::string message = from.toHex() + to.toHex() + std::to_string(value) +
                           std::to_string(validAfter) + std::to_string(validBefore) + nonce;
     return keccak::keccak256(message);
 }
@@ -32,8 +33,8 @@ static std::string bytesToHex(const unsigned char* data, size_t len) {
     return oss.str();
 }
 
-std::string EIP3009::signAuthorization(const std::string& from,
-                                       const std::string& to,
+std::string EIP3009::signAuthorization(const EthAddress& from,
+                                       const EthAddress& to,
                                        uint64_t value,
                                        uint64_t validAfter,
                                        uint64_t validBefore,
@@ -60,8 +61,8 @@ std::string EIP3009::signAuthorization(const std::string& from,
     return bytesToHex(sig.data(), sig_len);
 }
 
-bool EIP3009::verifyAuthorization(const std::string& from,
-                                  const std::string& to,
+bool EIP3009::verifyAuthorization(const EthAddress& from,
+                                  const EthAddress& to,
                                   uint64_t value,
                                   uint64_t validAfter,
                                   uint64_t validBefore,
@@ -94,4 +95,3 @@ bool EIP3009::verifyAuthorization(const std::string& from,
     EC_KEY_free(ec_key);
     return verify_status == 1;
 }
-

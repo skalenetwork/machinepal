@@ -2,12 +2,13 @@
 #include <string>
 #include "EthPrivateKey.h"
 #include "EthPublicKey.h"
+#include "EthAddress.h"
 
 class EIP3009 {
 public:
     // Signs an EIP-3009 authorization message
-    static std::string signAuthorization(const std::string& from,
-                                         const std::string& to,
+    static std::string signAuthorization(const EthAddress& from,
+                                         const EthAddress& to,
                                          uint64_t value,
                                          uint64_t validAfter,
                                          uint64_t validBefore,
@@ -15,8 +16,8 @@ public:
                                          const EthPrivateKey& privateKey);
 
     // Verifies an EIP-3009 authorization signature
-    static bool verifyAuthorization(const std::string& from,
-                                    const std::string& to,
+    static bool verifyAuthorization(const EthAddress& from,
+                                    const EthAddress& to,
                                     uint64_t value,
                                     uint64_t validAfter,
                                     uint64_t validBefore,
@@ -24,4 +25,3 @@ public:
                                     const std::string& signature,
                                     const EthPublicKey& publicKey);
 };
-
