@@ -49,7 +49,7 @@ add_executable(machinepay
         ${APP_SRC_FILES}
 )
 target_include_directories(machinepay PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
-target_link_libraries(machinepay PRIVATE CLI11::CLI11)
+target_link_libraries(machinepay PRIVATE CLI11::CLI11 cryptopp OpenSSL::SSL OpenSSL::Crypto)
 
 set (MACHINEPAY_COMMON_LIBS
         CURL::libcurl
@@ -122,3 +122,4 @@ set(CPACK_DEBIAN_PACKAGE_DEPENDS "libstdc++6 (>= 11.2)")
 set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
 install(TARGETS machinepay mptest DESTINATION usr/bin)
 include(CPack)
+

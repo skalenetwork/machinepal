@@ -48,3 +48,13 @@ BOOST_AUTO_TEST_CASE(generate_pair_round_trip) {
     auto derived = CryptoManager::deriveAddressFromPrivateKey(pk);
     BOOST_TEST(derived.toHex() == addr.toHex());
 }
+
+BOOST_AUTO_TEST_CASE(known_vector_0x4c0883) {
+    std::string pkHex = "0x4c0883a69102937d6231471b5dbb6204fe5129617082790839b22c7f81b0e6f";
+    auto pk = EthPrivateKey::parseFlexible(pkHex);
+    auto addr = CryptoManager::deriveAddressFromPrivateKey(pk);
+    BOOST_TEST(addr.toHex() == "0x90f8bf6a479f320ead074411a4b0e7944ea8c9c1");
+    BOOST_TEST(addr.toChecksumHex() == "0x90F8bf6A479f320eAd074411a4B0e7944Ea8c9C1");
+}
+
+// TODO: Verify private key scalar one test after keccak fix
