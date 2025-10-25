@@ -43,7 +43,7 @@ BOOST_AUTO_TEST_CASE(private_key_scalar_one) {
     auto privateKey = EthPrivateKey::parseFlexible(privateKeyStr);
 
 
-    auto publicKey = EthPrivateKey::derivePublicKeyFromPrivateKey(privateKey);
+    auto publicKey = privateKey.computePublicKey();
 
     // Expected uncompressed public key (65 bytes, 0x04 prefix)
     const std::string expectedPublicKeyHex =

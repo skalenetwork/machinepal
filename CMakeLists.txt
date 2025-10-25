@@ -77,6 +77,8 @@ target_link_libraries(machinepay
         ${MACHINEPAY_COMMON_LIBS}
 )
 
+target_compile_options(machinepay PRIVATE -Wno-deprecated-declarations)
+
 option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
 if(ENABLE_ASAN)
     target_compile_options(machinepay PRIVATE -fsanitize=address -fno-omit-frame-pointer)

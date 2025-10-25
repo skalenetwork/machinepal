@@ -116,7 +116,7 @@ bool operator==(const EthPrivateKey& a, const EthPrivateKey& b) { return a.bytes
 bool operator!=(const EthPrivateKey& a, const EthPrivateKey& b) { return !(a == b); }
 
 
-EthPrivateKey EthPrivateKey::generateHardHatCompatibleEthereumPrivateKey() {
+EthPrivateKey EthPrivateKey::generate() {
     EC_KEY* ec = EC_KEY_new_by_curve_name(NID_secp256k1);
     if (!ec) throw std::runtime_error("EC_KEY_new_by_curve_name failed");
     if (EC_KEY_generate_key(ec) != 1) { EC_KEY_free(ec); throw std::runtime_error("EC_KEY_generate_key failed"); }
@@ -143,12 +143,12 @@ EthPrivateKey EthPrivateKey::generateHardHatCompatibleEthereumPrivateKey() {
     return privateKey;
 }
 
-EthPublicKey EthPrivateKey::derivePublicKeyFromPrivateKey(const EthPrivateKey &key) {
+EthPublicKey EthPrivateKey::computePublicKey() {
     EC_GROUP* group = EC_GROUP_new_by_curve_name(NID_secp256k1);
     if (!group) throw std::runtime_error("Failed to create EC_GROUP");
     BN_CTX* bnCtx = BN_CTX_new();
     if (!bnCtx) { EC_GROUP_free(group); throw std::runtime_error("Failed to create BN_CTX"); }
-    BIGNUM* priv = BN_bin2bn(key.bytes().data(), 32, nullptr);
+    BIGNUM* priv = BN_bin2bn(bytes().data(), 32, nullptr);
     if (!priv) { BN_CTX_free(bnCtx); EC_GROUP_free(group); throw std::runtime_error("Failed to create BIGNUM for private key"); }
     EC_POINT* pub = EC_POINT_new(group);
     if (!pub) { BN_free(priv); BN_CTX_free(bnCtx); EC_GROUP_free(group); throw std::runtime_error("Failed to create EC_POINT"); }

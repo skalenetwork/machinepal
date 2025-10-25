@@ -33,7 +33,7 @@ public:
  * Generates a random Ethereum private key and address compatible with HardHat.
  * @return Pair of EthPrivateKey and Address objects.
  */
-    static EthPrivateKey generateHardHatCompatibleEthereumPrivateKey();
+    static EthPrivateKey generate();
 
 
     /**
@@ -41,7 +41,7 @@ public:
      * @param key The private key to derive the address from.
      * @return The derived Ethereum address.
      */
-    static EthPublicKey derivePublicKeyFromPrivateKey(const EthPrivateKey& key);
+    EthPublicKey computePublicKey();
 
     ~EthPrivateKey();
 
