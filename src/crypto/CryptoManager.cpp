@@ -89,40 +89,31 @@ EthAddress CryptoManager::deriveAddressFromPrivateKey(const EthPrivateKey& key) 
 
 std::pair<EthPrivateKey, EthAddress>
 CryptoManager::generateHardHatCompatibleEthereumPrivateKeyAndAddressAsPair() {
-    auto pkeyDeleter = [](EVP_PKEY *p) { EVP_PKEY_free(p); };
-    auto pctxDeleter = [](EVP_PKEY_CTX *p) { EVP_PKEY_CTX_free(p); };
+    EC_KEY* ec = EC_KEY_new_by_curve_name(NID_secp256k1);
+    if (!ec) throw std::runtime_error("EC_KEY_new_by_curve_name failed");
+    if (EC_KEY_generate_key(ec) != 1) { EC_KEY_free(ec); throw std::runtime_error("EC_KEY_generate_key failed"); }
+    const BIGNUM* privBn = EC_KEY_get0_private_key(ec);
+    if (!privBn) { EC_KEY_free(ec); throw std::runtime_error("Failed to get private key BIGNUM"); }
 
-    std::unique_ptr<EVP_PKEY_CTX, decltype(pctxDeleter)> pctx(
-        EVP_PKEY_CTX_new_id(EVP_PKEY_EC, nullptr),
-        pctxDeleter);
-    if (!pctx) throw std::runtime_error("Failed to create EVP_PKEY_CTX");
+    std::array<uint8_t,32> privBytes{};
+    if (BN_bn2binpad(privBn, privBytes.data(), 32) != 32) { EC_KEY_free(ec); throw std::runtime_error("BN_bn2binpad private failed"); }
 
-    if (EVP_PKEY_keygen_init(pctx.get()) <= 0)
-        throw std::runtime_error("EVP_PKEY_keygen_init failed");
+    const EC_GROUP* group = EC_KEY_get0_group(ec);
+    const EC_POINT* pubPoint = EC_KEY_get0_public_key(ec);
+    if (!group || !pubPoint) { EC_KEY_free(ec); throw std::runtime_error("Failed to get public key point"); }
 
-    OSSL_PARAM params[2];
-    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME, (char*)"secp256k1", 0);
-    params[1] = OSSL_PARAM_construct_end();
-    if (EVP_PKEY_CTX_set_params(pctx.get(), params) <= 0)
-        throw std::runtime_error("Failed to set EC curve params");
+    BIGNUM* x = BN_new(); BIGNUM* y = BN_new();
+    if (!x || !y) { if (x) BN_free(x); if (y) BN_free(y); EC_KEY_free(ec); throw std::runtime_error("BN_new failed"); }
+    if (EC_POINT_get_affine_coordinates(group, pubPoint, x, y, nullptr) != 1) { BN_free(x); BN_free(y); EC_KEY_free(ec); throw std::runtime_error("EC_POINT_get_affine_coordinates failed"); }
 
-    EVP_PKEY *pkeyRaw = nullptr;
-    if (EVP_PKEY_keygen(pctx.get(), &pkeyRaw) <= 0)
-        throw std::runtime_error("EVP_PKEY_keygen failed");
-    std::unique_ptr<EVP_PKEY, decltype(pkeyDeleter)> pkey(pkeyRaw, pkeyDeleter);
+    std::array<uint8_t,64> pubBytes{};
+    BN_bn2binpad(x, pubBytes.data(), 32);
+    BN_bn2binpad(y, pubBytes.data()+32, 32);
 
-    unsigned char privKey[32]; size_t privLen = sizeof(privKey);
-    if (EVP_PKEY_get_raw_private_key(pkey.get(), privKey, &privLen) <= 0 || privLen != 32)
-        throw std::runtime_error("Failed to get raw private key");
+    auto hash = keccak::keccak256(std::span<const uint8_t>(pubBytes.data(), 64));
+    EthPrivateKey privateKey(privBytes);
+    EthAddress address(hash.data()+12, 20);
 
-    unsigned char pubKey[65]; size_t pubLen = sizeof(pubKey);
-    if (EVP_PKEY_get_raw_public_key(pkey.get(), pubKey, &pubLen) <= 0 || pubLen != 65)
-        throw std::runtime_error("Failed to get raw public key");
-
-    // Skip 0x04 prefix, keccak hash of 64 bytes
-    auto hash = keccak::keccak256(std::span<const uint8_t>(pubKey + 1, 64));
-
-    EthPrivateKey privateKey(privKey, 32);
-    EthAddress address(hash.data() + 12, 20);
-    return std::make_pair(privateKey, address);
+    BN_free(x); BN_free(y); EC_KEY_free(ec);
+    return { privateKey, address };
 }
