@@ -11,10 +11,10 @@ server:
     key_file: secrets/insecure_test_localhost.key
 
 
-# Optional logging configuration. Default log level is "info" to stderr.
 
 network:
   name: base-sepolia
+  wallet_address: 0xYourEthereumWalletAddressHere
   facilitator:
     # Facilitator type. Override: FACILITATOR_TYPE
     # Facilitator types:

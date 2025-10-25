@@ -16,6 +16,13 @@ std::shared_ptr<NetworkConfig> NetworkConfig::createFromJson(const nlohmann::jso
 
         auto networkJson = j["network"];
 
+        CHECK_STATE(networkJson.contains("wallet_address"));
+        CHECK_STATE(networkJson["wallet_address"].is_string());
+
+        auto walletAddressStr = networkJson["wallet_address"].get<std::string>();
+
+        auto walletAddress = Address::parseHexAddress(walletAddressStr);
+
         std::string name = networkJson.value("name", "machinepay-easy-test");
         std::set<std::string> supportedNetworks = {
             "machinepay-easy-testnet",
@@ -27,7 +34,7 @@ std::shared_ptr<NetworkConfig> NetworkConfig::createFromJson(const nlohmann::jso
         if (networkJson.contains("facilitator") && networkJson["facilitator"].is_object()) {
             facilitator = FacilitatorConfig::createFomJson(networkJson["facilitator"], fileManager);
         }
-        return ptr<NetworkConfig>(new NetworkConfig(name, facilitator));
+        return ptr<NetworkConfig>(new NetworkConfig(name, walletAddress, facilitator));
     } catch (const std::exception& ex) {
         RETHROW_NESTED;
     }
