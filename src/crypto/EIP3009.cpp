@@ -7,6 +7,7 @@
 #include <sstream>
 #include <iomanip>
 #include "EthAddress.h"
+#include "EthSignature.h"
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
@@ -33,7 +34,7 @@ static std::string bytesToHex(const unsigned char* data, size_t len) {
     return oss.str();
 }
 
-std::string EIP3009::signAuthorization(const EthAddress& from,
+EthSignature EIP3009::signAuthorization(const EthAddress& from,
                                        const EthAddress& to,
                                        uint64_t value,
                                        uint64_t validAfter,
@@ -58,7 +59,12 @@ std::string EIP3009::signAuthorization(const EthAddress& from,
     }
     BN_free(priv_bn);
     EC_KEY_free(ec_key);
-    return bytesToHex(sig.data(), sig_len);
+    // Pad/copy to 65 bytes, set v to 0 (no recovery, for compatibility)
+    std::array<uint8_t, 65> sigArr{};
+    size_t copyLen = std::min<size_t>(sig_len, 64);
+    std::copy(sig.begin(), sig.begin() + copyLen, sigArr.begin());
+    sigArr[64] = 0; // v value (could be set to 27/28 if recovery is implemented)
+    return EthSignature(sigArr);
 }
 
 bool EIP3009::verifyAuthorization(const EthAddress& from,
@@ -67,7 +73,7 @@ bool EIP3009::verifyAuthorization(const EthAddress& from,
                                   uint64_t validAfter,
                                   uint64_t validBefore,
                                   const std::string& nonce,
-                                  const std::string& signature,
+                                  const EthSignature& signature,
                                   const EthPublicKey& publicKey) {
     auto hash = hashAuthorization(from, to, value, validAfter, validBefore, nonce);
     EC_KEY* ec_key = EC_KEY_new_by_curve_name(NID_secp256k1);
@@ -86,12 +92,9 @@ bool EIP3009::verifyAuthorization(const EthAddress& from,
         throw std::runtime_error("Failed to set public key");
     }
     EC_POINT_free(pub_point);
-    // Convert signature hex to bytes
-    std::vector<unsigned char> sig_bytes;
-    for (size_t i = 0; i < signature.size(); i += 2) {
-        sig_bytes.push_back(static_cast<unsigned char>(std::stoi(signature.substr(i, 2), nullptr, 16)));
-    }
-    int verify_status = ECDSA_verify(0, hash.data(), hash.size(), sig_bytes.data(), sig_bytes.size(), ec_key);
+    // Use only r+s for verification (v is not used by OpenSSL)
+    const auto& sig_bytes = signature.bytes();
+    int verify_status = ECDSA_verify(0, hash.data(), hash.size(), sig_bytes.data(), 64, ec_key);
     EC_KEY_free(ec_key);
     return verify_status == 1;
 }
