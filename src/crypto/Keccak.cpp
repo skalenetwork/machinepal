@@ -13,6 +13,7 @@ std::array<uint8_t, 32> keccak256(std::span<const uint8_t> data) {
     std::array<uint8_t, 32> out{};
     CryptoPP::Keccak_256 hash;
     hash.Update(data.data(), data.size());
+    hash.TruncatedFinal(out.data(), out.size());
     return out;
 }
 
