@@ -1,6 +1,8 @@
 #include "EthPublicKey.h"
 #include "EthAddress.h"
 #include "Keccak.h"
+#include "MachinePayCommon.h"
+
 #include <stdexcept>
 #include <algorithm>
 #include <sstream>
@@ -53,11 +55,13 @@ EthPublicKey EthPublicKey::parseFlexible(const std::string& hex) {
     return EthPublicKey(arr);
 }
 EthPublicKey EthPublicKey::parseHex(const std::string& hex) { return parseFlexible(hex); }
+
 std::string EthPublicKey::toHex() const {
     std::string hexString;
-    hexString.reserve(130); // 2 for '0x' + 128 for 64 bytes
-    hexString += "0x";
+    hexString.reserve(132); // 2 for '0x' + 2 for prefix + 128 for 64 bytes
+    hexString += "0x04"; // prefix byte for uncompressed public key
     boost::algorithm::hex_lower(bytes_.begin(), bytes_.end(), std::back_inserter(hexString));
+    CHECK_STATE2(hexString.size() == 132, "Invalid hex string size"); // 2 for '0x' + 2 for prefix + 128 for 64 bytes
     return hexString;
 }
 EthAddress EthPublicKey::getAddress() const {
