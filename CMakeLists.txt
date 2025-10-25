@@ -49,7 +49,7 @@ add_executable(machinepay
         ${APP_SRC_FILES}
 )
 target_include_directories(machinepay PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
-target_link_libraries(machinepay PRIVATE CLI11::CLI11 cryptopp OpenSSL::SSL OpenSSL::Crypto)
+
 
 set (MACHINEPAY_COMMON_LIBS
         CURL::libcurl
@@ -68,6 +68,7 @@ set (MACHINEPAY_COMMON_LIBS
         nlohmann_json_schema_validator
         yaml-cpp
         spdlog::spdlog
+        cryptopp
 )
 
 target_link_libraries(machinepay
