@@ -17,7 +17,7 @@ public:
                                           const EthPrivateKey& privateKey);
 
     // Verifies an EIP-3009 authorization signature
-    static bool verifyAuthorization(const EthAddress& from,
+    static void verifyAuthorization(const EthAddress& from,
                                     const EthAddress& to,
                                     uint64_t value,
                                     uint64_t validAfter,

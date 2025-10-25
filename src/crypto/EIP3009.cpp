@@ -45,7 +45,7 @@ EIP712Signature EIP3009::signAuthorization(const EthAddress& from,
     return EthPrivateKey::signAuthRaw(hash.data(), privateKey.bytes().data());;
 }
 
-bool EIP3009::verifyAuthorization(const EthAddress& from,
+void EIP3009::verifyAuthorization(const EthAddress& from,
                                   const EthAddress& to,
                                   uint64_t value,
                                   uint64_t validAfter,
@@ -54,5 +54,5 @@ bool EIP3009::verifyAuthorization(const EthAddress& from,
                                   const EIP712Signature& signature,
                                   const EthPublicKey& publicKey) {
     auto hash = hashAuthorization(from, to, value, validAfter, validBefore, nonce);
-    return EthPrivateKey::eip712Verify(hash.data(), signature.bytes().data(), publicKey.getAddress());
+    EthPrivateKey::eip712VerifyRaw(hash.data(), signature.bytes().data(), publicKey.getAddress());
 }

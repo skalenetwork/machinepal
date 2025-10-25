@@ -285,8 +285,9 @@ inline bool rs_low_s_and_in_range(const uint8_t* r, const uint8_t* s) {
 }
 
 inline bool normalize_v(uint8_t v, int& recid) {
+    // do not allow 0 or 1
     if (v == 27 || v == 28) { recid = v - 27; return true; }
-    if (v == 0  || v == 1 ) { recid = v; return true; }
+    // do not allow 0 or 1
     return false;
 }
 
@@ -306,21 +307,21 @@ EthAddress recoverAddressFromSigRSV(const uint8_t msg32[32], const uint8_t sig65
         throw std::invalid_argument("invalid v (0/1/27/28 expected)");
 
     auto ctx = secp256k1_context_create(SECP256K1_CONTEXT_VERIFY);
-    if (!ctx) throw std::runtime_error("context_create failed");
+    if (!ctx) throw std::invalid_argument("context_create failed");
     CtxGuard guard{ctx};
 
     secp256k1_ecdsa_recoverable_signature rsig;
     if (!secp256k1_ecdsa_recoverable_signature_parse_compact(ctx, &rsig, r, recid))
-        throw std::runtime_error("parse_compact failed");
+        throw std::invalid_argument("parse_compact failed");
 
     secp256k1_pubkey pub;
     if (!secp256k1_ecdsa_recover(ctx, &pub, &rsig, msg32))
-        throw std::runtime_error("ecdsa_recover failed");
+        throw std::invalid_argument("ecdsa_recover failed");
 
     uint8_t pubkey[65];
     size_t len = sizeof(pubkey);
     if (!secp256k1_ec_pubkey_serialize(ctx, pubkey, &len, &pub, SECP256K1_EC_UNCOMPRESSED) || len != 65)
-        throw std::runtime_error("pubkey_serialize failed");
+        throw std::invalid_argument("pubkey_serialize failed");
 
     auto hash = keccak::keccak256(std::span<const uint8_t>(pubkey + 1, 64));
     EthAddress addr{};
@@ -329,15 +330,17 @@ EthAddress recoverAddressFromSigRSV(const uint8_t msg32[32], const uint8_t sig65
 }
 
 // -------------------- Verify against expected address --------------------
-bool EthPrivateKey::eip712Verify(const uint8_t msg32[32],
+void EthPrivateKey::eip712VerifyRaw(const uint8_t msg32[32],
                                  const uint8_t sig65[65],
                                  EthAddress expectedAddress)
 {
     try {
         EthAddress rec = recoverAddressFromSigRSV(msg32, sig65);
-        return std::memcmp(rec.bytes().data(), expectedAddress.bytes().data(), 20) == 0;
-    } catch (...) {
-        return false; // invalid sig or failure to recover
+        if (std::memcmp(rec.bytes().data(), expectedAddress.bytes().data(), 20) != 0) {
+            throw std::invalid_argument("Signature verification failed: recovered address mismatch");
+        }
+    } catch (std::exception&) {
+        RETHROW_NESTED;
     }
 }
 

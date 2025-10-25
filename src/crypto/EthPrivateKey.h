@@ -51,7 +51,7 @@ public:
 
 
     // -------------------- Verify against expected address --------------------
-    static bool eip712Verify(const uint8_t msg32[32],
+    static void eip712VerifyRaw(const uint8_t msg32[32],
                                      const uint8_t sig65[65],
                                      EthAddress address);
 
