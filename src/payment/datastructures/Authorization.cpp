@@ -8,6 +8,8 @@
 #include <sstream>
 #include <boost/algorithm/hex.hpp>
 
+#include "config/subconfigs/NetworkConfig.h"
+
 Authorization::Authorization() = default;
 
 Authorization::Authorization(const std::string &fromStr,
@@ -94,11 +96,16 @@ std::optional<HttpError> Authorization::validate(const MachinePayConfig &config,
                              "Authorization expired: current time (" + std::to_string(now) + ") is after validBefore ("
                              + std::to_string(validBeforeTs) + ")");
         }
+
+        if (this->to() != config.network()->walletAddress()) {
+            return HttpError(ErrorType::ERR_BAD_REQUEST,
+                std::string("Authorization payment destination address does not match configured destination address: ") +
+                "authorization.to=" + to().toHex() + ", configured.to=" + config.network()->walletAddress().toHex());
+        }
+
     } catch (const std::exception &e) {
         return HttpError(ErrorType::ERR_INTERNAL_SERVER_ERROR,
                          std::string("Authorization failed to validate") + e.what());
     }
     return std::nullopt; // no error
 }
-
-
