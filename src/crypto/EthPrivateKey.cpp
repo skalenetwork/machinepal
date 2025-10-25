@@ -1,3 +1,6 @@
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 #include "MachinePayCommon.h"
 #include "EthPrivateKey.h"
 #include "Keccak.h"
@@ -164,3 +167,5 @@ EthPublicKey EthPrivateKey::derivePublicKeyFromPrivateKey(const EthPrivateKey &k
     BN_free(x); BN_free(y); EC_POINT_free(pub); BN_free(priv); BN_CTX_free(bnCtx); EC_GROUP_free(group);
     return EthPublicKey(pubBytes);
 }
+
+#pragma GCC diagnostic pop

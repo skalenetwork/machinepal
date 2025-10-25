@@ -1,3 +1,6 @@
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 #include <boost/test/unit_test.hpp>
 #include "crypto/EthPrivateKey.h"
 #include "crypto/EthAddress.h"
@@ -79,3 +82,5 @@ BOOST_AUTO_TEST_CASE(range_checks) {
 }
 
 // TODO: Verify private key scalar one test after keccak fix
+
+#pragma GCC diagnostic pop
