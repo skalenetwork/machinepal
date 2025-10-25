@@ -36,18 +36,18 @@ BOOST_AUTO_TEST_CASE(keccak256_abc_vector)
 
 // Deterministic test using private key = 1
 BOOST_AUTO_TEST_CASE(private_key_scalar_one) {
-    std::string pkHex = "0x" + std::string(63, '0') + "1"; // 64 hex chars ending with 1
-    auto pk = EthPrivateKey::parseFlexible(pkHex);
+    std::string privateKeyStr = "0x" + std::string(63, '0') + "1"; // 64 hex chars ending with 1
+    auto privateKey = EthPrivateKey::parseFlexible(privateKeyStr);
 
     // Expected uncompressed public key (65 bytes, 0x04 prefix)
     const std::string expectedPubHex =
         "0x0479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"
         "483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8";
 
-    BOOST_TEST_MESSAGE("Public key (uncompressed): " << pk.toHex());
-    BOOST_TEST(pk.toHex() == expectedPubHex);
+    BOOST_TEST_MESSAGE("Public key (uncompressed): " << privateKey.toHex());
+    BOOST_TEST(privateKey.toHex() == expectedPubHex);
 
-    auto addr = CryptoManager::deriveAddressFromPrivateKey(pk);
+    auto addr = CryptoManager::derivePublicKeyFromPrivateKey(privateKey).getAddress();
     BOOST_TEST(addr.toHex() == "0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199");
     BOOST_TEST(addr.toChecksumHex() == "0x8626f6940E2eb28930eFb4CeF49B2d1F2C9C1199");
 }
@@ -85,14 +85,14 @@ BOOST_AUTO_TEST_CASE(range_checks) {
 
 BOOST_AUTO_TEST_CASE(generate_pair_round_trip) {
     auto [pk, addr] = CryptoManager::generateHardHatCompatibleEthereumPrivateKeyAndAddressAsPair();
-    auto derived = CryptoManager::deriveAddressFromPrivateKey(pk);
+    auto derived = CryptoManager::derivePublicKeyFromPrivateKey(pk);
     BOOST_TEST(derived.toHex() == addr.toHex());
 }
 
 BOOST_AUTO_TEST_CASE(known_vector_0x4c0883) {
     std::string pkHex = "0x4c0883a69102937d6231471b5dbb6204fe5129617082790839b22c7f81b0e6f";
     auto pk = EthPrivateKey::parseFlexible(pkHex);
-    auto addr = CryptoManager::deriveAddressFromPrivateKey(pk);
+    auto addr = CryptoManager::derivePublicKeyFromPrivateKey(pk).getAddress();
     BOOST_TEST(addr.toHex() == "0x90f8bf6a479f320ead074411a4b0e7944ea8c9c1");
     BOOST_TEST(addr.toChecksumHex() == "0x90F8bf6A479f320eAd074411a4B0e7944Ea8c9C1");
 }

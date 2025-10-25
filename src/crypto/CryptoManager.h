@@ -3,6 +3,7 @@
 #include <utility>
 #include "EthPrivateKey.h"
 #include "EthAddress.h"
+#include "EthPublicKey.h"
 
 
 class CryptoManager {
@@ -26,5 +27,5 @@ public:
      * @param key The private key to derive the address from.
      * @return The derived Ethereum address.
      */
-    static EthAddress deriveAddressFromPrivateKey(const EthPrivateKey& key);
+    static EthPublicKey derivePublicKeyFromPrivateKey(const EthPrivateKey& key);
 };

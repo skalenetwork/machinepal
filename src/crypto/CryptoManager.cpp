@@ -13,6 +13,7 @@
 #include <openssl/bn.h>
 #include "EthPrivateKey.h"
 #include "EthAddress.h"
+#include "EthPublicKey.h"
 #include "Keccak.h"
 
 
@@ -59,7 +60,7 @@ std::string CryptoManager::computeBlakeHash(const std::string &filePath) {
     return oss.str();
 }
 
-EthAddress CryptoManager::deriveAddressFromPrivateKey(const EthPrivateKey& key) {
+EthPublicKey CryptoManager::derivePublicKeyFromPrivateKey(const EthPrivateKey &key) {
     EC_GROUP* group = EC_GROUP_new_by_curve_name(NID_secp256k1);
     if (!group) throw std::runtime_error("Failed to create EC_GROUP");
     BN_CTX* bnCtx = BN_CTX_new();
@@ -80,11 +81,8 @@ EthAddress CryptoManager::deriveAddressFromPrivateKey(const EthPrivateKey& key) 
     BN_bn2binpad(x, pubBytes.data(), 32);
     BN_bn2binpad(y, pubBytes.data()+32, 32);
 
-    auto hash = keccak::keccak256(std::span<const uint8_t>(pubBytes.data(), 64));
-    EthAddress address(hash.data()+12, 20);
-
     BN_free(x); BN_free(y); EC_POINT_free(pub); BN_free(priv); BN_CTX_free(bnCtx); EC_GROUP_free(group);
-    return address;
+    return EthPublicKey(pubBytes);
 }
 
 std::pair<EthPrivateKey, EthAddress>
