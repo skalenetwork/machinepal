@@ -14,7 +14,7 @@ server:
 
 network:
   name: base-sepolia
-  wallet_address: 0xYourEthereumWalletAddressHere
+  wallet_address: 0x2222222222222222222222222222222222222222
   facilitator:
     # Facilitator type. Override: FACILITATOR_TYPE
     # Facilitator types:
