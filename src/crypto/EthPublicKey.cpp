@@ -20,10 +20,11 @@ static std::string trimCopy(const std::string& in) {
 
 static std::vector<uint8_t> hexToBytesFlexible(const std::string& hex) {
     std::string s = trimCopy(hex);
-    if (s.rfind("0x",0)==0 || s.rfind("0X",0)==0) s = s.substr(2);
-    if (s.size() != 128) throw std::invalid_argument("Public key hex must be 128 characters (64 bytes); got " + std::to_string(s.size()));
-    for (char c: s) if (!std::isxdigit(static_cast<unsigned char>(c))) throw std::invalid_argument("Invalid hex character in public key");
-    std::vector<uint8_t> bytes; bytes.reserve(64);
+    if (s.rfind("0x", 0) == 0 || s.rfind("0X", 0) == 0) s = s.substr(2);
+    if (s.size() != 130 || s.substr(0, 2) != "04")
+        throw std::invalid_argument("Public key hex must be 130 characters (0x04 + 64 bytes); got " + std::to_string(s.size()));
+    for (char c : s) if (!std::isxdigit(static_cast<unsigned char>(c))) throw std::invalid_argument("Invalid hex character in public key");
+    std::vector<uint8_t> bytes; bytes.reserve(65);
     boost::algorithm::unhex(s.begin(), s.end(), std::back_inserter(bytes));
     return bytes;
 }
