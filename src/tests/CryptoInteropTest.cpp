@@ -38,6 +38,15 @@ BOOST_AUTO_TEST_CASE(keccak256_abc_vector)
 BOOST_AUTO_TEST_CASE(private_key_scalar_one) {
     std::string pkHex = "0x" + std::string(63, '0') + "1"; // 64 hex chars ending with 1
     auto pk = EthPrivateKey::parseFlexible(pkHex);
+
+    // Expected uncompressed public key (65 bytes, 0x04 prefix)
+    const std::string expectedPubHex =
+        "0x0479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"
+        "483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8";
+
+    BOOST_TEST_MESSAGE("Public key (uncompressed): " << pk.toHex());
+    BOOST_TEST(pk.toHex() == expectedPubHex);
+
     auto addr = CryptoManager::deriveAddressFromPrivateKey(pk);
     BOOST_TEST(addr.toHex() == "0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199");
     BOOST_TEST(addr.toChecksumHex() == "0x8626f6940E2eb28930eFb4CeF49B2d1F2C9C1199");

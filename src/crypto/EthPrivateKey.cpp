@@ -69,6 +69,10 @@ bool EthPrivateKey::isValidRange(const std::array<uint8_t,32>& k) {
 EthPrivateKey EthPrivateKey::parseFlexible(const std::string& hex) {
     auto v = hexToBytesFlexible(hex);
     std::array<uint8_t,32> arr{}; std::copy(v.begin(), v.end(), arr.begin());
+    // Check that private key is not zero
+    if (std::all_of(arr.begin(), arr.end(), [](uint8_t b){ return b == 0; })) {
+        throw std::invalid_argument("Private key must not be zero");
+    }
     if (!isValidRange(arr)) throw std::invalid_argument("Private key out of range for secp256k1");
     return EthPrivateKey(arr);
 }
