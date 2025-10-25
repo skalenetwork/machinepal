@@ -16,16 +16,6 @@ public:
      */
     static std::string computeBlakeHash(const std::string& filePath);
 
-    /**
-     * Generates a random Ethereum private key and address compatible with HardHat.
-     * @return Pair of EthPrivateKey and Address objects.
-     */
-    static std::pair<EthPrivateKey, EthAddress> generateHardHatCompatibleEthereumPrivateKeyAndAddressAsPair();
 
-    /**
-     * Derives the Ethereum address from the given private key.
-     * @param key The private key to derive the address from.
-     * @return The derived Ethereum address.
-     */
-    static EthPublicKey derivePublicKeyFromPrivateKey(const EthPrivateKey& key);
+
 };

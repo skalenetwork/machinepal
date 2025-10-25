@@ -1,5 +1,7 @@
 #pragma once
 
+#include "EthPublicKey.h"
+
 #include <array>
 #include <cstdint>
 #include <string>
@@ -26,6 +28,20 @@ public:
     // Comparison operators
     friend bool operator==(const EthPrivateKey &a, const EthPrivateKey &b);
     friend bool operator!=(const EthPrivateKey &a, const EthPrivateKey &b);
+
+    /**
+ * Generates a random Ethereum private key and address compatible with HardHat.
+ * @return Pair of EthPrivateKey and Address objects.
+ */
+    static EthPrivateKey generateHardHatCompatibleEthereumPrivateKey();
+
+
+    /**
+     * Derives the Ethereum address from the given private key.
+     * @param key The private key to derive the address from.
+     * @return The derived Ethereum address.
+     */
+    static EthPublicKey derivePublicKeyFromPrivateKey(const EthPrivateKey& key);
 
     ~EthPrivateKey();
 
