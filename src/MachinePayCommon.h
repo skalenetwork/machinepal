@@ -1,5 +1,7 @@
 #pragma once
-
+#include <boost/algorithm/hex.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/regex.hpp>
 #include <cassert>
 #include <iostream>
 #include <string>

@@ -31,34 +31,37 @@ EthAddress EthAddress::parseHexAddress(const std::string& hex) {
 }
 
 EthAddress EthAddress::parseFlexible(const std::string &hex, bool validateChecksum) {
-    // Accept optional 0x prefix, lowercase or checksum form.
+    using namespace boost::algorithm;
+
+    // Remove optional 0x prefix
     std::string s = hex;
-    if (s.rfind("0x", 0) == 0 || s.rfind("0X", 0) == 0) s = s.substr(2);
-    if (s.size() != 40) throw std::invalid_argument("Address hex must be 40 characters (20 bytes)");
-    // Validate characters
-    for (char c : s) {
-        if (!std::isxdigit(static_cast<unsigned char>(c))) {
-            throw std::invalid_argument("Invalid hex character in address");
-        }
-    }
-    // If mixed case and validateChecksum, verify EIP-55
-    bool hasUpper = false, hasLower = false;
-    for (char c : s) {
-        if (std::isalpha(static_cast<unsigned char>(c))) {
-            if (std::islower(static_cast<unsigned char>(c))) hasLower = true; else hasUpper = true;
-        }
-    }
+    if (istarts_with(s, "0x"))
+        s.erase(0, 2);
+
+    if (s.size() != 40)
+        throw std::invalid_argument("Address hex must be 40 characters (20 bytes)");
+
+    // Validate all characters are hex
+    if (!all(s, is_xdigit()))
+        throw std::invalid_argument("Invalid hex character in address");
+
+    // Detect case pattern
+    bool hasUpper = std::any_of(s.begin(), s.end(), [](char c){ return std::isupper(static_cast<unsigned char>(c)); });
+    bool hasLower = std::any_of(s.begin(), s.end(), [](char c){ return std::islower(static_cast<unsigned char>(c)); });
     bool mixed = hasUpper && hasLower;
-    std::string lower;
-    lower.reserve(40);
-    for (char c : s) lower.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(c))));
-    EthAddress addr = parseHexAddress(lower); // reuse decoder
+
+    // Lowercase copy for decoding
+    std::string lower = to_lower_copy(s);
+
+    EthAddress addr = parseHexAddress(lower);
+
+    // Checksum validation (EIP-55)
     if (validateChecksum && mixed) {
-        std::string expected = addr.toChecksumHex().substr(2); // remove 0x
-        if (expected != s) {
+        std::string expected = addr.toChecksumHex().substr(2); // remove "0x"
+        if (expected != s)
             throw std::invalid_argument("Checksum mismatch for address");
-        }
     }
+
     return addr;
 }
 

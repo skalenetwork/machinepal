@@ -1,3 +1,4 @@
+#include "MachinePayCommon.h"
 #include "EthPrivateKey.h"
 #include <stdexcept>
 #include <algorithm>
@@ -15,20 +16,34 @@ static std::string trimCopy(const std::string& in) {
     return in.substr(start, end - start);
 }
 
-// Helper function to convert hex string to bytes
+
 static std::vector<uint8_t> hexToBytesFlexible(const std::string& hex) {
-    std::string s = trimCopy(hex);
-    if (s.rfind("0x",0)==0 || s.rfind("0X",0)==0) s = s.substr(2);
-    if (s.size() != 64) throw std::invalid_argument("Private key hex must be 64 characters (32 bytes); got " + std::to_string(s.size()));
-    for (char c: s) if (!std::isxdigit(static_cast<unsigned char>(c))) throw std::invalid_argument("Invalid hex character in private key");
-    std::vector<uint8_t> bytes; bytes.reserve(32);
-    for (size_t i=0;i<s.size(); i+=2) {
-        uint8_t hi = std::isdigit(s[i])? s[i]-'0' : (std::tolower(s[i])-'a'+10);
-        uint8_t lo = std::isdigit(s[i+1])? s[i+1]-'0' : (std::tolower(s[i+1])-'a'+10);
-        bytes.push_back((hi<<4)|lo);
+    std::string s = hex;
+
+    // Strip optional 0x or 0X prefix
+    if (s.rfind("0x", 0) == 0 || s.rfind("0X", 0) == 0)
+        s = s.substr(2);
+
+    // Must have even length
+    if (s.size() % 2 != 0)
+        throw std::invalid_argument("Hex string must have even length");
+
+    // Optional strict length check (for Ethereum private key = 32 bytes)
+    if (s.size() != 64)
+        throw std::invalid_argument("Private key must be 32 bytes (64 hex chars); got " + std::to_string(s.size()));
+
+    std::vector<uint8_t> bytes;
+    bytes.reserve(s.size() / 2);
+
+    try {
+        boost::algorithm::unhex(s.begin(), s.end(), std::back_inserter(bytes));
+    } catch (const boost::algorithm::hex_decode_error& e) {
+        throw std::invalid_argument(std::string("Invalid hex input: ") + e.what());
     }
+
     return bytes;
 }
+
 
 EthPrivateKey::EthPrivateKey() : bytes_{} {}
 
