@@ -28,7 +28,7 @@ Address Address::parseHexAddress(const std::string& hex) {
     return addr;
 }
 
-std::string Address::toHex() {
+std::string Address::toHex() const {
     std::string out;
     out.reserve(42);
     out += "0x";

@@ -1,0 +1,49 @@
+# Style tuned to typical assistant-generated C++: attached braces, 4-space indent, readable alignment.
+BasedOnStyle: LLVM
+Language: Cpp
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+ColumnLimit: 100
+BreakBeforeBraces: Attach
+BraceWrapping:
+  AfterEnum: false
+  AfterFunction: false
+  AfterStruct: false
+  AfterClass: false
+  BeforeElse: false
+  BeforeCatch: false
+  AfterControlStatement: false
+  AfterNamespace: false
+  SplitEmptyFunction: false
+  SplitEmptyRecord: false
+  SplitEmptyNamespace: false
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortBlocksOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: false
+IndentCaseLabels: true
+NamespaceIndentation: All
+AccessModifierOffset: -2
+SortIncludes: true
+IncludeBlocks: Regroup
+SpaceBeforeInheritanceColon: true
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+BreakConstructorInitializersBeforeComma: false
+AlwaysBreakTemplateDeclarations: Yes
+AlignAfterOpenBracket: Align
+AlignOperands: true
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: true
+AlignConsecutiveMacros: true
+AlignTrailingComments: true
+SpaceBeforeRangeBasedForLoopColon: false
+SpacesInAngles: false
+Cpp11BracedListStyle: true
+SpaceBeforeParens: ControlStatements
+BinPackParameters: false
+BinPackArguments: false
+ReflowComments: true
+# Keep enums scoped and braces style consistent.
+# Feel free to adjust ColumnLimit if lines wrap undesirably.

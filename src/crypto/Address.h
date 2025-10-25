@@ -20,7 +20,7 @@ public:
     [[nodiscard]] const std::array<uint8_t, 20> &bytes() const { return bytes_; }
 
     static Address parseHexAddress(const std::string &hex);
-    std::string toHex();
+    std::string toHex() const;
 
     // Comparison operators (defined in Address.cpp)
     friend bool operator==(const Address &a, const Address &b);
