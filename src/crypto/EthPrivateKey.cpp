@@ -198,7 +198,6 @@ EIP712Signature sign_auth(const uint8_t msg32[32], const uint8_t priv32[32]) {
     return EIP712Signature(sig);
 }
 
-enum class VEncoding : uint8_t { V27_28, V0_1 };
 
 
 struct CtxGuard {
@@ -212,11 +211,10 @@ struct CtxGuard {
 
 // msg32: EXACT 32-byte EIP-712 digest
 // priv32: 32-byte secp256k1 secret key (1..n-1)
-// seed32: OPTIONAL 32-byte context randomization seed (pass nullptr to skip)
-EIP712Signature signAuthRaw(const uint8_t msg32[32],
+
+EIP712Signature EthPrivateKey::signAuthRaw(const uint8_t msg32[32],
                             const uint8_t priv32[32],
-                            VEncoding vEnc = VEncoding::V27_28,
-                            const uint8_t* seed32 = nullptr)
+                            VEncoding vEnc)
 {
     if (!msg32 || !priv32) throw std::invalid_argument("null pointer");
 
@@ -225,12 +223,6 @@ EIP712Signature signAuthRaw(const uint8_t msg32[32],
     if (!ctx) throw std::runtime_error("context_create failed");
     CtxGuard guard{ctx};
 
-    // 2) optional randomization (expects 32 bytes if provided)
-    if (seed32) {
-        if (!secp256k1_context_randomize(ctx, seed32)) {
-            throw std::runtime_error("context_randomize failed");
-        }
-    }
 
     // 3) validate private key
     if (!secp256k1_ec_seckey_verify(ctx, priv32)) {
@@ -337,13 +329,13 @@ EthAddress recoverAddressFromSigRSV(const uint8_t msg32[32], const uint8_t sig65
 }
 
 // -------------------- Verify against expected address --------------------
-bool eip712_verifyAgainstAddress(const uint8_t msg32[32],
+bool EthPrivateKey::eip712Verify(const uint8_t msg32[32],
                                  const uint8_t sig65[65],
-                                 const uint8_t expected_addr20[20])
+                                 EthAddress expectedAddress)
 {
     try {
         EthAddress rec = recoverAddressFromSigRSV(msg32, sig65);
-        return std::memcmp(rec.bytes().data(), expected_addr20, 20) == 0;
+        return std::memcmp(rec.bytes().data(), expectedAddress.bytes().data(), 20) == 0;
     } catch (...) {
         return false; // invalid sig or failure to recover
     }

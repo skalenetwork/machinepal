@@ -1,5 +1,6 @@
 #pragma once
 
+#include "EIP712Signature.h"
 #include "EthPublicKey.h"
 
 #include <array>
@@ -7,6 +8,9 @@
 #include <string>
 #include <algorithm>
 #include <span>
+
+
+enum class VEncoding : uint8_t { V27_28, V0_1 };
 
 class EthPrivateKey {
 public:
@@ -44,6 +48,17 @@ public:
     EthPublicKey computePublicKey();
 
     ~EthPrivateKey();
+
+
+    // -------------------- Verify against expected address --------------------
+    static bool eip712Verify(const uint8_t msg32[32],
+                                     const uint8_t sig65[65],
+                                     EthAddress address);
+
+
+    static EIP712Signature signAuthRaw(const uint8_t msg32[32],
+                                const uint8_t priv32[32],
+                                VEncoding vEnc = VEncoding::V27_28);
 
 private:
     std::array<uint8_t, 32> bytes_{};
