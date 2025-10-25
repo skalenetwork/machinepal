@@ -41,7 +41,7 @@ endforeach()
 
 find_package(Boost REQUIRED CONFIG COMPONENTS unit_test_framework system thread url locale multiprecision)
 find_package(OpenSSL REQUIRED)
-
+find_package(cryptopp CONFIG REQUIRED)
 
 # ---- App target ----
 add_executable(machinepay
@@ -68,7 +68,8 @@ set (MACHINEPAY_COMMON_LIBS
         nlohmann_json_schema_validator
         yaml-cpp
         spdlog::spdlog
-        cryptopp
+        cryptopp::cryptopp
+        CLI11::CLI11
 )
 
 target_link_libraries(machinepay
@@ -123,4 +124,3 @@ set(CPACK_DEBIAN_PACKAGE_DEPENDS "libstdc++6 (>= 11.2)")
 set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
 install(TARGETS machinepay mptest DESTINATION usr/bin)
 include(CPack)
-
