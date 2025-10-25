@@ -15,7 +15,7 @@ BOOST_AUTO_TEST_CASE(EIP3009_SignAndVerify_ReferenceValues) {
     std::string nonce = "0xabcdef1234567890";
 
     // Example private key (DO NOT USE IN PRODUCTION)
-    std::string privKeyHex = "4c0883a69102937d6231471b5dbb6204fe5129617082796e8a7a7e7a7a7a7a7a7a";
+    std::string privKeyHex = "4c0883a69102937d6231471b5dbb6204fe5129617082796e8a7a7e7a7a7a7a7a";
     EthPrivateKey privKey(privKeyHex);
     EthPublicKey pubKey = privKey.computePublicKey();
 
