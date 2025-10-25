@@ -1,4 +1,4 @@
-#include "EIP3009.h"
+#include "EIP3009Authorization.h"
 #include "crypto/Keccak.h"
 #include <openssl/ec.h>
 #include <openssl/ecdsa.h>
@@ -34,7 +34,7 @@ static std::string bytesToHex(const unsigned char* data, size_t len) {
     return oss.str();
 }
 
-EIP712Signature EIP3009::signAuthorization(const EthAddress& from,
+EIP712Signature EIP3009Authorization::signAuthorization(const EthAddress& from,
                                        const EthAddress& to,
                                        uint64_t value,
                                        uint64_t validAfter,
@@ -45,7 +45,7 @@ EIP712Signature EIP3009::signAuthorization(const EthAddress& from,
     return EthPrivateKey::signAuthRaw(hash.data(), privateKey.bytes().data());;
 }
 
-void EIP3009::verifyAuthorization(const EthAddress& from,
+void EIP3009Authorization::verifyAuthorization(const EthAddress& from,
                                   const EthAddress& to,
                                   uint64_t value,
                                   uint64_t validAfter,

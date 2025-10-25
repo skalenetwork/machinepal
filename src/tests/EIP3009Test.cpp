@@ -1,5 +1,5 @@
 #include <boost/test/unit_test.hpp>
-#include "crypto/EIP3009.h"
+#include "crypto/EIP3009Authorization.h"
 #include "crypto/EthPrivateKey.h"
 #include "crypto/EthPublicKey.h"
 #include "crypto/EthAddress.h"
@@ -20,11 +20,11 @@ BOOST_AUTO_TEST_CASE(EIP3009_SignAndVerify_ReferenceValues) {
     EthPublicKey pubKey = privKey.computePublicKey();
 
     // Sign authorization
-    EIP712Signature signature = EIP3009::signAuthorization(from, to, value, validAfter, validBefore, nonce, privKey);
+    EIP712Signature signature = EIP3009Authorization::signAuthorization(from, to, value, validAfter, validBefore, nonce, privKey);
     BOOST_TEST(!signature.toHex().empty());
 
     // Verify authorization
-    EIP3009::verifyAuthorization(from, to, value, validAfter, validBefore, nonce, signature, pubKey);
+    EIP3009Authorization::verifyAuthorization(from, to, value, validAfter, validBefore, nonce, signature, pubKey);
 
 
 }

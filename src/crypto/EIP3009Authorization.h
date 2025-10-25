@@ -5,7 +5,7 @@
 #include "EthAddress.h"
 #include "EIP712Signature.h"
 
-class EIP3009 {
+class EIP3009Authorization {
 public:
     // Signs an EIP-3009 authorization message
     static EIP712Signature signAuthorization(const EthAddress& from,
