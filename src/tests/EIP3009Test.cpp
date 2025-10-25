@@ -3,7 +3,7 @@
 #include "crypto/EthPrivateKey.h"
 #include "crypto/EthPublicKey.h"
 #include "crypto/EthAddress.h"
-#include "crypto/EthSignature.h"
+#include "crypto/EIP712Signature.h"
 
 BOOST_AUTO_TEST_CASE(EIP3009_SignAndVerify_ReferenceValues) {
     // Reference values (example test vectors)
@@ -20,7 +20,7 @@ BOOST_AUTO_TEST_CASE(EIP3009_SignAndVerify_ReferenceValues) {
     EthPublicKey pubKey = privKey.computePublicKey();
 
     // Sign authorization
-    EthSignature signature = EIP3009::signAuthorization(from, to, value, validAfter, validBefore, nonce, privKey);
+    EIP712Signature signature = EIP3009::signAuthorization(from, to, value, validAfter, validBefore, nonce, privKey);
     BOOST_TEST(!signature.toHex().empty());
 
     // Verify authorization

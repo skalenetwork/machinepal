@@ -3,12 +3,17 @@
 
 #include "MachinePayCommon.h"
 #include "EthPrivateKey.h"
+
+#include "EIP712Signature.h"
 #include "Keccak.h"
 #include <openssl/evp.h>
 #include <openssl/core_names.h>
 #include <openssl/ec.h>
 #include <openssl/obj_mac.h>
 #include <openssl/bn.h>
+
+#include <secp256k1.h>
+#include <secp256k1_recovery.h>
 
 #include <stdexcept>
 #include <algorithm>
@@ -170,5 +175,198 @@ EthPublicKey EthPrivateKey::computePublicKey() {
 
 
 
+// msg32 must be the 32-byte EIP-712 digest of the authorization
+EIP712Signature sign_auth(const uint8_t msg32[32], const uint8_t priv32[32]) {
+    static secp256k1_context* ctx =
+        secp256k1_context_create(SECP256K1_CONTEXT_SIGN);
 
-#pragma GCC diagnostic pop
+    secp256k1_ecdsa_recoverable_signature rsig;
+    if (!secp256k1_ecdsa_sign_recoverable(ctx, &rsig, msg32, priv32, nullptr, nullptr)) {
+        throw std::runtime_error("sign failed");
+    }
+
+    // Serialize to compact r||s and get recovery id
+    unsigned char out64[64];
+    int recid = 0;
+    secp256k1_ecdsa_recoverable_signature_serialize_compact(ctx, out64, &recid, &rsig);
+
+    // out64[0..31]=r, [32..63]=s are already 32-byte big-endian, low-s normalized
+    std::array<uint8_t,65> sig;
+    std::memcpy(sig.data(), out64, 64);
+    sig[64] = static_cast<uint8_t>(27 + recid); // or 0+recid if your verifier adds 27
+
+    return EIP712Signature(sig);
+}
+
+enum class VEncoding : uint8_t { V27_28, V0_1 };
+
+
+struct CtxGuard {
+    secp256k1_context* ctx;
+    explicit CtxGuard(secp256k1_context* c) : ctx(c) {}
+    ~CtxGuard() { if (ctx) secp256k1_context_destroy(ctx); }
+    CtxGuard(const CtxGuard&) = delete;
+    CtxGuard& operator=(const CtxGuard&) = delete;
+};
+
+
+// msg32: EXACT 32-byte EIP-712 digest
+// priv32: 32-byte secp256k1 secret key (1..n-1)
+// seed32: OPTIONAL 32-byte context randomization seed (pass nullptr to skip)
+EIP712Signature signAuthRaw(const uint8_t msg32[32],
+                            const uint8_t priv32[32],
+                            VEncoding vEnc = VEncoding::V27_28,
+                            const uint8_t* seed32 = nullptr)
+{
+    if (!msg32 || !priv32) throw std::invalid_argument("null pointer");
+
+    // 1) fresh signing context (no reuse)
+    secp256k1_context* ctx = secp256k1_context_create(SECP256K1_CONTEXT_SIGN);
+    if (!ctx) throw std::runtime_error("context_create failed");
+    CtxGuard guard{ctx};
+
+    // 2) optional randomization (expects 32 bytes if provided)
+    if (seed32) {
+        if (!secp256k1_context_randomize(ctx, seed32)) {
+            throw std::runtime_error("context_randomize failed");
+        }
+    }
+
+    // 3) validate private key
+    if (!secp256k1_ec_seckey_verify(ctx, priv32)) {
+        throw std::invalid_argument("invalid secp256k1 private key");
+    }
+
+    // 4) sign (RFC6979 + low-s enforced by libsecp256k1)
+    secp256k1_ecdsa_recoverable_signature rsig;
+    if (!secp256k1_ecdsa_sign_recoverable(ctx, &rsig, msg32, priv32, nullptr, nullptr)) {
+        throw std::runtime_error("sign_recoverable failed");
+    }
+
+    // 5) serialize r||s and recovery id
+    unsigned char out64[64];
+    int recid = 0;
+    if (!secp256k1_ecdsa_recoverable_signature_serialize_compact(ctx, out64, &recid, &rsig)) {
+        throw std::runtime_error("serialize_compact failed");
+    }
+
+    // 6) build RSV (Ethereum) — use only parity bit of recid
+    const uint8_t parity = static_cast<uint8_t>(recid & 1);
+
+    std::array<uint8_t,65> sig{};
+    std::memcpy(sig.data(), out64, 64);
+    sig[64] = (vEnc == VEncoding::V27_28)
+                ? static_cast<uint8_t>(27 + parity)   // on-chain ecrecover
+                : parity;                              // 0/1 for some off-chain libs
+
+    return EIP712Signature(sig);
+}
+
+
+constexpr uint8_t N[32] = {
+    0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+    0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFE,
+    0xBA,0xAE,0xDC,0xE6,0xAF,0x48,0xA0,0x3B,
+    0xBF,0xD2,0x5E,0x8C,0xD0,0x36,0x41,0x41
+};
+constexpr uint8_t N_HALF[32] = {
+    0x7F,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+    0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+    0x5D,0x57,0x6E,0x73,0x57,0xA4,0x50,0x1D,
+    0xDF,0xE9,0x2F,0x46,0x68,0x1B,0x20,0xA0
+};
+
+inline int be_cmp32(const uint8_t a[32], const uint8_t b[32]) {
+    for (int i = 0; i < 32; ++i) {
+        if (a[i] != b[i]) return (a[i] < b[i]) ? -1 : 1;
+    }
+    return 0;
+}
+inline bool be_is_zero32(const uint8_t a[32]) {
+    for (int i = 0; i < 32; ++i) if (a[i] != 0) return false;
+    return true;
+}
+inline bool rs_low_s_and_in_range(const uint8_t r[32], const uint8_t s[32]) {
+    // 1 <= r < n
+    if (be_is_zero32(r)) return false;
+    if (be_cmp32(r, N) >= 0) return false;
+    // 1 <= s <= n/2
+    if (be_is_zero32(s)) return false;
+    if (be_cmp32(s, N_HALF) > 0) return false;
+    return true;
+}
+inline bool normalize_v_to_parity(uint8_t v, int& recid_out) {
+    if (v == 27 || v == 28) { recid_out = (v - 27) & 1; return true; }
+    if (v == 0  || v == 1 ) { recid_out = v & 1;        return true; }
+    return false;
+}
+
+
+
+EthAddress recoverAddressFromSigRSV(const uint8_t msg32[32], const uint8_t sig65[65]) {
+    if (!msg32 || !sig65) throw std::invalid_argument("null pointer");
+
+    const uint8_t* r = sig65 + 0;
+    const uint8_t* s = sig65 + 32;
+    const uint8_t  v = sig65[64];
+
+    // EIP-2 / range checks
+    if (!rs_low_s_and_in_range(r, s)) {
+        throw std::invalid_argument("invalid r/s (range or high-s)");
+    }
+
+    // Normalize v to parity (0/1)
+    int recid = 0;
+    if (!normalize_v_to_parity(v, recid)) {
+        throw std::invalid_argument("invalid v (expected 0/1/27/28)");
+    }
+
+    // Create context
+    secp256k1_context* ctx = secp256k1_context_create(SECP256K1_CONTEXT_VERIFY);
+    if (!ctx) throw std::runtime_error("context_create failed");
+    CtxGuard guard{ctx};
+
+    // Parse recoverable signature from compact r||s + recid
+    secp256k1_ecdsa_recoverable_signature rsig;
+    if (!secp256k1_ecdsa_recoverable_signature_parse_compact(ctx, &rsig, r /* 64 bytes r||s */, recid)) {
+        throw std::runtime_error("recoverable_signature_parse failed");
+    }
+
+    // Recover public key
+    secp256k1_pubkey pub;
+    if (!secp256k1_ecdsa_recover(ctx, &pub, &rsig, msg32)) {
+        throw std::runtime_error("ecdsa_recover failed");
+    }
+
+    // Serialize uncompressed pubkey (65 bytes: 0x04 || X(32) || Y(32))
+    unsigned char pub_uncomp[65];
+    size_t publen = sizeof(pub_uncomp);
+    if (!secp256k1_ec_pubkey_serialize(ctx, pub_uncomp, &publen, &pub, SECP256K1_EC_UNCOMPRESSED) || publen != 65) {
+        throw std::runtime_error("pubkey_serialize failed");
+    }
+
+    // keccak256 of X||Y (skip the 0x04 prefix)
+    uint8_t hash32[32];
+    auto hashArr = keccak::keccak256(std::span<const uint8_t>(pub_uncomp + 1, 64));
+    std::copy(hashArr.begin(), hashArr.end(), hash32);
+
+    // address = last 20 bytes of keccak(pubkey[1:])
+    EthAddress addr{};
+    std::memcpy(addr.bytes().data(), hash32 + 12, 20);
+    return addr;
+}
+
+// -------------------- Verify against expected address --------------------
+bool eip712_verifyAgainstAddress(const uint8_t msg32[32],
+                                 const uint8_t sig65[65],
+                                 const uint8_t expected_addr20[20])
+{
+    try {
+        EthAddress rec = recoverAddressFromSigRSV(msg32, sig65);
+        return std::memcmp(rec.bytes().data(), expected_addr20, 20) == 0;
+    } catch (...) {
+        return false; // invalid sig or failure to recover
+    }
+}
+
+

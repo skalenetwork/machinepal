@@ -70,6 +70,7 @@ set (MACHINEPAY_COMMON_LIBS
         spdlog::spdlog
         cryptopp::cryptopp
         CLI11::CLI11
+        secp256k1::secp256k1
 )
 
 target_link_libraries(machinepay

@@ -7,7 +7,7 @@
 #include <sstream>
 #include <iomanip>
 #include "EthAddress.h"
-#include "EthSignature.h"
+#include "EIP712Signature.h"
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
@@ -34,7 +34,7 @@ static std::string bytesToHex(const unsigned char* data, size_t len) {
     return oss.str();
 }
 
-EthSignature EIP3009::signAuthorization(const EthAddress& from,
+EIP712Signature EIP3009::signAuthorization(const EthAddress& from,
                                        const EthAddress& to,
                                        uint64_t value,
                                        uint64_t validAfter,
@@ -64,7 +64,7 @@ EthSignature EIP3009::signAuthorization(const EthAddress& from,
     size_t copyLen = std::min<size_t>(sig_len, 64);
     std::copy(sig.begin(), sig.begin() + copyLen, sigArr.begin());
     sigArr[64] = 0; // v value (could be set to 27/28 if recovery is implemented)
-    return EthSignature(sigArr);
+    return EIP712Signature(sigArr);
 }
 
 bool EIP3009::verifyAuthorization(const EthAddress& from,
@@ -73,7 +73,7 @@ bool EIP3009::verifyAuthorization(const EthAddress& from,
                                   uint64_t validAfter,
                                   uint64_t validBefore,
                                   const std::string& nonce,
-                                  const EthSignature& signature,
+                                  const EIP712Signature& signature,
                                   const EthPublicKey& publicKey) {
     auto hash = hashAuthorization(from, to, value, validAfter, validBefore, nonce);
     EC_KEY* ec_key = EC_KEY_new_by_curve_name(NID_secp256k1);
