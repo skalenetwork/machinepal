@@ -10,3 +10,6 @@
 [submodule "external/x402"]
 	path = external/x402
 	url = https://github.com/coinbase/x402.git
+[submodule "external/secp256k1"]
+	path = external/secp256k1
+	url = https://github.com/bitcoin-core/secp256k1

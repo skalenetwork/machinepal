@@ -1,7 +1,10 @@
 cmake_minimum_required(VERSION 3.16)
 project(machinepay LANGUAGES CXX)
 
-foreach(submod json-schema-validator yaml-cpp)
+set(CMAKE_C_COMPILER_LAUNCHER ccache)
+set(CMAKE_CXX_COMPILER_LAUNCHER ccache)
+
+foreach(submod json-schema-validator yaml-cpp secp256k1)
     add_subdirectory(external/${submod})
 endforeach()
 
@@ -70,7 +73,7 @@ set (MACHINEPAY_COMMON_LIBS
         spdlog::spdlog
         cryptopp::cryptopp
         CLI11::CLI11
-        secp256k1::secp256k1
+        secp256k1
 )
 
 target_link_libraries(machinepay

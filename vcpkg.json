@@ -14,7 +14,6 @@
     "cli11",
     "spdlog",
     "boost-locale",
-    "cryptopp",
-    "secp256k1"
+    "cryptopp"
   ]
 }
