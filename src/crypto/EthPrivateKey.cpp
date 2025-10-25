@@ -276,83 +276,63 @@ constexpr uint8_t N_HALF[32] = {
     0xDF,0xE9,0x2F,0x46,0x68,0x1B,0x20,0xA0
 };
 
-inline int be_cmp32(const uint8_t a[32], const uint8_t b[32]) {
-    for (int i = 0; i < 32; ++i) {
-        if (a[i] != b[i]) return (a[i] < b[i]) ? -1 : 1;
-    }
-    return 0;
-}
-inline bool be_is_zero32(const uint8_t a[32]) {
-    for (int i = 0; i < 32; ++i) if (a[i] != 0) return false;
-    return true;
-}
-inline bool rs_low_s_and_in_range(const uint8_t r[32], const uint8_t s[32]) {
-    // 1 <= r < n
-    if (be_is_zero32(r)) return false;
-    if (be_cmp32(r, N) >= 0) return false;
-    // 1 <= s <= n/2
-    if (be_is_zero32(s)) return false;
-    if (be_cmp32(s, N_HALF) > 0) return false;
-    return true;
-}
-inline bool normalize_v_to_parity(uint8_t v, int& recid_out) {
-    if (v == 27 || v == 28) { recid_out = (v - 27) & 1; return true; }
-    if (v == 0  || v == 1 ) { recid_out = v & 1;        return true; }
-    return false;
+inline int be_cmp32(const uint8_t* a, const uint8_t* b) {
+    return std::memcmp(a, b, 32);
 }
 
+inline bool be_is_zero32(const uint8_t* a) {
+    static const uint8_t z[32] = {0};
+    return std::memcmp(a, z, 32) == 0;
+}
+
+inline bool rs_low_s_and_in_range(const uint8_t* r, const uint8_t* s) {
+    return !be_is_zero32(r)
+        && be_cmp32(r, N) < 0
+        && !be_is_zero32(s)
+        && be_cmp32(s, N_HALF) <= 0;
+}
+
+inline bool normalize_v(uint8_t v, int& recid) {
+    if (v == 27 || v == 28) { recid = v - 27; return true; }
+    if (v == 0  || v == 1 ) { recid = v; return true; }
+    return false;
+}
 
 
 EthAddress recoverAddressFromSigRSV(const uint8_t msg32[32], const uint8_t sig65[65]) {
     if (!msg32 || !sig65) throw std::invalid_argument("null pointer");
 
-    const uint8_t* r = sig65 + 0;
+    const uint8_t* r = sig65;
     const uint8_t* s = sig65 + 32;
-    const uint8_t  v = sig65[64];
+    uint8_t v = sig65[64];
 
-    // EIP-2 / range checks
-    if (!rs_low_s_and_in_range(r, s)) {
-        throw std::invalid_argument("invalid r/s (range or high-s)");
-    }
+    if (!rs_low_s_and_in_range(r, s))
+        throw std::invalid_argument("invalid r/s");
 
-    // Normalize v to parity (0/1)
     int recid = 0;
-    if (!normalize_v_to_parity(v, recid)) {
-        throw std::invalid_argument("invalid v (expected 0/1/27/28)");
-    }
+    if (!normalize_v(v, recid))
+        throw std::invalid_argument("invalid v (0/1/27/28 expected)");
 
-    // Create context
-    secp256k1_context* ctx = secp256k1_context_create(SECP256K1_CONTEXT_VERIFY);
+    auto ctx = secp256k1_context_create(SECP256K1_CONTEXT_VERIFY);
     if (!ctx) throw std::runtime_error("context_create failed");
     CtxGuard guard{ctx};
 
-    // Parse recoverable signature from compact r||s + recid
     secp256k1_ecdsa_recoverable_signature rsig;
-    if (!secp256k1_ecdsa_recoverable_signature_parse_compact(ctx, &rsig, r /* 64 bytes r||s */, recid)) {
-        throw std::runtime_error("recoverable_signature_parse failed");
-    }
+    if (!secp256k1_ecdsa_recoverable_signature_parse_compact(ctx, &rsig, r, recid))
+        throw std::runtime_error("parse_compact failed");
 
-    // Recover public key
     secp256k1_pubkey pub;
-    if (!secp256k1_ecdsa_recover(ctx, &pub, &rsig, msg32)) {
+    if (!secp256k1_ecdsa_recover(ctx, &pub, &rsig, msg32))
         throw std::runtime_error("ecdsa_recover failed");
-    }
 
-    // Serialize uncompressed pubkey (65 bytes: 0x04 || X(32) || Y(32))
-    unsigned char pub_uncomp[65];
-    size_t publen = sizeof(pub_uncomp);
-    if (!secp256k1_ec_pubkey_serialize(ctx, pub_uncomp, &publen, &pub, SECP256K1_EC_UNCOMPRESSED) || publen != 65) {
+    uint8_t pubkey[65];
+    size_t len = sizeof(pubkey);
+    if (!secp256k1_ec_pubkey_serialize(ctx, pubkey, &len, &pub, SECP256K1_EC_UNCOMPRESSED) || len != 65)
         throw std::runtime_error("pubkey_serialize failed");
-    }
 
-    // keccak256 of X||Y (skip the 0x04 prefix)
-    uint8_t hash32[32];
-    auto hashArr = keccak::keccak256(std::span<const uint8_t>(pub_uncomp + 1, 64));
-    std::copy(hashArr.begin(), hashArr.end(), hash32);
-
-    // address = last 20 bytes of keccak(pubkey[1:])
+    auto hash = keccak::keccak256(std::span<const uint8_t>(pubkey + 1, 64));
     EthAddress addr{};
-    std::memcpy(addr.bytes().data(), hash32 + 12, 20);
+    std::memcpy(addr.bytes().data(), hash.data() + 12, 20);
     return addr;
 }
 
