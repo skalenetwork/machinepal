@@ -1,16 +1,19 @@
 #pragma once
 #include <string>
+#include <boost/multiprecision/cpp_int.hpp>
 #include "EthPrivateKey.h"
 #include "EthPublicKey.h"
 #include "EthAddress.h"
 #include "EIP712Signature.h"
+
+using u256 = boost::multiprecision::uint256_t;
 
 class EIP3009Authorization {
 public:
     // Signs an EIP-3009 authorization message
     static EIP712Signature signAuthorization(const EthAddress& from,
                                           const EthAddress& to,
-                                          uint64_t value,
+                                          const u256& value,
                                           uint64_t validAfter,
                                           uint64_t validBefore,
                                           const std::string& nonce,
@@ -19,7 +22,7 @@ public:
     // Verifies an EIP-3009 authorization signature
     static void verifyAuthorization(const EthAddress& from,
                                     const EthAddress& to,
-                                    uint64_t value,
+                                    const u256& value,
                                     uint64_t validAfter,
                                     uint64_t validBefore,
                                     const std::string& nonce,
