@@ -118,7 +118,7 @@ public:
 
     static const EIP712Domain baseMainnet() {
         return  {"USD Coin", "2", 8453,
-                               EthAddress("0x036CbD53842c5426634e7929541eC2318f3dCF7e"),
+                               EthAddress("0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"),
         "0x02fa7265e7c5d81118673727957699e4d68f74cd74b7db77da710fe8a2c7834f",
         "0x158b0a9edf7a828aad02f63cd515c68ef2f50ba807396f6d12842833a1597429",
             "0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9",
