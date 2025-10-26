@@ -102,3 +102,12 @@ EIP712Signature EIP712Domain::signWithDomain(const std::array<uint8_t, 32> &stru
     auto hash = hashWithDomain(structHash);
     return EthPrivateKey::signAuthRaw(hash.data(), privateKey.bytes().data());
 }
+
+
+
+void EIP712Domain::verifyWithDomain(const std::array<uint8_t, 32> &structHash,
+                                                    const EIP712Signature& signature,
+                                                   const EthPublicKey &publicKey) const {
+    auto hash = hashWithDomain(structHash);
+    EthPrivateKey::eip712VerifyRaw(hash.data(), signature.bytes().data(), publicKey.getAddress());
+}

@@ -107,6 +107,5 @@ void EIP3009Authorization::verifyAuthorization(const EIP712Domain& domain,
                                   const EIP712Signature& signature,
                                   const EthPublicKey& publicKey) {
     auto structHash = hashAuthorizationStruct(from, to, value, validAfter, validBefore, nonce);
-    auto finalHash = domain.hashWithDomain(structHash);
-    EthPrivateKey::eip712VerifyRaw(finalHash.data(), signature.bytes().data(), publicKey.getAddress());
+    domain.verifyWithDomain(structHash, signature, publicKey);
 }
