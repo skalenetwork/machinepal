@@ -2,6 +2,7 @@
 #include <string>
 #include <boost/multiprecision/cpp_int.hpp>
 #include "EthAddress.h"
+#include "EthPrivateKey.h"
 #include "Hex.h"
 #include <optional>
 #include <array>
@@ -77,6 +78,11 @@ public:
         return verifyingContract_;
     }
 
-    std::array<uint8_t, 32> hashDomainWithStruct(const std::array<uint8_t, 32>& structHash) const;
+    std::array<uint8_t, 32>  hashWithDomain(const std::array<uint8_t, 32>& structHash) const;
+
+    EIP712Signature signWithDomain(const std::array<uint8_t, 32>& structHash,
+        const EthPrivateKey& privateKey) const;
+
+
 
 };

@@ -1,6 +1,8 @@
 #include "MachinePayCommon.h"
 
 #include "EIP712Domain.h"
+
+#include "EthPrivateKey.h"
 #include "Keccak.h"
 #include <vector>
 #include <iostream>
@@ -9,7 +11,7 @@
 
 
 EIP712Domain::EIP712Domain(const std::string &name, const std::string &version, const u256 &chainId,
-             const EthAddress &verifyingContract, const std::optional<std::string> domainSeparator)
+                           const EthAddress &verifyingContract, const std::optional<std::string> domainSeparator)
     : name_(name),
       version_(version),
       chainId_(chainId),
@@ -41,10 +43,6 @@ std::array<uint8_t, 32> EIP712Domain::getDomainTypeHash() {
 }
 
 
-
-
-
-
 // https://github.com/0xsequence/ethers-eip712/blob/master/tests/typed-data.test.ts
 std::array<uint8_t, 32> EIP712Domain::hashDomain() const {
     std::vector<uint8_t> encodedData;
@@ -54,17 +52,14 @@ std::array<uint8_t, 32> EIP712Domain::hashDomain() const {
     // EIP-712 field: typeHash
     encodedData.insert(encodedData.end(), domainTypeHash.begin(), domainTypeHash.end());
 
-
     // EIP-712 field: name (string)
     auto hashed_name = keccak::keccak256(name_);
     encodedData.insert(encodedData.end(), hashed_name.begin(), hashed_name.end());
-
 
     // EIP-712 field: version (string)
     auto hashed_version = keccak::keccak256(version_);
 
     encodedData.insert(encodedData.end(), hashed_version.begin(), hashed_version.end());
-
 
     // EIP-712 field: chainId (uint256) - left-padded to 32 bytes
     std::vector<uint8_t> chainIdBytes;
@@ -74,7 +69,6 @@ std::array<uint8_t, 32> EIP712Domain::hashDomain() const {
     CHECK_STATE(paddedChainId.size() == 32);
 
     encodedData.insert(encodedData.end(), paddedChainId.begin(), paddedChainId.end());
-
 
     // EIP-712 field: verifyingContract (address) - left-padded to 32 bytes
     auto contractBytes = verifyingContract_.bytes(); // Should be 20 bytes
@@ -87,19 +81,24 @@ std::array<uint8_t, 32> EIP712Domain::hashDomain() const {
 
     CHECK_STATE(encodedData.size() == 160);
 
-    return  keccak::keccak256(encodedData);
+    return keccak::keccak256(encodedData);
 
 }
 
-
-std::array<uint8_t, 32> EIP712Domain::hashDomainWithStruct(const std::array<uint8_t, 32>& structHash) const {
+std::array<uint8_t, 32> EIP712Domain::hashWithDomain(const std::array<uint8_t, 32>& structHash) const {
     std::vector<uint8_t> dataToHash;
     dataToHash.push_back(0x19);
     dataToHash.push_back(0x01);
-
     auto domainSeparator = hashDomain();
     dataToHash.insert(dataToHash.end(), domainSeparator.begin(), domainSeparator.end());
     dataToHash.insert(dataToHash.end(), structHash.begin(), structHash.end());
-
     return keccak::keccak256(dataToHash);
+}
+
+
+EIP712Signature EIP712Domain::signWithDomain(const std::array<uint8_t, 32> &structHash,
+                                                   const EthPrivateKey &privateKey) const {
+    std::vector<uint8_t> dataToHash;
+    auto hash = hashWithDomain(structHash);
+    return EthPrivateKey::signAuthRaw(hash.data(), privateKey.bytes().data());
 }
