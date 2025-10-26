@@ -30,7 +30,7 @@ public:
     USDCDomain(const USDCDomain&) = delete;
     USDCDomain& operator=(const USDCDomain&) = delete;
 
-    static const USDCDomain& instance() {
+    static const USDCDomain& BaseMainnet() {
         static USDCDomain instance_;
         return instance_;
     }
