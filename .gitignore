@@ -2,3 +2,4 @@
 /vcpkg_installed/
 /.cmake/
 /.idea/
+/external/
