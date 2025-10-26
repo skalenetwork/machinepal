@@ -38,18 +38,16 @@ std::array<uint8_t, 32> EIP712Domain::hashDomain() const {
     auto hashed_version = keccak::keccak256(version_);
     encodedData.insert(encodedData.end(), hashed_version.begin(), hashed_version.end());
 
-    // EIP-712 field: chainId (uint256)
+    // EIP-712 field: chainId (uint256) - left-padded to 32 bytes
     std::vector<uint8_t> chainIdBytes;
     boost::multiprecision::export_bits(chainId_, std::back_inserter(chainIdBytes), 8);
-    if (chainIdBytes.size() < 32) {
-        std::vector<uint8_t> padding(32 - chainIdBytes.size(), 0);
-        encodedData.insert(encodedData.end(), padding.begin(), padding.end());
-    }
-    encodedData.insert(encodedData.end(), chainIdBytes.begin(), chainIdBytes.end());
+    std::vector<uint8_t> paddedChainId(32 - chainIdBytes.size(), 0);
+    paddedChainId.insert(paddedChainId.end(), chainIdBytes.begin(), chainIdBytes.end());
+    encodedData.insert(encodedData.end(), paddedChainId.begin(), paddedChainId.end());
 
-    // EIP-712 field: verifyingContract (address)
-    auto contractBytes = verifyingContract_.bytes();
-    std::vector<uint8_t> paddedContract(12, 0);
+    // EIP-712 field: verifyingContract (address) - left-padded to 32 bytes
+    auto contractBytes = verifyingContract_.bytes(); // Should be 20 bytes
+    std::vector<uint8_t> paddedContract(32 - contractBytes.size(), 0);
     paddedContract.insert(paddedContract.end(), contractBytes.begin(), contractBytes.end());
     encodedData.insert(encodedData.end(), paddedContract.begin(), paddedContract.end());
 
