@@ -4,6 +4,7 @@
 #include "EthAddress.h"
 #include "EIP712Signature.h"
 #include "EIP712Domain.h"
+#include "EIP3008Nonce.h"
 
 using u256 = boost::multiprecision::uint256_t;
 
@@ -40,7 +41,7 @@ static std::array<uint8_t, 32> hashTransferWithAuthorizationStruct(const EthAddr
                                                                    const u256 &value,
                                                                    uint64_t validAfter,
                                                                    uint64_t validBefore,
-                                                                   const std::string &nonce) {
+                                                                   const EIP3008Nonce &nonce) {
     const uint64_t MAX_UINT48 = 0xFFFFFFFFFFFF;
     if (validAfter > MAX_UINT48) {
         throw std::invalid_argument("validAfter exceeds uint48 max value");
@@ -52,7 +53,7 @@ static std::array<uint8_t, 32> hashTransferWithAuthorizationStruct(const EthAddr
     std::vector<uint8_t> message;
     message.reserve(32 + 20 + 20 + 32 + 6 + 6 + 32); // typehash + from + to + value + validAfter + validBefore + nonce
 
-    static auto transferWithAuthorizationTypeHashVector = fromHex(
+    static auto transferWithAuthorizationTypeHashVector = Hex::fromHex(
         EIP3009Authorization::TRANSFER_WITH_AUTHORIZATION_TYPE_HASH);
 
     message.insert(message.end(), transferWithAuthorizationTypeHashVector.begin(),
@@ -74,11 +75,7 @@ static std::array<uint8_t, 32> hashTransferWithAuthorizationStruct(const EthAddr
     packUint48(message, validBefore);
 
     // EIP-3009 field: nonce (bytes32)
-    // Assuming nonce is a 32-byte hex string without "0x" prefix
-    std::vector<uint8_t> nonceBytes(32);
-    for (size_t i = 0; i < 32; ++i) {
-        nonceBytes[i] = std::stoul(nonce.substr(i * 2, 2), nullptr, 16);
-    }
+    const auto& nonceBytes = nonce.bytes();
     message.insert(message.end(), nonceBytes.begin(), nonceBytes.end());
 
     return keccak::keccak256(message);
@@ -91,7 +88,7 @@ EIP712Signature EIP3009Authorization::signAuthorization(const EIP712Domain &doma
                                                         const u256 &value,
                                                         uint64_t validAfter,
                                                         uint64_t validBefore,
-                                                        const std::string &nonce,
+                                                        const EIP3008Nonce &nonce,
                                                         const EthPrivateKey &privateKey) {
     auto structHash = hashTransferWithAuthorizationStruct(from, to, value, validAfter, validBefore, nonce);
     return domain.signWithDomain(structHash, privateKey);
@@ -104,9 +101,10 @@ void EIP3009Authorization::verifyAuthorization(const EIP712Domain &domain,
                                                const u256 &value,
                                                uint64_t validAfter,
                                                uint64_t validBefore,
-                                               const std::string &nonce,
+                                               const EIP3008Nonce &nonce,
                                                const EIP712Signature &signature,
                                                const EthPublicKey &publicKey) {
     auto structHash = hashTransferWithAuthorizationStruct(from, to, value, validAfter, validBefore, nonce);
     domain.verifyWithDomain(structHash, signature, publicKey);
 }
+

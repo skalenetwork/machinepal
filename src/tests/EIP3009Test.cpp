@@ -27,11 +27,12 @@ BOOST_AUTO_TEST_CASE(EIP3009_SignAndVerify_ReferenceValues) {
 
     // Sign authorization
     EIP712Signature signature = EIP3009Authorization::signAuthorization(EIP712Domain::machinePayEasyTestNet(), from, to,
-                                                                        value, validAfter, validBefore, nonce, privKey);
+                                                                        value, validAfter, validBefore,
+                                                                        EIP3008Nonce::fromHex(nonce), privKey);
     BOOST_TEST(!signature.toHex().empty());
 
     // Verify authorization
     EIP3009Authorization::verifyAuthorization(EIP712Domain::machinePayEasyTestNet(), from, to, value, validAfter,
-                                              validBefore, nonce, signature, pubKey);
+                                              validBefore, EIP3008Nonce::fromHex(nonce) , signature, pubKey);
 
 }
