@@ -17,7 +17,7 @@ BOOST_AUTO_TEST_CASE(EIP3009_SignAndVerify_ReferenceValues) {
     EthAddress verifyingContract("0x1234567890123456789012345678901234567890");
     std::array<uint8_t, 32> salt{}; // Zero-filled salt
 
-    EIP712Domain domain(domain_name, domain_version, chainId, verifyingContract, salt);
+    EIP712Domain domain(domain_name, domain_version, chainId, verifyingContract);
 
 
     // Reference values (example test vectors)
