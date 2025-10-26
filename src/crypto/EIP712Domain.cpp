@@ -90,3 +90,16 @@ std::array<uint8_t, 32> EIP712Domain::hashDomain() const {
     return  keccak::keccak256(encodedData);
 
 }
+
+
+std::array<uint8_t, 32> EIP712Domain::getEIP712Hash(const EIP712Domain& domain, const std::array<uint8_t, 32>& structHash) {
+    std::vector<uint8_t> dataToHash;
+    dataToHash.push_back(0x19);
+    dataToHash.push_back(0x01);
+
+    auto domainSeparator = domain.hashDomain();
+    dataToHash.insert(dataToHash.end(), domainSeparator.begin(), domainSeparator.end());
+    dataToHash.insert(dataToHash.end(), structHash.begin(), structHash.end());
+
+    return keccak::keccak256(dataToHash);
+}

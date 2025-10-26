@@ -27,9 +27,6 @@ public:
     }
 
 
-
-
-
     // Default constructor
     EIP712Domain() = default;
 
@@ -80,9 +77,6 @@ public:
         return verifyingContract_;
     }
 
-    [[nodiscard]] std::string domainSeparator() const {
-        return domainSeparator_;
-    }
-
+    static std::array<uint8_t, 32> getEIP712Hash(const EIP712Domain& domain, const std::array<uint8_t, 32>& structHash);
 
 };

@@ -82,17 +82,7 @@ static std::array<uint8_t, 32> hashAuthorizationStruct(const EthAddress& from,
     return keccak::keccak256(message);
 }
 
-static std::array<uint8_t, 32> getEIP712Hash(const EIP712Domain& domain, const std::array<uint8_t, 32>& structHash) {
-    std::vector<uint8_t> data_to_hash;
-    data_to_hash.push_back(0x19);
-    data_to_hash.push_back(0x01);
 
-    auto domain_separator = domain.hashDomain();
-    data_to_hash.insert(data_to_hash.end(), domain_separator.begin(), domain_separator.end());
-    data_to_hash.insert(data_to_hash.end(), structHash.begin(), structHash.end());
-
-    return keccak::keccak256(data_to_hash);
-}
 
 EIP712Signature EIP3009Authorization::signAuthorization(const EIP712Domain& domain,
                                        const EthAddress& from,
@@ -103,7 +93,7 @@ EIP712Signature EIP3009Authorization::signAuthorization(const EIP712Domain& doma
                                        const std::string& nonce,
                                        const EthPrivateKey& privateKey) {
     auto structHash = hashAuthorizationStruct(from, to, value, validAfter, validBefore, nonce);
-    auto finalHash = getEIP712Hash(domain, structHash);
+    auto finalHash = EIP712Domain::getEIP712Hash(domain, structHash);
     return EthPrivateKey::signAuthRaw(finalHash.data(), privateKey.bytes().data());
 }
 
@@ -117,6 +107,6 @@ void EIP3009Authorization::verifyAuthorization(const EIP712Domain& domain,
                                   const EIP712Signature& signature,
                                   const EthPublicKey& publicKey) {
     auto structHash = hashAuthorizationStruct(from, to, value, validAfter, validBefore, nonce);
-    auto finalHash = getEIP712Hash(domain, structHash);
+    auto finalHash = EIP712Domain::getEIP712Hash(domain, structHash);
     EthPrivateKey::eip712VerifyRaw(finalHash.data(), signature.bytes().data(), publicKey.getAddress());
 }
