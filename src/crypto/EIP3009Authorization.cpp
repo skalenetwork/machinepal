@@ -12,6 +12,18 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
+// Helper to pack a 64-bit unsigned integer into a byte array (big-endian)
+static void packUint64(std::vector<uint8_t>& bytes, uint64_t value) {
+    bytes.push_back(static_cast<uint8_t>((value >> 56) & 0xFF));
+    bytes.push_back(static_cast<uint8_t>((value >> 48) & 0xFF));
+    bytes.push_back(static_cast<uint8_t>((value >> 40) & 0xFF));
+    bytes.push_back(static_cast<uint8_t>((value >> 32) & 0xFF));
+    bytes.push_back(static_cast<uint8_t>((value >> 24) & 0xFF));
+    bytes.push_back(static_cast<uint8_t>((value >> 16) & 0xFF));
+    bytes.push_back(static_cast<uint8_t>((value >> 8) & 0xFF));
+    bytes.push_back(static_cast<uint8_t>(value & 0xFF));
+}
+
 // Helper to encode and hash the authorization message
 static std::array<uint8_t, 32> hashAuthorization(const EthAddress& from,
                                               const EthAddress& to,
@@ -19,19 +31,27 @@ static std::array<uint8_t, 32> hashAuthorization(const EthAddress& from,
                                               uint64_t validAfter,
                                               uint64_t validBefore,
                                               const std::string& nonce) {
-    // Concatenate and encode fields as per EIP-3009
-    std::string message = from.toHex() + to.toHex() + std::to_string(value) +
-                          std::to_string(validAfter) + std::to_string(validBefore) + nonce;
-    return keccak::keccak256(message);
-}
+    std::vector<uint8_t> message;
+    message.reserve(20 + 20 + 8 + 8 + 8 + 32); // Approximate size
 
-// Helper to convert bytes to hex string
-static std::string bytesToHex(const unsigned char* data, size_t len) {
-    std::ostringstream oss;
-    for (size_t i = 0; i < len; ++i) {
-        oss << std::hex << std::setw(2) << std::setfill('0') << (int)data[i];
+    auto fromBytes = from.bytes();
+    message.insert(message.end(), fromBytes.begin(), fromBytes.end());
+
+    auto toBytes = to.bytes();
+    message.insert(message.end(), toBytes.begin(), toBytes.end());
+
+    packUint64(message, value);
+    packUint64(message, validAfter);
+    packUint64(message, validBefore);
+
+    // Assuming nonce is a 32-byte hex string without "0x" prefix
+    std::vector<uint8_t> nonceBytes(32);
+    for(size_t i = 0; i < 32; ++i) {
+        nonceBytes[i] = std::stoul(nonce.substr(i * 2, 2), nullptr, 16);
     }
-    return oss.str();
+    message.insert(message.end(), nonceBytes.begin(), nonceBytes.end());
+
+    return keccak::keccak256(message);
 }
 
 EIP712Signature EIP3009Authorization::signAuthorization(const EthAddress& from,
@@ -42,7 +62,7 @@ EIP712Signature EIP3009Authorization::signAuthorization(const EthAddress& from,
                                        const std::string& nonce,
                                        const EthPrivateKey& privateKey) {
     auto hash = hashAuthorization(from, to, value, validAfter, validBefore, nonce);
-    return EthPrivateKey::signAuthRaw(hash.data(), privateKey.bytes().data());;
+    return EthPrivateKey::signAuthRaw(hash.data(), privateKey.bytes().data());
 }
 
 void EIP3009Authorization::verifyAuthorization(const EthAddress& from,

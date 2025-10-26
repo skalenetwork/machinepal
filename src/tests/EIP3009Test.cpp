@@ -12,7 +12,7 @@ BOOST_AUTO_TEST_CASE(EIP3009_SignAndVerify_ReferenceValues) {
     uint64_t value = 1000000000000000000ULL; // 1 ETH in wei
     uint64_t validAfter = 1633046400; // 2021-10-01
     uint64_t validBefore = 1733046400; // 2024-10-01
-    std::string nonce = "0xabcdef1234567890";
+    std::string nonce = "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890";
 
     // Example private key (DO NOT USE IN PRODUCTION)
     std::string privKeyHex = "4c0883a69102937d6231471b5dbb6204fe5129617082796e8a7a7e7a7a7a7a7a";
