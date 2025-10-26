@@ -86,6 +86,8 @@ public:
     // Computes the EIP-712 domain separator hash
     std::array<uint8_t, 32> hashDomain() const;
 
+    static std::array<uint8_t, 32> getDomainTypeHash();
+
 
     static const EIP712Domain machinePayEasyTestNet() {
         return  EIP712Domain{"USD", "2", 84542,
