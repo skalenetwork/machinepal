@@ -4,11 +4,22 @@
 #include "crypto/EthPublicKey.h"
 #include "crypto/EthAddress.h"
 #include "crypto/EIP712Signature.h"
+#include "crypto/EIP712Domain.h"
 #include <boost/multiprecision/cpp_int.hpp>
 
 using u256 = boost::multiprecision::uint256_t;
 
 BOOST_AUTO_TEST_CASE(EIP3009_SignAndVerify_ReferenceValues) {
+    // EIP-712 Domain
+    std::string domain_name = "Test DApp";
+    std::string domain_version = "1";
+    u256 chainId = 1;
+    EthAddress verifyingContract("0x1234567890123456789012345678901234567890");
+    std::array<uint8_t, 32> salt{}; // Zero-filled salt
+
+    EIP712Domain domain(domain_name, domain_version, chainId, verifyingContract, salt);
+
+
     // Reference values (example test vectors)
     EthAddress from("0x90f8bf6a479f320ead074411a4b0e7944ea8c9c1");
     EthAddress to("0xffcf8fdee72ac11b5c542428b35eef5769c409f0");
@@ -23,11 +34,11 @@ BOOST_AUTO_TEST_CASE(EIP3009_SignAndVerify_ReferenceValues) {
     EthPublicKey pubKey = privKey.computePublicKey();
 
     // Sign authorization
-    EIP712Signature signature = EIP3009Authorization::signAuthorization(from, to, value, validAfter, validBefore, nonce, privKey);
+    EIP712Signature signature = EIP3009Authorization::signAuthorization(domain, from, to, value, validAfter, validBefore, nonce, privKey);
     BOOST_TEST(!signature.toHex().empty());
 
     // Verify authorization
-    EIP3009Authorization::verifyAuthorization(from, to, value, validAfter, validBefore, nonce, signature, pubKey);
+    EIP3009Authorization::verifyAuthorization(domain, from, to, value, validAfter, validBefore, nonce, signature, pubKey);
 
 
 }

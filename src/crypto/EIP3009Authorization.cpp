@@ -9,6 +9,7 @@
 #include "EthAddress.h"
 #include "EIP712Signature.h"
 #include <boost/multiprecision/cpp_int.hpp>
+#include "EIP712Domain.h"
 
 using u256 = boost::multiprecision::uint256_t;
 
@@ -38,9 +39,11 @@ static void packUint48(std::vector<uint8_t>& bytes, uint64_t value) {
     bytes.push_back(static_cast<uint8_t>(value & 0xFF));
 }
 
-// Helper to encode and hash the authorization message
-// This corresponds to the EIP-3009 specification for the authorization structure.
-static std::array<uint8_t, 32> hashAuthorization(const EthAddress& from,
+// EIP-3009 Authorization Type Hash
+const std::array<uint8_t, 32> EIP3009_AUTHORIZATION_TYPEHASH = keccak::keccak256("Authorization(address from,address to,uint256 value,uint48 validAfter,uint48 validBefore,bytes32 nonce)");
+
+// Helper to encode and hash the authorization message struct
+static std::array<uint8_t, 32> hashAuthorizationStruct(const EthAddress& from,
                                               const EthAddress& to,
                                               const u256& value,
                                               uint64_t validAfter,
@@ -55,7 +58,9 @@ static std::array<uint8_t, 32> hashAuthorization(const EthAddress& from,
     }
 
     std::vector<uint8_t> message;
-    message.reserve(20 + 20 + 32 + 6 + 6 + 32); // Approximate size
+    message.reserve(32 + 20 + 20 + 32 + 6 + 6 + 32); // typehash + from + to + value + validAfter + validBefore + nonce
+
+    message.insert(message.end(), EIP3009_AUTHORIZATION_TYPEHASH.begin(), EIP3009_AUTHORIZATION_TYPEHASH.end());
 
     // EIP-3009 field: from (address)
     auto fromBytes = from.bytes();
@@ -83,18 +88,33 @@ static std::array<uint8_t, 32> hashAuthorization(const EthAddress& from,
     return keccak::keccak256(message);
 }
 
-EIP712Signature EIP3009Authorization::signAuthorization(const EthAddress& from,
+static std::array<uint8_t, 32> getEIP712Hash(const EIP712Domain& domain, const std::array<uint8_t, 32>& structHash) {
+    std::vector<uint8_t> data_to_hash;
+    data_to_hash.push_back(0x19);
+    data_to_hash.push_back(0x01);
+
+    auto domain_separator = domain.hashDomain();
+    data_to_hash.insert(data_to_hash.end(), domain_separator.begin(), domain_separator.end());
+    data_to_hash.insert(data_to_hash.end(), structHash.begin(), structHash.end());
+
+    return keccak::keccak256(data_to_hash);
+}
+
+EIP712Signature EIP3009Authorization::signAuthorization(const EIP712Domain& domain,
+                                       const EthAddress& from,
                                        const EthAddress& to,
                                        const u256& value,
                                        uint64_t validAfter,
                                        uint64_t validBefore,
                                        const std::string& nonce,
                                        const EthPrivateKey& privateKey) {
-    auto hash = hashAuthorization(from, to, value, validAfter, validBefore, nonce);
-    return EthPrivateKey::signAuthRaw(hash.data(), privateKey.bytes().data());
+    auto structHash = hashAuthorizationStruct(from, to, value, validAfter, validBefore, nonce);
+    auto finalHash = getEIP712Hash(domain, structHash);
+    return EthPrivateKey::signAuthRaw(finalHash.data(), privateKey.bytes().data());
 }
 
-void EIP3009Authorization::verifyAuthorization(const EthAddress& from,
+void EIP3009Authorization::verifyAuthorization(const EIP712Domain& domain,
+                                  const EthAddress& from,
                                   const EthAddress& to,
                                   const u256& value,
                                   uint64_t validAfter,
@@ -102,6 +122,7 @@ void EIP3009Authorization::verifyAuthorization(const EthAddress& from,
                                   const std::string& nonce,
                                   const EIP712Signature& signature,
                                   const EthPublicKey& publicKey) {
-    auto hash = hashAuthorization(from, to, value, validAfter, validBefore, nonce);
-    EthPrivateKey::eip712VerifyRaw(hash.data(), signature.bytes().data(), publicKey.getAddress());
+    auto structHash = hashAuthorizationStruct(from, to, value, validAfter, validBefore, nonce);
+    auto finalHash = getEIP712Hash(domain, structHash);
+    EthPrivateKey::eip712VerifyRaw(finalHash.data(), signature.bytes().data(), publicKey.getAddress());
 }
