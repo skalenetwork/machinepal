@@ -1,14 +1,8 @@
+#include "MachinePayCommon.h"
 #include "EIP3009Authorization.h"
 #include "crypto/Keccak.h"
-#include <openssl/ec.h>
-#include <openssl/ecdsa.h>
-#include <openssl/obj_mac.h>
-#include <openssl/bn.h>
-#include <sstream>
-#include <iomanip>
 #include "EthAddress.h"
 #include "EIP712Signature.h"
-#include <boost/multiprecision/cpp_int.hpp>
 #include "EIP712Domain.h"
 
 using u256 = boost::multiprecision::uint256_t;

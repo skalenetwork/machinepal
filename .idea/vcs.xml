@@ -4,6 +4,7 @@
     <mapping directory="" vcs="Git" />
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external/json-schema-validator" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/secp256k1" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external/vcpkg" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external/x402" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external/yaml-cpp" vcs="Git" />

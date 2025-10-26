@@ -2,6 +2,7 @@
 #include <boost/algorithm/hex.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/regex.hpp>
+#include <boost/multiprecision/cpp_int.hpp>
 #include <cassert>
 #include <iostream>
 #include <string>
