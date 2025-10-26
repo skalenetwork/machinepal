@@ -93,7 +93,7 @@ EIP712Signature EIP3009Authorization::signAuthorization(const EIP712Domain& doma
                                        const std::string& nonce,
                                        const EthPrivateKey& privateKey) {
     auto structHash = hashAuthorizationStruct(from, to, value, validAfter, validBefore, nonce);
-    auto finalHash = EIP712Domain::getEIP712Hash(domain, structHash);
+    auto finalHash = domain.hashDomainWithStruct(structHash);
     return EthPrivateKey::signAuthRaw(finalHash.data(), privateKey.bytes().data());
 }
 
@@ -107,6 +107,6 @@ void EIP3009Authorization::verifyAuthorization(const EIP712Domain& domain,
                                   const EIP712Signature& signature,
                                   const EthPublicKey& publicKey) {
     auto structHash = hashAuthorizationStruct(from, to, value, validAfter, validBefore, nonce);
-    auto finalHash = EIP712Domain::getEIP712Hash(domain, structHash);
+    auto finalHash = domain.hashDomainWithStruct(structHash);
     EthPrivateKey::eip712VerifyRaw(finalHash.data(), signature.bytes().data(), publicKey.getAddress());
 }

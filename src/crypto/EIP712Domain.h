@@ -77,6 +77,6 @@ public:
         return verifyingContract_;
     }
 
-    static std::array<uint8_t, 32> getEIP712Hash(const EIP712Domain& domain, const std::array<uint8_t, 32>& structHash);
+    std::array<uint8_t, 32> hashDomainWithStruct(const std::array<uint8_t, 32>& structHash) const;
 
 };
