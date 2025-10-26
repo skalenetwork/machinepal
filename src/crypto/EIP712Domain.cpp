@@ -8,6 +8,22 @@
 #include <boost/algorithm/string.hpp>
 
 
+EIP712Domain::EIP712Domain(const std::string &name, const std::string &version, const u256 &chainId,
+             const EthAddress &verifyingContract, const std::optional<std::string> domainSeparator)
+    : name_(name),
+      version_(version),
+      chainId_(chainId),
+      verifyingContract_(verifyingContract) {
+    auto computedDomainSeparator = hashDomain();
+    domainSeparator_ = toHex(computedDomainSeparator, true);
+    if (domainSeparator) {
+        cerr << domainSeparator_ << endl;
+        cerr << domainSeparator.value() << endl;
+        CHECK_STATE(domainSeparator_ == domainSeparator.value());
+    }
+}
+
+
 // https://github.com/0xsequence/ethers-eip712/blob/master/tests/typed-data.test.ts
 std::array<uint8_t, 32> EIP712Domain::getDomainTypeHash() {
     // EIP-712 Domain Type Hash

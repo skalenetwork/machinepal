@@ -1,3 +1,4 @@
+#include <MachinePayCommon.h>
 #include <boost/test/unit_test.hpp>
 #include "crypto/EIP3009Authorization.h"
 #include "crypto/EthPrivateKey.h"

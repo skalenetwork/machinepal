@@ -2,6 +2,8 @@
 #include <string>
 #include <boost/multiprecision/cpp_int.hpp>
 #include "EthAddress.h"
+#include "Hex.h"
+#include <optional>
 #include <array>
 
 
@@ -21,6 +23,11 @@ public:
 
     static constexpr const char *CANCEL_AUTHORIZATION_TYPE_HASH =
         "0x158b0a9edf7a828aad02f63cd515c68ef2f50ba807396f6d12842833a1597429";
+
+    [[nodiscard]] std::string domainSeparator() const {
+        return domainSeparator_;
+    }
+
     static constexpr const char *PERMIT_TYPE_HASH =
         "0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9";
     static constexpr const char *RECEIVE_WITH_AUTHORIZATION_TYPE_HASH =
@@ -34,14 +41,8 @@ public:
     EIP712Domain() = default;
 
     EIP712Domain(const std::string &name, const std::string &version, const u256 &chainId,
-                 const EthAddress &verifyingContract, const std::string &domainSeparator)
-        : name_(name),
-          version_(version),
-          chainId_(chainId),
-          verifyingContract_(verifyingContract),
-          domainSeparator_(domainSeparator){
-    }
-
+                 const EthAddress &verifyingContract, const std::optional<std::string> domainSeparator
+                 = std::nullopt);
 
     // Computes the EIP-712 domain separator hash
     std::array<uint8_t, 32> hashDomain() const;
@@ -51,9 +52,7 @@ public:
 
     static EIP712Domain machinePayEasyTestNet() {
         return EIP712Domain{"USDC", "2", 84542,
-                            EthAddress("0x036CbD53842c5426634e7929541eC2318f3dCF7e"),
-                            "0x71f17a3b2ff373b803d70a5a07c046c1a2bc8e89c09ef722fcb047abe94c9818",
-
+                            EthAddress("0x036CbD53842c5426634e7929541eC2318f3dCF7e")
         };
     }
 
