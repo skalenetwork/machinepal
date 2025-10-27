@@ -1,6 +1,6 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-
+#include "MachinePayCommon.h"
 #include <boost/test/unit_test.hpp>
 #include "crypto/EthPrivateKey.h"
 #include "crypto/EthAddress.h"

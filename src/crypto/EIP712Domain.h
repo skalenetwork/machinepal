@@ -10,6 +10,7 @@
 
 // https://www.circle.com/multi-chain-usdc
 
+class HttpError;
 using u256 = boost::multiprecision::uint256_t;
 
 class EIP712Domain {
@@ -83,7 +84,7 @@ public:
                                    const EthPrivateKey &privateKey) const;
 
 
-    void verifyWithDomain(const std::array<uint8_t, 32> &structHash,
+    std::optional<HttpError> verifyWithDomain(const std::array<uint8_t, 32> &structHash,
                           const EIP712Signature &signature,
                           const EthAddress& expectedAddress) const;
 };
