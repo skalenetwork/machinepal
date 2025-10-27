@@ -1,6 +1,7 @@
 #include "FacilitatorConfig.h"
 
 #include "config/JsonUtils.h"
+#include "examples/PaymentExamples.h"
 #include "exceptions/JsonValidationException.h"
 #include "filesystem/FileManager.h"
 
@@ -14,6 +15,12 @@ FacilitatorConfig::FacilitatorConfig(const FacilitatorType type,
 const FacilitatorType FacilitatorConfig::type() const { return type_; }
 const std::string& FacilitatorConfig::baseUrl() const { return baseUrl_; }
 const std::optional<CanonicalPath>& FacilitatorConfig::apiKeyFile() const { return apiKeyFile_; }
+
+optional<HttpError> FacilitatorConfig::settlePayment(const shared_ptr<PaymentPayload> paymentPayload,
+    std::string &settlementInfo) {
+    settlementInfo = URLUtils::base64Encode(std::string(PaymentExamples::EXACT_UCDC_SETTLEMENT_RESPONSE_CB_SEPOLIA));
+    return std::nullopt;
+}
 
 
 ptr<FacilitatorConfig> FacilitatorConfig::createFomJson(const nlohmann::json& j, ptr<FileManager> fileManager)

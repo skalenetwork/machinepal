@@ -53,3 +53,33 @@ const string PaymentExamples::EXACT_UCDC_PAYMENT_PAYLOAD_CB_SEPOLIA = R"({
         }
     }
 })";
+
+const string PaymentExamples::EXACT_UCDC_SETTLEMENT_RESPONSE_CB_SEPOLIA = R"({
+    "success": true,
+    "transaction": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+    "network": "base-sepolia",
+    "payer": "0x857b06519E91e3A54538791bDbb0E22373e36b66"
+})";
+
+
+/*
+ *
+*```json
+{
+"success": true,
+"transaction": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+"network": "base-sepolia",
+"payer": "0x857b06519E91e3A54538791bDbb0E22373e36b66"
+}
+```
+
+
+| Field Name    | Type      | Required | Description                                                     |
+| ------------- | --------- | -------- | --------------------------------------------------------------- |
+| `success`     | `boolean` | Required | Indicates whether the payment settlement was successful         |
+| `errorReason` | `string`  | Optional | Error reason if settlement failed (omitted if successful)       |
+| `transaction` | `string`  | Required | Blockchain transaction hash (empty string if settlement failed) |
+| `network`     | `string`  | Required | Blockchain network identifier                                   |
+| `payer`       | `string`  | Required | Address of the payer's wallet                                   |
+
+*/

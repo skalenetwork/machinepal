@@ -1,5 +1,6 @@
 #include "PaymentManager.h"
 #include "MachinePayApp.h"
+#include "config/subconfigs/FacilitatorConfig.h"
 #include "config/subconfigs/NetworkConfig.h"
 #include "config/subconfigs/ResourceConfig.h"
 #include "datastructures/PaymentPayload.h"
@@ -54,25 +55,16 @@ std::optional<HttpError> PaymentManager::decodeValidateAndSettlePayment(const st
 
         auto paymentPayload = std::get<ptr<PaymentPayload>>(result);
 
-        std::optional<HttpError> error = paymentPayload->validateAndVerifySignature(config, resource);
+        auto error = paymentPayload->validateAndVerifySignature(config, resource);
 
         if (error) {
             return error;
         }
 
+        auto facilitator = config.network()->facilitator();
 
-        if (error) {
-            return error;
-        }
+        return  facilitator->settlePayment(paymentPayload, settlementInfo);
 
-        try {
-            settlementInfo = paymentPayload->toJson().dump();
-        } catch (const std::exception& e) {
-            spdlog::error("Failed serializing payment payload to JSON: {}", e.what());
-            return HttpError(ERR_INTERNAL_SERVER_ERROR, "Failed serializing payment payload");
-        }
-
-        return std::nullopt; // success
     } catch (std::exception &e) {
         spdlog::error("validatePayment had exception while parsing X-PAYMENT header: {}", e.what());
         return HttpError(ERR_INTERNAL_SERVER_ERROR, std::string("Error parsing X-PAYMENT header: ") + e.what());
