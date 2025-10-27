@@ -60,6 +60,12 @@ std::optional<HttpError> PaymentManager::decodeValidateAndSettlePayment(const st
             return error;
         }
 
+        error = paymentPayload->validate(config, resource);
+
+        if (error) {
+            return error;
+        }
+
         try {
             settlementInfo = paymentPayload->toJson().dump();
         } catch (const std::exception& e) {

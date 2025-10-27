@@ -26,6 +26,9 @@ public:
     static std::shared_ptr<PaymentPayload> fromJson(const json& j);
     [[nodiscard]] json toJson() const;
     std::optional<HttpError> validate(const MachinePayConfig& config, const ResourceConfig& resource) const;
+
+    std::optional<HttpError> verifyEIP3009(const MachinePayConfig &config, const ResourceConfig &resource) const;
+
 private:
     int x402Version_;
     std::string scheme_;
