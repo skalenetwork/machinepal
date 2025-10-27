@@ -25,14 +25,14 @@ const string PaymentExamples::EXACT_UCDC_PAYMENT_PAYLOAD_CB_SEPOLIA = R"({
     "scheme": "exact",
     "network": "base-sepolia",
     "payload": {
-        "signature": "0x9f3b3e8c8b1a68d08337a42b1b1e6d0562a15c0e4b4c30d2c6a9f965f4a2f53256e0d4f8a5c20dcb9b1d3b3c2f3e87cbf5e99c2b2f07e0b8c2a6f61d2f8f4c6a1b",
+        "signature": "0x2d6a7588d6acca505cbf0d9a4a227e0c52c6c34008c8e8986a1283259764173608a2ce6496642e377d6da8dbbf5836e9bd15092f9ecab05ded3d6293af148b571c",
         "authorization": {
-            "from": "0x1111111111111111111111111111111111111111",
-            "to": "0x2222222222222222222222222222222222222222",
-            "value": "1000",
-            "validAfter": "1716150000",
-            "validBefore": "1716153600",
-            "nonce": "0x1234567890abcdef"
+            "from": "0x857b06519E91e3A54538791bDbb0E22373e36b66",
+            "to": "0x209693Bc6afc0C5328bA36FaF03C514EF312287C",
+            "value": "10000",
+            "validAfter": "1740672089",
+            "authorization": "1740672154",
+            "nonce": "0xf3746613c2d920b5fdabc0856f2aeb2d4f88ee6037b8cc5d04a71a4462f13480"
         }
     }
 })";

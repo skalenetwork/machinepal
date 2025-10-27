@@ -67,8 +67,8 @@ std::shared_ptr<Authorization> Authorization::fromJson(const json &j) {
 
 json Authorization::toJson() const {
     json j;
-    j["from"] = from_.toHex();
-    j["to"] = to_.toHex();
+    j["from"] = from_.toChecksumHex();
+    j["to"] = to_.toChecksumHex();
     j["value"] = value_.toDecimal();
     j["validAfter"] = validAfter_.toDecimal();
     j["validBefore"] = validBefore_.toDecimal();
