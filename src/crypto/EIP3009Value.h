@@ -15,7 +15,7 @@ public:
     EIP3009Value() = default;
     explicit EIP3009Value(const u256& val);
     std::string toDecimal() const;
-    static EIP3009Value fromDecimal(const std::string& decStr);
+    static EIP3009Value fromHexOrDecimal(const std::string& decStr);
     friend auto operator<=>(const EIP3009Value&, const EIP3009Value&) = default;
 };
 

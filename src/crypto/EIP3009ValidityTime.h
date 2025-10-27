@@ -16,7 +16,7 @@ public:
     }
 
     std::string toDecimal() const;
-    static EIP3009ValidityTime fromDecimal(const std::string& decStr);
+    static EIP3009ValidityTime fromHexOrDecimal(const std::string& decStr);
     static EIP3009ValidityTime fromTimeT(std::time_t timeT);
 
     friend bool operator==(const EIP3009ValidityTime&, const EIP3009ValidityTime&) = default;

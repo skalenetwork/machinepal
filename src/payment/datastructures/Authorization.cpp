@@ -17,9 +17,9 @@ Authorization::Authorization(const std::string &fromStr,
                              const std::string &validAfter,
                              const std::string &validBefore,
                              const std::string &nonce) {
-    value_ = EIP3009Value::fromDecimal(value);
-    validAfter_ = EIP3009ValidityTime::fromDecimal(validAfter);
-    validBefore_ = EIP3009ValidityTime::fromDecimal(validBefore);
+    value_ = EIP3009Value::fromHexOrDecimal(value);
+    validAfter_ = EIP3009ValidityTime::fromHexOrDecimal(validAfter);
+    validBefore_ = EIP3009ValidityTime::fromHexOrDecimal(validBefore);
     from_ = EthAddress::parseHexAddress(fromStr);
     to_ = EthAddress::parseHexAddress(toStr);
     nonce_ = EIP3009Nonce::fromHex(nonce);

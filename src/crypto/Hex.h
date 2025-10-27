@@ -8,10 +8,8 @@
 #include <vector>
 
 class Hex {
-
 public:
-
-    static std::string toHex(const boost::multiprecision::uint256_t& val, bool withPrefix = false) {
+    static std::string toHex(const boost::multiprecision::uint256_t &val, bool withPrefix = false) {
         std::vector<uint8_t> bytes;
         export_bits(val, std::back_inserter(bytes), 8);
 
@@ -33,7 +31,7 @@ public:
         return hex;
     }
 
-    static std::vector<uint8_t> fromHex(const std::string& hexStr) {
+    static std::vector<uint8_t> fromHex(const std::string &hexStr) {
         std::string_view hexView(hexStr);
         if (hexView.substr(0, 2) == "0x" || hexView.substr(0, 2) == "0X") {
             hexView.remove_prefix(2);
@@ -45,5 +43,39 @@ public:
         bytes.reserve(hexView.size() / 2);
         boost::algorithm::unhex(hexView.begin(), hexView.end(), std::back_inserter(bytes));
         return bytes;
+    }
+
+    static boost::multiprecision::uint256_t fromHexOrDecimal(const std::string &str) {
+        if (str.empty())
+            throw std::invalid_argument("Empty input for uint256");
+
+        // ❌ Disallow any whitespace characters
+        if (std::any_of(str.begin(), str.end(), ::isspace))
+            throw std::invalid_argument("Whitespace not allowed in uint256 input");
+
+        if (str[0] == '-')
+            throw std::invalid_argument("Negative numbers not allowed for uint256");
+
+        if (str.size() >= 2 && str[0] == '0' && (str[1] == 'x' || str[1] == 'X')) {
+            auto bytes = fromHex(str);
+            if (bytes.size() == 0)
+                throw std::invalid_argument("Empty hex input for uint256");
+            if (bytes.size() > 32)
+                throw std::invalid_argument("Hex input too long for uint256");
+            boost::multiprecision::uint256_t val = 0;
+            for (auto b: bytes) {
+                val = (val << 8) | b;
+            }
+            return val;
+        } else {
+            boost::multiprecision::uint256_t val(str);
+            return val;
+        }
+    }
+
+    // Convert uint256 to a base-10 string without leading zeros or prefix
+    static std::string u256ToDecimal(const boost::multiprecision::uint256_t &val) {
+        // Explicit base ensures decimal even under modified stream flags
+        return val.str(0, std::ios_base::dec);
     }
 };
