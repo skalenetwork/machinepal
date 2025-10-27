@@ -18,13 +18,13 @@ BOOST_AUTO_TEST_CASE(deserialize_payment_payload) {
     BOOST_TEST(paymentPayload.x402Version() == 1);
     BOOST_TEST(paymentPayload.scheme() == "exact");
     BOOST_TEST(paymentPayload.network() == "base-sepolia");
-    BOOST_TEST(paymentPayload.payload()->signature() == "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef1b");
+    BOOST_TEST(paymentPayload.payload()->signature().toHex(true) == "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef1b");
     BOOST_TEST(paymentPayload.payload()->authorization()->from().toHex() == "0x1111111111111111111111111111111111111111");
     BOOST_TEST(paymentPayload.payload()->authorization()->to().toHex() == "0x2222222222222222222222222222222222222222");
-    BOOST_TEST(paymentPayload.payload()->authorization()->value() == "1000");
-    BOOST_TEST(paymentPayload.payload()->authorization()->validAfter() == "1716150000");
-    BOOST_TEST(paymentPayload.payload()->authorization()->validBefore() == "1716153600");
-    BOOST_TEST(paymentPayload.payload()->authorization()->nonce() == "0x1234567890abcdef");
+    BOOST_TEST(paymentPayload.payload()->authorization()->value().toDecimal() == "1000");
+    BOOST_TEST(paymentPayload.payload()->authorization()->validAfter().toDecimal() == "1716150000");
+    BOOST_TEST(paymentPayload.payload()->authorization()->validBefore().toDecimal() == "1716153600");
+    BOOST_TEST(paymentPayload.payload()->authorization()->nonce().toHex(true) == "0x1234567890abcdef");
 }
 
 BOOST_AUTO_TEST_CASE(serialize_payment_payload) {

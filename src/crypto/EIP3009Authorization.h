@@ -8,6 +8,8 @@
 #include "EIP712Domain.h"
 #include "EIP3009Nonce.h"
 
+class EIP3009ValidityTime;
+class EIP3009Value;
 using u256 = boost::multiprecision::uint256_t;
 
 class EIP3009Authorization {
@@ -16,9 +18,9 @@ public:
     static EIP712Signature signAuthorization(const EIP712Domain& domain,
                                           const EthAddress& from,
                                           const EthAddress& to,
-                                          const u256& value,
-                                          const u256& validAfter,
-                                          const u256& validBefore,
+                                          const EIP3009Value& value,
+                                          const EIP3009ValidityTime& validAfter,
+                                          const EIP3009ValidityTime& validBefore,
                                           const EIP3009Nonce& nonce,
                                           const EthPrivateKey& privateKey);
 
@@ -26,9 +28,9 @@ public:
     static void verifyAuthorization(const EIP712Domain& domain,
                                     const EthAddress& from,
                                     const EthAddress& to,
-                                    const u256& value,
-                                    const u256& validAfter,
-                                    const u256& validBefore,
+                                    const EIP3009Value& value,
+                                    const EIP3009ValidityTime& validAfter,
+                                    const EIP3009ValidityTime& validBefore,
                                     const EIP3009Nonce& nonce,
                                     const EIP712Signature& signature);
 

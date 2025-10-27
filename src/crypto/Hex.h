@@ -1,13 +1,29 @@
 #pragma once
 #include "boost/algorithm/hex.hpp"
 #include "boost/algorithm/string/case_conv.hpp"
+#include <boost/multiprecision/cpp_int.hpp>
 
 #include <iostream>
 #include <span>
+#include <vector>
 
 class Hex {
 
 public:
+
+    static std::string toHex(const boost::multiprecision::uint256_t& val, bool withPrefix = false) {
+        std::vector<uint8_t> bytes;
+        export_bits(val, std::back_inserter(bytes), 8);
+
+        // Pad with leading zeros to 32 bytes if necessary
+        if (bytes.size() < 32) {
+            std::vector<uint8_t> padded_bytes(32 - bytes.size(), 0);
+            padded_bytes.insert(padded_bytes.end(), bytes.begin(), bytes.end());
+            bytes = padded_bytes;
+        }
+
+        return toHex(bytes, withPrefix);
+    }
 
     static std::string toHex(std::span<const std::uint8_t> bytes, bool withPrefix = false) {
         std::string hex;

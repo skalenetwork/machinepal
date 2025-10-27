@@ -16,7 +16,7 @@ Payload::Payload(const std::string& signature, std::shared_ptr<Authorization> au
     CHECK_STATE(authorization)
 }
 
-const std::string& Payload::signature() const {
+const EIP712Signature Payload::signature() const {
     return signature_;
 }
 
@@ -53,7 +53,7 @@ std::shared_ptr<Payload> Payload::fromJson(const json& j) {
 
 [[nodiscard]] json Payload::toJson() const {
     json j;
-    j["signature"] = signature_;
+    j["signature"] = signature_.toHex(true);
     CHECK_STATE(authorization());
     j["authorization"] = authorization_->toJson();
     return j;
@@ -73,7 +73,7 @@ std::optional<HttpError> Payload::verifyEIP3009Signature(std::shared_ptr<EIP712D
         authorization()->nonce(),
         signature());
     } catch (std::exception e) {
-        return HttpError(400, std::string("Invalid EIP-3009 signature: ") + e.what());
+        return HttpError(ErrorType::ERR_BAD_REQUEST, std::string("Invalid EIP-3009 signature: ") + e.what());
     }
     return std::nullopt;
 };

@@ -16,18 +16,18 @@ Authorization::Authorization(const std::string &fromStr,
                              const std::string &value,
                              const std::string &validAfter,
                              const std::string &validBefore,
-                             const std::string &nonce) :
-      value_(value),
-      validAfter_(validAfter),
-      validBefore_(validBefore){
+                             const std::string &nonce) {
+    value_ = EIP3009Value::fromDecimal(value);
+    validAfter_ = EIP3009ValidityTime::fromDecimal(validAfter);
+    validBefore_ = EIP3009ValidityTime::fromDecimal(validBefore);
     from_ = EthAddress::parseHexAddress(fromStr);
     to_ = EthAddress::parseHexAddress(toStr);
     nonce_ = EIP3009Nonce::fromHex(nonce);
 }
 
-const u256 &Authorization::value() const { return value_; }
-const u256 &Authorization::validAfter() const { return validAfter_; }
-const u256 &Authorization::validBefore() const { return validBefore_; }
+const EIP3009Value &Authorization::value() const { return value_; }
+const EIP3009ValidityTime &Authorization::validAfter() const { return validAfter_; }
+const EIP3009ValidityTime &Authorization::validBefore() const { return validBefore_; }
 const EIP3009Nonce &Authorization::nonce() const { return nonce_; }
 
 
@@ -67,12 +67,12 @@ std::shared_ptr<Authorization> Authorization::fromJson(const json &j) {
 
 json Authorization::toJson() const {
     json j;
-    j["from"] = fromHex_;
-    j["to"] = toHex_;
-    j["value"] = value_;
-    j["validAfter"] = validAfter_;
-    j["validBefore"] = validBefore_;
-    j["nonce"] = nonce_;
+    j["from"] = from_.toHex();
+    j["to"] = to_.toHex();
+    j["value"] = value_.toDecimal();
+    j["validAfter"] = validAfter_.toDecimal();
+    j["validBefore"] = validBefore_.toDecimal();
+    j["nonce"] = nonce_.toHex(true);
     return j;
 }
 
@@ -80,18 +80,17 @@ std::optional<HttpError> Authorization::validate(const MachinePayConfig &config,
     // Check validAfter is less than or equal to current time
     // Check validBefore is greater than current time
     try {
-        std::time_t validAfterTs = std::stoll(validAfter_);
-        std::time_t validBeforeTs = std::stoll(validBefore_);
-        std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-        if (validAfterTs > now) {
+        auto now = EIP3009ValidityTime::fromTimeT(
+            std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
+        if (validAfter() > now) {
             return HttpError(ErrorType::ERR_BAD_REQUEST,
-                             "Authorization not yet valid: current time (" + std::to_string(now) +
-                             ") is less than validAfter (" + std::to_string(validAfterTs) + ")");
+                             "Authorization not yet valid: current time (" + now.toDecimal() +
+                             ") is less than validAfter (" + validAfter().toDecimal() + ")");
         }
-        if (validBeforeTs < now) {
+        if (validBefore() < now) {
             return HttpError(ErrorType::ERR_BAD_REQUEST,
-                             "Authorization expired: current time (" + std::to_string(now) + ") is after validBefore ("
-                             + std::to_string(validBeforeTs) + ")");
+                             "Authorization expired: current time (" + now.toDecimal() + ") is after validBefore ("
+                             + validBefore().toDecimal() + ")");
         }
 
         if (this->to() != config.network()->walletAddress()) {

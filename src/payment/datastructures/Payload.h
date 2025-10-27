@@ -16,7 +16,7 @@ public:
     Payload();
     Payload(const std::string& signature, std::shared_ptr<Authorization> authorization);
 
-    [[nodiscard]] const std::string& signature() const;
+    [[nodiscard]] const EIP712Signature signature() const;
     [[nodiscard]] std::shared_ptr<Authorization> authorization() const;
 
     bool operator==(const Payload& other) const;
@@ -27,6 +27,6 @@ public:
     std::optional<HttpError> verifyEIP3009Signature(std::shared_ptr<EIP712Domain> domain) const;
 
 private:
-    std::string signature_;
+    EIP712Signature signature_;
     std::shared_ptr<Authorization> authorization_;
 };

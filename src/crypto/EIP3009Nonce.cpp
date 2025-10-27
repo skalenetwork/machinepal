@@ -31,8 +31,9 @@ std::string EIP3009Nonce::toHex(bool withPrefix) const {
 
 EIP3009Nonce EIP3009Nonce::fromHex(const std::string& hexStr) {
     auto vec = Hex::fromHex(hexStr);
-    if (vec.size() != 32) throw std::invalid_argument("EIP3009Nonce must be 32 bytes");
-    std::array<uint8_t, 32> arr;
-    std::copy(vec.begin(), vec.end(), arr.begin());
+    if (vec.size() > 32) throw std::invalid_argument("EIP3009Nonce must be at most 32 bytes");
+    std::array<uint8_t, 32> arr{};
+    // Pad with zeros on the left
+    std::copy(vec.begin(), vec.end(), arr.begin() + (32 - vec.size()));
     return EIP3009Nonce(arr);
 }
