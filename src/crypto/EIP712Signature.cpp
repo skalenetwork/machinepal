@@ -57,7 +57,7 @@ uint8_t EIP712Signature::v() const {
 
 std::string EIP712Signature::toHex(bool withPrefix) const {
     std::string hex;
-    boost::algorithm::hex(bytes_.begin(), bytes_.end(), std::back_inserter(hex));
+    boost::algorithm::hex_lower(bytes_.begin(), bytes_.end(), std::back_inserter(hex));
     if (withPrefix) return "0x" + hex;
     return hex;
 }
