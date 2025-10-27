@@ -7,6 +7,7 @@
 #include "EIP3009Nonce.h"
 #include "EIP3009ValidityTime.h"
 #include "EIP3009Value.h"
+#include "x402_protocol/HttpError.h"
 
 using u256 = boost::multiprecision::uint256_t;
 
@@ -92,7 +93,7 @@ EIP712Signature EIP3009Authorization::signAuthorization(const EIP712Domain &doma
 
 }
 
-void EIP3009Authorization::verifyAuthorization(const EIP712Domain &domain,
+std::optional<HttpError> EIP3009Authorization::verifyAuthorization(const EIP712Domain &domain,
                                                const EthAddress &from,
                                                const EthAddress &to,
                                                const EIP3009Value &value,
@@ -100,6 +101,12 @@ void EIP3009Authorization::verifyAuthorization(const EIP712Domain &domain,
                                                const EIP3009ValidityTime& validBefore,
                                                const EIP3009Nonce &nonce,
                                                const EIP712Signature &signature) {
-    auto structHash = hashTransferWithAuthorizationStruct(from, to, value, validAfter, validBefore, nonce);
-    domain.verifyWithDomain(structHash, signature, from);
+    try {
+        auto structHash = hashTransferWithAuthorizationStruct(from, to, value, validAfter, validBefore, nonce);
+        domain.verifyWithDomain(structHash, signature, from);
+        return std::nullopt;
+    } catch (std::exception e) {
+        printNestedException(e);
+        return HttpError(ErrorType::ERR_INTERNAL_SERVER_ERROR, std::string("Could not validate EIP-3009 sig ") + e.what());
+    }
 }

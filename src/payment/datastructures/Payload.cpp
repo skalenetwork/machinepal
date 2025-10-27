@@ -73,7 +73,9 @@ std::optional<HttpError> Payload::verifyEIP3009Signature(std::shared_ptr<EIP712D
         authorization()->nonce(),
         signature());
     } catch (std::exception e) {
-        return HttpError(ErrorType::ERR_BAD_REQUEST, std::string("Invalid EIP-3009 signature: ") + e.what());
+        printNestedException(e);
+        return HttpError(ErrorType::ERR_INTERNAL_SERVER_ERROR, std::string("Could not validate EIP-3009 sig ")
+            + e.what());
     }
     return std::nullopt;
 };

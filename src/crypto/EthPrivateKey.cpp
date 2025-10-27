@@ -337,7 +337,8 @@ void EthPrivateKey::eip712VerifyRaw(const uint8_t msg32[32],
     try {
         EthAddress rec = recoverAddressFromSigRSV(msg32, sig65);
         if (std::memcmp(rec.bytes().data(), expectedAddress.bytes().data(), 20) != 0) {
-            throw std::invalid_argument("Signature verification failed: recovered address mismatch");
+            throw std::invalid_argument("Signature verification failed: recovered address mismatch:"
+                + rec.toHex() + " != expected " + expectedAddress.toHex());
         }
     } catch (std::exception&) {
         RETHROW_NESTED;

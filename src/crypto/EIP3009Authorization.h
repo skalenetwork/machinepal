@@ -8,6 +8,7 @@
 #include "EIP712Domain.h"
 #include "EIP3009Nonce.h"
 
+class HttpError;
 class EIP3009ValidityTime;
 class EIP3009Value;
 using u256 = boost::multiprecision::uint256_t;
@@ -25,7 +26,7 @@ public:
                                           const EthPrivateKey& privateKey);
 
     // Verifies an EIP-3009 authorization signature
-    static void verifyAuthorization(const EIP712Domain& domain,
+    static std::optional<HttpError> verifyAuthorization(const EIP712Domain& domain,
                                     const EthAddress& from,
                                     const EthAddress& to,
                                     const EIP3009Value& value,
