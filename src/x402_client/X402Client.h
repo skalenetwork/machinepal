@@ -12,6 +12,8 @@
 #include <boost/beast/http.hpp>
 #include <boost/beast/version.hpp>
 
+class PaymentPayload;
+
 struct HttpResponse {
     long status = 0;
     std::string body;
@@ -33,6 +35,9 @@ public:
     std::tuple<std::map<std::string, std::string>, std::string, HttpResponse>
     sendRequestAndParseResult(std::string _location, const std::vector<std::string> &_extraHeaders,
         bool printHttpTrace = false);
+
+    std::tuple<std::map<std::string, std::string>, std::string, HttpResponse> sendRequestWithPayloadAndParseResult(
+        std::string _location, ptr<PaymentPayload> payload, bool printHttpTrace);
 
     static size_t writeBody(char *_ptr, size_t _size, size_t _nmemb, void *_userdata);
     static size_t writeHeader(char *_buffer, size_t _size, size_t _nitems, void *_userdata);

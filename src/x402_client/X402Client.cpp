@@ -1,5 +1,7 @@
 #include "X402Client.h"
 
+#include "payment/datastructures/PaymentPayload.h"
+
 X402Client::X402Client(const std::string &_connect_ip, uint16_t _port)
     : connectHost(_connect_ip), port(_port) {}
 
@@ -46,6 +48,14 @@ X402Client::sendRequestAndParseResult(std::string _location, const std::vector<s
     return {headersMap, statusLine, resp};
 }
 
+
+std::tuple<std::map<std::string, std::string>, std::string, HttpResponse>
+X402Client::sendRequestWithPayloadAndParseResult(std::string _location, ptr<PaymentPayload> payload,
+    bool printHttpTrace ) {
+    CHECK_STATE(payload);
+    auto header = payload->createHttpHeaderValue();
+    return sendRequestAndParseResult(_location, {header}, printHttpTrace);
+}
 size_t X402Client::writeBody(char *_ptr, size_t _size, size_t _nmemb, void *_userdata) {
     auto *out = static_cast<std::string *>(_userdata);
     out->append(_ptr, _size * _nmemb);

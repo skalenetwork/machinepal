@@ -132,41 +132,23 @@ BOOST_FIXTURE_TEST_SUITE(X402Suite, X402ServerFixture)
     BOOST_AUTO_TEST_CASE(Returns200WhenPaymentHeaderPresent) {
         EthAddress to("0x209693bc6afc0c5328ba36faf03c514ef312287c");
         EIP3009Value value(12000000000000000000ULL);
-
-
-        std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-
-        EIP3009ValidityTime validAfter(now);
-        EIP3009ValidityTime validBefore(now + 3600);
         EIP3009Nonce nonce = EIP3009Nonce::fromHex("abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890");
-
         // Example private key (DO NOT USE IN PRODUCTION)
         std::string privKeyHex = "4c0883a69102937d6231471b5dbb6204fe5129617082796e8a7a7e7a7a7a7a7a";
         EthPrivateKey privKey(privKeyHex);
-        EthPublicKey pubKey = privKey.computePublicKey();
-        EthAddress from = pubKey.getAddress();
 
-        auto auth = std::make_shared<Authorization>(from, to, value, validAfter, validBefore, nonce);
 
-        // Sign authorization
-        EIP712Signature signature = EIP3009Authorization::signAuthorization(
-            *EIP712Domain::baseSepolia(), from, to,
+        auto paymentPayload = PaymentPayload().createDefaultPaymentPayload(
+            privKey,
+            to,
             value,
-            validAfter,
-            validBefore,
-            nonce, privKey);
+            nonce,
+            "base-sepolia"
+        );
 
+        auto [headersMap, statusLine, resp] = client->sendRequestWithPayloadAndParseResult("/posts/1",
+            paymentPayload, true);
 
-        auto payload = std::make_shared<Payload>(signature, auth);
-
-        PaymentPayload paymentPayload(1,
-                                      "exact", "base-sepolia", payload);
-
-        auto xPaymentJson = paymentPayload.toJson();
-        std::string xPaymentBase64 = URLUtils::base64Encode(xPaymentJson.dump());
-
-        auto [headersMap, statusLine, resp] = client->sendRequestAndParseResult("/posts/1",
-            {"X-PAYMENT: " + xPaymentBase64}, true);
         BOOST_TEST(resp.status == 200);
         BOOST_TEST(headersMap.contains("X-PAYMENT-RESPONSE"));
         auto paymentResponse = headersMap.at("X-PAYMENT-RESPONSE");
