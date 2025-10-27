@@ -11,26 +11,37 @@ using u256 = boost::multiprecision::uint256_t;
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
-// Helper to pack a 256-bit unsigned integer into a byte array (big-endian)
-static void packUint256(std::vector<uint8_t> &bytes, const u256 &value) {
-    // export_bits exports as big-endian
-    std::vector<unsigned char> temp_bytes;
-    export_bits(value, std::back_inserter(temp_bytes), 8);
 
-    // Pad with leading zeros to 32 bytes if necessary
-    if (temp_bytes.size() < 32) {
-        bytes.insert(bytes.end(), 32 - temp_bytes.size(), 0);
+static inline void packUint256(std::vector<uint8_t>& out, const u256& value) {
+    constexpr size_t targetLen = 32;
+
+    // Avoid extra reallocations if this is called in a tight loop.
+    out.reserve(out.size() + targetLen);
+
+    // export_bits(value, it, 8) writes big-endian without leading zeros.
+    std::vector<uint8_t> tmp;
+    tmp.reserve(targetLen);
+    export_bits(value, std::back_inserter(tmp), 8); // big-endian, minimal length
+
+    if (tmp.size() > targetLen) {
+        // Should never happen for a true 256-bit type, but guard anyway.
+        throw std::invalid_argument("packUint256: value does not fit in 32 bytes");
     }
-    bytes.insert(bytes.end(), temp_bytes.begin(), temp_bytes.end());
+
+    // Left-pad to 32 and append.
+    out.insert(out.end(), targetLen - tmp.size(), 0);
+    out.insert(out.end(), tmp.begin(), tmp.end());
 }
+
+
 
 
 // Helper to encode and hash the authorization message struct
 static std::array<uint8_t, 32> hashTransferWithAuthorizationStruct(const EthAddress &from,
                                                                    const EthAddress &to,
                                                                    const u256 &value,
-                                                                   const u256 validAfter,
-                                                                   const u256 validBefore,
+                                                                   const u256& validAfter,
+                                                                   const u256& validBefore,
                                                                    const EIP3009Nonce &nonce) {
 
     std::vector<uint8_t> message;
