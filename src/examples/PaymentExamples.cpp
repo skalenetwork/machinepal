@@ -31,7 +31,7 @@ const string PaymentExamples::EXACT_UCDC_PAYMENT_PAYLOAD_CB_SEPOLIA = R"({
             "to": "0x209693Bc6afc0C5328bA36FaF03C514EF312287C",
             "value": "10000",
             "validAfter": "1740672089",
-            "authorization": "1740672154",
+            "validBefore": "1740672154",
             "nonce": "0xf3746613c2d920b5fdabc0856f2aeb2d4f88ee6037b8cc5d04a71a4462f13480"
         }
     }
