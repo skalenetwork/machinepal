@@ -26,13 +26,13 @@ BOOST_AUTO_TEST_CASE(EIP3009_SignAndVerify_ReferenceValues) {
     EthPublicKey pubKey = privKey.computePublicKey();
 
     // Sign authorization
-    EIP712Signature signature = EIP3009Authorization::signAuthorization(EIP712Domain::machinePayEasyTestNet(), from, to,
+    EIP712Signature signature = EIP3009Authorization::signAuthorization(*EIP712Domain::machinePayEasyTestNet(), from, to,
                                                                         value, validAfter, validBefore,
                                                                         EIP3009Nonce::fromHex(nonce), privKey);
     BOOST_TEST(!signature.toHex().empty());
 
     // Verify authorization
-    EIP3009Authorization::verifyAuthorization(EIP712Domain::machinePayEasyTestNet(), from, to, value, validAfter,
+    EIP3009Authorization::verifyAuthorization(*EIP712Domain::machinePayEasyTestNet(), from, to, value, validAfter,
                                               validBefore, EIP3009Nonce::fromHex(nonce) , signature, pubKey);
 
 }

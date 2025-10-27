@@ -24,17 +24,19 @@ std::shared_ptr<NetworkConfig> NetworkConfig::createFromJson(const nlohmann::jso
         auto walletAddress = EthAddress::parseHexAddress(walletAddressStr);
 
         std::string name = networkJson.value("name", "machinepay-easy-test");
-        std::map<std::string, EIP712Domain> supportedNetworks{
+        std::map<std::string, ptr<EIP712Domain>> supportedNetworks{
             {"machinepay-easy-testnet", EIP712Domain::machinePayEasyTestNet()},
             {"base-sepolia", EIP712Domain::baseSepolia()},
             {"base", EIP712Domain::baseMainnet()}
         };
         CHECK_STATE2(supportedNetworks.contains(name), "Unsupported network name in config:" + name);
+        // Select domain
+        auto domain = supportedNetworks.at(name);
         std::shared_ptr<FacilitatorConfig> facilitator = nullptr;
         if (networkJson.contains("facilitator") && networkJson["facilitator"].is_object()) {
             facilitator = FacilitatorConfig::createFomJson(networkJson["facilitator"], fileManager);
         }
-        return ptr<NetworkConfig>(new NetworkConfig(name, walletAddress, facilitator));
+        return ptr<NetworkConfig>(new NetworkConfig(name, walletAddress, facilitator, domain));
     } catch (const std::exception& ex) {
         RETHROW_NESTED;
     }

@@ -19,10 +19,7 @@ class EIP712Domain {
     EthAddress verifyingContract_;
     std::string domainSeparator_;
 
-
 public:
-
-
     [[nodiscard]] std::string domainSeparator() const {
         return domainSeparator_;
     }
@@ -33,7 +30,7 @@ public:
 
     EIP712Domain(const std::string &name, const std::string &version, const u256 &chainId,
                  const EthAddress &verifyingContract, const std::optional<std::string> domainSeparator
-                 = std::nullopt);
+                         = std::nullopt);
 
     // Computes the EIP-712 domain separator hash
     std::array<uint8_t, 32> hashDomain() const;
@@ -41,24 +38,26 @@ public:
     static std::array<uint8_t, 32> getDomainTypeHash();
 
 
-    static EIP712Domain machinePayEasyTestNet() {
-        return EIP712Domain{"USDC", "2", 84542,
-                            EthAddress("0x036CbD53842c5426634e7929541eC2318f3dCF7e")
-        };
+    static shared_ptr<EIP712Domain> machinePayEasyTestNet() {
+        auto static result = make_shared<EIP712Domain>("USDC", "2", 84542,
+                                                       EthAddress("0x036CbD53842c5426634e7929541eC2318f3dCF7e")
+        );
+        return result;
     }
 
-    static EIP712Domain baseSepolia() {
-        return EIP712Domain{"USDC", "2", 84532,
-                            EthAddress("0x036CbD53842c5426634e7929541eC2318f3dCF7e"),
-                            "0x71f17a3b2ff373b803d70a5a07c046c1a2bc8e89c09ef722fcb047abe94c9818"
-        };
+    static shared_ptr<EIP712Domain> baseSepolia() {
+        auto static result = make_shared<EIP712Domain>("USDC", "2", 84532,
+                                                       EthAddress("0x036CbD53842c5426634e7929541eC2318f3dCF7e"),
+                                                       "0x71f17a3b2ff373b803d70a5a07c046c1a2bc8e89c09ef722fcb047abe94c9818");
+        return result;
     }
 
 
-    static EIP712Domain baseMainnet() {
-        return {"USD Coin", "2", 8453,
-                EthAddress("0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"),
-                "0x02fa7265e7c5d81118673727957699e4d68f74cd74b7db77da710fe8a2c7834f"};
+    static shared_ptr<EIP712Domain> baseMainnet() {
+        auto static result = make_shared<EIP712Domain>("USD Coin", "2", 8453,
+                                                       EthAddress("0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"),
+                                                       "0x02fa7265e7c5d81118673727957699e4d68f74cd74b7db77da710fe8a2c7834f");
+        return result;
     }
 
 public:
@@ -78,16 +77,13 @@ public:
         return verifyingContract_;
     }
 
-    std::array<uint8_t, 32>  hashWithDomain(const std::array<uint8_t, 32>& structHash) const;
+    std::array<uint8_t, 32> hashWithDomain(const std::array<uint8_t, 32> &structHash) const;
 
-    EIP712Signature signWithDomain(const std::array<uint8_t, 32>& structHash,
-        const EthPrivateKey& privateKey) const;
+    EIP712Signature signWithDomain(const std::array<uint8_t, 32> &structHash,
+                                   const EthPrivateKey &privateKey) const;
 
 
     void verifyWithDomain(const std::array<uint8_t, 32> &structHash,
-                                                        const EIP712Signature& signature,
-                                                       const EthPublicKey &publicKey) const;
-
-
-
+                          const EIP712Signature &signature,
+                          const EthPublicKey &publicKey) const;
 };
