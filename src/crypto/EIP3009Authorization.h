@@ -6,7 +6,7 @@
 #include "EthAddress.h"
 #include "EIP712Signature.h"
 #include "EIP712Domain.h"
-#include "EIP3008Nonce.h"
+#include "EIP3009Nonce.h"
 
 using u256 = boost::multiprecision::uint256_t;
 
@@ -19,7 +19,7 @@ public:
                                           const u256& value,
                                           const u256& validAfter,
                                           const u256& validBefore,
-                                          const EIP3008Nonce& nonce,
+                                          const EIP3009Nonce& nonce,
                                           const EthPrivateKey& privateKey);
 
     // Verifies an EIP-3009 authorization signature
@@ -29,7 +29,7 @@ public:
                                     const u256& value,
                                     const u256& validAfter,
                                     const u256& validBefore,
-                                    const EIP3008Nonce& nonce,
+                                    const EIP3009Nonce& nonce,
                                     const EIP712Signature& signature,
                                     const EthPublicKey& publicKey);
 
