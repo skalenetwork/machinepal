@@ -40,7 +40,7 @@ variant<ptr<PaymentPayload>, HttpError> PaymentManager::decodeAndParsePayment(co
     }
 }
 
-void PaymentManager::noteSuccessfulSettlement(const shared_ptr<PaymentPayload> &payload, const ResourceConfig &resource) {
+void PaymentManager::recordSuccessfulSettlement(const shared_ptr<PaymentPayload> &payload, const ResourceConfig &resource) {
 }
 
 std::optional<HttpError> PaymentManager::checkAgaistAlreadySettledPayments(const shared_ptr<PaymentPayload> &shared,
@@ -84,7 +84,7 @@ std::optional<HttpError> PaymentManager::decodeValidateAndSettlePayment(const st
             return error;
         }
 
-        noteSuccessfulSettlement(paymentPayload, resource);
+        recordSuccessfulSettlement(paymentPayload, resource);
 
         return std::nullopt;
 
