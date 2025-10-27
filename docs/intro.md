@@ -1,12 +1,3 @@
----
-sidebar_position: 1
----
-
-<div align="center">
-  <a href="https://github.com/skalenetwork/machinepay">
-    <img src="/img/machinepay.png" alt="MachinePay Logo" width="250">
-  </a>
-</div>
 
 <h1 align="center">🚀 MachinePay: The Internet's Missing Money Layer</h1>
 
@@ -24,12 +15,6 @@ sidebar_position: 1
 
 <div align="center">
 
-[![Love this project? Give it a heart!](https://img.shields.io/badge/%E2%9D%A4%EF%B8%8F%20Love%20this%20project%3F%20Give%20it%20a%20heart!-ff69b4?style=flat-square)](https://github.com/skalenetwork/machinepay/stargazers)
-[![GitHub stars](https://img.shields.io/github/stars/skalenetwork/machinepay?style=social)](https://github.com/skalenetwork/machinepay/stargazers)
-[![Contribute](https://img.shields.io/badge/Become%20a%20Contributor-28a745?logo=github)](https://github.com/skalenetwork/machinepay/blob/main/CONTRIBUTING.md)
-[![Open an Issue](https://img.shields.io/badge/Open%20an%20Issue-ff9800?logo=github)](https://github.com/skalenetwork/machinepay/issues/new/choose)
-
-</div>
 
 ---
 

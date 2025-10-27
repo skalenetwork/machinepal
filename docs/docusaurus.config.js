@@ -65,7 +65,7 @@ const config = {
             items: [
                 { to: '/', label: 'Docs', position: 'left' },
                 {
-                    href: 'https://github.com/machinepay',
+                    href: 'https://github.com/skalenetwork/machinepay',
                     label: 'GitHub',
                     position: 'right',
                 },
