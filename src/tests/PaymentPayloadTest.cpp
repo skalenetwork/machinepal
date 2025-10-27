@@ -28,6 +28,8 @@ BOOST_AUTO_TEST_CASE(deserialize_payment_payload) {
 }
 
 BOOST_AUTO_TEST_CASE(serialize_payment_payload) {
+    auto sig = "0x9f3b3e8c8b1a68d08337a42b1b1e6d0562a15c0e4b4c30d2c6a9f965f4"
+        "a2f53256e0d4f8a5c20dcb9b1d3b3c2f3e87cbf5e99c2b2f07e0b8c2a6f61d2f8f4c6a1b1b";
     auto auth = std::make_shared<Authorization>(
         "0x5555555555555555555555555555555555555555",
         "0x6666666666666666666666666666666666666666",
@@ -36,8 +38,7 @@ BOOST_AUTO_TEST_CASE(serialize_payment_payload) {
         "1727283600",
         "0xfee1deadbeef"
     );
-    auto payloadPtr = std::make_shared<Payload>(
-        "0xfee1deadfee1deadfee1deadfee1deadfee1deadfee1deadfee1deadfee1deadfee1dead",
+    auto payloadPtr = std::make_shared<Payload>(sig,
         auth
     );
     PaymentPayload newPayload(2, "streaming", "optimism", payloadPtr);
@@ -48,7 +49,7 @@ BOOST_AUTO_TEST_CASE(serialize_payment_payload) {
     BOOST_TEST(jOutput["paymentPayload"]["x402Version"] == 2);
     BOOST_TEST(jOutput["paymentPayload"]["scheme"] == "streaming");
     BOOST_TEST(jOutput["paymentPayload"]["network"] == "optimism");
-    BOOST_TEST(jOutput["paymentPayload"]["payload"]["signature"] == "0xfee1deadfee1deadfee1deadfee1deadfee1deadfee1deadfee1deadfee1deadfee1dead");
+    BOOST_TEST(jOutput["paymentPayload"]["payload"]["signature"] == sig);
     BOOST_TEST(jOutput["paymentPayload"]["payload"]["authorization"]["from"] == "0x5555555555555555555555555555555555555555");
     BOOST_TEST(jOutput["paymentPayload"]["payload"]["authorization"]["to"] == "0x6666666666666666666666666666666666666666");
     BOOST_TEST(jOutput["paymentPayload"]["payload"]["authorization"]["value"] == "1000000000000000000");

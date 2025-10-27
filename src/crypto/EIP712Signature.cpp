@@ -22,9 +22,9 @@ EIP712Signature::EIP712Signature(const uint8_t *data, std::size_t len) {
 
 EIP712Signature::EIP712Signature(const std::string &hex) {
     std::string s = hex;
-    if (s.rfind("0x", 0) == 0 || s.rfind("0X", 0) == 0)
+    if (s.starts_with("0x") || s.starts_with("0X"))
         s = s.substr(2);
-    if (s.size() != 130) throw std::invalid_argument("Hex string must be 130 chars for 65 bytes");
+    if (s.size() != 130) throw std::invalid_argument("Hex string must be 130 chars for 65 bytes: " + hex);
     boost::algorithm::unhex(s.begin(), s.end(), bytes_.begin());
 }
 
