@@ -109,5 +109,5 @@ std::optional<HttpError> EIP712Domain::verifyWithDomain(const std::array<uint8_t
                                                     const EIP712Signature& signature,
                                                    const EthAddress& expectedAddress) const {
     auto hash = hashWithDomain(structHash);
-    EthPrivateKey::eip712VerifyRaw(hash.data(), signature.bytes().data(), expectedAddress);
+    return EthPrivateKey::eip712VerifyRaw(hash.data(), signature.bytes().data(), expectedAddress);
 }
