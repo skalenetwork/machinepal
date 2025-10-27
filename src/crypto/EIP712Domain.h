@@ -3,7 +3,7 @@
 #include <boost/multiprecision/cpp_int.hpp>
 #include "EthAddress.h"
 #include "EthPrivateKey.h"
-#include "Hex.h"
+#include "Encoding.h"
 #include <optional>
 #include <array>
 

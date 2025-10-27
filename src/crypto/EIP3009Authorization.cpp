@@ -49,7 +49,7 @@ static std::array<uint8_t, 32> hashTransferWithAuthorizationStruct(const EthAddr
     std::vector<uint8_t> message;
     message.reserve(7 * 32); // 7 fields * 32 bytes each
 
-    static auto transferWithAuthorizationTypeHashVector = Hex::fromHex(
+    static auto transferWithAuthorizationTypeHashVector = Encoding::fromHex(
         EIP3009Authorization::TRANSFER_WITH_AUTHORIZATION_TYPE_HASH);
     message.insert(message.end(), transferWithAuthorizationTypeHashVector.begin(),
                    transferWithAuthorizationTypeHashVector.end());

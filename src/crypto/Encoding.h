@@ -7,7 +7,7 @@
 #include <span>
 #include <vector>
 
-class Hex {
+class Encoding {
 public:
     static std::string toHex(const boost::multiprecision::uint256_t &val, bool withPrefix = false) {
         std::vector<uint8_t> bytes;

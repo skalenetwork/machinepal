@@ -2,16 +2,16 @@
 #include "EIP3009ValidityTime.h"
 #include <limits>
 
-#include "Hex.h"
+#include "Encoding.h"
 
 EIP3009ValidityTime::EIP3009ValidityTime(const u256& val) : time_(val) {}
 
 std::string EIP3009ValidityTime::toDecimal() const {
-    return Hex::u256ToDecimal(time_);
+    return Encoding::u256ToDecimal(time_);
 }
 
 EIP3009ValidityTime EIP3009ValidityTime::fromHexOrDecimal(const std::string& decStr) {
-    u256 val = Hex::fromHexOrDecimal(decStr);
+    u256 val = Encoding::fromHexOrDecimal(decStr);
     return EIP3009ValidityTime(val);
 }
 

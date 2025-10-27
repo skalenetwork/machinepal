@@ -1,6 +1,6 @@
 #include "MachinePayCommon.h"
 #include "EIP3009Nonce.h"
-#include "Hex.h"
+#include "Encoding.h"
 #include <stdexcept>
 #include <algorithm>
 #include <random>
@@ -26,11 +26,11 @@ const std::array<uint8_t, 32>& EIP3009Nonce::bytes() const {
 }
 
 std::string EIP3009Nonce::toHex(bool withPrefix) const {
-    return Hex::toHex(std::span<const uint8_t>(bytes_.data(), bytes_.size()), withPrefix);
+    return Encoding::toHex(std::span<const uint8_t>(bytes_.data(), bytes_.size()), withPrefix);
 }
 
 EIP3009Nonce EIP3009Nonce::fromHex(const std::string& hexStr) {
-    auto vec = Hex::fromHex(hexStr);
+    auto vec = Encoding::fromHex(hexStr);
     if (vec.size() > 32) throw std::invalid_argument("EIP3009Nonce must be at most 32 bytes");
     std::array<uint8_t, 32> arr{};
     // Pad with zeros on the left

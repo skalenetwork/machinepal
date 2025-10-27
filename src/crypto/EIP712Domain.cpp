@@ -17,7 +17,7 @@ EIP712Domain::EIP712Domain(const std::string &name, const std::string &version, 
       chainId_(chainId),
       verifyingContract_(verifyingContract) {
     auto computedDomainSeparator = hashDomain();
-    domainSeparator_ = Hex::toHex(computedDomainSeparator, true);
+    domainSeparator_ = Encoding::toHex(computedDomainSeparator, true);
     if (domainSeparator) {
         cerr << domainSeparator_ << endl;
         cerr << domainSeparator.value() << endl;
