@@ -32,13 +32,6 @@ static std::array<uint8_t, 32> hashTransferWithAuthorizationStruct(const EthAddr
                                                                    const u256 validAfter,
                                                                    const u256 validBefore,
                                                                    const EIP3008Nonce &nonce) {
-    const uint64_t MAX_UINT48 = 0xFFFFFFFFFFFF;
-    if (validAfter > MAX_UINT48) {
-        throw std::invalid_argument("validAfter exceeds uint48 max value");
-    }
-    if (validBefore > MAX_UINT48) {
-        throw std::invalid_argument("validBefore exceeds uint48 max value");
-    }
 
     std::vector<uint8_t> message;
     message.reserve(7 * 32); // 7 fields * 32 bytes each
