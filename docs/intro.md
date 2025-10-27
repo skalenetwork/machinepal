@@ -4,7 +4,7 @@ sidebar_position: 1
 
 <div align="center">
   <a href="https://github.com/skalenetwork/machinepay">
-    <img src="/img/machinepay.png" alt="MachinePay Logo" width="250" />
+    <img src="/img/machinepay.png" alt="MachinePay Logo" width="250">
   </a>
 </div>
 
@@ -59,3 +59,4 @@ Think of **MachinePay** as a **toll booth for your digital highway**. Instead of
 7.  **📬 Content Delivered** → Your server's response is passed back to the user.
 
 The result? You just monetized your content without lifting a finger. Secure, compliant, and instant.
+
