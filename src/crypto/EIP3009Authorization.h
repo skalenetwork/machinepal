@@ -17,8 +17,8 @@ public:
                                           const EthAddress& from,
                                           const EthAddress& to,
                                           const u256& value,
-                                          uint64_t validAfter,
-                                          uint64_t validBefore,
+                                          const u256& validAfter,
+                                          const u256& validBefore,
                                           const EIP3008Nonce& nonce,
                                           const EthPrivateKey& privateKey);
 
@@ -27,8 +27,8 @@ public:
                                     const EthAddress& from,
                                     const EthAddress& to,
                                     const u256& value,
-                                    uint64_t validAfter,
-                                    uint64_t validBefore,
+                                    const u256& validAfter,
+                                    const u256& validBefore,
                                     const EIP3008Nonce& nonce,
                                     const EIP712Signature& signature,
                                     const EthPublicKey& publicKey);

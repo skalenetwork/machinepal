@@ -24,23 +24,13 @@ static void packUint256(std::vector<uint8_t> &bytes, const u256 &value) {
     bytes.insert(bytes.end(), temp_bytes.begin(), temp_bytes.end());
 }
 
-// Helper to pack a 48-bit unsigned integer into a byte array (big-endian)
-static void packUint48(std::vector<uint8_t> &bytes, uint64_t value) {
-    bytes.push_back(static_cast<uint8_t>((value >> 40) & 0xFF));
-    bytes.push_back(static_cast<uint8_t>((value >> 32) & 0xFF));
-    bytes.push_back(static_cast<uint8_t>((value >> 24) & 0xFF));
-    bytes.push_back(static_cast<uint8_t>((value >> 16) & 0xFF));
-    bytes.push_back(static_cast<uint8_t>((value >> 8) & 0xFF));
-    bytes.push_back(static_cast<uint8_t>(value & 0xFF));
-}
-
 
 // Helper to encode and hash the authorization message struct
 static std::array<uint8_t, 32> hashTransferWithAuthorizationStruct(const EthAddress &from,
                                                                    const EthAddress &to,
                                                                    const u256 &value,
-                                                                   uint64_t validAfter,
-                                                                   uint64_t validBefore,
+                                                                   const u256 validAfter,
+                                                                   const u256 validBefore,
                                                                    const EIP3008Nonce &nonce) {
     const uint64_t MAX_UINT48 = 0xFFFFFFFFFFFF;
     if (validAfter > MAX_UINT48) {
@@ -51,28 +41,29 @@ static std::array<uint8_t, 32> hashTransferWithAuthorizationStruct(const EthAddr
     }
 
     std::vector<uint8_t> message;
-    message.reserve(32 + 20 + 20 + 32 + 6 + 6 + 32); // typehash + from + to + value + validAfter + validBefore + nonce
+    message.reserve(7 * 32); // 7 fields * 32 bytes each
 
     static auto transferWithAuthorizationTypeHashVector = Hex::fromHex(
         EIP3009Authorization::TRANSFER_WITH_AUTHORIZATION_TYPE_HASH);
-
     message.insert(message.end(), transferWithAuthorizationTypeHashVector.begin(),
                    transferWithAuthorizationTypeHashVector.end());
 
-    // EIP-3009 field: from (address)
+    // EIP-3009 field: from (address) - padded to 32 bytes
     auto fromBytes = from.bytes();
+    message.insert(message.end(), 32 - fromBytes.size(), 0);
     message.insert(message.end(), fromBytes.begin(), fromBytes.end());
 
-    // EIP-3009 field: to (address)
+    // EIP-3009 field: to (address) - padded to 32 bytes
     auto toBytes = to.bytes();
+    message.insert(message.end(), 32 - toBytes.size(), 0);
     message.insert(message.end(), toBytes.begin(), toBytes.end());
 
     // EIP-3009 field: value (uint256)
     packUint256(message, value);
-    // EIP-3009 field: validAfter (uint48)
-    packUint48(message, validAfter);
-    // EIP-3009 field: validBefore (uint48)
-    packUint48(message, validBefore);
+
+    packUint256(message, validAfter);
+
+    packUint256(message, validBefore);
 
     // EIP-3009 field: nonce (bytes32)
     const auto& nonceBytes = nonce.bytes();
@@ -85,9 +76,9 @@ static std::array<uint8_t, 32> hashTransferWithAuthorizationStruct(const EthAddr
 EIP712Signature EIP3009Authorization::signAuthorization(const EIP712Domain &domain,
                                                         const EthAddress &from,
                                                         const EthAddress &to,
-                                                        const u256 &value,
-                                                        uint64_t validAfter,
-                                                        uint64_t validBefore,
+                                                        const u256& value,
+                                                        const u256& validAfter,
+                                                        const u256& validBefore,
                                                         const EIP3008Nonce &nonce,
                                                         const EthPrivateKey &privateKey) {
     auto structHash = hashTransferWithAuthorizationStruct(from, to, value, validAfter, validBefore, nonce);
@@ -99,12 +90,11 @@ void EIP3009Authorization::verifyAuthorization(const EIP712Domain &domain,
                                                const EthAddress &from,
                                                const EthAddress &to,
                                                const u256 &value,
-                                               uint64_t validAfter,
-                                               uint64_t validBefore,
+                                               const u256& validAfter,
+                                               const u256& validBefore,
                                                const EIP3008Nonce &nonce,
                                                const EIP712Signature &signature,
                                                const EthPublicKey &publicKey) {
     auto structHash = hashTransferWithAuthorizationStruct(from, to, value, validAfter, validBefore, nonce);
     domain.verifyWithDomain(structHash, signature, publicKey);
 }
-
