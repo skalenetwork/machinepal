@@ -1,5 +1,6 @@
 #pragma once
 #include "MachinePayCommon.h"
+#include "crypto/EIP712Domain.h"
 #include "crypto/EthAddress.h"
 
 class FacilitatorConfig;
@@ -9,6 +10,7 @@ class NetworkConfig {
     std::string name_;
     EthAddress walletAddress_;
     std::shared_ptr<FacilitatorConfig> facilitator_;
+    EIP712Domain eip712Domain_;
     NetworkConfig(const std::string& name, const EthAddress& walletAddress, std::shared_ptr<FacilitatorConfig>& facilitator)
         : name_(name), walletAddress_(walletAddress), facilitator_(facilitator) {}
 public:

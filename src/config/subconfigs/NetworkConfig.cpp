@@ -24,10 +24,10 @@ std::shared_ptr<NetworkConfig> NetworkConfig::createFromJson(const nlohmann::jso
         auto walletAddress = EthAddress::parseHexAddress(walletAddressStr);
 
         std::string name = networkJson.value("name", "machinepay-easy-test");
-        std::set<std::string> supportedNetworks = {
-            "machinepay-easy-testnet",
-            "base-sepolia",
-            "base"
+        std::map<std::string, EIP712Domain> supportedNetworks{
+            {"machinepay-easy-testnet", EIP712Domain::machinePayEasyTestNet()},
+            {"base-sepolia", EIP712Domain::baseSepolia()},
+            {"base", EIP712Domain::baseMainnet()}
         };
         CHECK_STATE2(supportedNetworks.contains(name), "Unsupported network name in config:" + name);
         std::shared_ptr<FacilitatorConfig> facilitator = nullptr;
@@ -54,4 +54,3 @@ string NetworkConfig::getTokenAddress(const string& tokenName)  {
     }
     return "";
 }
-
