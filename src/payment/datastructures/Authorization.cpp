@@ -76,29 +76,47 @@ json Authorization::toJson() const {
     return j;
 }
 
+std::optional<HttpError> Authorization::checkValidityTime() {
+
+
+
+    // add disabling of valid time checks for testing so we can use fixed validAfter/validBefore values in tests
+    if (getEnv("TEST_DISABLE_AUTHORIZATION_TIME_CHECK")) {
+        return  std::nullopt;
+    }
+
+    auto now = EIP3009ValidityTime::fromTimeT(
+        std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
+
+    if (validAfter() > now) {
+        return HttpError(ErrorType::ERR_BAD_REQUEST,
+                           "Authorization not yet valid: current time (" + now.toDecimal() +
+                           ") is less than validAfter (" + validAfter().toDecimal() + ")");
+    }
+    if (validBefore() < now) {
+        return HttpError(ErrorType::ERR_BAD_REQUEST,
+                           "Authorization expired: current time (" + now.toDecimal() + ") is after validBefore ("
+                           + validBefore().toDecimal() + ")");
+    }
+    return std::nullopt;
+}
+
 std::optional<HttpError> Authorization::validate(const MachinePayConfig &config, const ResourceConfig &resource) {
     // Check validAfter is less than or equal to current time
     // Check validBefore is greater than current time
     try {
-        auto now = EIP3009ValidityTime::fromTimeT(
-            std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
-        if (validAfter() > now) {
-            return HttpError(ErrorType::ERR_BAD_REQUEST,
-                             "Authorization not yet valid: current time (" + now.toDecimal() +
-                             ") is less than validAfter (" + validAfter().toDecimal() + ")");
-        }
-        if (validBefore() < now) {
-            return HttpError(ErrorType::ERR_BAD_REQUEST,
-                             "Authorization expired: current time (" + now.toDecimal() + ") is after validBefore ("
-                             + validBefore().toDecimal() + ")");
-        }
+
 
         if (this->to() != config.network()->walletAddress()) {
             return HttpError(ErrorType::ERR_BAD_REQUEST,
-                std::string("Authorization payment destination address does not match configured destination address: ") +
-                "authorization.to=" + to().toHex() + ", configured.to=" + config.network()->walletAddress().toHex());
+                             std::string(
+                                 "Authorization payment destination address does not match configured destination address: ")
+                             +
+                             "authorization.to=" + to().toHex() + ", configured.to=" + config.network()->walletAddress()
+                             .toHex());
         }
 
+        return checkValidityTime();
     } catch (const std::exception &e) {
         return HttpError(ErrorType::ERR_INTERNAL_SERVER_ERROR,
                          std::string("Authorization failed to validate") + e.what());

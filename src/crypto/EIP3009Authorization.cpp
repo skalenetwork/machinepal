@@ -105,7 +105,7 @@ std::optional<HttpError> EIP3009Authorization::verifyAuthorization(const EIP712D
         auto structHash = hashTransferWithAuthorizationStruct(from, to, value, validAfter, validBefore, nonce);
         return domain.verifyWithDomain(structHash, signature, from);
     } catch (std::exception e) {
-        //printNestedException(e);
+        printNestedException(e);
         return HttpError(ErrorType::ERR_INTERNAL_SERVER_ERROR, std::string("Could not validate EIP-3009 sig ") + e.what());
     }
 }

@@ -28,6 +28,7 @@
 #include <iomanip>
 #include <nlohmann/json.hpp>
 #include <array>
+#include <cstdlib>
 
 #if defined(__cpp_exceptions) || defined(__EXCEPTIONS) || defined(_CPPUNWIND)
     constexpr bool exceptions_enabled = true;
@@ -98,4 +99,12 @@ template<typename T>
 using ptr = std::shared_ptr<T>;
 
 using namespace std;
+
+inline const char* getEnv(const char* name) {
+    return std::getenv(name);
+}
+
+inline const char* getEnv(const std::string& name) {
+    return std::getenv(name.c_str());
+}
 
