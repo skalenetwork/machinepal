@@ -9,6 +9,7 @@
 #include <boost/algorithm/hex.hpp>
 
 #include "config/subconfigs/NetworkConfig.h"
+#include "config/subconfigs/ResourceConfig.h"
 
 
 Authorization::Authorization(const std::string &fromStr,
@@ -114,6 +115,17 @@ std::optional<HttpError> Authorization::validate(const MachinePayConfig &config,
                              +
                              "authorization.to=" + to().toHex() + ", configured.to=" + config.network()->walletAddress()
                              .toHex());
+        }
+
+        EIP3009Value price(resource.price());
+
+        if (value() != price) {
+            return HttpError(ErrorType::ERR_BAD_REQUEST,
+                             std::string(
+                                 "Payment value does not equal price of the resource (maxAmountRequired): ")
+                             +
+                             "authorization.value=" + value().toDecimal() +
+                             ", resource.maxAmountRequired=" + price.toDecimal());
         }
 
         return checkValidityTime();

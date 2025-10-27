@@ -54,13 +54,12 @@ std::optional<HttpError> PaymentManager::decodeValidateAndSettlePayment(const st
 
         auto paymentPayload = std::get<ptr<PaymentPayload>>(result);
 
-        std::optional<HttpError> error = paymentPayload->validate(config, resource);
+        std::optional<HttpError> error = paymentPayload->validateAndVerifySignature(config, resource);
 
         if (error) {
             return error;
         }
 
-        error = paymentPayload->verifyEIP3009(config, resource);
 
         if (error) {
             return error;

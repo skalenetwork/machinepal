@@ -73,7 +73,7 @@ json PaymentPayload::toJson() const {
     return j;
 }
 
-std::optional<HttpError> PaymentPayload::validate(const MachinePayConfig& config, const ResourceConfig& resource) const {
+std::optional<HttpError> PaymentPayload::validateAndVerifySignature(const MachinePayConfig& config, const ResourceConfig& resource) const {
     try {
         if (x402Version_ != 1) {
             spdlog::error("Unsupported x402Version in payment payload: {}", x402Version_);
@@ -91,14 +91,22 @@ std::optional<HttpError> PaymentPayload::validate(const MachinePayConfig& config
                 network_ + " != " + config.network()->name());
         }
 
-        return this->payload()->validate(config, resource);
+        auto error = payload()->validate(config, resource);
+
+        if (error) {
+            return error;
+        }
+
+        return  verifyEIP3009Signature(config, resource);
     } catch (const std::exception& e) {
         spdlog::error("Exception validating payment payload: {}", e.what());
         return HttpError(ERR_INTERNAL_SERVER_ERROR, "Exception validating payment payload");
     }
+
+
 }
 
-std::optional<HttpError> PaymentPayload::verifyEIP3009(const MachinePayConfig& config, const ResourceConfig& resource) const {
+std::optional<HttpError> PaymentPayload::verifyEIP3009Signature(const MachinePayConfig& config, const ResourceConfig& resource) const {
     try {
         auto eipDomain = config.network()->eip712Domain();
          return payload()->verifyEIP3009Signature(eipDomain);

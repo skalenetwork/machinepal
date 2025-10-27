@@ -20,6 +20,16 @@ using json = nlohmann::json;
 
 class Authorization {
 public:
+    Authorization(const EthAddress &from, const EthAddress &to, const EIP3009Value &value,
+        const EIP3009ValidityTime &valid_after, const EIP3009ValidityTime &valid_before, const EIP3009Nonce &nonce)
+        : from_(from),
+          to_(to),
+          value_(value),
+          validAfter_(valid_after),
+          validBefore_(valid_before),
+          nonce_(nonce) {
+    }
+
     Authorization(const std::string& fromStr,
                   const std::string& toStr,
                   const std::string& value,

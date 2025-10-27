@@ -16,6 +16,11 @@ public:
     Payload();
     Payload(const std::string& signature, std::shared_ptr<Authorization> authorization);
 
+    Payload(const EIP712Signature &signature, const std::shared_ptr<Authorization> &authorization)
+        : signature_(signature),
+          authorization_(authorization) {
+    }
+
     [[nodiscard]] const EIP712Signature signature() const;
     [[nodiscard]] std::shared_ptr<Authorization> authorization() const;
 

@@ -26,7 +26,7 @@ public:
                                           const EthPrivateKey& privateKey);
 
     // Verifies an EIP-3009 authorization signature
-    [[nodiscard]] static std::optional<HttpError> verifyAuthorization(const EIP712Domain& domain,
+    [[nodiscard]] static std::optional<HttpError> verifyAuthorizationSignature(const EIP712Domain& domain,
                                     const EthAddress& from,
                                     const EthAddress& to,
                                     const EIP3009Value& value,

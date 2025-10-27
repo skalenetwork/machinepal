@@ -93,7 +93,7 @@ EIP712Signature EIP3009Authorization::signAuthorization(const EIP712Domain &doma
 
 }
 
-std::optional<HttpError> EIP3009Authorization::verifyAuthorization(const EIP712Domain &domain,
+std::optional<HttpError> EIP3009Authorization::verifyAuthorizationSignature(const EIP712Domain &domain,
                                                const EthAddress &from,
                                                const EthAddress &to,
                                                const EIP3009Value &value,

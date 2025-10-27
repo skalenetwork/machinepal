@@ -27,9 +27,9 @@ BOOST_AUTO_TEST_CASE(deserialize_payment_payload) {
     BOOST_TEST(paymentPayload.network() == "base-sepolia");
     BOOST_TEST(paymentPayload.payload()->signature().toHex(true) == SIGNATURE_SAMPLE);
     BOOST_TEST(
-        paymentPayload.payload()->authorization()->from().toChecksumHex() == "0x857b06519E91e3A54538791bDbb0E22373e36b66");
+        paymentPayload.payload()->authorization()->from().toChecksumHex() == "0x9410cE824d7D65Bf5Ce9B656040aD597bDC9bF30");
     BOOST_TEST(paymentPayload.payload()->authorization()->to().toChecksumHex() == "0x209693Bc6afc0C5328bA36FaF03C514EF312287C");
-    BOOST_TEST(paymentPayload.payload()->authorization()->value().toDecimal() == "10000");
+    BOOST_TEST(paymentPayload.payload()->authorization()->value().toDecimal() == "12000000000000000000");
     BOOST_TEST(paymentPayload.payload()->authorization()->validAfter().toDecimal() == "1740672089");
     BOOST_TEST(paymentPayload.payload()->authorization()->validBefore().toDecimal() == "1740672154");
     BOOST_TEST(paymentPayload.payload()->authorization()->nonce().toHex(true) ==
