@@ -150,11 +150,12 @@ BOOST_FIXTURE_TEST_SUITE(X402Suite, X402ServerFixture)
 
         // Sign authorization
         EIP712Signature signature = EIP3009Authorization::signAuthorization(
-            *EIP712Domain::machinePayEasyTestNet(), from, to,
+            *EIP712Domain::baseSepolia(), from, to,
             value,
             validAfter,
             validBefore,
             nonce, privKey);
+
 
         auto payload = std::make_shared<Payload>(signature, auth);
 
