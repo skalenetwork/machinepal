@@ -131,7 +131,7 @@ BOOST_FIXTURE_TEST_SUITE(X402Suite, X402ServerFixture)
 
     BOOST_AUTO_TEST_CASE(Returns200WhenPaymentHeaderPresent) {
         EthAddress to("0x209693bc6afc0c5328ba36faf03c514ef312287c");
-        EIP3009Value value(1000000000000000000ULL);
+        EIP3009Value value(12000000000000000000ULL);
         EIP3009ValidityTime validAfter(1633046400);
         EIP3009ValidityTime validBefore(1733046400);
         EIP3009Nonce nonce = EIP3009Nonce::fromHex("abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890");
