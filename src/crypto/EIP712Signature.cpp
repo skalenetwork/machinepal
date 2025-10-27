@@ -24,7 +24,10 @@ EIP712Signature::EIP712Signature(const std::string &hex) {
     std::string s = hex;
     if (s.starts_with("0x") || s.starts_with("0X"))
         s = s.substr(2);
-    if (s.size() != 130) throw std::invalid_argument("Hex string must be 130 chars for 65 bytes: " + hex);
+    if (s.size() != 130) {
+        throw std::invalid_argument("Hex string must have 130 chars for 65 bytes: " + hex);
+    }
+
     boost::algorithm::unhex(s.begin(), s.end(), bytes_.begin());
 }
 

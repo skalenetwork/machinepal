@@ -25,7 +25,7 @@ const string PaymentExamples::EXACT_UCDC_PAYMENT_PAYLOAD_CB_SEPOLIA = R"({
     "scheme": "exact",
     "network": "base-sepolia",
     "payload": {
-        "signature": "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef1b",
+        "signature": ""0x9f3b3e8c8b1a68d08337a42b1b1e6d0562a15c0e4b4c30d2c6a9f965f4a2f53256e0d4f8a5c20dcb9b1d3b3c2f3e87cbf5e99c2b2f07e0b8c2a6f61d2f8f4c6a1b1b",
         "authorization": {
             "from": "0x1111111111111111111111111111111111111111",
             "to": "0x2222222222222222222222222222222222222222",
