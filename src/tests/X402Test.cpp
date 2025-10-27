@@ -130,6 +130,12 @@ BOOST_FIXTURE_TEST_SUITE(X402Suite, X402ServerFixture)
     }
 
     BOOST_AUTO_TEST_CASE(Returns200WhenPaymentHeaderPresent) {
+
+
+        // Disable authorization time check for this test so we can use fixed validAfter/validBefore values
+        // for x402 protocol auth spec example
+        setenv("TEST_DISABLE_AUTHORIZATION_TIME_CHECK", "1", 1);
+
         std::string xPaymentValue = PaymentExamples::EXACT_UCDC_PAYMENT_PAYLOAD_CB_SEPOLIA;
         // Set current time as validAfter
         nlohmann::json paymentJson = nlohmann::json::parse(xPaymentValue);
@@ -146,6 +152,8 @@ BOOST_FIXTURE_TEST_SUITE(X402Suite, X402ServerFixture)
         BOOST_TEST(headersMap.contains("X-PAYMENT-RESPONSE"));
         auto paymentResponse = headersMap.at("X-PAYMENT-RESPONSE");
         BOOST_TEST(resp.body.size() > 0);
+
+        unsetenv("TEST_DISABLE_AUTHORIZATION_TIME_CHECK");
     }
 
 BOOST_AUTO_TEST_SUITE_END()

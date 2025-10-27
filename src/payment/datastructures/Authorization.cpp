@@ -81,7 +81,7 @@ std::optional<HttpError> Authorization::checkValidityTime() {
 
 
     // add disabling of valid time checks for testing so we can use fixed validAfter/validBefore values in tests
-    if (getEnv("TEST_DISABLE_AUTHORIZATION_TIME_CHECK")) {
+    if (std::getenv("TEST_DISABLE_AUTHORIZATION_TIME_CHECK")) {
         return  std::nullopt;
     }
 
