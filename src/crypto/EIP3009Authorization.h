@@ -16,7 +16,7 @@ using u256 = boost::multiprecision::uint256_t;
 class EIP3009Authorization {
 public:
     // Signs an EIP-3009 authorization message
-    static EIP712Signature signAuthorization(const EIP712Domain& domain,
+     [[nodiscard]] static EIP712Signature signAuthorization(const EIP712Domain& domain,
                                           const EthAddress& from,
                                           const EthAddress& to,
                                           const EIP3009Value& value,
@@ -26,7 +26,7 @@ public:
                                           const EthPrivateKey& privateKey);
 
     // Verifies an EIP-3009 authorization signature
-    static std::optional<HttpError> verifyAuthorization(const EIP712Domain& domain,
+    [[nodiscard]] static std::optional<HttpError> verifyAuthorization(const EIP712Domain& domain,
                                     const EthAddress& from,
                                     const EthAddress& to,
                                     const EIP3009Value& value,

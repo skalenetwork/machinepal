@@ -67,7 +67,7 @@ std::optional<HttpError> Payload::validate(const MachinePayConfig& config, const
 
 std::optional<HttpError> Payload::verifyEIP3009Signature(std::shared_ptr<EIP712Domain> domain) const {
     try {
-        EIP3009Authorization::verifyAuthorization(*domain,
+        return EIP3009Authorization::verifyAuthorization(*domain,
         authorization()->from(), authorization()->to(),
         authorization()->value(), authorization()->validAfter(), authorization()->validBefore(),
         authorization()->nonce(),
