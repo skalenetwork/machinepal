@@ -21,11 +21,15 @@ EIP712Signature::EIP712Signature(const uint8_t *data, std::size_t len) {
 }
 
 EIP712Signature::EIP712Signature(const std::string &hex) {
+    if (hex.size() > 132) {
+        throw std::invalid_argument("Hex string too long to be a valid signature: " + std::to_string(hex.size()) + " chars "
+            + hex);
+    }
     std::string s = hex;
     if (s.starts_with("0x") || s.starts_with("0X"))
         s = s.substr(2);
     if (s.size() != 130) {
-        throw std::invalid_argument("Hex string must have 130 chars for 65 bytes: " + hex);
+        throw std::invalid_argument("Hex string must have 130 chars for 65 bytes: " + s);
     }
 
     boost::algorithm::unhex(s.begin(), s.end(), bytes_.begin());
