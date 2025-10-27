@@ -40,6 +40,14 @@ variant<ptr<PaymentPayload>, HttpError> PaymentManager::decodeAndParsePayment(co
     }
 }
 
+void PaymentManager::noteSuccessfulSettlement(const shared_ptr<PaymentPayload> &payload, const ResourceConfig &resource) {
+}
+
+std::optional<HttpError> PaymentManager::checkAgaistAlreadySettledPayments(const shared_ptr<PaymentPayload> &shared,
+    const ResourceConfig &resource) {
+    return std::nullopt;
+}
+
 std::optional<HttpError> PaymentManager::decodeValidateAndSettlePayment(const std::unique_ptr<proxygen::HTTPMessage> &req,
                                                                         std::string &settlementInfo,
                                                                         const MachinePayConfig& config,
@@ -55,7 +63,14 @@ std::optional<HttpError> PaymentManager::decodeValidateAndSettlePayment(const st
 
         auto paymentPayload = std::get<ptr<PaymentPayload>>(result);
 
+
         auto error = paymentPayload->validateAndVerifySignature(config, resource);
+
+        if (error) {
+            return error;
+        }
+
+        error = checkAgaistAlreadySettledPayments(paymentPayload, resource);
 
         if (error) {
             return error;
@@ -63,7 +78,15 @@ std::optional<HttpError> PaymentManager::decodeValidateAndSettlePayment(const st
 
         auto facilitator = config.network()->facilitator();
 
-        return  facilitator->settlePayment(paymentPayload, settlementInfo);
+        error =  facilitator->settlePayment(paymentPayload, settlementInfo);
+
+        if (error) {
+            return error;
+        }
+
+        noteSuccessfulSettlement(paymentPayload, resource);
+
+        return std::nullopt;
 
     } catch (std::exception &e) {
         spdlog::error("validatePayment had exception while parsing X-PAYMENT header: {}", e.what());

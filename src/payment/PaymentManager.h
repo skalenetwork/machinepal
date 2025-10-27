@@ -29,6 +29,10 @@ public:
 
     [[nodiscard]] MachinePayApp& app() const { return app_; }
 
+    void noteSuccessfulSettlement(const shared_ptr<PaymentPayload> & payload, const ResourceConfig & resource);
+
+    std::optional<HttpError>  checkAgaistAlreadySettledPayments(const shared_ptr<PaymentPayload> & shared, const ResourceConfig & resource);
+
     std::optional<HttpError> decodeValidateAndSettlePayment(
         const std::unique_ptr<proxygen::HTTPMessage> &req,
         std::string &settlementInfo,
