@@ -2,6 +2,8 @@
 #include <stdexcept>
 
 #include "config/JsonUtils.h"
+#include "crypto/EIP3009Authorization.h"
+#include "crypto/EIP712Domain.h"
 #include "x402_protocol/HttpError.h"
 
 class HttpError;
@@ -23,9 +25,6 @@ std::shared_ptr<Authorization> Payload::authorization() const {
     return authorization_;
 }
 
-std::shared_ptr<Authorization> Payload::authorizationPtr() const {
-    return authorization_;
-}
 
 bool Payload::operator==(const Payload& other) const {
     CHECK_STATE(authorization());
@@ -65,3 +64,16 @@ std::optional<HttpError> Payload::validate(const MachinePayConfig& config, const
     // For now, always return std::nullopt (success)
     return authorization()->validate(config, resource);
 }
+
+std::optional<HttpError> Payload::verifyEIP3009Signature(std::shared_ptr<EIP712Domain> domain) const {
+    try {
+        EIP3009Authorization::verifyAuthorization(*domain,
+        authorization()->from(), authorization()->to(),
+        authorization()->value(), authorization()->validAfter(), authorization()->validBefore(),
+        authorization()->nonce(),
+        signature());
+    } catch (std::exception e) {
+        return HttpError(400, std::string("Invalid EIP-3009 signature: ") + e.what());
+    }
+    return std::nullopt;
+};

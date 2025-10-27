@@ -100,30 +100,10 @@ std::optional<HttpError> PaymentPayload::validate(const MachinePayConfig& config
 
 std::optional<HttpError> PaymentPayload::verifyEIP3009(const MachinePayConfig& config, const ResourceConfig& resource) const {
     try {
-
-        auto networkConfig = config.network();
-        //auto eipDomain =- networkConfig->eip3009Domain();
-
-
-        if (x402Version_ != 1) {
-            spdlog::error("Unsupported x402Version in payment payload: {}", x402Version_);
-            return HttpError(ERR_BAD_REQUEST, "Unsupported x402Version in payment payload");
-        }
-        if (!config.isSchemeSupported(scheme_)) {
-            return HttpError(ERR_BAD_REQUEST, "Payment scheme is not supported");
-        }
-        if (scheme_ != resource.paymentScheme()) {
-            return HttpError(ERR_BAD_REQUEST, std::string("Payment scheme does not match resource's required scheme ") +
-                scheme_ + " != " + resource.paymentScheme());
-        }
-        if (network_ != config.network()->name()) {
-            return HttpError(ERR_BAD_REQUEST, std::string("Payment network does not match configured network ") +
-                network_ + " != " + config.network()->name());
-        }
-
-        return this->payload()->validate(config, resource);
+        auto eipDomain = config.network()->eip712Domain();
+         return payload()->verifyEIP3009Signature(eipDomain);
     } catch (const std::exception& e) {
-        spdlog::error("Exception verifying EIP3009 payment payload: {}", e.what());
-        return HttpError(ERR_INTERNAL_SERVER_ERROR, "Exception verifying EIP3009 payment payload");
+        spdlog::error("Exception : {}", e.what());
+        return HttpError(ERR_INTERNAL_SERVER_ERROR, "Exception verifying EIP3009 signature of payment payload");
     }
 }

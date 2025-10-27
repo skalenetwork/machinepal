@@ -60,7 +60,7 @@ std::optional<HttpError> PaymentManager::decodeValidateAndSettlePayment(const st
             return error;
         }
 
-        error = paymentPayload->validate(config, resource);
+        error = paymentPayload->verifyEIP3009(config, resource);
 
         if (error) {
             return error;

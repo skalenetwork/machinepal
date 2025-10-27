@@ -97,8 +97,7 @@ void EIP3009Authorization::verifyAuthorization(const EIP712Domain &domain,
                                                const u256& validAfter,
                                                const u256& validBefore,
                                                const EIP3009Nonce &nonce,
-                                               const EIP712Signature &signature,
-                                               const EthPublicKey &publicKey) {
+                                               const EIP712Signature &signature) {
     auto structHash = hashTransferWithAuthorizationStruct(from, to, value, validAfter, validBefore, nonce);
-    domain.verifyWithDomain(structHash, signature, publicKey);
+    domain.verifyWithDomain(structHash, signature, from);
 }

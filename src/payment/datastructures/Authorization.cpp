@@ -10,7 +10,6 @@
 
 #include "config/subconfigs/NetworkConfig.h"
 
-Authorization::Authorization() = default;
 
 Authorization::Authorization(const std::string &fromStr,
                              const std::string &toStr,
@@ -20,18 +19,16 @@ Authorization::Authorization(const std::string &fromStr,
                              const std::string &nonce) :
       value_(value),
       validAfter_(validAfter),
-      validBefore_(validBefore),
-      nonce_(nonce) {
+      validBefore_(validBefore){
     from_ = EthAddress::parseHexAddress(fromStr);
     to_ = EthAddress::parseHexAddress(toStr);
-    fromHex_ = from_.toHex(); // normalized 0x lowercase
-    toHex_ = to_.toHex();
+    nonce_ = EIP3009Nonce::fromHex(nonce);
 }
 
-const std::string &Authorization::value() const { return value_; }
-const std::string &Authorization::validAfter() const { return validAfter_; }
-const std::string &Authorization::validBefore() const { return validBefore_; }
-const std::string &Authorization::nonce() const { return nonce_; }
+const u256 &Authorization::value() const { return value_; }
+const u256 &Authorization::validAfter() const { return validAfter_; }
+const u256 &Authorization::validBefore() const { return validBefore_; }
+const EIP3009Nonce &Authorization::nonce() const { return nonce_; }
 
 
 bool Authorization::operator==(const Authorization &other) const {

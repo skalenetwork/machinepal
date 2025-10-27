@@ -8,6 +8,7 @@
 #include "nlohmann/json.hpp"
 #include <ostream>
 #include "config/JsonUtils.h"
+#include "crypto/EIP3009Authorization.h"
 
 
 class ResourceConfig;
@@ -16,19 +17,23 @@ class MachinePayConfig; // forward declaration added
 using json = nlohmann::json;
 
 class Authorization {
-public:
-    Authorization();
+
     Authorization(const std::string& fromStr,
                   const std::string& toStr,
                   const std::string& value,
                   const std::string& validAfter,
                   const std::string& validBefore,
                   const std::string& nonce);
+    Authorization();
 
-    [[nodiscard]] const std::string& value() const;
-    [[nodiscard]] const std::string& validAfter() const;
-    [[nodiscard]] const std::string& validBefore() const;
-    [[nodiscard]] const std::string& nonce() const;
+public:
+
+
+
+    [[nodiscard]] const u256& value() const;
+    [[nodiscard]] const u256& validAfter() const;
+    [[nodiscard]] const u256& validBefore() const;
+    [[nodiscard]] const EIP3009Nonce& nonce() const;
 
 
     // Raw address bytes
@@ -48,10 +53,8 @@ private:
 
     EthAddress from_{};
     EthAddress to_{};
-    std::string fromHex_;
-    std::string toHex_;
-    std::string value_;
-    std::string validAfter_;
-    std::string validBefore_;
-    std::string nonce_;
+    u256 value_;
+    u256 validAfter_;
+    u256 validBefore_;
+    EIP3009Nonce nonce_;
 };

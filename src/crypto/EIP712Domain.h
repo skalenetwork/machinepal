@@ -85,5 +85,5 @@ public:
 
     void verifyWithDomain(const std::array<uint8_t, 32> &structHash,
                           const EIP712Signature &signature,
-                          const EthPublicKey &publicKey) const;
+                          const EthAddress& expectedAddress) const;
 };

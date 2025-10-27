@@ -31,7 +31,8 @@ public:
         return walletAddress_;
     }
     [[nodiscard]] const ptr<EIP712Domain>& eip712Domain() const {
-        CHECK_STATE(eip712Domain_); return eip712Domain_;
+        CHECK_STATE(eip712Domain_);
+        return eip712Domain_;
     }
 
     static std::shared_ptr<NetworkConfig> createFromJson(const nlohmann::json& j, ptr<FileManager> fileManager);

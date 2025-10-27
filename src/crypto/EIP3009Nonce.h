@@ -6,6 +6,7 @@ class EIP3009Nonce {
     std::array<uint8_t, 32> bytes_;
 public:
     // Construct from vector
+    explicit EIP3009Nonce() = default;
     explicit EIP3009Nonce(const std::array<uint8_t, 32>& arr);
     // Construct from hex string (with or without 0x)
     static EIP3009Nonce fromHex(const std::string& hexStr);
