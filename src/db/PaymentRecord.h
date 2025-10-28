@@ -19,6 +19,7 @@ class PaymentRecord {
     Hash resourceHash_;
     uint64_t timestamp_;
     Hash authorizationHash_;
+    Hash transactionHash_;
     std::string jsonInfo_;
 
 public:
@@ -36,12 +37,14 @@ public:
 
     [[nodiscard]] Hash authorizationHash() const;
 
+    [[nodiscard]] Hash transactionHash() const;
+
     [[nodiscard]] std::string jsonInfo() const;
 
 
     PaymentRecord(const EthAddress &fromAddress, const EthAddress &toAddress, const EIP3009Value &value,
                   const EIP3009Nonce &nonce, const Hash &resourceHash, uint64_t timestamp,
-                  const Hash &authorizationHash, const std::string &jsonInfo);
+                  const Hash &authorizationHash, const Hash &transactionHash, const std::string &jsonInfo);
 
     static ptr<PaymentRecord> deserializeFromDbRow(const soci::row &row);
 };

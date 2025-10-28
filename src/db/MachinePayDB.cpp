@@ -113,12 +113,14 @@ void MachinePayDB::writePayment(const PaymentRecord &record) {
         std::string resourceHash = Encoding::hashToHex(record.resourceHash());
         uint64_t timestamp = record.timestamp();
         std::string authorizationHash = Encoding::hashToHex(record.authorizationHash());
+        std::string transactionHash = Encoding::hashToHex(record.transactionHash());
         std::string jsonInfo = record.jsonInfo();
 
         // Insert into the database
         sql <<
                 "INSERT INTO payments (fromAddress, toAddress, value, nonce, hash, timestamp, authorizationHash, jsonInfo) "
-                "VALUES (:fromAddress, :toAddress, :value, :nonce, :hash, :timestamp, :authorizationHash, :jsonInfo)",
+                "VALUES (:fromAddress, :toAddress, :value, :nonce, :hash, :timestamp, :authorizationHash, :transactionHash, :jsonInfo)"
+                ,
                 soci::use(fromAddress),
                 soci::use(toAddress),
                 soci::use(value),
@@ -126,6 +128,7 @@ void MachinePayDB::writePayment(const PaymentRecord &record) {
                 soci::use(resourceHash),
                 soci::use(timestamp),
                 soci::use(authorizationHash),
+                soci::use(transactionHash),
                 soci::use(jsonInfo);
     } catch (...) {
         RETHROW_NESTED2("Failed to write payment");
@@ -194,6 +197,7 @@ void MachinePayDB::ensureSchema() {
                     "hash TEXT NOT NULL,"
                     "timestamp INTEGER NOT NULL," // SQLite's INTEGER handles 64-bit
                     "authorizationHash  TEXT NOT NULL,"
+                    "transactionHash  TEXT NOT NULL,"
                     "jsonInfo TEXT)";
         } else if (dbType_ == DbType::PostgreSQL) {
             sql << "CREATE TABLE IF NOT EXISTS payments ("
@@ -204,6 +208,7 @@ void MachinePayDB::ensureSchema() {
                     "nonce TEXT NOT NULL,"
                     "hash TEXT NOT NULL,"
                     "timestamp BIGINT NOT NULL," // PostgreSQL uses BIGINT for 64-bit
+                    "transactionHash  TEXT NOT NULL,"
                     "authorizationHash  TEXT NOT NULL,"
                     "jsonInfo TEXT)";
         }
