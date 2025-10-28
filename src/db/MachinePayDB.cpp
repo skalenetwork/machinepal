@@ -103,18 +103,30 @@ MachinePayDB::MachinePayDB(MachinePayApp &app, DbType type, const std::optional<
 void MachinePayDB::writePayment(const PaymentRecord& record) {
     try {
         soci::session sql(*pool_);
+
+        // Store record fields in local variables
+        std::string fromAddress = record.fromAddress().toHex();
+        std::string toAddress = record.toAddress().toHex();
+        std::string value = record.value().toDecimal();
+        std::string nonce = record.nonce().toHex();
+        std::string resourceHash = Encoding::array32ToHex(record.resourceHash());
+        uint64_t timestamp = record.timestamp();
+        std::string transactionHash = Encoding::array32ToHex(record.transactionHash());
+        std::string jsonInfo = record.jsonInfo();
+
+        // Insert into the database
         sql <<
             "INSERT INTO payments (fromAddress, toAddress, value, nonce, hash, timestamp, transactionHash, jsonInfo) "
             "VALUES (:fromAddress, :toAddress, :value, :nonce, :hash, :timestamp, :transactionHash, :jsonInfo)",
-            soci::use(record.fromAddress),
-            soci::use(record.toAddress),
-            soci::use(record.value),
-            soci::use(record.nonce),
-            soci::use(record.resourceHash),
-            soci::use(record.timestamp),
-            soci::use(record.transactionHash),
-            soci::use(record.jsonInfo);
-    } catch(...) {
+            soci::use(fromAddress),
+            soci::use(toAddress),
+            soci::use(value),
+            soci::use(nonce),
+            soci::use(resourceHash),
+            soci::use(timestamp),
+            soci::use(transactionHash),
+            soci::use(jsonInfo);
+    } catch (...) {
         RETHROW_NESTED2("Failed to write payment");
     }
 }

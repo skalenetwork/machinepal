@@ -7,12 +7,12 @@
 class FileManager;
 
 class ServerConfig {
+    std::string hostName_;
     std::string bindIp_;
     ptr<HTTPConfig> http_;
 
 private:
     ptr<HTTPSConfig> https_;
-    std::string hostName_;
 
     ServerConfig(const std::string& hostName, const std::string& bindIp,
                  ptr<HTTPConfig> http,
@@ -27,4 +27,3 @@ public:
         return hostName_;
     }
 };
-
