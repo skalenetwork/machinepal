@@ -19,7 +19,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # Gather all source files except test sources
-set(APP_SRC_DIRS . config config/subconfigs crypto datastructures exceptions examples facilitator_clients filesystem
+set(APP_SRC_DIRS . config config/subconfigs crypto datastructures db exceptions examples facilitator_clients filesystem
         init  payment payment/datastructures url x402_client x402_protocol x402_server)
 
 set(APP_SRC_FILES)
