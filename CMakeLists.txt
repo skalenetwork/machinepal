@@ -126,6 +126,10 @@ if(BUILD_TESTING)
             Boost::unit_test_framework
     )
 
+    if(ENABLE_POSTGRESQL)
+        target_compile_definitions(mptest PRIVATE ENABLE_POSTGRESQL)
+    endif()
+
     if(ENABLE_ASAN)
         target_compile_options(mptest PRIVATE -fsanitize=address -fno-omit-frame-pointer)
         target_link_options(mptest PRIVATE -fsanitize=address)

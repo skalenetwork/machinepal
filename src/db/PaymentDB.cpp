@@ -2,13 +2,95 @@
 #include "MachinePayCommon.h" // Assumed to provide RETHROW_NESTED2
 
 #include <soci/sqlite3/soci-sqlite3.h>
-#ifdef ENABLE_POSTGRESQL
 #include <soci/postgresql/soci-postgresql.h>
-#endif
 #include <filesystem>
 #include <stdexcept> // For std::runtime_error
+#include <memory>    // For std::make_unique
 
 using namespace std;
+
+// --- Public API ---
+
+/**
+ * @brief Constructs the PaymentDB.
+ */
+PaymentDB::PaymentDB(MachinePayApp& app, DbType type, const std::string& connectionInfo)
+    : app_(app),
+      dbType_(type)
+{
+    // Define the size of the connection pool
+    const int POOL_SIZE = 8;
+
+    try {
+        if (dbType_ == DbType::SQLite) {
+            // For SQLite, connectionInfo is the data directory.
+            std::filesystem::create_directories(connectionInfo); // idempotent
+            connectionString_ = connectionInfo + "/machinepay.db";
+        } else {
+            // For PostgreSQL, connectionInfo is the full connection string.
+            connectionString_ = connectionInfo;
+        }
+
+        // --- Connection Pool Setup ---
+        // 1. Get the correct backend
+        soci::backend_factory const& backend = getBackend(dbType_);
+
+        // 2. Create the pool with the correct 1-argument constructor
+        pool_ = std::make_unique<soci::connection_pool>(POOL_SIZE);
+
+        // 3. Initialize all connections in the pool using .open()
+        for (std::size_t i = 0; i < POOL_SIZE; ++i) {
+            soci::session& sess = pool_->at(i);
+            sess.open(backend, connectionString_);
+        }
+        // --- End Pool Setup ---
+
+        // Ensure the schema is ready on initialization
+        // This will lease one of the new connections
+        ensureSchema();
+    } catch(...) {
+        RETHROW_NESTED2("Failed to initialize PaymentDB");
+    }
+}
+
+/**
+ * @brief Writes a payment record to the database.
+ */
+void PaymentDB::writePayment(
+    const std::string& fromAddress, // Renamed from 'from'
+    const std::string& toAddress,   // Renamed from 'to'
+    const std::string& value,
+    const std::string& nonce,
+    const std::string& resourceHash,
+    uint64_t timestamp,
+    const std::string& transactionHash,
+    const std::string& jsonInfo)
+{
+    try {
+        // Lease a session from the pool.
+        // The connection is automatically returned when 'sql' goes out of scope.
+        soci::session sql(*pool_);
+
+        // Renamed columns 'fromAddress' and 'toAddress' (no quotes needed)
+        // Renamed SOCI parameters ':fromAddress' and ':toAddress'
+        sql << "INSERT INTO payments (fromAddress, toAddress, value, nonce, hash, timestamp, transactionHash, jsonInfo) "
+               "VALUES (:fromAddress, :toAddress, :value, :nonce, :hash, :timestamp, :transactionHash, :jsonInfo)",
+            soci::use(fromAddress),   // Renamed variable
+            soci::use(toAddress),     // Renamed variable
+            soci::use(value),
+            soci::use(nonce),
+            soci::use(resourceHash),
+            // SOCI can handle uint64_t directly.
+            soci::use(timestamp),
+            soci::use(transactionHash),
+            soci::use(jsonInfo);
+    } catch(...) {
+        RETHROW_NESTED2("Failed to write payment");
+    }
+}
+
+
+// --- Private Helpers ---
 
 /**
  * @brief Gets the appropriate SOCI backend factory based on the DbType.
@@ -32,52 +114,19 @@ soci::backend_factory const& PaymentDB::getBackend(DbType type) {
 }
 
 /**
- * @brief Constructs the PaymentDB.
- */
-PaymentDB::PaymentDB(MachinePayApp& app, DbType type, const std::string& connectionInfo)
-    : app_(app),
-      dbType_(type),
-      backend_(getBackend(type))
-{
-    try {
-        if (dbType_ == DbType::SQLite) {
-            // For SQLite, connectionInfo is the data directory.
-            // We create it and append the standard database filename.
-            std::filesystem::create_directories(connectionInfo); // idempotent
-            connectionString_ = connectionInfo + "/machinepay.db";
-        } else {
-            // For PostgreSQL, connectionInfo is the full connection string.
-            connectionString_ = connectionInfo;
-        }
-
-        // Ensure the schema is ready on initialization
-        ensureSchema();
-    } catch(...) {
-        RETHROW_NESTED2("Failed to initialize PaymentDB");
-    }
-}
-
-/**
- * @brief Creates and returns a new SOCI session.
- */
-soci::session PaymentDB::getSession() {
-    // This now uses the stored backend and connection string
-    return soci::session(backend_, connectionString_);
-}
-
-/**
  * @brief Ensures the database schema (tables and indices) exists.
  */
 void PaymentDB::ensureSchema() {
     try {
-        soci::session sql = getSession();
+        // Lease a session from the pool.
+        soci::session sql(*pool_);
 
         // Use conditional DDL for backend-specific syntax
         if (dbType_ == DbType::SQLite) {
             sql << "CREATE TABLE IF NOT EXISTS payments ("
                    "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                   "\"from\" TEXT NOT NULL," // Quoted for safety (SQL keyword)
-                   "\"to\" TEXT NOT NULL,"   // Quoted for safety (SQL keyword)
+                   "fromAddress TEXT NOT NULL," // Renamed from 'from'
+                   "toAddress TEXT NOT NULL,"   // Renamed from 'to'
                    "value TEXT NOT NULL,"
                    "nonce TEXT NOT NULL,"
                    "hash TEXT NOT NULL,"
@@ -87,8 +136,8 @@ void PaymentDB::ensureSchema() {
         } else if (dbType_ == DbType::PostgreSQL) {
             sql << "CREATE TABLE IF NOT EXISTS payments ("
                    "id SERIAL PRIMARY KEY," // PostgreSQL uses SERIAL
-                   "\"from\" TEXT NOT NULL,"
-                   "\"to\" TEXT NOT NULL,"
+                   "fromAddress TEXT NOT NULL," // Renamed from 'from'
+                   "toAddress TEXT NOT NULL,"   // Renamed from 'to'
                    "value TEXT NOT NULL,"
                    "nonce TEXT NOT NULL,"
                    "hash TEXT NOT NULL,"
@@ -97,8 +146,10 @@ void PaymentDB::ensureSchema() {
                    "jsonInfo TEXT)";
         }
 
-        // Index creation syntax is compatible across both backends
-        sql << "CREATE INDEX IF NOT EXISTS idx_payments_hash ON payments(hash)";
+        // Index creation
+        // Use a UNIQUE index on 'hash' for data integrity
+        sql << "CREATE UNIQUE INDEX IF NOT EXISTS idx_payments_hash ON payments(hash)";
+        // Standard indices for common lookups
         sql << "CREATE INDEX IF NOT EXISTS idx_payments_txhash ON payments(transactionHash)";
         sql << "CREATE INDEX IF NOT EXISTS idx_payments_nonce ON payments(nonce)";
     } catch(...) {
@@ -106,35 +157,3 @@ void PaymentDB::ensureSchema() {
     }
 }
 
-/**
- * @brief Writes a payment record to the database.
- */
-void PaymentDB::writePayment(
-    const std::string& from,
-    const std::string& to,
-    const std::string& value,
-    const std::string& nonce,
-    const std::string& resourceHash,
-    uint64_t timestamp,
-    const std::string& transactionHash,
-    const std::string& jsonInfo)
-{
-    try {
-        soci::session sql = getSession();
-
-        // The INSERT statement is standard SQL.
-        // Quoted "from" and "to" to avoid conflicts with SQL keywords.
-        sql << "INSERT INTO payments (\"from\", \"to\", value, nonce, hash, timestamp, transactionHash, jsonInfo) "
-               "VALUES (:from, :to, :value, :nonce, :hash, :timestamp, :transactionHash, :jsonInfo)",
-            soci::use(from),
-            soci::use(to),
-            soci::use(value),
-            soci::use(nonce),
-            soci::use(resourceHash),
-            soci::use(timestamp), // SOCI handles uint64_t -> INTEGER/BIGINT
-            soci::use(transactionHash),
-            soci::use(jsonInfo);
-    } catch(...) {
-        RETHROW_NESTED2("Failed to write payment");
-    }
-}
