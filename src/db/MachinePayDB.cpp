@@ -118,9 +118,8 @@ void MachinePayDB::writePayment(const PaymentRecord &record) {
 
         // Insert into the database
         sql <<
-                "INSERT INTO payments (fromAddress, toAddress, value, nonce, hash, timestamp, authorizationHash, jsonInfo) "
-                "VALUES (:fromAddress, :toAddress, :value, :nonce, :hash, :timestamp, :authorizationHash, :transactionHash, :jsonInfo)"
-                ,
+          "INSERT INTO payments (fromAddress, toAddress, value, nonce, resourceHash, timestamp, authorizationHash, transactionHash, jsonInfo) "
+          "VALUES (:fromAddress, :toAddress, :value, :nonce, :resourceHash, :timestamp, :authorizationHash, :transactionHash, :jsonInfo)",
                 soci::use(fromAddress),
                 soci::use(toAddress),
                 soci::use(value),
@@ -194,7 +193,7 @@ void MachinePayDB::ensureSchema() {
                     "toAddress TEXT NOT NULL," // Renamed from 'to'
                     "value TEXT NOT NULL,"
                     "nonce TEXT NOT NULL,"
-                    "hash TEXT NOT NULL,"
+                    "resourceHash TEXT NOT NULL,"
                     "timestamp INTEGER NOT NULL," // SQLite's INTEGER handles 64-bit
                     "authorizationHash  TEXT NOT NULL,"
                     "transactionHash  TEXT NOT NULL,"
@@ -206,7 +205,7 @@ void MachinePayDB::ensureSchema() {
                     "toAddress TEXT NOT NULL," // Renamed from 'to'
                     "value TEXT NOT NULL,"
                     "nonce TEXT NOT NULL,"
-                    "hash TEXT NOT NULL,"
+                    "resourceHash TEXT NOT NULL,"
                     "timestamp BIGINT NOT NULL," // PostgreSQL uses BIGINT for 64-bit
                     "transactionHash  TEXT NOT NULL,"
                     "authorizationHash  TEXT NOT NULL,"
@@ -215,9 +214,9 @@ void MachinePayDB::ensureSchema() {
 
         // Index creation
         // Use a UNIQUE index on 'hash' for data integrity
-        sql << "CREATE UNIQUE INDEX IF NOT EXISTS idx_payments_hash ON payments(hash)";
-        // Standard indices for common lookups
-        sql << "CREATE INDEX IF NOT EXISTS idx_payments_txhash ON payments(authorizationHash )";
+        sql << "CREATE UNIQUE INDEX IF NOT EXISTS idx_payments_reshash ON payments(resourceHash)";
+        sql << "CREATE INDEX IF NOT EXISTS idx_payments_authhash ON payments(authorizationHash)";
+        sql << "CREATE INDEX IF NOT EXISTS idx_payments_txhash ON payments(transactionHash)";
         sql << "CREATE INDEX IF NOT EXISTS idx_payments_nonce ON payments(nonce)";
 
         // --- Step 4: Log based on our check ---
