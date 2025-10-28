@@ -62,6 +62,10 @@ private:
     MachinePayApp& app_;
     DbType dbType_;
     std::string connectionString_;
+
+    [[nodiscard]] std::unique_ptr<soci::connection_pool>& pool();
+
+private:
     ptr<spdlog::logger> logger_;
 
     /**

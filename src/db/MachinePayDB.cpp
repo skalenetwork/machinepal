@@ -76,7 +76,7 @@ MachinePayDB::MachinePayDB(MachinePayApp &app, DbType type, const std::optional<
     try {
         logger_ = spdlog::get("machinepay.db");
         if (!logger_) {
-            logger_ = spdlog::stderr_logger_mt("machinepay.db");
+            logger_ = spdlog::stderr_logger_st("machinepay.db");
         }
         CHECK_STATE(logger_);
 
@@ -85,7 +85,7 @@ MachinePayDB::MachinePayDB(MachinePayApp &app, DbType type, const std::optional<
             auto dataDir = app_.configPath() / "data";
             std::filesystem::create_directories(dataDir);
             connectionString_ = (dataDir / "machinepay.db").string();
-      } else {
+        } else {
             CHECK_STATE(connectionInfo);
             connectionString_ = connectionInfo.value();
         }
@@ -130,26 +130,25 @@ void MachinePayDB::writePayment(const PaymentRecord &record) {
                 :timestamp, :authorizationHash, :transactionHash, :jsonInfo
             )
         )",
-        soci::use(fromAddress, "fromAddress"),
-        soci::use(toAddress, "toAddress"),
-        soci::use(value, "value"),
-        soci::use(nonce, "nonce"),
-        soci::use(resourceHash, "resourceHash"),
-        soci::use(timestamp, "timestamp"),
-        soci::use(authorizationHash, "authorizationHash"),
-        soci::use(transactionHash, "transactionHash"),
-        soci::use(jsonInfo, "jsonInfo");
+                soci::use(fromAddress, "fromAddress"),
+                soci::use(toAddress, "toAddress"),
+                soci::use(value, "value"),
+                soci::use(nonce, "nonce"),
+                soci::use(resourceHash, "resourceHash"),
+                soci::use(timestamp, "timestamp"),
+                soci::use(authorizationHash, "authorizationHash"),
+                soci::use(transactionHash, "transactionHash"),
+                soci::use(jsonInfo, "jsonInfo");
     } catch (...) {
         RETHROW_NESTED2("Failed to write payment");
     }
 }
 
 
-
 // --- Private Helpers ---
 
 /**
- * @brief Gets the app`ropriate SOCI backend factory based on the DbType.
+ * @brief Gets the appropriate SOCI backend factory based on the DbType.
  */
 soci::backend_factory const &MachinePayDB::getBackend(DbType type) {
     switch (type) {
@@ -174,7 +173,7 @@ soci::backend_factory const &MachinePayDB::getBackend(DbType type) {
 void MachinePayDB::ensureSchema() {
     try {
         // Lease a session from the pool.
-        soci::session sql(*pool_);
+        soci::session sql(*pool());
 
         // check if table exists
 
@@ -191,7 +190,7 @@ void MachinePayDB::ensureSchema() {
             soci::indicator ind;
             // to_regclass('payments') returns NULL if the table does not exist.
             // soci will set the indicator to i_null in that case.
-            sql << "SELECT to_regclass('payments')", soci::into(tableName, ind);
+            sql << "SELECT to_regclass('public.payments')", soci::into(tableName, ind);
             tableExisted = (ind != soci::i_null);
         }
 
@@ -218,13 +217,12 @@ void MachinePayDB::ensureSchema() {
                     "nonce TEXT NOT NULL,"
                     "resourceHash TEXT NOT NULL,"
                     "timestamp BIGINT NOT NULL," // PostgreSQL uses BIGINT for 64-bit
-                    "transactionHash  TEXT NOT NULL,"
                     "authorizationHash  TEXT NOT NULL,"
+                    "transactionHash  TEXT NOT NULL,"
                     "jsonInfo TEXT)";
         }
 
-        // Index creation
-        // Use a UNIQUE index on 'hash' for data integrity
+
         sql << "CREATE UNIQUE INDEX IF NOT EXISTS idx_payments_reshash ON payments(resourceHash)";
         sql << "CREATE INDEX IF NOT EXISTS idx_payments_authhash ON payments(authorizationHash)";
         sql << "CREATE INDEX IF NOT EXISTS idx_payments_txhash ON payments(transactionHash)";
@@ -232,11 +230,16 @@ void MachinePayDB::ensureSchema() {
 
         // --- Step 4: Log based on our check ---
         if (!tableExisted) {
-            logger_->info("Machinepay.db: new 'payments' table created and schema initialized.");
+            logger_->info("New 'payments' table created and schema initialized.");
         } else {
-            logger_->info("Machinepay.db: database schema verified, 'payments' table already exists.");
+            logger_->info("Database schema verified, 'payments' table already exists.");
         }
     } catch (...) {
         RETHROW_NESTED2("Failed to ensure schema");
     }
+}
+
+[[nodiscard]] std::unique_ptr<soci::connection_pool>& MachinePayDB::pool() {
+    CHECK_STATE(pool_);
+    return pool_;
 }
