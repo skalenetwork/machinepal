@@ -5,7 +5,7 @@ set(CMAKE_C_COMPILER_LAUNCHER ccache)
 set(CMAKE_CXX_COMPILER_LAUNCHER ccache)
 
 SET(SECP256K1_ENABLE_MODULE_RECOVERY ON)
-foreach(submod json-schema-validator yaml-cpp secp256k1)
+foreach(submod json-schema-validator yaml-cpp secp256k1 soci)
     add_subdirectory(external/${submod})
 endforeach()
 
