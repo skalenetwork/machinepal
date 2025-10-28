@@ -18,60 +18,30 @@ class PaymentRecord {
     EIP3009Nonce nonce_;
     Hash resourceHash_;
     uint64_t timestamp_;
-    Hash transactionHash_;
+    Hash authorizationHash_;
     std::string jsonInfo_;
 
 public:
-    [[nodiscard]] EthAddress fromAddress() const {
-        return fromAddress_;
-    }
+    [[nodiscard]] EthAddress fromAddress() const;
 
-    [[nodiscard]] EthAddress toAddress() const {
-        return toAddress_;
-    }
+    [[nodiscard]] EthAddress toAddress() const;
 
-    [[nodiscard]] EIP3009Value value() const {
-        return value_;
-    }
+    [[nodiscard]] EIP3009Value value() const;
 
-    [[nodiscard]] EIP3009Nonce nonce() const {
-        return nonce_;
-    }
+    [[nodiscard]] EIP3009Nonce nonce() const;
 
-    [[nodiscard]] Hash resourceHash() const {
-        return resourceHash_;
-    }
+    [[nodiscard]] Hash resourceHash() const;
 
-    [[nodiscard]] uint64_t timestamp() const {
-        return timestamp_;
-    }
+    [[nodiscard]] uint64_t timestamp() const;
 
-    [[nodiscard]] Hash transactionHash() const {
-        return transactionHash_;
-    }
+    [[nodiscard]] Hash authorizationHash() const;
 
-    [[nodiscard]] std::string jsonInfo() const {
-        return jsonInfo_;
-    }
+    [[nodiscard]] std::string jsonInfo() const;
 
 
-    PaymentRecord(const EthAddress &fromAddress,
-                  const EthAddress &toAddress,
-                  const EIP3009Value &value,
-                  const EIP3009Nonce &nonce,
-                  const Hash &resourceHash,
-                  uint64_t timestamp,
-                  const Hash &transactionHash,
-                  const std::string &jsonInfo)
-        : fromAddress_(fromAddress.toChecksumHex()),
-          toAddress_(toAddress.toChecksumHex()),
-          value_(value),
-          nonce_(nonce),
-          resourceHash_(resourceHash),
-          timestamp_(timestamp),
-          transactionHash_(transactionHash),
-          jsonInfo_(jsonInfo) {
-    }
+    PaymentRecord(const EthAddress &fromAddress, const EthAddress &toAddress, const EIP3009Value &value,
+                  const EIP3009Nonce &nonce, const Hash &resourceHash, uint64_t timestamp,
+                  const Hash &authorizationHash, const std::string &jsonInfo);
 
     static ptr<PaymentRecord> deserializeFromDbRow(const soci::row &row);
 };

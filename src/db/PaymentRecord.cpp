@@ -12,9 +12,58 @@ ptr<PaymentRecord> PaymentRecord::deserializeFromDbRow(const soci::row& row) {
     EIP3009Value value = EIP3009Value::fromHexOrDecimal(row.get<std::string>("value"));
     EIP3009Nonce nonce = EIP3009Nonce::fromHex(row.get<std::string>("nonce"));
     Hash resourceHash = Encoding::fromHexToHash(row.get<std::string>("hash"));
-    Hash transactionHash = Encoding::fromHexToHash(row.get<std::string>("transactionHash"));
+    Hash authorizationHash = Encoding::fromHexToHash(row.get<std::string>("authorizationHash"));
     auto timestamp = row.get<uint64_t>("timestamp");
     auto jsonInfo = row.get<std::string>("jsonInfo");
     return make_shared<PaymentRecord>(fromAddress, toAddress, value, nonce, resourceHash, timestamp,
-        transactionHash, jsonInfo);
+        authorizationHash, jsonInfo);
 }
+
+EthAddress PaymentRecord::fromAddress() const {
+    return fromAddress_;
+}
+
+EthAddress PaymentRecord::toAddress() const {
+    return toAddress_;
+}
+
+EIP3009Value PaymentRecord::value() const {
+    return value_;
+}
+
+EIP3009Nonce PaymentRecord::nonce() const {
+    return nonce_;
+}
+
+Hash PaymentRecord::resourceHash() const {
+    return resourceHash_;
+}
+
+uint64_t PaymentRecord::timestamp() const {
+    return timestamp_;
+}
+
+Hash PaymentRecord::authorizationHash() const {
+    return authorizationHash_;
+}
+
+std::string PaymentRecord::jsonInfo() const {
+    return jsonInfo_;
+}
+
+PaymentRecord::PaymentRecord(const EthAddress &fromAddress,
+                  const EthAddress &toAddress,
+                  const EIP3009Value &value,
+                  const EIP3009Nonce &nonce,
+                  const Hash &resourceHash,
+                  uint64_t timestamp,
+                  const Hash &authorizationHash,
+                  const std::string &jsonInfo)
+    : fromAddress_(fromAddress),
+      toAddress_(toAddress),
+      value_(value),
+      nonce_(nonce),
+      resourceHash_(resourceHash),
+      timestamp_(timestamp),
+      authorizationHash_(authorizationHash),
+      jsonInfo_(jsonInfo) {}

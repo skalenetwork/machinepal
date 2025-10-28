@@ -13,26 +13,27 @@
 using namespace std;
 
 
+void MachinePayDB::checkSqlLiteFileOnDisk() {
+    if (std::filesystem::exists(connectionString_)) {
+        if (std::filesystem::is_directory(connectionString_)) {
+            throw std::runtime_error("SQLite database path is a directory, not a file: " + connectionString_);
+        }
+        std::fstream file(connectionString_, std::ios::in | std::ios::out);
+        if (!file.is_open()) {
+            throw std::runtime_error(
+                "Permissions problem: cannot open SQLite database file for read/write: " +
+                connectionString_);
+        }
+        file.close();
+    } else {
+        spdlog::info("SQLite database file does not exist at {}, it will be created.", connectionString_);
+    }
+}
+
 void MachinePayDB::verifyDatabaseConnectivity() {
     try {
         if (dbType_ == DbType::SQLite) {
-            if (!std::filesystem::exists(connectionString_)) {
-                spdlog::info("SQLite database file does not exist at {}, it will be created.", connectionString_);
-                return;
-            }
-            if (std::filesystem::is_directory(connectionString_)) {
-                throw std::runtime_error("SQLite database path is a directory, not a file: " + connectionString_);
-            }
-
-            // Try to open the file for read/write to check permissions
-            {
-                std::fstream file(connectionString_, std::ios::in | std::ios::out);
-                if (!file.is_open()) {
-                    throw std::runtime_error(
-                        "Permissions problem: cannot open SQLite database file for read/write: " + connectionString_);
-                }
-                file.close();
-            }
+            checkSqlLiteFileOnDisk();
         }
         soci::backend_factory const &backendTest = getBackend(dbType_);
         soci::session testSess(backendTest, connectionString_);
@@ -53,21 +54,32 @@ void MachinePayDB::verifyDatabaseConnectivity() {
     logger_->info("Database connectivity verified successfully. Using {}.", backendName);
 }
 
+void MachinePayDB::configureDBParamsAndPool() {
+    const int POOL_SIZE = 8;
+    soci::backend_factory const &backend = getBackend(dbType_);
+    pool_ = std::make_unique<soci::connection_pool>(POOL_SIZE);
+    for (std::size_t i = 0; i < POOL_SIZE; ++i) {
+        soci::session &sess = pool_->at(i);
+        sess.open(backend, connectionString_);
+        if (dbType_ == DbType::SQLite) {
+            sess << "PRAGMA journal_mode=WAL"; // apply to every pooled connection
+        }
+    }
+}
+
 /**
  * @brief Constructs the PaymentDB.
  */
 MachinePayDB::MachinePayDB(MachinePayApp &app, DbType type, const std::optional<std::string> &connectionInfo)
     : app_(app),
       dbType_(type) {
-
-    logger_ = spdlog::get("machinepay.db");
-    if (!logger_) {
-        logger_ = spdlog::stderr_logger_mt("machinepay.db");
-    }
-    CHECK_STATE(logger_);
-
-    const int POOL_SIZE = 8;
     try {
+        logger_ = spdlog::get("machinepay.db");
+        if (!logger_) {
+            logger_ = spdlog::stderr_logger_mt("machinepay.db");
+        }
+        CHECK_STATE(logger_);
+
         if (dbType_ == DbType::SQLite) {
             // Ensure config directory exists, then build DB file path
             auto dataDir = app_.configPath().append("data");
@@ -78,19 +90,8 @@ MachinePayDB::MachinePayDB(MachinePayApp &app, DbType type, const std::optional<
             connectionString_ = connectionInfo.value();
         }
 
-
         verifyDatabaseConnectivity();
-
-
-        soci::backend_factory const &backend = getBackend(dbType_);
-        pool_ = std::make_unique<soci::connection_pool>(POOL_SIZE);
-        for (std::size_t i = 0; i < POOL_SIZE; ++i) {
-            soci::session &sess = pool_->at(i);
-            sess.open(backend, connectionString_);
-            if (dbType_ == DbType::SQLite) {
-                sess << "PRAGMA journal_mode=WAL"; // apply to every pooled connection
-            }
-        }
+        configureDBParamsAndPool();
         ensureSchema();
     } catch (...) {
         RETHROW_NESTED2("Failed to initialize PaymentDB");
@@ -100,7 +101,7 @@ MachinePayDB::MachinePayDB(MachinePayApp &app, DbType type, const std::optional<
 /**
  * @brief Writes a payment record to the database.
  */
-void MachinePayDB::writePayment(const PaymentRecord& record) {
+void MachinePayDB::writePayment(const PaymentRecord &record) {
     try {
         soci::session sql(*pool_);
 
@@ -111,21 +112,21 @@ void MachinePayDB::writePayment(const PaymentRecord& record) {
         std::string nonce = record.nonce().toHex();
         std::string resourceHash = Encoding::hashToHex(record.resourceHash());
         uint64_t timestamp = record.timestamp();
-        std::string transactionHash = Encoding::hashToHex(record.transactionHash());
+        std::string authorizationHash = Encoding::hashToHex(record.authorizationHash());
         std::string jsonInfo = record.jsonInfo();
 
         // Insert into the database
         sql <<
-            "INSERT INTO payments (fromAddress, toAddress, value, nonce, hash, timestamp, transactionHash, jsonInfo) "
-            "VALUES (:fromAddress, :toAddress, :value, :nonce, :hash, :timestamp, :transactionHash, :jsonInfo)",
-            soci::use(fromAddress),
-            soci::use(toAddress),
-            soci::use(value),
-            soci::use(nonce),
-            soci::use(resourceHash),
-            soci::use(timestamp),
-            soci::use(transactionHash),
-            soci::use(jsonInfo);
+                "INSERT INTO payments (fromAddress, toAddress, value, nonce, hash, timestamp, authorizationHash, jsonInfo) "
+                "VALUES (:fromAddress, :toAddress, :value, :nonce, :hash, :timestamp, :authorizationHash, :jsonInfo)",
+                soci::use(fromAddress),
+                soci::use(toAddress),
+                soci::use(value),
+                soci::use(nonce),
+                soci::use(resourceHash),
+                soci::use(timestamp),
+                soci::use(authorizationHash),
+                soci::use(jsonInfo);
     } catch (...) {
         RETHROW_NESTED2("Failed to write payment");
     }
@@ -192,7 +193,7 @@ void MachinePayDB::ensureSchema() {
                     "nonce TEXT NOT NULL,"
                     "hash TEXT NOT NULL,"
                     "timestamp INTEGER NOT NULL," // SQLite's INTEGER handles 64-bit
-                    "transactionHash TEXT NOT NULL,"
+                    "authorizationHash  TEXT NOT NULL,"
                     "jsonInfo TEXT)";
         } else if (dbType_ == DbType::PostgreSQL) {
             sql << "CREATE TABLE IF NOT EXISTS payments ("
@@ -203,7 +204,7 @@ void MachinePayDB::ensureSchema() {
                     "nonce TEXT NOT NULL,"
                     "hash TEXT NOT NULL,"
                     "timestamp BIGINT NOT NULL," // PostgreSQL uses BIGINT for 64-bit
-                    "transactionHash TEXT NOT NULL,"
+                    "authorizationHash  TEXT NOT NULL,"
                     "jsonInfo TEXT)";
         }
 
@@ -211,7 +212,7 @@ void MachinePayDB::ensureSchema() {
         // Use a UNIQUE index on 'hash' for data integrity
         sql << "CREATE UNIQUE INDEX IF NOT EXISTS idx_payments_hash ON payments(hash)";
         // Standard indices for common lookups
-        sql << "CREATE INDEX IF NOT EXISTS idx_payments_txhash ON payments(transactionHash)";
+        sql << "CREATE INDEX IF NOT EXISTS idx_payments_txhash ON payments(authorizationHash )";
         sql << "CREATE INDEX IF NOT EXISTS idx_payments_nonce ON payments(nonce)";
 
         // --- Step 4: Log based on our check ---

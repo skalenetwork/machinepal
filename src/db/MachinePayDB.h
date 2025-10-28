@@ -33,13 +33,19 @@ public:
 
     MachinePayDB(MachinePayApp& app, DbType type, const std::optional<std::string>& connectionInfo = std::nullopt);
 
+    void checkSqlLiteFileOnDisk();
+
     void verifyDatabaseConnectivity();
+
+    void configureDBParamsAndPool();
 
     /**
      * @brief Writes a payment record to the database.
      * This method is thread-safe.
      */
     void writePayment(const PaymentRecord& record);
+
+    ptr<PaymentRecord> getPaymentByResourceHash(const Hash& resourceHash);
 
 private:
     /**
