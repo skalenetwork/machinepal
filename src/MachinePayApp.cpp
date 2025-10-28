@@ -3,11 +3,19 @@
 #include <csignal>
 #include <atomic>
 
+#include "db/MachinePayDB.h"
+
 MachinePayApp::MachinePayApp(const std::map<std::string, std::string>& configValuesFromCliAndEnv) {
+    try {
     spdlog::info("Looking for config");
     configManager_  = ConfigManager::initManager(configValuesFromCliAndEnv);
+    configPath_ = configManager_->fileManager()->canonicalConfigDirPath();
     Init::initLogLevelFromConfig(configManager());
     paymentManager_ = std::make_shared<PaymentManager>(*this);
+    machinePayDB_ = std::make_shared<MachinePayDB>(*this, DbType::SQLite);
+    } catch (...) {
+        RETHROW_NESTED2("Failed to initialize MachinePayApp");
+    }
 }
 
 

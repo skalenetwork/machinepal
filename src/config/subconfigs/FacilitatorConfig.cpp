@@ -7,16 +7,16 @@
 
 
 
-FacilitatorConfig::FacilitatorConfig(const FacilitatorType type,
-                                     const std::string& baseUrl,
-                                     const std::optional<CanonicalPath>& apiKeyFile)
-    : type_(type), baseUrl_(baseUrl), apiKeyFile_(apiKeyFile) {}
+FacilitatorConfig::FacilitatorConfig(FacilitatorType type,
+                                     std::string baseUrl,
+                                     std::optional<CanonicalPath> apiKeyFile)
+    : type_(type), baseUrl_(std::move(baseUrl)), apiKeyFile_(std::move(apiKeyFile)) {}
 
-const FacilitatorType FacilitatorConfig::type() const { return type_; }
+FacilitatorType FacilitatorConfig::type() const { return type_; }
 const std::string& FacilitatorConfig::baseUrl() const { return baseUrl_; }
 const std::optional<CanonicalPath>& FacilitatorConfig::apiKeyFile() const { return apiKeyFile_; }
 
-optional<HttpError> FacilitatorConfig::settlePayment(const shared_ptr<PaymentPayload> paymentPayload,
+optional<HttpError> FacilitatorConfig::settlePayment(const shared_ptr<PaymentPayload>& /*paymentPayload*/,
     std::string &settlementInfo) {
     settlementInfo = URLUtils::base64Encode(std::string(PaymentExamples::EXACT_UCDC_SETTLEMENT_RESPONSE_CB_SEPOLIA));
     return std::nullopt;
@@ -68,4 +68,3 @@ FacilitatorType FacilitatorConfig::mustContainType(const nlohmann::json& j) {
     }
     throw JsonValidationException("Invalid facilitator type: " + typeString, j);
 }
-

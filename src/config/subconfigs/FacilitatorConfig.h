@@ -20,15 +20,15 @@ class FacilitatorConfig {
     std::string baseUrl_;
     std::optional<CanonicalPath> apiKeyFile_;
 
-    FacilitatorConfig(const FacilitatorType,
-                      const std::string& baseUrl,
-                      const std::optional<CanonicalPath>& apiKeyFile = std::nullopt);
+    FacilitatorConfig(FacilitatorType type,
+                      std::string baseUrl,
+                      std::optional<CanonicalPath> apiKeyFile = std::nullopt);
 public:
-    const FacilitatorType type() const;
-    const std::string& baseUrl() const;
-    const std::optional<CanonicalPath>& apiKeyFile() const;
+    [[nodiscard]] FacilitatorType type() const;
+    [[nodiscard]] const std::string& baseUrl() const;
+    [[nodiscard]] const std::optional<CanonicalPath>& apiKeyFile() const;
 
-    optional<HttpError> settlePayment(const shared_ptr<PaymentPayload> paymentPayload, std::string& settlementInfo);
+    optional<HttpError> settlePayment(const shared_ptr<PaymentPayload>& paymentPayload, std::string& settlementInfo);
 
     static ptr<FacilitatorConfig> createFomJson(const nlohmann::json& j, ptr<FileManager> fileManager);
 

@@ -9,10 +9,11 @@
 #include "payment/PaymentManager.h"
 
 
+class MachinePayDB;
 
 class MachinePayApp {
-public:
-    [[nodiscard]] ptr<ConfigManager> configManager() const {
+    public:
+        [[nodiscard]] ptr<ConfigManager> configManager() const {
         CHECK_STATE(configManager_);
         return configManager_;
     }
@@ -98,6 +99,10 @@ public:
     }
 
 
+    [[nodiscard]] std::filesystem::path configPath() const {
+        return configPath_;
+    }
+
 
 private:
 
@@ -109,14 +114,16 @@ private:
     ptr<PaymentManager> paymentManager_;
     std::atomic<bool> isStarted_{false};
     std::atomic<bool> serverStopCalled_{false};
+    ptr<MachinePayDB> machinePayDB_;
 
 
     bool isExited_ {false};
     uint32_t exitCode_{0};
     string exitErrorMessage_;
 
-    std::mutex exitMutex;
 
+    std::mutex exitMutex;
+    std::filesystem::path configPath_;
 
 
 };

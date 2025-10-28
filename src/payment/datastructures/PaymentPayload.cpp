@@ -109,7 +109,7 @@ std::optional<HttpError> PaymentPayload::validateAndVerifySignature(const Machin
 }
 
 std::optional<HttpError> PaymentPayload::verifyEIP3009Signature(const MachinePayConfig &config,
-                                                                const ResourceConfig &resource) const {
+                                                                const ResourceConfig &/*resource*/) const {
     try {
         auto eipDomain = config.network()->eip712Domain();
         return payload()->verifyEIP3009Signature(eipDomain);

@@ -49,7 +49,7 @@ PaymentRequiredResponse PaymentRequiredResponse::fromJson(const json &j) {
         CHECK_STATE_JSON(!paymentRequirementsList.empty(), "Accepts array must not be empty", j);
 
         return PaymentRequiredResponse(paymentRequirementsList, error);
-    } catch (std::exception e) {
+    } catch (const std::exception& e) {
         RETHROW_NESTED;
     }
 }

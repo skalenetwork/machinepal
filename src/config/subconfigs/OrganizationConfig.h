@@ -39,7 +39,7 @@ public:
 
     static ptr<OrganizationConfig> createDefaultFromResources(ptr<vector<ptr<ResourceConfig> > > resources);
 
-    ptr<ResourceConfig> getResourceByPath(const std::string& path, proxygen::HTTPMethod method, const std::string& body) const {
+    ptr<ResourceConfig> getResourceByPath(const std::string& path, proxygen::HTTPMethod , const std::string& ) const {
         CHECK_STATE(resources_);
         string matchString;
         // ignore last backslash for matching

@@ -25,7 +25,7 @@
 #include <openssl/bn.h>
 #include <string>
 
-static std::string trimCopy(const std::string &in) {
+[[maybe_unused]] static std::string trimCopy(const std::string &in) {
     size_t start = 0;
     while (start < in.size() && std::isspace(static_cast<unsigned char>(in[start]))) ++start;
     size_t end = in.size();
@@ -172,7 +172,6 @@ EthPrivateKey EthPrivateKey::generate() {
     BN_bn2binpad(x, pubBytes.data(), 32);
     BN_bn2binpad(y, pubBytes.data() + 32, 32);
 
-    auto hash = keccak::keccak256(std::span<const uint8_t>(pubBytes.data(), 64));
     EthPrivateKey privateKey(privBytes);
     return privateKey;
 }

@@ -65,13 +65,13 @@ inline std::string stripSpaces(std::string _s) {
 }
 
 inline void printNestedException(const std::exception& e, int level = 0) {
-    spdlog::error("{}Exception: {}", std::string(level, ' '), e.what());
+    spdlog::error("{}Exception: {}", std::string(level, '*'), e.what());
     try {
         std::rethrow_if_nested(e);
     } catch (const std::exception& nested) {
         printNestedException(nested, level + 2);
     } catch (...) {
-        spdlog::error("{}Non-std::exception nested", std::string(level + 2, ' '));
+        spdlog::error("{}Non-std::exception nested", std::string(level + 2, '*'));
     }
 }
 

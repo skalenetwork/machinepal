@@ -7,6 +7,8 @@ if(ENABLE_POSTGRESQL)
     set(WITH_POSTGRESQL ON CACHE BOOL "Build SOCI PostgreSQL backend" FORCE)
 endif()
 
+
+
 set(CMAKE_C_COMPILER_LAUNCHER ccache)
 set(CMAKE_CXX_COMPILER_LAUNCHER ccache)
 
@@ -137,6 +139,18 @@ if(BUILD_TESTING)
 
     add_test(NAME mptest COMMAND mptest)
 endif()
+
+function(enable_warnings target)
+    target_compile_options(${target} PRIVATE
+            -Wall
+            -Wextra
+            -Wconversion-null
+            -Wnull-dereference
+    )
+endfunction()
+
+enable_warnings(machinepay)
+enable_warnings(mptest)
 
 # ---- CPack/DEB packaging ----
 set(CPACK_GENERATOR "DEB")

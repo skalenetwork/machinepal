@@ -1,11 +1,13 @@
-#include "PaymentDB.h"
-#include "MachinePayCommon.h" // Assumed to provide RETHROW_NESTED2
 
+#include "MachinePayCommon.h"
+#include "MachinePayDB.h"
 #include <soci/sqlite3/soci-sqlite3.h>
 #include <soci/postgresql/soci-postgresql.h>
 #include <filesystem>
 #include <stdexcept> // For std::runtime_error
 #include <memory>    // For std::make_unique
+
+#include "MachinePayApp.h"
 
 using namespace std;
 
@@ -14,21 +16,24 @@ using namespace std;
 /**
  * @brief Constructs the PaymentDB.
  */
-PaymentDB::PaymentDB(MachinePayApp& app, DbType type, const std::string& connectionInfo)
+MachinePayDB::MachinePayDB(MachinePayApp& app, DbType type, const std::optional<std::string>& connectionInfo)
     : app_(app),
       dbType_(type)
 {
+
     // Define the size of the connection pool
     const int POOL_SIZE = 8;
 
     try {
         if (dbType_ == DbType::SQLite) {
             // For SQLite, connectionInfo is the data directory.
-            std::filesystem::create_directories(connectionInfo); // idempotent
-            connectionString_ = connectionInfo + "/machinepay.db";
+            connectionString_ = app_.configPath().append("machinepay.db").string();
+            std::filesystem::create_directories(connectionString_); // idempotent
+
         } else {
             // For PostgreSQL, connectionInfo is the full connection string.
-            connectionString_ = connectionInfo;
+            CHECK_STATE(connectionInfo)
+            connectionString_ = connectionInfo.value();
         }
 
         // --- Connection Pool Setup ---
@@ -56,7 +61,7 @@ PaymentDB::PaymentDB(MachinePayApp& app, DbType type, const std::string& connect
 /**
  * @brief Writes a payment record to the database.
  */
-void PaymentDB::writePayment(
+void MachinePayDB::writePayment(
     const std::string& fromAddress, // Renamed from 'from'
     const std::string& toAddress,   // Renamed from 'to'
     const std::string& value,
@@ -95,7 +100,7 @@ void PaymentDB::writePayment(
 /**
  * @brief Gets the appropriate SOCI backend factory based on the DbType.
  */
-soci::backend_factory const& PaymentDB::getBackend(DbType type) {
+soci::backend_factory const& MachinePayDB::getBackend(DbType type) {
     switch (type) {
         case DbType::SQLite:
             return soci::sqlite3;
@@ -116,7 +121,7 @@ soci::backend_factory const& PaymentDB::getBackend(DbType type) {
 /**
  * @brief Ensures the database schema (tables and indices) exists.
  */
-void PaymentDB::ensureSchema() {
+void MachinePayDB::ensureSchema() {
     try {
         // Lease a session from the pool.
         soci::session sql(*pool_);

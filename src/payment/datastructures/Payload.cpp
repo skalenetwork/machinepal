@@ -70,7 +70,7 @@ std::optional<HttpError> Payload::verifyEIP3009Signature(std::shared_ptr<EIP712D
         authorization()->value(), authorization()->validAfter(), authorization()->validBefore(),
         authorization()->nonce(),
         signature());
-    } catch (std::exception e) {
+    } catch (const std::exception& e) {
         printNestedException(e);
         return HttpError(ErrorType::ERR_INTERNAL_SERVER_ERROR, std::string("Could not validate EIP-3009 sig ")
             + e.what());
