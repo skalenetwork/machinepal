@@ -1,19 +1,21 @@
 
-<h1 align="center">🚀 MachinePay: The Internet's Missing Money Layer</h1>
+🚀 MachinePay: The Internet's Missing Money Layer
 
-<p align="center">
-  Ever wished you could charge a few cents for an API call, a file download, or access to a premium article—without forcing users through clunky sign-up forms and credit card fields?
-</p>
 
-<p align="center">
-  <strong>Your wish is granted.</strong>
-</p>
+Ever wished you could charge a few cents for an API call, a file download, r access to a premium article—without 
+forcing users through clunky sign-up forms and credit card fields?
 
-<p align="center">
-  MachinePay is a <strong>plug-and-play payment gatekeeper</strong> that lets you instantly add crypto-powered micropayments to <em>any</em> website or API using the <a href="https://docs.cdp.coinbase.com/x402/docs/welcome">x402 protocol</a>.
-</p>
 
-<div align="center">
+
+Your wish is granted.
+
+
+MachinePay is a <strong>plug-and-play payment gatekeeper</strong> that lets you instantly add crypto-powered 
+micropayments to <em>any</em> website or API using the 
+<a href="https://docs.cdp.coinbase.com/x402/docs/welcome">x402 protocol</a>.
+
+
+
 
 
 ---
