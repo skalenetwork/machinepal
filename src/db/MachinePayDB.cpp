@@ -82,10 +82,10 @@ MachinePayDB::MachinePayDB(MachinePayApp &app, DbType type, const std::optional<
 
         if (dbType_ == DbType::SQLite) {
             // Ensure config directory exists, then build DB file path
-            auto dataDir = app_.configPath().append("data");
-            std::filesystem::create_directories(dataDir); // idempotent directory creation
-            connectionString_ = dataDir.append("machinepay.db").string();
-        } else {
+            auto dataDir = app_.configPath() / "data";
+            std::filesystem::create_directories(dataDir);
+            connectionString_ = (dataDir / "machinepay.db").string();
+      } else {
             CHECK_STATE(connectionInfo);
             connectionString_ = connectionInfo.value();
         }
@@ -98,6 +98,9 @@ MachinePayDB::MachinePayDB(MachinePayApp &app, DbType type, const std::optional<
     }
 }
 
+/**
+ * @brief Writes a payment record to the database.
+ */
 /**
  * @brief Writes a payment record to the database.
  */
@@ -116,29 +119,37 @@ void MachinePayDB::writePayment(const PaymentRecord &record) {
         std::string transactionHash = Encoding::hashToHex(record.transactionHash());
         std::string jsonInfo = record.jsonInfo();
 
-        // Insert into the database
-        sql <<
-          "INSERT INTO payments (fromAddress, toAddress, value, nonce, resourceHash, timestamp, authorizationHash, transactionHash, jsonInfo) "
-          "VALUES (:fromAddress, :toAddress, :value, :nonce, :resourceHash, :timestamp, :authorizationHash, :transactionHash, :jsonInfo)",
-                soci::use(fromAddress),
-                soci::use(toAddress),
-                soci::use(value),
-                soci::use(nonce),
-                soci::use(resourceHash),
-                soci::use(timestamp),
-                soci::use(authorizationHash),
-                soci::use(transactionHash),
-                soci::use(jsonInfo);
+        // Insert into the database using explicit named bindings for safety and cross-backend consistency
+        sql << R"(
+            INSERT INTO payments (
+                fromAddress, toAddress, value, nonce, resourceHash,
+                timestamp, authorizationHash, transactionHash, jsonInfo
+            )
+            VALUES (
+                :fromAddress, :toAddress, :value, :nonce, :resourceHash,
+                :timestamp, :authorizationHash, :transactionHash, :jsonInfo
+            )
+        )",
+        soci::use(fromAddress, "fromAddress"),
+        soci::use(toAddress, "toAddress"),
+        soci::use(value, "value"),
+        soci::use(nonce, "nonce"),
+        soci::use(resourceHash, "resourceHash"),
+        soci::use(timestamp, "timestamp"),
+        soci::use(authorizationHash, "authorizationHash"),
+        soci::use(transactionHash, "transactionHash"),
+        soci::use(jsonInfo, "jsonInfo");
     } catch (...) {
         RETHROW_NESTED2("Failed to write payment");
     }
 }
 
 
+
 // --- Private Helpers ---
 
 /**
- * @brief Gets the appropriate SOCI backend factory based on the DbType.
+ * @brief Gets the app`ropriate SOCI backend factory based on the DbType.
  */
 soci::backend_factory const &MachinePayDB::getBackend(DbType type) {
     switch (type) {

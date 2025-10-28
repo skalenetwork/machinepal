@@ -11,7 +11,7 @@ ptr<PaymentRecord> PaymentRecord::deserializeFromDbRow(const soci::row &row) {
     EthAddress toAddress = EthAddress::parseHexAddress(row.get<std::string>("toAddress"));
     EIP3009Value value = EIP3009Value::fromHexOrDecimal(row.get<std::string>("value"));
     EIP3009Nonce nonce = EIP3009Nonce::fromHex(row.get<std::string>("nonce"));
-    Hash resourceHash = Encoding::fromHexToHash(row.get<std::string>("hash"));
+    Hash resourceHash = Encoding::fromHexToHash(row.get<std::string>("resourceHash"));
     Hash authorizationHash = Encoding::fromHexToHash(row.get<std::string>("authorizationHash"));
     Hash transactionHash = Encoding::fromHexToHash(row.get<std::string>("transactionHash"));
     auto timestamp = row.get<uint64_t>("timestamp");
