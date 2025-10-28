@@ -27,10 +27,11 @@ public:
         return payToAddressStr_;
     }
 
-
     const ptr<vector<ptr<ResourceConfig> > > &resources() const { return resources_; }
     const std::string &organizationName() const { return organizationName_; }
     const std::string &subdomain() const { return subdomain_; }
+
+    static void validateOrgName(const std::string &name);
 
     static ptr<OrganizationConfig> createFromJson(const nlohmann::json &j, ptr<FileManager> fileManager);
 
