@@ -26,10 +26,13 @@ public:
      * @brief Constructs the PaymentDB and initializes the connection pool.
      * @param app Reference to the main application class.
      * @param type The database backend to use (SQLite or PostgreSQL).
-     * @param connectionInfo For SQLite: the directory path. For PostgreSQL: the full connection string.
+     * @param connectionInfo For PostgreSQL: the full connection string.
      */
 
+
     MachinePayDB(MachinePayApp& app, DbType type, const std::optional<std::string>& connectionInfo = std::nullopt);
+
+    void verifyDatabaseConnectivity();
 
     /**
      * @brief Writes a payment record to the database.
@@ -60,6 +63,7 @@ private:
     MachinePayApp& app_;
     DbType dbType_;
     std::string connectionString_;
+    ptr<spdlog::logger> logger_;
 
     /**
      * @brief Thread-safe connection pool.
