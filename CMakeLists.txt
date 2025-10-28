@@ -1,6 +1,12 @@
 cmake_minimum_required(VERSION 3.16)
 project(machinepay LANGUAGES CXX)
 
+set(WITH_SQLITE3 ON CACHE BOOL "Build SOCI SQLite3 backend" FORCE)
+option(ENABLE_POSTGRESQL "Enable PostgreSQL backend via SOCI" OFF)
+if(ENABLE_POSTGRESQL)
+    set(WITH_POSTGRESQL ON CACHE BOOL "Build SOCI PostgreSQL backend" FORCE)
+endif()
+
 set(CMAKE_C_COMPILER_LAUNCHER ccache)
 set(CMAKE_CXX_COMPILER_LAUNCHER ccache)
 
@@ -43,6 +49,7 @@ foreach(pkg folly Wangle Proxygen CURL CLI11 spdlog)
 endforeach()
 
 
+
 find_package(Boost REQUIRED CONFIG COMPONENTS unit_test_framework system thread url locale multiprecision)
 find_package(OpenSSL REQUIRED)
 find_package(cryptopp CONFIG REQUIRED)
@@ -52,7 +59,7 @@ add_executable(machinepay
         main.cpp
         ${APP_SRC_FILES}
 )
-target_include_directories(machinepay PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_include_directories(machinepay PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/external/soci/include)
 
 
 set (MACHINEPAY_COMMON_LIBS
@@ -75,7 +82,15 @@ set (MACHINEPAY_COMMON_LIBS
         cryptopp::cryptopp
         CLI11::CLI11
         secp256k1
+        soci_core
+        soci_sqlite3
+        soci_postgresql
 )
+
+if(ENABLE_POSTGRESQL)
+    list(APPEND MACHINEPAY_COMMON_LIBS soci_postgresql)
+    target_compile_definitions(machinepay PRIVATE ENABLE_POSTGRESQL)
+endif()
 
 target_link_libraries(machinepay
         PRIVATE
@@ -102,8 +117,7 @@ if(BUILD_TESTING)
     target_include_directories(mptest
             PRIVATE
             ${CMAKE_CURRENT_SOURCE_DIR}/src
-            ${CMAKE_CURRENT_SOURCE_DIR}/tests
-    )
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 
 
     target_link_libraries(mptest
