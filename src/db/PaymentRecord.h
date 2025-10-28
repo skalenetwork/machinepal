@@ -12,6 +12,7 @@ class EthAddress;
  * @brief Represents a payment record.
  */
 class PaymentRecord {
+    std::string organizationName_;
     EthAddress fromAddress_;
     EthAddress toAddress_;
     EIP3009Value value_;
@@ -23,6 +24,9 @@ class PaymentRecord {
     std::string jsonInfo_;
 
 public:
+
+    [[nodiscard]] std::string organizationName() const;
+
     [[nodiscard]] EthAddress fromAddress() const;
 
     [[nodiscard]] EthAddress toAddress() const;
@@ -42,7 +46,9 @@ public:
     [[nodiscard]] std::string jsonInfo() const;
 
 
-    PaymentRecord(const EthAddress &fromAddress, const EthAddress &toAddress, const EIP3009Value &value,
+
+
+    PaymentRecord(const string& organizationName, const EthAddress &fromAddress, const EthAddress &toAddress, const EIP3009Value &value,
                   const EIP3009Nonce &nonce, const Hash &resourceHash, uint64_t timestamp,
                   const Hash &authorizationHash, const Hash &transactionHash, const std::string &jsonInfo);
 

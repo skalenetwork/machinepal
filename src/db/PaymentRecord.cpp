@@ -7,6 +7,7 @@
 #include <soci/row.h>
 
 ptr<PaymentRecord> PaymentRecord::deserializeFromDbRow(const soci::row &row) {
+    auto organizationName = row.get<std::string>("organizationName");
     auto fromAddress = EthAddress::parseHexAddress(row.get<std::string>("fromAddress"));
     EthAddress toAddress = EthAddress::parseHexAddress(row.get<std::string>("toAddress"));
     EIP3009Value value = EIP3009Value::fromHexOrDecimal(row.get<std::string>("value"));
@@ -16,8 +17,12 @@ ptr<PaymentRecord> PaymentRecord::deserializeFromDbRow(const soci::row &row) {
     Hash transactionHash = Encoding::fromHexToHash(row.get<std::string>("transactionHash"));
     auto timestamp = static_cast<uint64_t>(row.get<long long>("timestamp"));
     auto jsonInfo = row.get<std::string>("jsonInfo");
-    return make_shared<PaymentRecord>(fromAddress, toAddress, value, nonce, resourceHash, timestamp,
+    return make_shared<PaymentRecord>(organizationName, fromAddress, toAddress, value, nonce, resourceHash, timestamp,
                                       authorizationHash, transactionHash, jsonInfo);
+}
+
+std::string PaymentRecord::organizationName() const {
+    return organizationName_;
 }
 
 EthAddress PaymentRecord::fromAddress() const {
@@ -56,7 +61,7 @@ std::string PaymentRecord::jsonInfo() const {
     return jsonInfo_;
 }
 
-PaymentRecord::PaymentRecord(const EthAddress &fromAddress,
+PaymentRecord::PaymentRecord(const string& organizationName, const EthAddress &fromAddress,
                              const EthAddress &toAddress,
                              const EIP3009Value &value,
                              const EIP3009Nonce &nonce,
@@ -65,7 +70,8 @@ PaymentRecord::PaymentRecord(const EthAddress &fromAddress,
                              const Hash &authorizationHash,
                              const Hash &transactionHash,
                              const std::string &jsonInfo)
-    : fromAddress_(fromAddress),
+    : organizationName_(organizationName),
+      fromAddress_(fromAddress),
       toAddress_(toAddress),
       value_(value),
       nonce_(nonce),

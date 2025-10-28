@@ -109,6 +109,7 @@ void MachinePayDB::writePayment(const PaymentRecord &record) {
         soci::session sql(*pool_);
 
         // Store record fields in local variables
+        std::string organizationName = record.organizationName();
         std::string fromAddress = record.fromAddress().toHex();
         std::string toAddress = record.toAddress().toHex();
         std::string value = record.value().toDecimal();
@@ -122,14 +123,15 @@ void MachinePayDB::writePayment(const PaymentRecord &record) {
         // Insert into the database using explicit named bindings for safety and cross-backend consistency
         sql << R"(
             INSERT INTO payments (
-                fromAddress, toAddress, value, nonce, resourceHash,
+                organizationName, fromAddress, toAddress, value, nonce, resourceHash,
                 timestamp, authorizationHash, transactionHash, jsonInfo
             )
             VALUES (
-                :fromAddress, :toAddress, :value, :nonce, :resourceHash,
+                :organizationName, :fromAddress, :toAddress, :value, :nonce, :resourceHash,
                 :timestamp, :authorizationHash, :transactionHash, :jsonInfo
             )
         )",
+                soci::use(organizationName, "organizationName"),
                 soci::use(fromAddress, "fromAddress"),
                 soci::use(toAddress, "toAddress"),
                 soci::use(value, "value"),
@@ -199,8 +201,9 @@ void MachinePayDB::ensureSchema() {
         if (dbType_ == DbType::SQLite) {
             sql << "CREATE TABLE IF NOT EXISTS payments ("
                     "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                    "fromAddress TEXT NOT NULL," // Renamed from 'from'
-                    "toAddress TEXT NOT NULL," // Renamed from 'to'
+                    "organizationName TEXT NOT NULL,"
+                    "fromAddress TEXT NOT NULL,"
+                    "toAddress TEXT NOT NULL,"
                     "value TEXT NOT NULL,"
                     "nonce TEXT NOT NULL,"
                     "resourceHash TEXT NOT NULL,"
@@ -210,9 +213,10 @@ void MachinePayDB::ensureSchema() {
                     "jsonInfo TEXT)";
         } else if (dbType_ == DbType::PostgreSQL) {
             sql << "CREATE TABLE IF NOT EXISTS payments ("
-                    "id SERIAL PRIMARY KEY," // PostgreSQL uses SERIAL
-                    "fromAddress TEXT NOT NULL," // Renamed from 'from'
-                    "toAddress TEXT NOT NULL," // Renamed from 'to'
+                    "id SERIAL PRIMARY KEY,"
+                    "organizationName TEXT NOT NULL,"
+                    "fromAddress TEXT NOT NULL,"
+                    "toAddress TEXT NOT NULL,"
                     "value TEXT NOT NULL,"
                     "nonce TEXT NOT NULL,"
                     "resourceHash TEXT NOT NULL,"
@@ -223,6 +227,7 @@ void MachinePayDB::ensureSchema() {
         }
 
 
+        sql << "CREATE UNIQUE INDEX IF NOT EXISTS idx_payments_orghash ON payments(organizationName)";
         sql << "CREATE UNIQUE INDEX IF NOT EXISTS idx_payments_reshash ON payments(resourceHash)";
         sql << "CREATE INDEX IF NOT EXISTS idx_payments_authhash ON payments(authorizationHash)";
         sql << "CREATE INDEX IF NOT EXISTS idx_payments_txhash ON payments(transactionHash)";
