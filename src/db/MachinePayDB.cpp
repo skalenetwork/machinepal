@@ -7,6 +7,7 @@
 #include <memory>    // For std::make_unique
 #include <spdlog/sinks/stdout_sinks.h>
 
+#include " PaymentRecord.h"
 #include "MachinePayApp.h"
 
 using namespace std;
@@ -99,35 +100,21 @@ MachinePayDB::MachinePayDB(MachinePayApp &app, DbType type, const std::optional<
 /**
  * @brief Writes a payment record to the database.
  */
-void MachinePayDB::writePayment(
-    const std::string &fromAddress, // Renamed from 'from'
-    const std::string &toAddress, // Renamed from 'to'
-    const std::string &value,
-    const std::string &nonce,
-    const std::string &resourceHash,
-    uint64_t timestamp,
-    const std::string &transactionHash,
-    const std::string &jsonInfo) {
+void MachinePayDB::writePayment(const PaymentRecord& record) {
     try {
-        // Lease a session from the pool.
-        // The connection is automatically returned when 'sql' goes out of scope.
         soci::session sql(*pool_);
-
-        // Renamed columns 'fromAddress' and 'toAddress' (no quotes needed)
-        // Renamed SOCI parameters ':fromAddress' and ':toAddress'
         sql <<
-                "INSERT INTO payments (fromAddress, toAddress, value, nonce, hash, timestamp, transactionHash, jsonInfo) "
-                "VALUES (:fromAddress, :toAddress, :value, :nonce, :hash, :timestamp, :transactionHash, :jsonInfo)",
-                soci::use(fromAddress), // Renamed variable
-                soci::use(toAddress), // Renamed variable
-                soci::use(value),
-                soci::use(nonce),
-                soci::use(resourceHash),
-                // SOCI can handle uint64_t directly.
-                soci::use(timestamp),
-                soci::use(transactionHash),
-                soci::use(jsonInfo);
-    } catch (...) {
+            "INSERT INTO payments (fromAddress, toAddress, value, nonce, hash, timestamp, transactionHash, jsonInfo) "
+            "VALUES (:fromAddress, :toAddress, :value, :nonce, :hash, :timestamp, :transactionHash, :jsonInfo)",
+            soci::use(record.fromAddress),
+            soci::use(record.toAddress),
+            soci::use(record.value),
+            soci::use(record.nonce),
+            soci::use(record.resourceHash),
+            soci::use(record.timestamp),
+            soci::use(record.transactionHash),
+            soci::use(record.jsonInfo);
+    } catch(...) {
         RETHROW_NESTED2("Failed to write payment");
     }
 }

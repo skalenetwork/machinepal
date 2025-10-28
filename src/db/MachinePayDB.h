@@ -5,6 +5,7 @@
 #include <string>
 #include <memory>
 
+class PaymentRecord;
 // Forward-declare MachinePayApp to avoid circular include
 class MachinePayApp;
 
@@ -38,15 +39,7 @@ public:
      * @brief Writes a payment record to the database.
      * This method is thread-safe.
      */
-    void writePayment(
-        const std::string& fromAddress, // Renamed from 'from'
-        const std::string& toAddress,   // Renamed from 'to'
-        const std::string& value,
-        const std::string& nonce,
-        const std::string& resourceHash,
-        uint64_t timestamp,
-        const std::string& transactionHash,
-        const std::string& jsonInfo);
+    void writePayment(const PaymentRecord& record);
 
 private:
     /**
@@ -70,4 +63,5 @@ private:
      */
     std::unique_ptr<soci::connection_pool> pool_;
 };
+
 
