@@ -12,8 +12,6 @@ class EthAddress;
  * @brief Represents a payment record.
  */
 class PaymentRecord {
-
-
     EthAddress fromAddress_;
     EthAddress toAddress_;
     EIP3009Value value_;
@@ -24,7 +22,6 @@ class PaymentRecord {
     std::string jsonInfo_;
 
 public:
-
     [[nodiscard]] EthAddress fromAddress() const {
         return fromAddress_;
     }
@@ -58,15 +55,14 @@ public:
     }
 
 
-
-    PaymentRecord(const EthAddress& fromAddress,
-                  const EthAddress& toAddress,
-                  const EIP3009Value& value,
-                  const EIP3009Nonce& nonce,
-                  const Hash& resourceHash,
+    PaymentRecord(const EthAddress &fromAddress,
+                  const EthAddress &toAddress,
+                  const EIP3009Value &value,
+                  const EIP3009Nonce &nonce,
+                  const Hash &resourceHash,
                   uint64_t timestamp,
-                  const Hash& transactionHash,
-                  const std::string& jsonInfo)
+                  const Hash &transactionHash,
+                  const std::string &jsonInfo)
         : fromAddress_(fromAddress.toChecksumHex()),
           toAddress_(toAddress.toChecksumHex()),
           value_(value),
@@ -74,18 +70,8 @@ public:
           resourceHash_(resourceHash),
           timestamp_(timestamp),
           transactionHash_(transactionHash),
-          jsonInfo_(jsonInfo) {}
-
-    static PaymentRecord deserializeFromDbRow(const soci::row& row) {
-        EthAddress fromAddress(row.get<std::string>("fromAddress"));
-        EthAddress toAddress(row.get<std::string>("toAddress"));
-        EIP3009Value value(EIP3009Value::fromHexOrDecimal(row.get<std::string>("value")));
-        EIP3009Nonce nonce(EIP3009Nonce::fromHex(row.get<std::string>("nonce")));
-        Hash resourceHash = Encoding::fromHexToArray32(row.get<std::string>("hash"));
-        uint64_t timestamp = row.get<uint64_t>("timestamp");
-        Hash transactionHash = Encoding::fromHexToArray32(row.get<std::string>("transactionHash"));
-        std::string jsonInfo = row.get<std::string>("jsonInfo");
-        return PaymentRecord(fromAddress, toAddress, value, nonce, resourceHash, timestamp, transactionHash, jsonInfo);
+          jsonInfo_(jsonInfo) {
     }
 
+    static ptr<PaymentRecord> deserializeFromDbRow(const soci::row &row);
 };

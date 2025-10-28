@@ -80,7 +80,7 @@ public:
     }
 
     // Converts a hex string to a std::array<uint8_t, 32>, left-padded with zeros if necessary
-    static std::array<uint8_t, 32> fromHexToArray32(const std::string &hexStr) {
+    static std::array<uint8_t, 32> fromHexToHash(const std::string &hexStr) {
         auto bytes = fromHex(hexStr);
         std::array<uint8_t, 32> arr{};
         if (bytes.size() > 32)
@@ -90,7 +90,7 @@ public:
     }
 
     // Converts a std::array<uint8_t, 32> to a hex string
-    static std::string array32ToHex(const std::array<uint8_t, 32>& arr) {
+    static std::string hashToHex(const std::array<uint8_t, 32>& arr) {
         std::string hex;
         boost::algorithm::hex_lower(arr.begin(), arr.end(), std::back_inserter(hex));
         return hex;

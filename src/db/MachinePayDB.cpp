@@ -7,7 +7,7 @@
 #include <memory>    // For std::make_unique
 #include <spdlog/sinks/stdout_sinks.h>
 
-#include " PaymentRecord.h"
+#include "PaymentRecord.h"
 #include "MachinePayApp.h"
 
 using namespace std;
@@ -109,9 +109,9 @@ void MachinePayDB::writePayment(const PaymentRecord& record) {
         std::string toAddress = record.toAddress().toHex();
         std::string value = record.value().toDecimal();
         std::string nonce = record.nonce().toHex();
-        std::string resourceHash = Encoding::array32ToHex(record.resourceHash());
+        std::string resourceHash = Encoding::hashToHex(record.resourceHash());
         uint64_t timestamp = record.timestamp();
-        std::string transactionHash = Encoding::array32ToHex(record.transactionHash());
+        std::string transactionHash = Encoding::hashToHex(record.transactionHash());
         std::string jsonInfo = record.jsonInfo();
 
         // Insert into the database

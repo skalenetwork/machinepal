@@ -1,39 +1,20 @@
 #include "MachinePayCommon.h"
 #include "PaymentRecord.h"
+#include "crypto/Encoding.h"
+#include "crypto/EthAddress.h"
+#include "crypto/EIP3009Value.h"
+#include "crypto/EIP3009Nonce.h"
+#include <soci/row.h>
 
-PaymentRecord::PaymentRecord(const std::string& fromAddress,
-                             const std::string& toAddress,
-                             const std::string& value,
-                             const std::string& nonce,
-                             const std::string& resourceHash,
-                             uint64_t timestamp,
-                             const std::string& transactionHash,
-                             const std::string& jsonInfo)
-    : fromAddress_(EthAddress::parseFlexible(fromAddress)),
-      toAddress_(EthAddress::parseFlexible(toAddress)),
-      value_(EIP3009Value::fromDecimal(value)),
-      nonce_(EIP3009Nonce::fromHex(nonce)),
-      resourceHash_(Encoding::fromHexToArray32(resourceHash)),
-      timestamp_(timestamp),
-      transactionHash_(transactionHash),
-      jsonInfo_(jsonInfo) {}
-
-PaymentRecord::PaymentRecord(const EthAddress& fromAddress,
-                             const EthAddress& toAddress,
-                             const EIP3009Value& value,
-                             const EIP3009Nonce& nonce,
-                             const Hash& resourceHash,
-                             uint64_t timestamp,
-                             const std::string& transactionHash,
-                             const std::string& jsonInfo)
-    : fromAddress_(fromAddress),
-      toAddress_(toAddress),
-      value_(value),
-      nonce_(nonce),
-      resourceHash_(resourceHash),
-      timestamp_(timestamp),
-      transactionHash_(transactionHash),
-      jsonInfo_(jsonInfo) {}
-
-// Accessors are defined inline in the header.
-
+ptr<PaymentRecord> PaymentRecord::deserializeFromDbRow(const soci::row& row) {
+    auto fromAddress = EthAddress::parseHexAddress(row.get<std::string>("fromAddress"));
+    EthAddress toAddress = EthAddress::parseHexAddress(row.get<std::string>("toAddress"));
+    EIP3009Value value = EIP3009Value::fromHexOrDecimal(row.get<std::string>("value"));
+    EIP3009Nonce nonce = EIP3009Nonce::fromHex(row.get<std::string>("nonce"));
+    Hash resourceHash = Encoding::fromHexToHash(row.get<std::string>("hash"));
+    Hash transactionHash = Encoding::fromHexToHash(row.get<std::string>("transactionHash"));
+    auto timestamp = row.get<uint64_t>("timestamp");
+    auto jsonInfo = row.get<std::string>("jsonInfo");
+    return make_shared<PaymentRecord>(fromAddress, toAddress, value, nonce, resourceHash, timestamp,
+        transactionHash, jsonInfo);
+}
