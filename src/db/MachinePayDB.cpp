@@ -26,7 +26,7 @@ void MachinePayDB::checkSqlLiteFileOnDisk() {
         }
         file.close();
     } else {
-        spdlog::info("SQLite database file does not exist at {}, it will be created.", connectionString_);
+        logger_->info("SQLite database file does not exist at {}, it will be created.", connectionString_);
     }
 }
 
@@ -172,7 +172,7 @@ soci::backend_factory const &MachinePayDB::getBackend(DbType type) {
  */
 void MachinePayDB::ensureSchema() {
     try {
-        // Lease a session from the pool.
+
         soci::session sql(*pool());
 
         // check if table exists
@@ -190,7 +190,7 @@ void MachinePayDB::ensureSchema() {
             soci::indicator ind;
             // to_regclass('payments') returns NULL if the table does not exist.
             // soci will set the indicator to i_null in that case.
-            sql << "SELECT to_regclass('public.payments')", soci::into(tableName, ind);
+            sql << "SELECT to_regclass(current_schema() || '.payments')", soci::into(tableName, ind);
             tableExisted = (ind != soci::i_null);
         }
 

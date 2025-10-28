@@ -14,7 +14,7 @@ ptr<PaymentRecord> PaymentRecord::deserializeFromDbRow(const soci::row &row) {
     Hash resourceHash = Encoding::fromHexToHash(row.get<std::string>("resourceHash"));
     Hash authorizationHash = Encoding::fromHexToHash(row.get<std::string>("authorizationHash"));
     Hash transactionHash = Encoding::fromHexToHash(row.get<std::string>("transactionHash"));
-    auto timestamp = row.get<uint64_t>("timestamp");
+    auto timestamp = static_cast<uint64_t>(row.get<long long>("timestamp"));
     auto jsonInfo = row.get<std::string>("jsonInfo");
     return make_shared<PaymentRecord>(fromAddress, toAddress, value, nonce, resourceHash, timestamp,
                                       authorizationHash, transactionHash, jsonInfo);
