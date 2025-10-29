@@ -222,7 +222,7 @@ void MachinePayDB::ensureSchema() {
                 "nonce TEXT NOT NULL,"
                 "resourceHash TEXT NOT NULL,"
                 "timestamp INTEGER NOT NULL," // SQLite's INTEGER handles 64-bit
-                "authorizationSignatureHash  TEXT NOT NULL,"
+                "authorizationSignatureHash TEXT NOT NULL,"
                 "transactionHash TEXT NOT NULL,"
                 "fromIpAddress TEXT NOT NULL,"
                 "jsonInfo TEXT)";
