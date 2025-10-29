@@ -280,8 +280,8 @@ bool MachinePayDB::paymentExists(const EthAddress &fromAddress, const EthAddress
         int count = 0;
 
         // Store temporary values in local variables
-        std::string fromAddrHex = fromAddress.toHex(true);
-        std::string assetAddrHex = assetAddress.toHex( true);
+        std::string fromAddrHex = fromAddress.toHex(false);
+        std::string assetAddrHex = assetAddress.toHex( false);
         std::string nonceHex = nonce.toHex();
         std::string chainIdStr = chainId.str();
 
