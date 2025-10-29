@@ -45,9 +45,11 @@ variant<ptr<PaymentPayload>, HttpError> PaymentManager::decodeAndParsePayment(
     }
 }
 
-void PaymentManager::recordSuccessfulSettlement(const PaymentPayload &payload, const ResourceConfig &resource) {
+void PaymentManager::recordSuccessfulSettlement(const PaymentPayload &payload,
+    const EIP712Domain& domain,
+    const ResourceConfig &resource) {
     auto db = app_.machinePayDB();
-    db->saveSettledPayment(payload, resource);
+    db->saveSettledPayment(payload, domain, resource);
 }
 
 
@@ -121,7 +123,7 @@ std::optional<HttpError> PaymentManager::decodeValidateAndSettlePayment(
             return error;
         }
 
-        recordSuccessfulSettlement(*paymentPayload, resource);
+        recordSuccessfulSettlement(*paymentPayload, *domain,  resource);
 
         return std::nullopt;
     } catch (std::exception &e) {

@@ -109,9 +109,8 @@ PaymentRecord::PaymentRecord(const string &organizationName, const u256 chainId,
       jsonInfo_(jsonInfo) {
 }
 
-ptr<PaymentRecord> PaymentRecord::createPaymentRecordFromPaymentPayloadAndResource(
-    const PaymentPayload& paymentPayload, const ResourceConfig& /*resource*/) {
-    // Extract available fields from nested structures
+ptr<PaymentRecord> PaymentRecord::createPaymentRecord(
+    const PaymentPayload& paymentPayload, const EIP712Domain &domain,  const ResourceConfig& /*resource*/) {
     auto innerPayload = paymentPayload.payload();
     CHECK_STATE(innerPayload);
     auto auth = innerPayload->authorization();
@@ -122,14 +121,13 @@ ptr<PaymentRecord> PaymentRecord::createPaymentRecordFromPaymentPayloadAndResour
     const EIP3009Value value = auth->value();
     const EIP3009Nonce nonce = auth->nonce();
 
-    // Some fields are not directly available here; use reasonable defaults.
     const std::string organizationName = ""; // unknown at this layer
-    const u256 chainId = 0; // network chain id not available without NetworkConfig
-    const EthAddress assetAddress; // zero address by default
+    const u256 chainId = domain.chainId();
+    const EthAddress assetAddress = domain.assetAddress();
 
-    Hash resourceHash{}; // not available; left zeroed
-    Hash authorizationSignatureHash{}; // could be derived from signature if needed; leave zeroed
-    Hash transactionHash{}; // facilitator may fill later; leave zeroed
+    Hash resourceHash{};
+    Hash authorizationSignatureHash{};
+    Hash transactionHash{};
 
     // Execution time now
     uint64_t executionTime = static_cast<uint64_t>(

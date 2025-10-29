@@ -45,9 +45,11 @@ public:
 
     MachinePayDB(MachinePayApp &app, DbType type, const std::optional<std::string> &connectionInfo = std::nullopt);
 
-    void saveSettledPayment(const PaymentPayload &payload, const ResourceConfig &resource) {
+    void saveSettledPayment(const PaymentPayload &payload,
+        const EIP712Domain &domain,
+        const ResourceConfig &resource) {
         auto paymentRecord =
-            PaymentRecord::createPaymentRecordFromPaymentPayloadAndResource(payload, resource);
+            PaymentRecord::createPaymentRecord(payload, domain, resource);
         CHECK_STATE(paymentRecord);
         writePayment(*paymentRecord);
     }
@@ -62,6 +64,13 @@ public:
 
         return paymentExists(from, asset, nonce, chainId);
     }
+
+/** Critical properties - should be analyzed in detail during code review
+ *
+ *  after saveSettledPayment is called with a PaymentPayload representing a successful payment,
+ *  subsequent calls to settledPaymentExists with the same PaymentPayload and EIP712Domain
+ *  shall return true.
+ */
 
 private:
     void checkSqliteFileOnDisk();
