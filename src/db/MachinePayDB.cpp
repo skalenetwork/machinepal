@@ -118,7 +118,7 @@ void MachinePayDB::writePayment(const PaymentRecord &record) {
         std::string value = record.value().toDecimal();
         std::string nonce = record.nonce().toHex();
         std::string resourceHash = Encoding::hashToPartialHex(record.resourceHash());
-        long long timestamp = static_cast<long long>(record.timestamp());
+        long long executionTime = static_cast<long long>(record.executionTime());
         std::string authorizationSignatureHash = Encoding::hashToPartialHex(record.authorizationSignatureHash());
         std::string transactionHash = Encoding::hashToPartialHex(record.transactionHash());
         std::string fromIpAddress = record.fromIpAddress();
@@ -128,11 +128,11 @@ void MachinePayDB::writePayment(const PaymentRecord &record) {
         sql << R"(
             INSERT INTO payments (
                 organizationName, chainId, fromAddress, toAddress, assetAddress, value, nonce, resourceHash,
-                timestamp, authorizationSignatureHash, transactionHash, fromIpAddress, jsonInfo
+                executionTime, authorizationSignatureHash, transactionHash, fromIpAddress, jsonInfo
             )
             VALUES (
                 :organizationName, :chainId, :fromAddress, :toAddress, :assetAddress, :value, :nonce, :resourceHash,
-                :timestamp, :authorizationSignatureHash, :transactionHash, :fromIpAddress, :jsonInfo
+                :executionTime, :authorizationSignatureHash, :transactionHash, :fromIpAddress, :jsonInfo
             )
         )",
             soci::use(organizationName, "organizationName"),
@@ -143,7 +143,7 @@ void MachinePayDB::writePayment(const PaymentRecord &record) {
             soci::use(value, "value"),
             soci::use(nonce, "nonce"),
             soci::use(resourceHash, "resourceHash"),
-            soci::use(timestamp, "timestamp"),
+            soci::use(executionTime, "executionTime"),
             soci::use(authorizationSignatureHash, "authorizationSignatureHash"),
             soci::use(transactionHash, "transactionHash"),
             soci::use(fromIpAddress, "fromIpAddress"),
@@ -221,7 +221,7 @@ void MachinePayDB::ensureSchema() {
                 "value TEXT NOT NULL,"
                 "nonce TEXT NOT NULL,"
                 "resourceHash TEXT NOT NULL,"
-                "timestamp INTEGER NOT NULL," // SQLite's INTEGER handles 64-bit
+                "executionTime INTEGER NOT NULL," // SQLite's INTEGER handles 64-bit
                 "authorizationSignatureHash TEXT NOT NULL,"
                 "transactionHash TEXT NOT NULL,"
                 "fromIpAddress TEXT NOT NULL,"
@@ -237,7 +237,7 @@ void MachinePayDB::ensureSchema() {
                 "value TEXT NOT NULL,"
                 "nonce TEXT NOT NULL,"
                 "resourceHash TEXT NOT NULL,"
-                "timestamp BIGINT NOT NULL," // PostgreSQL uses BIGINT for 64-bit
+                "executionTime BIGINT NOT NULL," // PostgreSQL uses BIGINT for 64-bit
                 "authorizationSignatureHash TEXT NOT NULL,"
                 "transactionHash TEXT NOT NULL,"
                 "fromIpAddress TEXT NOT NULL,"
@@ -245,8 +245,8 @@ void MachinePayDB::ensureSchema() {
         }
 
         sql << "CREATE INDEX IF NOT EXISTS idx_payments_fromaddress ON payments(fromAddress)";
-        sql << "CREATE INDEX IF NOT EXISTS idx_payments_timestamp ON payments(timestamp)";
-        sql << "CREATE INDEX IF NOT EXISTS idx_payments_to_timestamp ON payments(toAddress, timestamp)";
+        sql << "CREATE INDEX IF NOT EXISTS idx_payments_executionTime ON payments(executionTime)";
+        sql << "CREATE INDEX IF NOT EXISTS idx_payments_to_executionTime ON payments(toAddress, executionTime)";
         sql << "CREATE INDEX IF NOT EXISTS idx_payments_authhash ON payments(authorizationSignatureHash)";
         sql << "CREATE INDEX IF NOT EXISTS idx_payments_txhash ON payments(transactionHash)";
         sql << "CREATE UNIQUE INDEX IF NOT EXISTS idx_payments_unique_payment ON "
@@ -282,10 +282,13 @@ bool MachinePayDB::paymentExists(const EthAddress &fromAddress, const EthAddress
 
         // Execute the query
         sql <<
-            "SELECT COUNT(*) FROM payments WHERE  fromAddress = :fromAddress AND nonce = :nonce AND assetAddress = :assetAddress AND chainId = :chainId"
-            ,
-            soci::use(fromAddrHex, "fromAddress"), soci::use(assetAddrHex, "assetAddress"), soci::use(nonceHex, "nonce"),
-            soci::use(chainIdStr, "chainId"), soci::into(count);
+            "SELECT COUNT(*) FROM payments WHERE fromAddress = :fromAddress AND nonce = :nonce AND assetAddress = :assetAddress AND chainId = :chainId",
+            soci::use(fromAddrHex, "fromAddress"),
+            soci::use(nonceHex, "nonce"),
+            soci::use(assetAddrHex, "assetAddress"),
+            soci::use(chainIdStr, "chainId"),
+            soci::into(count);
+
 
         return count > 0;
     } catch (...) {

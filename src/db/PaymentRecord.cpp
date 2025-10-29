@@ -17,10 +17,10 @@ ptr<PaymentRecord> PaymentRecord::deserializeFromDbRow(const soci::row &) {
     Hash resourceHash = Encoding::fromHexToHash(row.get<std::string>("resourceHash"));
     Hash authorizationHash = Encoding::fromHexToHash(row.get<std::string>("authorizationHash"));
     Hash transactionHash = Encoding::fromHexToHash(row.get<std::string>("transactionHash"));
-    auto timestamp = static_cast<uint64_t>(row.get<long long>("timestamp"));
+    auto executionTime = static_cast<uint64_t>(row.get<long long>("executionTime"));
     auto fromIpAddress = row.get<std::string>("fromIpAddress");
     auto jsonInfo = row.get<std::string>("jsonInfo");
-    return make_shared<PaymentRecord>(organizationName, chainId, fromAddress, toAddress, assetAddress, value, nonce, resourceHash, timestamp,
+    return make_shared<PaymentRecord>(organizationName, chainId, fromAddress, toAddress, assetAddress, value, nonce, resourceHash, executionTime,
                                       authorizationHash, transactionHash, fromIpAddress, jsonInfo);
  (*/
     throw std::runtime_error("PaymentRecord::deserializeFromDbRow not implemented");
@@ -59,8 +59,8 @@ Hash PaymentRecord::resourceHash() const {
     return resourceHash_;
 }
 
-uint64_t PaymentRecord::timestamp() const {
-    return timestamp_;
+uint64_t PaymentRecord::executionTime() const {
+    return executionTime_;
 }
 
 Hash PaymentRecord::authorizationSignatureHash() const {
@@ -84,7 +84,7 @@ PaymentRecord::PaymentRecord(const string &organizationName, const u256 chainId,
                              const EIP3009Value &value,
                              const EIP3009Nonce &nonce,
                              const Hash &resourceHash,
-                             uint64_t timestamp,
+                             uint64_t executionTime,
                              const Hash &authorizationSignatureHash,
                              const Hash &transactionHash,
                              const std::string &fromIpAddress,
@@ -97,7 +97,7 @@ PaymentRecord::PaymentRecord(const string &organizationName, const u256 chainId,
       value_(value),
       nonce_(nonce),
       resourceHash_(resourceHash),
-      timestamp_(timestamp),
+      executionTime_(executionTime),
       authorizationSignatureHash_(authorizationSignatureHash),
       transactionHash_(transactionHash),
       fromIpAddress_(fromIpAddress),
