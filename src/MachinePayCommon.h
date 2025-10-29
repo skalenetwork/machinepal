@@ -18,7 +18,9 @@
 #include <regex>
 #include <set>
 #include <nlohmann/json_fwd.hpp>
-#include "boost/url/decode_view.hpp"
+#include <boost/url/decode_view.hpp>
+#include <boost/algorithm/string/case_conv.hpp>
+#include <boost/beast/core/detail/base64.hpp>
 #include <boost/locale.hpp>
 #include <boost/locale/conversion.hpp>
 #include <algorithm>
@@ -29,6 +31,11 @@
 #include <nlohmann/json.hpp>
 #include <array>
 #include <cstdlib>
+#include <glog/logging.h>
+#include <thread>
+#include <vector>
+#include <span>
+
 
 #if defined(__cpp_exceptions) || defined(__EXCEPTIONS) || defined(_CPPUNWIND)
     constexpr bool exceptions_enabled = true;
@@ -75,13 +82,7 @@ inline void printNestedException(const std::exception& e, int level = 0) {
     }
 }
 
-#include <glog/logging.h>
-#include <atomic>
-#include <thread>
-#include <chrono>
-#include <string>
-#include <vector>
-#include <stdexcept>
+
 
 
 #define RETHROW_NESTED \
@@ -98,8 +99,11 @@ do { std::throw_with_nested(std::runtime_error(std::string(__FILE__) + ":" \
 template<typename T>
 using ptr = std::shared_ptr<T>;
 
-using Hash = std::array<uint8_t, 32>;;
+using Hash = std::array<uint8_t, 32>;
+
+using u256 = boost::multiprecision::uint256_t;
+
+using json = nlohmann::json;
 
 using namespace std;
-
 

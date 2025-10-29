@@ -1,8 +1,6 @@
 #pragma once
 #include <string>
-#include <boost/multiprecision/cpp_int.hpp>
 
-using u256 = boost::multiprecision::uint256_t;
 
 class EIP3009Value {
     u256 value_{};

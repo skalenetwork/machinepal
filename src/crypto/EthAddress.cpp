@@ -72,13 +72,13 @@ std::string EthAddress::toHex() const {
     boost::algorithm::hex_lower(bytes().begin(), bytes().end(), std::back_inserter(out));
     return out;
 }
-#include <boost/algorithm/hex.hpp>
-#include <cctype>
-#include <string>
 
-// keccak::keccak256(std::string_view) -> std::array<uint8_t, 32>
-#include <boost/algorithm/hex.hpp>
-#include <cctype>
+std::string EthAddress::toBase64() const {
+    constexpr std::size_t take = 32;
+    std::string out(boost::beast::detail::base64::encoded_size(32), '\0');
+    boost::beast::detail::base64::encode(out.data(), bytes().data(), take);
+    return out;
+}
 
 
 std::string EthAddress::toChecksumHex() const {

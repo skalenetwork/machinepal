@@ -2,16 +2,18 @@
 
 #include <string>
 
-namespace URLUtils {
+class URLUtils {
 
-    std::string getLocationFromUrl(const std::string& url);
+public:
 
-    bool isIpAddress(const std::string& host);
+    static std::string getLocationFromUrl(const std::string& url);
 
-    bool isDomainName(const std::string& host);
+    static bool isIpAddress(const std::string& host);
 
-    bool decodePath(const std::string &path, std::string& result, std::string &errorMessage);
+    static bool isDomainName(const std::string& host);
 
-    std::string base64Encode(const std::string& input);
-    std::string base64Decode(const std::string& input);
-}
+    static bool decodePath(const std::string &path, std::string& result, std::string &errorMessage);
+
+    static std::string base64Encode(const std::string& input);
+    static std::string base64Decode(const std::string& input);
+};

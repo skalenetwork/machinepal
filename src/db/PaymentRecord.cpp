@@ -8,6 +8,7 @@
 
 ptr<PaymentRecord> PaymentRecord::deserializeFromDbRow(const soci::row &row) {
     auto organizationName = row.get<std::string>("organizationName");
+    u256 chainId = Encoding::u256FromHexOrDecimal(row.get<std::string>("chainId"));
     auto fromAddress = EthAddress::parseHexAddress(row.get<std::string>("fromAddress"));
     EthAddress toAddress = EthAddress::parseHexAddress(row.get<std::string>("toAddress"));
     EIP3009Value value = EIP3009Value::fromHexOrDecimal(row.get<std::string>("value"));
@@ -16,13 +17,18 @@ ptr<PaymentRecord> PaymentRecord::deserializeFromDbRow(const soci::row &row) {
     Hash authorizationHash = Encoding::fromHexToHash(row.get<std::string>("authorizationHash"));
     Hash transactionHash = Encoding::fromHexToHash(row.get<std::string>("transactionHash"));
     auto timestamp = static_cast<uint64_t>(row.get<long long>("timestamp"));
+    auto fromIpAddress = row.get<std::string>("fromIpAddress");
     auto jsonInfo = row.get<std::string>("jsonInfo");
-    return make_shared<PaymentRecord>(organizationName, fromAddress, toAddress, value, nonce, resourceHash, timestamp,
-                                      authorizationHash, transactionHash, jsonInfo);
+    return make_shared<PaymentRecord>(organizationName, chainId, fromAddress, toAddress, value, nonce, resourceHash, timestamp,
+                                      authorizationHash, transactionHash, fromIpAddress, jsonInfo);
 }
 
 std::string PaymentRecord::organizationName() const {
     return organizationName_;
+}
+
+u256 PaymentRecord::chainId() const {
+    return chainId_;
 }
 
 EthAddress PaymentRecord::fromAddress() const {
@@ -57,11 +63,15 @@ Hash PaymentRecord::transactionHash() const {
     return transactionHash_;
 }
 
+std::string PaymentRecord::fromIpAddress() const {
+    return fromIpAddress_;
+}
+
 std::string PaymentRecord::jsonInfo() const {
     return jsonInfo_;
 }
 
-PaymentRecord::PaymentRecord(const string& organizationName, const EthAddress &fromAddress,
+PaymentRecord::PaymentRecord(const string &organizationName, const u256 chainId, const EthAddress &fromAddress,
                              const EthAddress &toAddress,
                              const EIP3009Value &value,
                              const EIP3009Nonce &nonce,
@@ -69,8 +79,10 @@ PaymentRecord::PaymentRecord(const string& organizationName, const EthAddress &f
                              uint64_t timestamp,
                              const Hash &authorizationHash,
                              const Hash &transactionHash,
+                             const std::string &fromIpAddress,
                              const std::string &jsonInfo)
     : organizationName_(organizationName),
+      chainId_(chainId),
       fromAddress_(fromAddress),
       toAddress_(toAddress),
       value_(value),
@@ -79,5 +91,6 @@ PaymentRecord::PaymentRecord(const string& organizationName, const EthAddress &f
       timestamp_(timestamp),
       authorizationHash_(authorizationHash),
       transactionHash_(transactionHash),
+      fromIpAddress_(fromIpAddress),
       jsonInfo_(jsonInfo) {
 }

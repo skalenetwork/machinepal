@@ -11,7 +11,7 @@
 class HttpError;
 class EIP3009ValidityTime;
 class EIP3009Value;
-using u256 = boost::multiprecision::uint256_t;
+
 
 class EIP3009Authorization {
 public:

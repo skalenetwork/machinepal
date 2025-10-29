@@ -29,6 +29,13 @@ std::string EIP3009Nonce::toHex(bool withPrefix) const {
     return Encoding::toHex(std::span<const uint8_t>(bytes_.data(), bytes_.size()), withPrefix);
 }
 
+std::string EIP3009Nonce::toBase64() const {
+    constexpr std::size_t take = 32;
+    std::string out(boost::beast::detail::base64::encoded_size(32), '\0');
+    boost::beast::detail::base64::encode(out.data(), bytes().data(), take);
+    return out;
+}
+
 EIP3009Nonce EIP3009Nonce::fromHex(const std::string& hexStr) {
     auto vec = Encoding::fromHex(hexStr);
     if (vec.size() > 32) throw std::invalid_argument("EIP3009Nonce must be at most 32 bytes");

@@ -45,7 +45,7 @@ public:
      */
     void writePayment(const PaymentRecord& record);
 
-    ptr<PaymentRecord> getPaymentByResourceHash(const Hash& resourceHash);
+    bool paymentExists(const Hash& nonce);
 
 private:
     /**

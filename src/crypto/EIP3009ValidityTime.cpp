@@ -11,7 +11,7 @@ std::string EIP3009ValidityTime::toDecimal() const {
 }
 
 EIP3009ValidityTime EIP3009ValidityTime::fromHexOrDecimal(const std::string& decStr) {
-    u256 val = Encoding::fromHexOrDecimal(decStr);
+    u256 val = Encoding::u256FromHexOrDecimal(decStr);
     return EIP3009ValidityTime(val);
 }
 

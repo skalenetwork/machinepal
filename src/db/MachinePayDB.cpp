@@ -91,8 +91,9 @@ MachinePayDB::MachinePayDB(MachinePayApp &app, DbType type, const std::optional<
         }
 
         verifyDatabaseConnectivity();
-        configureDBParamsAndPool();
         ensureSchema();
+        configureDBParamsAndPool();
+
     } catch (...) {
         RETHROW_NESTED2("Failed to initialize PaymentDB");
     }
@@ -110,28 +111,31 @@ void MachinePayDB::writePayment(const PaymentRecord &record) {
 
         // Store record fields in local variables
         std::string organizationName = record.organizationName();
-        std::string fromAddress = record.fromAddress().toHex();
-        std::string toAddress = record.toAddress().toHex();
+        std::string chainId = record.chainId().str();
+        std::string fromAddress = record.fromAddress().toBase64();
+        std::string toAddress = record.toAddress().toBase64();
         std::string value = record.value().toDecimal();
-        std::string nonce = record.nonce().toHex();
-        std::string resourceHash = Encoding::hashToPartialHex(record.resourceHash());
+        std::string nonce = record.nonce().toBase64();
+        std::string resourceHash = Encoding::hashToPartialBase64(record.resourceHash());
         long long timestamp = static_cast<long long>(record.timestamp());
-        std::string authorizationHash = Encoding::hashToPartialHex(record.authorizationHash());
-        std::string transactionHash = Encoding::hashToPartialHex(record.transactionHash());
+        std::string authorizationHash = Encoding::hashToPartialBase64(record.authorizationHash());
+        std::string transactionHash = Encoding::hashToPartialBase64(record.transactionHash());
+        std::string fromIpAddress = record.fromIpAddress();
         std::string jsonInfo = record.jsonInfo();
 
         // Insert into the database using explicit named bindings for safety and cross-backend consistency
         sql << R"(
             INSERT INTO payments (
-                organizationName, fromAddress, toAddress, value, nonce, resourceHash,
-                timestamp, authorizationHash, transactionHash, jsonInfo
+                organizationName, chainId, fromAddress, toAddress, value, nonce, resourceHash,
+                timestamp, authorizationHash, transactionHash, fromIpAddress, jsonInfo
             )
             VALUES (
-                :organizationName, :fromAddress, :toAddress, :value, :nonce, :resourceHash,
-                :timestamp, :authorizationHash, :transactionHash, :jsonInfo
+                :organizationName, :chainId, :fromAddress, :toAddress, :value, :nonce, :resourceHash,
+                :timestamp, :authorizationHash, :transactionHash, :fromIpAddress, :jsonInfo
             )
         )",
                 soci::use(organizationName, "organizationName"),
+                soci::use(chainId, "chainId"),
                 soci::use(fromAddress, "fromAddress"),
                 soci::use(toAddress, "toAddress"),
                 soci::use(value, "value"),
@@ -140,6 +144,7 @@ void MachinePayDB::writePayment(const PaymentRecord &record) {
                 soci::use(timestamp, "timestamp"),
                 soci::use(authorizationHash, "authorizationHash"),
                 soci::use(transactionHash, "transactionHash"),
+                soci::use( fromIpAddress, "fromIpAddress"),
                 soci::use(jsonInfo, "jsonInfo");
     } catch (...) {
         RETHROW_NESTED2("Failed to write payment");
@@ -175,7 +180,9 @@ soci::backend_factory const &MachinePayDB::getBackend(DbType type) {
 void MachinePayDB::ensureSchema() {
     try {
 
-        soci::session sql(*pool());
+        // Create a single, temporary session just for schema initialization.
+        soci::backend_factory const &backend = getBackend(dbType_);
+        soci::session sql(backend, connectionString_);
 
         // check if table exists
 
@@ -196,41 +203,43 @@ void MachinePayDB::ensureSchema() {
             tableExisted = (ind != soci::i_null);
         }
 
-
         // Use conditional DDL for backend-specific syntax
         if (dbType_ == DbType::SQLite) {
             sql << "CREATE TABLE IF NOT EXISTS payments ("
-                    "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                    "organizationName TEXT NOT NULL,"
-                    "fromAddress TEXT NOT NULL,"
-                    "toAddress TEXT NOT NULL,"
-                    "value TEXT NOT NULL,"
-                    "nonce TEXT NOT NULL,"
-                    "resourceHash TEXT NOT NULL,"
-                    "timestamp INTEGER NOT NULL," // SQLite's INTEGER handles 64-bit
-                    "authorizationHash  TEXT NOT NULL,"
-                    "transactionHash  TEXT NOT NULL,"
-                    "jsonInfo TEXT)";
+                "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                "organizationName TEXT NOT NULL,"
+                "chainId TEXT NOT NULL,"
+                "fromAddress TEXT NOT NULL,"
+                "toAddress TEXT NOT NULL,"
+                "value TEXT NOT NULL,"
+                "nonce TEXT NOT NULL,"
+                "resourceHash TEXT NOT NULL,"
+                "timestamp INTEGER NOT NULL," // SQLite's INTEGER handles 64-bit
+                "authorizationHash  TEXT NOT NULL,"
+                "transactionHash  TEXT NOT NULL,"
+                "fromIpAddress  TEXT NOT NULL,"
+                "jsonInfo TEXT)";
         } else if (dbType_ == DbType::PostgreSQL) {
             sql << "CREATE TABLE IF NOT EXISTS payments ("
-                    "id SERIAL PRIMARY KEY,"
-                    "organizationName TEXT NOT NULL,"
-                    "fromAddress TEXT NOT NULL,"
-                    "toAddress TEXT NOT NULL,"
-                    "value TEXT NOT NULL,"
-                    "nonce TEXT NOT NULL,"
-                    "resourceHash TEXT NOT NULL,"
-                    "timestamp BIGINT NOT NULL," // PostgreSQL uses BIGINT for 64-bit
-                    "authorizationHash  TEXT NOT NULL,"
-                    "transactionHash  TEXT NOT NULL,"
-                    "jsonInfo TEXT)";
+                "id SERIAL PRIMARY KEY,"
+                "organizationName TEXT NOT NULL,"
+                "chainId TEXT NOT NULL,"
+                "fromAddress TEXT NOT NULL,"
+                "toAddress TEXT NOT NULL,"
+                "value TEXT NOT NULL,"
+                "nonce TEXT NOT NULL,"
+                "resourceHash TEXT NOT NULL,"
+                "timestamp BIGINT NOT NULL," // PostgreSQL uses BIGINT for 64-bit
+                "authorizationHash  TEXT NOT NULL,"
+                "transactionHash  TEXT NOT NULL,"
+                "fromIpAddress  TEXT NOT NULL,"
+                "jsonInfo TEXT)";
         }
-
 
         sql << "CREATE INDEX IF NOT EXISTS idx_payments_fromaddress ON payments(fromAddress)";
         sql << "CREATE INDEX IF NOT EXISTS idx_payments_nonce ON payments(nonce)";
+        sql << "CREATE INDEX IF NOT EXISTS idx_payments_authhash ON payments(authorizationHash)";
         sql << "CREATE INDEX IF NOT EXISTS idx_payments_txhash ON payments(transactionHash)";
-
 
         // --- Step 4: Log based on our check ---
         if (!tableExisted) {

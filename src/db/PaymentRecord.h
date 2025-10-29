@@ -13,19 +13,24 @@ class EthAddress;
  */
 class PaymentRecord {
     std::string organizationName_;
+    u256 chainId_;
     EthAddress fromAddress_;
     EthAddress toAddress_;
+    EthAddress asset_;
     EIP3009Value value_;
     EIP3009Nonce nonce_;
     Hash resourceHash_;
     uint64_t timestamp_;
     Hash authorizationHash_;
     Hash transactionHash_;
+    std::string fromIpAddress_;
     std::string jsonInfo_;
 
 public:
 
     [[nodiscard]] std::string organizationName() const;
+
+    [[nodiscard]] u256 chainId() const;
 
     [[nodiscard]] EthAddress fromAddress() const;
 
@@ -43,14 +48,17 @@ public:
 
     [[nodiscard]] Hash transactionHash() const;
 
+    std::string fromIpAddress() const;
+
     [[nodiscard]] std::string jsonInfo() const;
 
 
-
-
-    PaymentRecord(const string& organizationName, const EthAddress &fromAddress, const EthAddress &toAddress, const EIP3009Value &value,
+    PaymentRecord(const string& organizationName, const u256 chainId,
+                    const EthAddress &fromAddress, const EthAddress &toAddress, const EIP3009Value &value,
                   const EIP3009Nonce &nonce, const Hash &resourceHash, uint64_t timestamp,
-                  const Hash &authorizationHash, const Hash &transactionHash, const std::string &jsonInfo);
+                  const Hash &authorizationHash, const Hash &transactionHash,
+                  const std::string& fromIpAddress,
+                  const std::string &jsonInfo);
 
     static ptr<PaymentRecord> deserializeFromDbRow(const soci::row &row);
 };

@@ -11,7 +11,7 @@
 // https://www.circle.com/multi-chain-usdc
 
 class HttpError;
-using u256 = boost::multiprecision::uint256_t;
+
 
 class EIP712Domain {
     std::string name_;

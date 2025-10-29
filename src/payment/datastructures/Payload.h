@@ -9,7 +9,7 @@
 class HttpError;
 class ResourceConfig;
 class EIP712Domain;
-using json = nlohmann::json;
+;
 
 class Payload {
 public:

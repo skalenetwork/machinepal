@@ -10,7 +10,7 @@ std::string EIP3009Value::toDecimal() const {
 }
 
 EIP3009Value EIP3009Value::fromHexOrDecimal(const std::string& decStr) {
-    u256 val = Encoding::fromHexOrDecimal(decStr);
+    u256 val = Encoding::u256FromHexOrDecimal(decStr);
     return EIP3009Value(val);
 }
 

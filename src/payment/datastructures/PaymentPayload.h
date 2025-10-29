@@ -10,7 +10,6 @@
 #include "config/MachinePayConfig.h"
 #include "config/subconfigs/ResourceConfig.h"
 
-using json = nlohmann::json;
 
 class PaymentPayload {
 public:

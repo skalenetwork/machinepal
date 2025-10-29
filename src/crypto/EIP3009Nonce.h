@@ -14,6 +14,7 @@ public:
     static EIP3009Nonce generateRandomNonce();
     const std::array<uint8_t, 32>& bytes() const;
     std::string toHex(bool withPrefix = false) const;
+    std::string toBase64() const;
 
     friend auto operator<=>(const EIP3009Nonce&, const EIP3009Nonce&) = default;
 
