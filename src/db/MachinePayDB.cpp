@@ -114,6 +114,7 @@ void MachinePayDB::writePayment(const PaymentRecord &record) {
         std::string chainId = record.chainId().str();
         std::string fromAddress = record.fromAddress().toBase64();
         std::string toAddress = record.toAddress().toBase64();
+        std::string assetAddress = record.assetAddress().toBase64();
         std::string value = record.value().toDecimal();
         std::string nonce = record.nonce().toBase64();
         std::string resourceHash = Encoding::hashToPartialBase64(record.resourceHash());
@@ -126,26 +127,27 @@ void MachinePayDB::writePayment(const PaymentRecord &record) {
         // Insert into the database using explicit named bindings for safety and cross-backend consistency
         sql << R"(
             INSERT INTO payments (
-                organizationName, chainId, fromAddress, toAddress, value, nonce, resourceHash,
+                organizationName, chainId, fromAddress, toAddress, assetAddress, value, nonce, resourceHash,
                 timestamp, authorizationHash, transactionHash, fromIpAddress, jsonInfo
             )
             VALUES (
-                :organizationName, :chainId, :fromAddress, :toAddress, :value, :nonce, :resourceHash,
+                :organizationName, :chainId, :fromAddress, :toAddress, :assetAddress, :value, :nonce, :resourceHash,
                 :timestamp, :authorizationHash, :transactionHash, :fromIpAddress, :jsonInfo
             )
         )",
-                soci::use(organizationName, "organizationName"),
-                soci::use(chainId, "chainId"),
-                soci::use(fromAddress, "fromAddress"),
-                soci::use(toAddress, "toAddress"),
-                soci::use(value, "value"),
-                soci::use(nonce, "nonce"),
-                soci::use(resourceHash, "resourceHash"),
-                soci::use(timestamp, "timestamp"),
-                soci::use(authorizationHash, "authorizationHash"),
-                soci::use(transactionHash, "transactionHash"),
-                soci::use( fromIpAddress, "fromIpAddress"),
-                soci::use(jsonInfo, "jsonInfo");
+            soci::use(organizationName, "organizationName"),
+            soci::use(chainId, "chainId"),
+            soci::use(fromAddress, "fromAddress"),
+            soci::use(toAddress, "toAddress"),
+            soci::use( assetAddress, "assetAddress"),
+            soci::use(value, "value"),
+            soci::use(nonce, "nonce"),
+            soci::use(resourceHash, "resourceHash"),
+            soci::use(timestamp, "timestamp"),
+            soci::use(authorizationHash, "authorizationHash"),
+            soci::use(transactionHash, "transactionHash"),
+            soci::use(fromIpAddress, "fromIpAddress"),
+            soci::use(jsonInfo, "jsonInfo");
     } catch (...) {
         RETHROW_NESTED2("Failed to write payment");
     }
@@ -211,6 +213,7 @@ void MachinePayDB::ensureSchema() {
                 "chainId TEXT NOT NULL,"
                 "fromAddress TEXT NOT NULL,"
                 "toAddress TEXT NOT NULL,"
+                "assetAddress TEXT NOT NULL,"
                 "value TEXT NOT NULL,"
                 "nonce TEXT NOT NULL,"
                 "resourceHash TEXT NOT NULL,"
@@ -226,6 +229,7 @@ void MachinePayDB::ensureSchema() {
                 "chainId TEXT NOT NULL,"
                 "fromAddress TEXT NOT NULL,"
                 "toAddress TEXT NOT NULL,"
+                "assetAddress TEXT NOT NULL,"
                 "value TEXT NOT NULL,"
                 "nonce TEXT NOT NULL,"
                 "resourceHash TEXT NOT NULL,"
@@ -253,7 +257,28 @@ void MachinePayDB::ensureSchema() {
     }
 }
 
-[[nodiscard]] std::unique_ptr<soci::connection_pool>& MachinePayDB::pool() {
+[[nodiscard]] std::unique_ptr<soci::connection_pool> &MachinePayDB::pool() {
     CHECK_STATE(pool_);
     return pool_;
+}
+
+bool MachinePayDB::paymentExists(const EthAddress &fromAddress, const EthAddress &assetAddress,
+                                 const EIP3009Nonce &nonce, u256 chainId) {
+    soci::session sql(*pool_);
+    int count = 0;
+
+    // Store temporary values in local variables
+    std::string fromAddrBase64 = fromAddress.toBase64();
+    std::string assetAddrBase64 = assetAddress.toBase64();
+    std::string nonceBase64 = nonce.toBase64();
+    std::string chainIdStr = chainId.str();
+
+    // Execute the query
+    sql <<
+        "SELECT COUNT(*) FROM payments WHERE from_address = :fromAddr AND asset_address = :assetAddr AND nonce = :nonce AND chain_id = :chainId"
+        ,
+        soci::use(fromAddrBase64, "fromAddr"), soci::use(assetAddrBase64, "assetAddr"), soci::use(nonceBase64, "nonce"),
+        soci::use(chainIdStr, "chainId"), soci::into(count);
+
+    return count > 0;
 }

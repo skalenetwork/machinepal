@@ -47,7 +47,13 @@ public:
      */
     void writePayment(const PaymentRecord& record);
 
-    bool paymentExists(const EthAddress& fromAddress, const EthAddress & assetAddress, const EIP3009Nonce& nonce);
+
+    /**
+     * @brief Checks if a payment with the given parameters already exists.
+     * This method is thread-safe.
+     */
+    bool paymentExists(const EthAddress& fromAddress, const EthAddress & assetAddress, const EIP3009Nonce& nonce,
+        u256 chaidId);
 
 private:
     /**

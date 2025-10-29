@@ -9,7 +9,7 @@
 ptr<PaymentRecord> PaymentRecord::deserializeFromDbRow(const soci::row &) {
     /*
     auto organizationName = row.get<std::string>("organizationName");
-    u256 chainId = Encoding::u256FromHexOrDecimal(row.get<std::string>("chainId"));
+        u256 chainId = Encoding::u256FromHexOrDecimal(row.get<std::string>("chainId"));
     EthAddress toAddress = EthAddress::parseHexAddress(row.get<std::string>("toAddress"));
     EthAddress assetAddress = EthAddress::parseHexAddress(row.get<std::string>("assetAddress"));
     EIP3009Value value = EIP3009Value::fromHexOrDecimal(row.get<std::string>("value"));
