@@ -219,8 +219,8 @@ void MachinePayDB::ensureSchema() {
                 "resourceHash TEXT NOT NULL,"
                 "timestamp INTEGER NOT NULL," // SQLite's INTEGER handles 64-bit
                 "authorizationSignatureHash  TEXT NOT NULL,"
-                "transactionHash  TEXT NOT NULL,"
-                "fromIpAddress  TEXT NOT NULL,"
+                "transactionHash TEXT NOT NULL,"
+                "fromIpAddress TEXT NOT NULL,"
                 "jsonInfo TEXT)";
         } else if (dbType_ == DbType::PostgreSQL) {
             sql << "CREATE TABLE IF NOT EXISTS payments ("
@@ -234,17 +234,19 @@ void MachinePayDB::ensureSchema() {
                 "nonce TEXT NOT NULL,"
                 "resourceHash TEXT NOT NULL,"
                 "timestamp BIGINT NOT NULL," // PostgreSQL uses BIGINT for 64-bit
-                "authorizationSignatureHash  TEXT NOT NULL,"
-                "transactionHash  TEXT NOT NULL,"
-                "fromIpAddress  TEXT NOT NULL,"
+                "authorizationSignatureHash TEXT NOT NULL,"
+                "transactionHash TEXT NOT NULL,"
+                "fromIpAddress TEXT NOT NULL,"
                 "jsonInfo TEXT)";
         }
 
         sql << "CREATE INDEX IF NOT EXISTS idx_payments_fromaddress ON payments(fromAddress)";
         sql << "CREATE INDEX IF NOT EXISTS idx_payments_timestamp ON payments(timestamp)";
-        sql << "CREATE INDEX IF NOT EXISTS idx_payments_nonce ON payments(nonce)";
+        sql << "CREATE INDEX IF NOT EXISTS idx_payments_to_timestamp ON payments(toAddress, timestamp)";
         sql << "CREATE INDEX IF NOT EXISTS idx_payments_authhash ON payments(authorizationSignatureHash)";
         sql << "CREATE INDEX IF NOT EXISTS idx_payments_txhash ON payments(transactionHash)";
+        sql << "CREATE UNIQUE INDEX IF NOT EXISTS idx_payments_unique_payment ON "
+               "payments(fromAddress, chainId, assetAddress, nonce)";
 
         // --- Step 4: Log based on our check ---
         if (!tableExisted) {
@@ -275,7 +277,7 @@ bool MachinePayDB::paymentExists(const EthAddress &fromAddress, const EthAddress
 
     // Execute the query
     sql <<
-        "SELECT COUNT(*) FROM payments WHERE fromAddress = :fromAddress AND assetAddress = :assetAddress AND nonce = :nonce AND chainId = :chainId"
+        "SELECT COUNT(*) FROM payments WHERE  fromAddress = :fromAddress AND nonce = :nonce AND assetAddress = :assetAddress AND chainId = :chainId"
         ,
         soci::use(fromAddrHex, "fromAddress"), soci::use(assetAddrHex, "assetAddress"), soci::use(nonceHex, "nonce"),
         soci::use(chainIdStr, "chainId"), soci::into(count);
