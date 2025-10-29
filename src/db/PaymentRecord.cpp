@@ -6,6 +6,11 @@
 #include "crypto/EIP3009Nonce.h"
 #include <soci/row.h>
 
+#include "payment/datastructures/PaymentPayload.h"
+#include "payment/datastructures/Payload.h"
+#include "payment/datastructures/Authorization.h"
+#include <chrono>
+
 ptr<PaymentRecord> PaymentRecord::deserializeFromDbRow(const soci::row &) {
     /*
     auto organizationName = row.get<std::string>("organizationName");
@@ -102,4 +107,52 @@ PaymentRecord::PaymentRecord(const string &organizationName, const u256 chainId,
       transactionHash_(transactionHash),
       fromIpAddress_(fromIpAddress),
       jsonInfo_(jsonInfo) {
+}
+
+ptr<PaymentRecord> PaymentRecord::createPaymentRecordFromPaymentPayloadAndResource(
+    const PaymentPayload& paymentPayload, const ResourceConfig& /*resource*/) {
+    // Extract available fields from nested structures
+    auto innerPayload = paymentPayload.payload();
+    CHECK_STATE(innerPayload);
+    auto auth = innerPayload->authorization();
+    CHECK_STATE(auth);
+
+    const EthAddress from = auth->from();
+    const EthAddress to = auth->to();
+    const EIP3009Value value = auth->value();
+    const EIP3009Nonce nonce = auth->nonce();
+
+    // Some fields are not directly available here; use reasonable defaults.
+    const std::string organizationName = ""; // unknown at this layer
+    const u256 chainId = 0; // network chain id not available without NetworkConfig
+    const EthAddress assetAddress; // zero address by default
+
+    Hash resourceHash{}; // not available; left zeroed
+    Hash authorizationSignatureHash{}; // could be derived from signature if needed; leave zeroed
+    Hash transactionHash{}; // facilitator may fill later; leave zeroed
+
+    // Execution time now
+    uint64_t executionTime = static_cast<uint64_t>(
+        std::chrono::duration_cast<std::chrono::seconds>(
+            std::chrono::system_clock::now().time_since_epoch()).count());
+
+    // Optional info fields; not available here
+    const std::string fromIpAddress;
+    const std::string jsonInfo = paymentPayload.toJson().dump();
+
+    return std::make_shared<PaymentRecord>(
+        organizationName,
+        chainId,
+        from,
+        to,
+        assetAddress,
+        value,
+        nonce,
+        resourceHash,
+        executionTime,
+        authorizationSignatureHash,
+        transactionHash,
+        fromIpAddress,
+        jsonInfo
+    );
 }

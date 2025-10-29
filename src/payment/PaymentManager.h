@@ -29,7 +29,7 @@ public:
 
     [[nodiscard]] MachinePayApp& app() const { return app_; }
 
-    void recordSuccessfulSettlement(const shared_ptr<PaymentPayload> & payload, const ResourceConfig & resource);
+    void recordSuccessfulSettlement(const PaymentPayload & payload, const ResourceConfig & resource);
 
     std::optional<HttpError>  checkAgaistAlreadySettledPayments(const shared_ptr<PaymentPayload> & shared, const ResourceConfig & resource);
 

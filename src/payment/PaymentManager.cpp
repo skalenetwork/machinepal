@@ -4,6 +4,8 @@
 #include "config/subconfigs/NetworkConfig.h"
 #include "config/subconfigs/ResourceConfig.h"
 #include "datastructures/PaymentPayload.h"
+#include "db/MachinePayDB.h"
+#include "db/PaymentRecord.h"
 #include "url/URLUtils.h"
 
 PaymentManager::PaymentManager(MachinePayApp& app) : app_(app) {}
@@ -40,7 +42,13 @@ variant<ptr<PaymentPayload>, HttpError> PaymentManager::decodeAndParsePayment(co
     }
 }
 
-void PaymentManager::recordSuccessfulSettlement(const shared_ptr<PaymentPayload> &/*payload*/, const ResourceConfig &/*resource*/) {
+void PaymentManager::recordSuccessfulSettlement(const PaymentPayload & payload, const ResourceConfig & resource) {
+    auto db = app_.machinePayDB();
+
+
+    auto paymentRecord = PaymentRecord::createPaymentRecordFromPaymentPayloadAndResource(payload, resource);
+    CHECK_STATE(paymentRecord);
+    db->writePayment(*paymentRecord);
 }
 
 std::optional<HttpError> PaymentManager::checkAgaistAlreadySettledPayments(const shared_ptr<PaymentPayload> &/*shared*/,
@@ -82,7 +90,7 @@ std::optional<HttpError> PaymentManager::decodeValidateAndSettlePayment(const st
             return error;
         }
 
-        recordSuccessfulSettlement(paymentPayload, resource);
+        recordSuccessfulSettlement(*paymentPayload, resource);
 
         return std::nullopt;
 
