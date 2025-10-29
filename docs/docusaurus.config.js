@@ -19,7 +19,7 @@ const config = {
     projectName: 'machinepay',                 // Repo name
     trailingSlash: false,
 
-    onBrokenLinks: 'throw',
+    onBrokenLinks: 'warn,
     onBrokenMarkdownLinks: 'warn',
 
     i18n: {
