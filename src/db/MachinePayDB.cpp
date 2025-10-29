@@ -237,6 +237,7 @@ void MachinePayDB::ensureSchema() {
         }
 
         sql << "CREATE INDEX IF NOT EXISTS idx_payments_fromaddress ON payments(fromAddress)";
+        sql << "CREATE INDEX IF NOT EXISTS idx_payments_timestamp ON payments(timestamp)";
         sql << "CREATE INDEX IF NOT EXISTS idx_payments_nonce ON payments(nonce)";
         sql << "CREATE INDEX IF NOT EXISTS idx_payments_authhash ON payments(authorizationHash)";
         sql << "CREATE INDEX IF NOT EXISTS idx_payments_txhash ON payments(transactionHash)";

@@ -16,7 +16,7 @@ class PaymentRecord {
     u256 chainId_;
     EthAddress fromAddress_;
     EthAddress toAddress_;
-    EthAddress asset_;
+    EthAddress assetAddress_;
     EIP3009Value value_;
     EIP3009Nonce nonce_;
     Hash resourceHash_;
@@ -36,6 +36,8 @@ public:
 
     [[nodiscard]] EthAddress toAddress() const;
 
+    [[nodiscard]] EthAddress assetAddress() const;
+
     [[nodiscard]] EIP3009Value value() const;
 
     [[nodiscard]] EIP3009Nonce nonce() const;
@@ -54,7 +56,8 @@ public:
 
 
     PaymentRecord(const string& organizationName, const u256 chainId,
-                    const EthAddress &fromAddress, const EthAddress &toAddress, const EIP3009Value &value,
+                    const EthAddress &fromAddress, const EthAddress &toAddress, const EthAddress &assetAddress,
+                    const EIP3009Value &value,
                   const EIP3009Nonce &nonce, const Hash &resourceHash, uint64_t timestamp,
                   const Hash &authorizationHash, const Hash &transactionHash,
                   const std::string& fromIpAddress,

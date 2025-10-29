@@ -5,6 +5,8 @@
 #include <string>
 #include <memory>
 
+class EthAddress;
+class EIP3009Nonce;
 class PaymentRecord;
 // Forward-declare MachinePayApp to avoid circular include
 class MachinePayApp;
@@ -45,7 +47,7 @@ public:
      */
     void writePayment(const PaymentRecord& record);
 
-    bool paymentExists(const Hash& nonce);
+    bool paymentExists(const EthAddress& fromAddress, const EthAddress & assetAddress, const EIP3009Nonce& nonce);
 
 private:
     /**
