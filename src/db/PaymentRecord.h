@@ -21,7 +21,7 @@ class PaymentRecord {
     EIP3009Nonce nonce_;
     Hash resourceHash_;
     uint64_t timestamp_;
-    Hash authorizationHash_;
+    Hash authorizationSignatureHash_;
     Hash transactionHash_;
     std::string fromIpAddress_;
     std::string jsonInfo_;
@@ -46,7 +46,7 @@ public:
 
     [[nodiscard]] uint64_t timestamp() const;
 
-    [[nodiscard]] Hash authorizationHash() const;
+    [[nodiscard]] Hash authorizationSignatureHash() const;
 
     [[nodiscard]] Hash transactionHash() const;
 
@@ -59,7 +59,7 @@ public:
                     const EthAddress &fromAddress, const EthAddress &toAddress, const EthAddress &assetAddress,
                     const EIP3009Value &value,
                   const EIP3009Nonce &nonce, const Hash &resourceHash, uint64_t timestamp,
-                  const Hash &authorizationHash, const Hash &transactionHash,
+                  const Hash &authorizationSignatureHash, const Hash &transactionHash,
                   const std::string& fromIpAddress,
                   const std::string &jsonInfo);
 

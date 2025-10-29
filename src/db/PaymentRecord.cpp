@@ -63,8 +63,8 @@ uint64_t PaymentRecord::timestamp() const {
     return timestamp_;
 }
 
-Hash PaymentRecord::authorizationHash() const {
-    return authorizationHash_;
+Hash PaymentRecord::authorizationSignatureHash() const {
+    return authorizationSignatureHash_;
 }
 
 Hash PaymentRecord::transactionHash() const {
@@ -85,7 +85,7 @@ PaymentRecord::PaymentRecord(const string &organizationName, const u256 chainId,
                              const EIP3009Nonce &nonce,
                              const Hash &resourceHash,
                              uint64_t timestamp,
-                             const Hash &authorizationHash,
+                             const Hash &authorizationSignatureHash,
                              const Hash &transactionHash,
                              const std::string &fromIpAddress,
                              const std::string &jsonInfo)
@@ -98,7 +98,7 @@ PaymentRecord::PaymentRecord(const string &organizationName, const u256 chainId,
       nonce_(nonce),
       resourceHash_(resourceHash),
       timestamp_(timestamp),
-      authorizationHash_(authorizationHash),
+      authorizationSignatureHash_(authorizationSignatureHash),
       transactionHash_(transactionHash),
       fromIpAddress_(fromIpAddress),
       jsonInfo_(jsonInfo) {

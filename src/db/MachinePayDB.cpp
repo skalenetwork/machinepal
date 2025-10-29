@@ -112,15 +112,15 @@ void MachinePayDB::writePayment(const PaymentRecord &record) {
         // Store record fields in local variables
         std::string organizationName = record.organizationName();
         std::string chainId = record.chainId().str();
-        std::string fromAddress = record.fromAddress().toBase64();
-        std::string toAddress = record.toAddress().toBase64();
-        std::string assetAddress = record.assetAddress().toBase64();
+        std::string fromAddress = record.fromAddress().toHex();
+        std::string toAddress = record.toAddress().toHex();
+        std::string assetAddress = record.assetAddress().toHex();
         std::string value = record.value().toDecimal();
-        std::string nonce = record.nonce().toBase64();
-        std::string resourceHash = Encoding::hashToPartialBase64(record.resourceHash());
+        std::string nonce = record.nonce().toHex();
+        std::string resourceHash = Encoding::hashToPartialHex(record.resourceHash());
         long long timestamp = static_cast<long long>(record.timestamp());
-        std::string authorizationHash = Encoding::hashToPartialBase64(record.authorizationHash());
-        std::string transactionHash = Encoding::hashToPartialBase64(record.transactionHash());
+        std::string authorizationSignatureHash = Encoding::hashToPartialHex(record.authorizationSignatureHash());
+        std::string transactionHash = Encoding::hashToPartialHex(record.transactionHash());
         std::string fromIpAddress = record.fromIpAddress();
         std::string jsonInfo = record.jsonInfo();
 
@@ -128,11 +128,11 @@ void MachinePayDB::writePayment(const PaymentRecord &record) {
         sql << R"(
             INSERT INTO payments (
                 organizationName, chainId, fromAddress, toAddress, assetAddress, value, nonce, resourceHash,
-                timestamp, authorizationHash, transactionHash, fromIpAddress, jsonInfo
+                timestamp, authorizationSignatureHash, transactionHash, fromIpAddress, jsonInfo
             )
             VALUES (
                 :organizationName, :chainId, :fromAddress, :toAddress, :assetAddress, :value, :nonce, :resourceHash,
-                :timestamp, :authorizationHash, :transactionHash, :fromIpAddress, :jsonInfo
+                :timestamp, :authorizationSignatureHash, :transactionHash, :fromIpAddress, :jsonInfo
             )
         )",
             soci::use(organizationName, "organizationName"),
@@ -144,7 +144,7 @@ void MachinePayDB::writePayment(const PaymentRecord &record) {
             soci::use(nonce, "nonce"),
             soci::use(resourceHash, "resourceHash"),
             soci::use(timestamp, "timestamp"),
-            soci::use(authorizationHash, "authorizationHash"),
+            soci::use(authorizationSignatureHash, "authorizationSignatureHash"),
             soci::use(transactionHash, "transactionHash"),
             soci::use(fromIpAddress, "fromIpAddress"),
             soci::use(jsonInfo, "jsonInfo");
@@ -218,7 +218,7 @@ void MachinePayDB::ensureSchema() {
                 "nonce TEXT NOT NULL,"
                 "resourceHash TEXT NOT NULL,"
                 "timestamp INTEGER NOT NULL," // SQLite's INTEGER handles 64-bit
-                "authorizationHash  TEXT NOT NULL,"
+                "authorizationSignatureHash  TEXT NOT NULL,"
                 "transactionHash  TEXT NOT NULL,"
                 "fromIpAddress  TEXT NOT NULL,"
                 "jsonInfo TEXT)";
@@ -234,7 +234,7 @@ void MachinePayDB::ensureSchema() {
                 "nonce TEXT NOT NULL,"
                 "resourceHash TEXT NOT NULL,"
                 "timestamp BIGINT NOT NULL," // PostgreSQL uses BIGINT for 64-bit
-                "authorizationHash  TEXT NOT NULL,"
+                "authorizationSignatureHash  TEXT NOT NULL,"
                 "transactionHash  TEXT NOT NULL,"
                 "fromIpAddress  TEXT NOT NULL,"
                 "jsonInfo TEXT)";
@@ -243,7 +243,7 @@ void MachinePayDB::ensureSchema() {
         sql << "CREATE INDEX IF NOT EXISTS idx_payments_fromaddress ON payments(fromAddress)";
         sql << "CREATE INDEX IF NOT EXISTS idx_payments_timestamp ON payments(timestamp)";
         sql << "CREATE INDEX IF NOT EXISTS idx_payments_nonce ON payments(nonce)";
-        sql << "CREATE INDEX IF NOT EXISTS idx_payments_authhash ON payments(authorizationHash)";
+        sql << "CREATE INDEX IF NOT EXISTS idx_payments_authhash ON payments(authorizationSignatureHash)";
         sql << "CREATE INDEX IF NOT EXISTS idx_payments_txhash ON payments(transactionHash)";
 
         // --- Step 4: Log based on our check ---
@@ -268,16 +268,16 @@ bool MachinePayDB::paymentExists(const EthAddress &fromAddress, const EthAddress
     int count = 0;
 
     // Store temporary values in local variables
-    std::string fromAddrBase64 = fromAddress.toBase64();
-    std::string assetAddrBase64 = assetAddress.toBase64();
-    std::string nonceBase64 = nonce.toBase64();
+    std::string fromAddrHex = fromAddress.toHex();
+    std::string assetAddrHex = assetAddress.toHex();
+    std::string nonceHex = nonce.toHex();
     std::string chainIdStr = chainId.str();
 
     // Execute the query
     sql <<
-        "SELECT COUNT(*) FROM payments WHERE from_address = :fromAddr AND asset_address = :assetAddr AND nonce = :nonce AND chain_id = :chainId"
+        "SELECT COUNT(*) FROM payments WHERE fromAddress = :fromAddress AND assetAddress = :assetAddress AND nonce = :nonce AND chainId = :chainId"
         ,
-        soci::use(fromAddrBase64, "fromAddr"), soci::use(assetAddrBase64, "assetAddr"), soci::use(nonceBase64, "nonce"),
+        soci::use(fromAddrHex, "fromAddress"), soci::use(assetAddrHex, "assetAddress"), soci::use(nonceHex, "nonce"),
         soci::use(chainIdStr, "chainId"), soci::into(count);
 
     return count > 0;
