@@ -186,6 +186,10 @@ void MachinePayDB::ensureSchema() {
         soci::backend_factory const &backend = getBackend(dbType_);
         soci::session sql(backend, connectionString_);
 
+        if (dbType_ == DbType::SQLite) {
+            sql << "PRAGMA journal_mode=WAL";
+        }
+
         // check if table exists
 
         bool tableExisted = false;
@@ -266,21 +270,25 @@ void MachinePayDB::ensureSchema() {
 
 bool MachinePayDB::paymentExists(const EthAddress &fromAddress, const EthAddress &assetAddress,
                                  const EIP3009Nonce &nonce, u256 chainId) {
-    soci::session sql(*pool_);
-    int count = 0;
+    try {
+        soci::session sql(*pool_);
+        int count = 0;
 
-    // Store temporary values in local variables
-    std::string fromAddrHex = fromAddress.toHex();
-    std::string assetAddrHex = assetAddress.toHex();
-    std::string nonceHex = nonce.toHex();
-    std::string chainIdStr = chainId.str();
+        // Store temporary values in local variables
+        std::string fromAddrHex = fromAddress.toHex();
+        std::string assetAddrHex = assetAddress.toHex();
+        std::string nonceHex = nonce.toHex();
+        std::string chainIdStr = chainId.str();
 
-    // Execute the query
-    sql <<
-        "SELECT COUNT(*) FROM payments WHERE  fromAddress = :fromAddress AND nonce = :nonce AND assetAddress = :assetAddress AND chainId = :chainId"
-        ,
-        soci::use(fromAddrHex, "fromAddress"), soci::use(assetAddrHex, "assetAddress"), soci::use(nonceHex, "nonce"),
-        soci::use(chainIdStr, "chainId"), soci::into(count);
+        // Execute the query
+        sql <<
+            "SELECT COUNT(*) FROM payments WHERE  fromAddress = :fromAddress AND nonce = :nonce AND assetAddress = :assetAddress AND chainId = :chainId"
+            ,
+            soci::use(fromAddrHex, "fromAddress"), soci::use(assetAddrHex, "assetAddress"), soci::use(nonceHex, "nonce"),
+            soci::use(chainIdStr, "chainId"), soci::into(count);
 
-    return count > 0;
+        return count > 0;
+    } catch (...) {
+        RETHROW_NESTED2("Failed to check if payment exists");
+    }
 }
