@@ -9,6 +9,9 @@
 
 #include "PaymentRecord.h"
 #include "MachinePayApp.h"
+#include "crypto/EIP712Domain.h"
+#include "config/subconfigs/ResourceConfig.h"
+#include "payment/datastructures/PaymentPayload.h"
 
 using namespace std;
 
@@ -102,6 +105,24 @@ MachinePayDB::MachinePayDB(MachinePayApp &app, DbType type, const std::optional<
     } catch (...) {
         RETHROW_NESTED2("Failed to initialize PaymentDB");
     }
+}
+
+void MachinePayDB::saveSettledPayment(const PaymentPayload &payload,
+                                      const EIP712Domain &domain,
+                                      const ResourceConfig &resource) {
+    auto paymentRecord = PaymentRecord::createPaymentRecord(payload, domain, resource);
+    CHECK_STATE(paymentRecord);
+    writePayment(*paymentRecord);
+}
+
+bool MachinePayDB::settledPaymentExists(const ptr<PaymentPayload> &paymentPayload,
+                                        const ptr<EIP712Domain> &domain) {
+    // Extract fields needed to check for existing payment.
+    auto from = paymentPayload->payload()->authorization()->from();
+    auto nonce = paymentPayload->payload()->authorization()->nonce();
+    auto asset = domain->assetAddress();
+    auto chainId = domain->chainId();
+    return paymentExists(from, asset, nonce, chainId);
 }
 
 /**

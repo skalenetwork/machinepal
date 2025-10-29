@@ -32,46 +32,28 @@ enum class DbType {
  * This class is now thread-safe due to the use of soci::connection_pool.
  */
 class MachinePayDB {
-
-
-
 public:
     /**
- * @brief Constructs the PaymentDB and initializes the connection pool.
- * @param app Reference to the main application class.
- * @param type The database backend to use (SQLite or PostgreSQL).
- * @param connectionInfo For PostgreSQL: the full connection string.
- */
-
+     * @brief Constructs the PaymentDB and initializes the connection pool.
+     * @param app Reference to the main application class.
+     * @param type The database backend to use (SQLite or PostgreSQL).
+     * @param connectionInfo For PostgreSQL: the full connection string.
+     */
     MachinePayDB(MachinePayApp &app, DbType type, const std::optional<std::string> &connectionInfo = std::nullopt);
 
     void saveSettledPayment(const PaymentPayload &payload,
-        const EIP712Domain &domain,
-        const ResourceConfig &resource) {
-        auto paymentRecord =
-            PaymentRecord::createPaymentRecord(payload, domain, resource);
-        CHECK_STATE(paymentRecord);
-        writePayment(*paymentRecord);
-    }
-
+                            const EIP712Domain &domain,
+                            const ResourceConfig &resource);
 
     bool settledPaymentExists(const ptr<PaymentPayload> &paymentPayload,
-                              const ptr<EIP712Domain> &domain) {
-        auto from = paymentPayload->payload()->authorization()->from();
-        auto nonce = paymentPayload->payload()->authorization()->nonce();
-        auto asset = domain->assetAddress();
-        auto chainId = domain->chainId();
+                              const ptr<EIP712Domain> &domain);
 
-        return paymentExists(from, asset, nonce, chainId);
-    }
-
-/** Critical properties - should be analyzed in detail during code review
- *
- *  after saveSettledPayment is called with a PaymentPayload representing a successful payment,
- *  subsequent calls to settledPaymentExists with the same PaymentPayload and EIP712Domain
- *  shall return true.
- */
-
+    /** Critical properties - should be analyzed in detail during code review
+     *
+     *  after saveSettledPayment is called with a PaymentPayload representing a successful payment,
+     *  subsequent calls to settledPaymentExists with the same PaymentPayload and EIP712Domain
+     *  shall return true.
+     */
 private:
     void checkSqliteFileOnDisk();
 
