@@ -96,4 +96,10 @@ public:
         return hex;
     }
 
+    // Converts a std::array<uint8_t, 32> to a hex string
+    static std::string hashToPartialHex(const std::array<uint8_t, 32>& arr) {
+        auto fullHex = hashToHex(arr);
+        return fullHex.substr(0, 20);
+    }
+
 };

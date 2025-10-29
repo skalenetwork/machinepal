@@ -33,7 +33,7 @@ public:
 
     MachinePayDB(MachinePayApp& app, DbType type, const std::optional<std::string>& connectionInfo = std::nullopt);
 
-    void checkSqlLiteFileOnDisk();
+    void checkSqliteFileOnDisk();
 
     void verifyDatabaseConnectivity();
 

@@ -13,7 +13,7 @@
 using namespace std;
 
 
-void MachinePayDB::checkSqlLiteFileOnDisk() {
+void MachinePayDB::checkSqliteFileOnDisk() {
     if (std::filesystem::exists(connectionString_)) {
         if (std::filesystem::is_directory(connectionString_)) {
             throw std::runtime_error("SQLite database path is a directory, not a file: " + connectionString_);
@@ -33,7 +33,7 @@ void MachinePayDB::checkSqlLiteFileOnDisk() {
 void MachinePayDB::verifyDatabaseConnectivity() {
     try {
         if (dbType_ == DbType::SQLite) {
-            checkSqlLiteFileOnDisk();
+            checkSqliteFileOnDisk();
         }
         soci::backend_factory const &backendTest = getBackend(dbType_);
         soci::session testSess(backendTest, connectionString_);
@@ -114,10 +114,10 @@ void MachinePayDB::writePayment(const PaymentRecord &record) {
         std::string toAddress = record.toAddress().toHex();
         std::string value = record.value().toDecimal();
         std::string nonce = record.nonce().toHex();
-        std::string resourceHash = Encoding::hashToHex(record.resourceHash());
-        uint64_t timestamp = record.timestamp();
-        std::string authorizationHash = Encoding::hashToHex(record.authorizationHash());
-        std::string transactionHash = Encoding::hashToHex(record.transactionHash());
+        std::string resourceHash = Encoding::hashToPartialHex(record.resourceHash());
+        long long timestamp = static_cast<long long>(record.timestamp());
+        std::string authorizationHash = Encoding::hashToPartialHex(record.authorizationHash());
+        std::string transactionHash = Encoding::hashToPartialHex(record.transactionHash());
         std::string jsonInfo = record.jsonInfo();
 
         // Insert into the database using explicit named bindings for safety and cross-backend consistency
@@ -227,11 +227,10 @@ void MachinePayDB::ensureSchema() {
         }
 
 
-        sql << "CREATE UNIQUE INDEX IF NOT EXISTS idx_payments_orghash ON payments(organizationName)";
-        sql << "CREATE UNIQUE INDEX IF NOT EXISTS idx_payments_reshash ON payments(resourceHash)";
-        sql << "CREATE INDEX IF NOT EXISTS idx_payments_authhash ON payments(authorizationHash)";
-        sql << "CREATE INDEX IF NOT EXISTS idx_payments_txhash ON payments(transactionHash)";
+        sql << "CREATE INDEX IF NOT EXISTS idx_payments_fromaddress ON payments(fromAddress)";
         sql << "CREATE INDEX IF NOT EXISTS idx_payments_nonce ON payments(nonce)";
+        sql << "CREATE INDEX IF NOT EXISTS idx_payments_txhash ON payments(transactionHash)";
+
 
         // --- Step 4: Log based on our check ---
         if (!tableExisted) {
