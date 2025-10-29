@@ -63,6 +63,11 @@ void MachinePayDB::configureDBParamsAndPool() {
         sess.open(backend, connectionString_);
         if (dbType_ == DbType::SQLite) {
             sess << "PRAGMA journal_mode=WAL"; // apply to every pooled connection
+            sess << "PRAGMA busy_timeout = 5000";
+            sess << "PRAGMA synchronous = NORMAL";        // Balance durability & performance
+            sess << "PRAGMA temp_store = MEMORY";         // Use RAM for temp tables/sorts
+            sess << "PRAGMA cache_size = -20000";         // 20MB in-memory page cache (negative = KB)
+            sess << "PRAGMA mmap_size = 268435456";       // 256MB memory mapping for reads
         }
     }
 }

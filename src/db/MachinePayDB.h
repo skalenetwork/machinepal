@@ -53,7 +53,7 @@ public:
      * This method is thread-safe.
      */
     bool paymentExists(const EthAddress& fromAddress, const EthAddress & assetAddress, const EIP3009Nonce& nonce,
-        u256 chaidId);
+        u256 chainId);
 
 private:
     /**
