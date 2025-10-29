@@ -117,9 +117,9 @@ void MachinePayDB::writePayment(const PaymentRecord &record) {
         // Store record fields in local variables
         std::string organizationName = record.organizationName();
         std::string chainId = record.chainId().str();
-        std::string fromAddress = record.fromAddress().toHex(false);
-        std::string toAddress = record.toAddress().toHex(false);
-        std::string assetAddress = record.assetAddress().toHex(false);
+        std::string fromAddress = record.fromAddress().toHex(PREFIX_NONE);
+        std::string toAddress = record.toAddress().toHex(PREFIX_NONE);
+        std::string assetAddress = record.assetAddress().toHex(PREFIX_NONE);
         std::string value = record.value().toDecimal();
         std::string nonce = record.nonce().toHex();
         std::string resourceHash = Encoding::hashToPartialHex(record.resourceHash());
@@ -280,8 +280,8 @@ bool MachinePayDB::paymentExists(const EthAddress &fromAddress, const EthAddress
         int count = 0;
 
         // Store temporary values in local variables
-        std::string fromAddrHex = fromAddress.toHex(false);
-        std::string assetAddrHex = assetAddress.toHex( false);
+        std::string fromAddrHex = fromAddress.toHex(PREFIX_NONE);
+        std::string assetAddrHex = assetAddress.toHex( PREFIX_NONE);
         std::string nonceHex = nonce.toHex();
         std::string chainIdStr = chainId.str();
 

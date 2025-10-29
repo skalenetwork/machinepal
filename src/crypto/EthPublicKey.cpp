@@ -1,15 +1,8 @@
+#include "MachinePayCommon.h"
 #include "EthPublicKey.h"
 #include "EthAddress.h"
 #include "Keccak.h"
-#include "MachinePayCommon.h"
 
-#include <stdexcept>
-#include <algorithm>
-#include <sstream>
-#include <iomanip>
-#include <vector>
-#include <cctype>
-#include <cstring>
 #include <boost/algorithm/hex.hpp>
 
 static std::string trimCopy(const std::string& in) {

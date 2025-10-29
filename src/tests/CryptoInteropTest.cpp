@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE(private_key_scalar_one) {
 
     auto addr = publicKey.getAddress();
 
-    BOOST_TEST(addr.toHex( true) == "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf");
+    BOOST_TEST(addr.toHex( PREFIX_0x) == "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf");
     BOOST_TEST(addr.toChecksumHex() == "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf");
 }
 
@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE(private_key_scalar_one) {
 BOOST_AUTO_TEST_CASE(checksum_validation_scalar_one_address) {
     std::string checksumAddr = "0x8626f6940E2eb28930eFb4CeF49B2d1F2C9C1199";
     auto addr = EthAddress::parseFlexible(checksumAddr, true);
-    BOOST_TEST(addr.toHex(true) == "0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199");
+    BOOST_TEST(addr.toHex(PREFIX_0x) == "0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199");
 }
 
 BOOST_AUTO_TEST_CASE(range_checks) {
@@ -80,7 +80,5 @@ BOOST_AUTO_TEST_CASE(range_checks) {
     for(char c: nMinus1) expectedLower.push_back(std::tolower(static_cast<unsigned char>(c)));
     BOOST_TEST(pk.toHex() == expectedLower);
 }
-
-// TODO: Verify private key scalar one test after keccak fix
 
 #pragma GCC diagnostic pop

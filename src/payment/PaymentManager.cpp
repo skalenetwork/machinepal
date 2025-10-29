@@ -47,35 +47,37 @@ variant<ptr<PaymentPayload>, HttpError> PaymentManager::decodeAndParsePayment(
 
 void PaymentManager::recordSuccessfulSettlement(const PaymentPayload &payload, const ResourceConfig &resource) {
     auto db = app_.machinePayDB();
-
-
-    auto paymentRecord = PaymentRecord::createPaymentRecordFromPaymentPayloadAndResource(payload, resource);
-    CHECK_STATE(paymentRecord);
-    db->writePayment(*paymentRecord);
+    db->saveSettledPayment(payload, resource);
 }
 
-// Before
+
 std::optional<HttpError> PaymentManager::checkAgaistAlreadySettledPayments(const ptr<PaymentPayload> &paymentPayload,
                                                                            const ptr<EIP712Domain> &domain) {
     auto db = app_.machinePayDB();
-    auto from = paymentPayload->payload()->authorization()->from();
-    auto nonce = paymentPayload->payload()->authorization()->nonce();
-    auto asset = domain->assetAddress();
-    auto chainId = domain->chainId();
 
-    if (db->paymentExists(from, asset, nonce, chainId)) {
+
+
+
+    if (db->settledPaymentExists(paymentPayload, domain)) {
+
+
+        const auto &from = paymentPayload->payload()->authorization()->from();
+        const auto &nonce = paymentPayload->payload()->authorization()->nonce();
+        const auto &asset = domain->assetAddress();
+        const auto &chainId = domain->chainId();
+
         spdlog::info("Payment has already been spent: from={}, nonce={}, token={}, tokenAddress={}, chainId={}",
-                     from.toHex(true),
+                     from.toHex(PREFIX_0x),
                      nonce.toHex(),
                      domain->name(),
-                     asset.toHex(true),
+                     asset.toHex(PREFIX_0x),
                      chainId.str());
         return HttpError(ERR_BAD_REQUEST,
                          std::string("This payment has already been spent: ") +
-                         "from=" + from.toHex(true) +
+                         "from=" + from.toHex(PREFIX_0x) +
                          ", nonce=" + nonce.toHex() +
                          ", token:" + domain->name() +
-                         ", tokenAddress=" + asset.toHex(true) +
+                         ", tokenAddress=" + asset.toHex(PREFIX_0x) +
                          ", chainId=" + chainId.str());
     }
 
@@ -124,6 +126,7 @@ std::optional<HttpError> PaymentManager::decodeValidateAndSettlePayment(
         return std::nullopt;
     } catch (std::exception &e) {
         spdlog::error("validatePayment had exception while parsing X-PAYMENT header: {}", e.what());
-        return HttpError(ERR_INTERNAL_SERVER_ERROR, std::string("Error parsing X-PAYMENT header: ") + e.what());
+        return HttpError(ERR_INTERNAL_SERVER_ERROR, std::string("Error parsing X-PAYMENT header: ")
+            + e.what());
     }
 }

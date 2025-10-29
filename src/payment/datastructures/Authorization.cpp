@@ -73,7 +73,7 @@ json Authorization::toJson() const {
     j["value"] = value_.toDecimal();
     j["validAfter"] = validAfter_.toDecimal();
     j["validBefore"] = validBefore_.toDecimal();
-    j["nonce"] = nonce_.toHex(true);
+    j["nonce"] = nonce_.toHex(PREFIX_0x);
     return j;
 }
 
@@ -113,8 +113,8 @@ std::optional<HttpError> Authorization::validate(const MachinePayConfig &config,
                              std::string(
                                  "Authorization payment destination address does not match configured destination address: ")
                              +
-                             "authorization.to=" + to().toHex(true) + ", configured.to=" + config.network()->walletAddress()
-                             .toHex(true));
+                             "authorization.to=" + to().toHex(PREFIX_0x) + ", configured.to=" + config.network()->walletAddress()
+                             .toHex(PREFIX_0x));
         }
 
         EIP3009Value price(resource.price());

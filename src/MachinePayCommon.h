@@ -1,40 +1,47 @@
 #pragma once
+
+// Third-party / external libraries
+#include <spdlog/spdlog.h>
+#include <glog/logging.h>
+#include <nlohmann/json_fwd.hpp>
+#include <nlohmann/json.hpp>
+
+// Boost libraries
 #include <boost/algorithm/hex.hpp>
 #include <boost/algorithm/string.hpp>
-#include <boost/regex.hpp>
-#include <boost/multiprecision/cpp_int.hpp>
-#include <cassert>
-#include <iostream>
-#include <string>
-#include <spdlog/spdlog.h>
-#include <map>
-#include <cstdint>
-#include <filesystem>
-#include <optional>
-#include <shared_mutex>
-#include <atomic>
-#include <chrono>
-#include <memory>
-#include <regex>
-#include <set>
-#include <nlohmann/json_fwd.hpp>
-#include <boost/url/decode_view.hpp>
 #include <boost/algorithm/string/case_conv.hpp>
 #include <boost/beast/core/detail/base64.hpp>
 #include <boost/locale.hpp>
 #include <boost/locale/conversion.hpp>
+#include <boost/multiprecision/cpp_int.hpp>
+#include <boost/regex.hpp>
+#include <boost/url/decode_view.hpp>
+
+// Standard library headers
 #include <algorithm>
-#include <cctype>
-#include <stdexcept>
-#include <sstream>
-#include <iomanip>
-#include <nlohmann/json.hpp>
 #include <array>
+#include <atomic>
+#include <cassert>
+#include <chrono>
+#include <cctype>
+#include <cstdint>
 #include <cstdlib>
-#include <glog/logging.h>
+#include <cstring>
+#include <filesystem>
+#include <iomanip>
+#include <iostream>
+#include <map>
+#include <memory>
+#include <optional>
+#include <regex>
+#include <shared_mutex>
+#include <sstream>
+#include <stdexcept>
+#include <string>
 #include <thread>
 #include <vector>
 #include <span>
+#include <set>
 
 
 #if defined(__cpp_exceptions) || defined(__EXCEPTIONS) || defined(_CPPUNWIND)
@@ -107,3 +114,7 @@ using json = nlohmann::json;
 
 using namespace std;
 
+enum Prefix {
+    PREFIX_NONE,
+    PREFIX_0x
+};
