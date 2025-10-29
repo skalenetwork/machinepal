@@ -15,7 +15,7 @@ EIP712Domain::EIP712Domain(const std::string &name, const std::string &version, 
     : name_(name),
       version_(version),
       chainId_(chainId),
-      verifyingContract_(verifyingContract) {
+      assetAddress_(verifyingContract) {
     auto computedDomainSeparator = hashDomain();
     domainSeparator_ = Encoding::toHex(computedDomainSeparator, true);
     if (domainSeparator) {
@@ -71,7 +71,7 @@ std::array<uint8_t, 32> EIP712Domain::hashDomain() const {
     encodedData.insert(encodedData.end(), paddedChainId.begin(), paddedChainId.end());
 
     // EIP-712 field: verifyingContract (address) - left-padded to 32 bytes
-    auto contractBytes = verifyingContract_.bytes(); // Should be 20 bytes
+    auto contractBytes = assetAddress_.bytes(); // Should be 20 bytes
 
     std::vector<uint8_t> paddedContract(32 - contractBytes.size(), 0);
     paddedContract.insert(paddedContract.end(), contractBytes.begin(), contractBytes.end());

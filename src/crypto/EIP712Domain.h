@@ -17,10 +17,14 @@ class EIP712Domain {
     std::string name_;
     std::string version_;
     u256 chainId_;
-    EthAddress verifyingContract_;
+    EthAddress assetAddress_;
     std::string domainSeparator_;
 
 public:
+    [[nodiscard]] EthAddress assetAddress() const {
+        return assetAddress_;
+    }
+
     [[nodiscard]] std::string domainSeparator() const {
         return domainSeparator_;
     }
@@ -75,7 +79,7 @@ public:
     }
 
     [[nodiscard]] EthAddress verifyingContract() const {
-        return verifyingContract_;
+        return assetAddress_;
     }
 
     std::array<uint8_t, 32> hashWithDomain(const std::array<uint8_t, 32> &structHash) const;

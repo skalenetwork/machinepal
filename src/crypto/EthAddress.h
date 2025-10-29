@@ -21,7 +21,7 @@ public:
 
     static EthAddress parseHexAddress(const std::string &hex);
     static EthAddress parseFlexible(const std::string &hex, bool validateChecksum = true);
-    std::string toHex() const;
+    std::string toHex(bool addPrefix) const;
     std::string toBase64() const;
     std::string toChecksumHex() const;
 

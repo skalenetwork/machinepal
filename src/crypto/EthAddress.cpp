@@ -65,10 +65,12 @@ EthAddress EthAddress::parseFlexible(const std::string &hex, bool validateChecks
     return addr;
 }
 
-std::string EthAddress::toHex() const {
+std::string EthAddress::toHex(bool addPrefix) const {
     std::string out;
     out.reserve(42);
-    out += "0x";
+    if (addPrefix) {
+        out += "0x";
+    }
     boost::algorithm::hex_lower(bytes().begin(), bytes().end(), std::back_inserter(out));
     return out;
 }

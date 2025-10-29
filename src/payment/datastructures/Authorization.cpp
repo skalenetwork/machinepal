@@ -113,8 +113,8 @@ std::optional<HttpError> Authorization::validate(const MachinePayConfig &config,
                              std::string(
                                  "Authorization payment destination address does not match configured destination address: ")
                              +
-                             "authorization.to=" + to().toHex() + ", configured.to=" + config.network()->walletAddress()
-                             .toHex());
+                             "authorization.to=" + to().toHex(true) + ", configured.to=" + config.network()->walletAddress()
+                             .toHex(true));
         }
 
         EIP3009Value price(resource.price());

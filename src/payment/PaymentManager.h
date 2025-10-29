@@ -31,7 +31,8 @@ public:
 
     void recordSuccessfulSettlement(const PaymentPayload & payload, const ResourceConfig & resource);
 
-    std::optional<HttpError>  checkAgaistAlreadySettledPayments(const shared_ptr<PaymentPayload> & shared, const ResourceConfig & resource);
+    std::optional<HttpError>  checkAgaistAlreadySettledPayments(const ptr<PaymentPayload> & paymentPayload,
+        const ptr<EIP712Domain>& domain);
 
     std::optional<HttpError> decodeValidateAndSettlePayment(
         const std::unique_ptr<proxygen::HTTPMessage> &req,

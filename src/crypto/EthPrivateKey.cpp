@@ -408,7 +408,7 @@ std::optional<HttpError> EthPrivateKey::eip712VerifyRaw(const uint8_t msg32[32],
         EthAddress rec = recoverAddressFromSigRSV(msg32, sig65);
         if (std::memcmp(rec.bytes().data(), expectedAddress.bytes().data(), 20) != 0) {
             return HttpError(ErrorType::ERR_BAD_REQUEST, "Signature verification failed: recovered address mismatch:"
-                                                         + rec.toHex() + " != expected " + expectedAddress.toHex());
+                                                         + rec.toHex(true) + " != expected " + expectedAddress.toHex(true));
         }
     } catch (std::exception &e) {
         return HttpError(ERR_BAD_REQUEST, string("Signature verification failed:") +
