@@ -98,7 +98,7 @@ std::string EthAddress::toChecksumHex() const {
     boost::algorithm::hex_lower(bytes_.begin(), bytes_.end(), std::back_inserter(lower));
 
     // 2) Compute the Keccak-256 hash of the lowercase hex string
-    const auto hash = keccak::keccak256(lower);
+    const auto hash = KeccakHash::keccak256(lower);
 
     // 3) Build the checksummed address
     std::string out = "0x";

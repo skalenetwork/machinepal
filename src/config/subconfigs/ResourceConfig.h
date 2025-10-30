@@ -3,8 +3,11 @@
 #include <boost/multiprecision/cpp_int.hpp>
 
 #include "MachinePayCommon.h"
+#include "crypto/Keccak.h"
 #include "filesystem/FileManager.h"
 #include "url/URLUtils.h"
+
+#include <cryptopp/keccak.h>
 
 enum class ResourceType {
     LocalFile,
@@ -41,6 +44,13 @@ private:
             machinePayPath_ = URLUtils::getLocationFromUrl(location_);
             mimeType_ = "application/json";
         }
+    }
+
+    Hash getHash() {
+        // Combine relevant fields to create a unique hash
+        std::string data = name_ + location_ + token_ + mimeType_ + description_ + paymentScheme_;
+        data += price_.str() + std::to_string(static_cast<int>(type_));
+        return KeccakHash::keccak256(data);
     }
 
 public:

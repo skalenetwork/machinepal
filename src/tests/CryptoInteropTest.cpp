@@ -28,7 +28,7 @@ BOOST_AUTO_TEST_CASE(keccak256_abc_vector)
     const std::string expected =
         "4e03657aea45a94fc7d47ba826c8d667c0d1e6e33a64a036ec44f58fa12d6c45";
 
-    const auto digest = keccak::keccak256(input);
+    const auto digest = KeccakHash::keccak256(input);
     const std::string got = to_hex(digest);
 
     BOOST_CHECK_MESSAGE(

@@ -60,7 +60,7 @@ std::string EthPublicKey::toHex() const {
 }
 
 EthAddress EthPublicKey::getAddress() const {
-    auto hash = keccak::keccak256(std::span<const uint8_t>(bytes_.data(), 64));
+    auto hash = KeccakHash::keccak256(std::span<const uint8_t>(bytes_.data(), 64));
     return EthAddress(hash.data() + 12, 20);
 }
 bool operator==(const EthPublicKey& a, const EthPublicKey& b) { return a.bytes_ == b.bytes_; }

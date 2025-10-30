@@ -30,7 +30,7 @@ EIP712Domain::EIP712Domain(const std::string &name, const std::string &version, 
 std::array<uint8_t, 32> EIP712Domain::getDomainTypeHash() {
     // EIP-712 Domain Type Hash
     //  public constant EIP712_DOMAIN_TYPEHASH = 0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f;
-    static std::array<uint8_t, 32> EIP712_DOMAIN_TYPEHASH = keccak::keccak256(
+    static std::array<uint8_t, 32> EIP712_DOMAIN_TYPEHASH = KeccakHash::keccak256(
         "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
 
     std::string hex;
@@ -53,11 +53,11 @@ std::array<uint8_t, 32> EIP712Domain::hashDomain() const {
     encodedData.insert(encodedData.end(), domainTypeHash.begin(), domainTypeHash.end());
 
     // EIP-712 field: name (string)
-    auto hashed_name = keccak::keccak256(name_);
+    auto hashed_name = KeccakHash::keccak256(name_);
     encodedData.insert(encodedData.end(), hashed_name.begin(), hashed_name.end());
 
     // EIP-712 field: version (string)
-    auto hashed_version = keccak::keccak256(version_);
+    auto hashed_version = KeccakHash::keccak256(version_);
 
     encodedData.insert(encodedData.end(), hashed_version.begin(), hashed_version.end());
 
@@ -81,7 +81,7 @@ std::array<uint8_t, 32> EIP712Domain::hashDomain() const {
 
     CHECK_STATE(encodedData.size() == 160);
 
-    return keccak::keccak256(encodedData);
+    return KeccakHash::keccak256(encodedData);
 
 }
 
@@ -92,7 +92,7 @@ std::array<uint8_t, 32> EIP712Domain::hashWithDomain(const std::array<uint8_t, 3
     auto domainSeparator = hashDomain();
     dataToHash.insert(dataToHash.end(), domainSeparator.begin(), domainSeparator.end());
     dataToHash.insert(dataToHash.end(), structHash.begin(), structHash.end());
-    return keccak::keccak256(dataToHash);
+    return KeccakHash::keccak256(dataToHash);
 }
 
 

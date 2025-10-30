@@ -394,7 +394,7 @@ EthAddress recoverAddressFromSigRSV(const uint8_t msg32[32], const uint8_t sig65
     if (!secp256k1_ec_pubkey_serialize(ctx, pubkey, &len, &pub, SECP256K1_EC_UNCOMPRESSED) || len != 65)
         throw std::invalid_argument("pubkey_serialize failed");
 
-    auto hash = keccak::keccak256(std::span<const uint8_t>(pubkey + 1, 64));
+    auto hash = KeccakHash::keccak256(std::span<const uint8_t>(pubkey + 1, 64));
     EthAddress addr{};
     std::memcpy(addr.bytes().data(), hash.data() + 12, 20);
     return addr;

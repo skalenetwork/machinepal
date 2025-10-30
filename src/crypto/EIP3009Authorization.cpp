@@ -76,7 +76,7 @@ static std::array<uint8_t, 32> hashTransferWithAuthorizationStruct(const EthAddr
     const auto& nonceBytes = nonce.bytes();
     message.insert(message.end(), nonceBytes.begin(), nonceBytes.end());
 
-    return keccak::keccak256(message);
+    return KeccakHash::keccak256(message);
 }
 
 
