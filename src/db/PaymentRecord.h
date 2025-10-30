@@ -70,5 +70,5 @@ public:
                   const std::string &jsonInfo);
 
     static ptr<PaymentRecord> deserializeFromDbRow(const soci::row &row);
-    std::string toDbString() const;
+
 };

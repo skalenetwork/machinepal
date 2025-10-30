@@ -67,14 +67,14 @@ std::optional<HttpError> PaymentManager::checkAgainstAlreadySettledPayments(cons
 
         spdlog::info("Payment has already been spent: from={}, nonce={}, token={}, tokenAddress={}, chainId={}",
                      from.toHex(PREFIX_0x),
-                     nonce.toHex(),
+                     nonce.toHex(PREFIX_0x),
                      domain->name(),
                      asset.toHex(PREFIX_0x),
                      chainId.str());
         return HttpError(ERR_BAD_REQUEST,
                          std::string("This payment has already been spent: ") +
                          "from=" + from.toHex(PREFIX_0x) +
-                         ", nonce=" + nonce.toHex() +
+                         ", nonce=" + nonce.toHex(PREFIX_0x) +
                          ", token:" + domain->name() +
                          ", tokenAddress=" + asset.toHex(PREFIX_0x) +
                          ", chainId=" + chainId.str());

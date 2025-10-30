@@ -32,9 +32,6 @@ ptr<PaymentRecord> PaymentRecord::deserializeFromDbRow(const soci::row &) {
     return nullptr;
 }
 
-std::string PaymentRecord::toDbString() const {
-    return organizationName();
-}
 
 std::string PaymentRecord::organizationName() const {
     return organizationName_;

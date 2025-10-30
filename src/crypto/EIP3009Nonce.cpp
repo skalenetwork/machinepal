@@ -25,6 +25,10 @@ const std::array<uint8_t, 32>& EIP3009Nonce::bytes() const {
     return bytes_;
 }
 
+std::string EIP3009Nonce::toDbString() const {
+    return toHex(PREFIX_NONE);
+}
+
 std::string EIP3009Nonce::toHex(bool withPrefix) const {
     return Encoding::toHex(std::span<const uint8_t>(bytes_.data(), bytes_.size()), withPrefix);
 }

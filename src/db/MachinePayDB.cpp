@@ -136,13 +136,13 @@ void MachinePayDB::writePayment(const PaymentRecord &record) {
         soci::session sql(*pool_);
 
         // Store record fields in local variables
-        std::string organizationName = record.toDbString();
+        std::string organizationName = record.organizationName();
         std::string chainId = record.chainId().str();
         std::string fromAddress = record.fromAddress().toDbString();
-        std::string toAddress = record.toDbString();
+        std::string toAddress = record.toAddress().toDbString();
         std::string assetAddress = record.assetAddress().toDbString();
-        std::string value = record.value().toDecimal();
-        std::string nonce = record.nonce().toHex();
+        std::string value = record.value().toDbString();
+        std::string nonce = record.nonce().toDbString();
         std::string resourceHash = Encoding::hashToPartialHex(record.resourceHash());
         long long executionTime = static_cast<long long>(record.executionTime());
         std::string authorizationSignatureHash = Encoding::hashToPartialHex(record.authorizationSignatureHash());
@@ -311,7 +311,7 @@ bool MachinePayDB::paymentExists(const EthAddress &fromAddress, const EthAddress
         // Store temporary values in local variables
         std::string fromAddrHex = fromAddress.toHex(PREFIX_NONE);
         std::string assetAddrHex = assetAddress.toHex(PREFIX_NONE);
-        std::string nonceHex = nonce.toHex();
+        std::string nonceHex = nonce.toHex(PREFIX_NONE);
         std::string chainIdStr = chainId.str();
 
         // Execute the query

@@ -36,7 +36,7 @@ public:
     // domain separator includes chain id and asset address
     // payment for a particular unique payment can only be settled once
     std::string uniquePaymentKey(const EthAddress &from, const EIP3009Nonce nonce) const {
-        return domainSeparator_ + "_" + from.toHex(PREFIX_NONE) + "_" + nonce.toHex();
+        return domainSeparator_ + "_" + from.toHex(PREFIX_NONE) + "_" + nonce.toHex(PREFIX_NONE);
     }
 
 

@@ -13,6 +13,7 @@ public:
     EIP3009Value() = default;
     explicit EIP3009Value(const u256& val);
     std::string toDecimal() const;
+    std::string toDbString() const;
     static EIP3009Value fromHexOrDecimal(const std::string& decStr);
     friend auto operator<=>(const EIP3009Value&, const EIP3009Value&) = default;
 };
