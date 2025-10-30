@@ -133,29 +133,32 @@ std::optional<HttpError> PaymentManager::checkPaymentIsNewAndSettleIt(std::strin
     auto authorization = paymentPayload->payload()->authorization();
     auto domain = networkConfig.eip712Domain();
 
-    // Try to acquire the lock for this payment
+
+    // we need to make sure that the user can not submit the same payment multiple times in parallel
+    // submitting the same payment twice should result in one successful settlement and one error response
+    // otherwise the user could use the same payment to pay for multiple requests
+    // we do it by marking the payment as locked while being settled
+
     if (!lockPaymentAsBeingSettled(authorization, domain)) {
-        // payment has already been submitted and is being processed
-        // by a different thread. Return immediately.
+        // Failed to acquire lock, return immediately.
         return HttpError(ERR_BAD_REQUEST, "Your payment is currently being processed. "
                          "Looks like you submitted the same payment twice.");
     }
 
-    std::optional<HttpError> error;
+    // Lock acquired. Immediately create the RAII guard.
+    // folly::makeGuard creates a guard that will unlock the payment once we exit this function,.
+    auto guard = folly::makeGuard([&]() {
+        unlockPaymentAsBeingSettled(authorization, domain);
+    });
+
 
     try {
-        // Call the settleUnsafe function tjhat assumes that we hold the lock
-        error = checkPaymentIsNewAndSettleItUnsafe(settlementInfo, networkConfig, resource, paymentPayload);
+        // Now that we hold the lock, proceed with the actual settlement.
+        return checkPaymentIsNewAndSettleItUnsafe(settlementInfo, networkConfig, resource, paymentPayload);
     } catch (const std::exception &e) {
-        spdlog::error("settleUnsafe had an exception: {}", e.what());
-        error = HttpError(ERR_INTERNAL_SERVER_ERROR, std::string("Error during payment settlement: ") + e.what());
-    } catch (...) {
-        spdlog::error("settleUnsafe had an unknown exception");
-        error = HttpError(ERR_INTERNAL_SERVER_ERROR, "Unknown error during payment settlement");
+        spdlog::error("Error during payment settlement: {}", e.what());
+        return HttpError(ERR_INTERNAL_SERVER_ERROR, std::string("Error during payment settlement: ") + e.what());
     }
-
-    unlockPaymentAsBeingSettled(authorization, domain);
-    return error;
 }
 
 
@@ -165,7 +168,6 @@ std::optional<HttpError> PaymentManager::decodeValidateAndSettlePayment(
     const MachinePayConfig &config,
     const ResourceConfig &resource) {
     std::optional<HttpError> error = std::nullopt;
-    std::string uniquePaymentKey;
 
     try {
         auto result = decodeAndParsePayment(req);
