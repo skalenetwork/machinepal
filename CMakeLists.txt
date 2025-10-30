@@ -1,11 +1,22 @@
 cmake_minimum_required(VERSION 3.16)
 project(machinepay LANGUAGES CXX)
 
-find_program(NICE_EXE nice)
-if (NICE_EXE)
-    set(CMAKE_C_COMPILER_LAUNCHER "${NICE_EXE};-n;10")
-    set(CMAKE_CXX_COMPILER_LAUNCHER "${NICE_EXE};-n;10")
+
+# Use 'nice' to lower priority of compilation processes
+# vs desktop UI processes
+# Detect desktop environment (X11 or Wayland)
+if(DEFINED ENV{DISPLAY} OR DEFINED ENV{WAYLAND_DISPLAY} OR DEFINED ENV{XDG_CURRENT_DESKTOP})
+    find_program(NICE_EXE nice)
+    if (NICE_EXE)
+        message(STATUS "Detected desktop session — running compilers with lower priority (nice -n 10)")
+        set(CMAKE_C_COMPILER_LAUNCHER "${NICE_EXE};-n;10")
+        set(CMAKE_CXX_COMPILER_LAUNCHER "${NICE_EXE};-n;10")
+    endif()
+else()
+    message(STATUS "Headless or CI environment detected — building at normal priority")
 endif()
+
+
 
 set(WITH_SQLITE3 ON CACHE BOOL "Build SOCI SQLite3 backend" FORCE)
 option(ENABLE_POSTGRESQL "Enable PostgreSQL backend via SOCI" OFF)
