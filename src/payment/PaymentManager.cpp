@@ -9,7 +9,8 @@
 #include "db/PaymentRecord.h"
 #include "url/URLUtils.h"
 
-PaymentManager::PaymentManager(MachinePayApp &app) : app_(app) {
+PaymentManager::PaymentManager(MachinePayApp &app)
+    : app_(app) {
 }
 
 variant<ptr<PaymentPayload>, HttpError> PaymentManager::decodeAndParsePayment(
@@ -46,22 +47,18 @@ variant<ptr<PaymentPayload>, HttpError> PaymentManager::decodeAndParsePayment(
 }
 
 void PaymentManager::recordSuccessfulSettlement(const PaymentPayload &payload,
-    const EIP712Domain& domain,
-    const ResourceConfig &resource) {
+                                                const EIP712Domain &domain,
+                                                const ResourceConfig &resource) {
     auto db = app_.machinePayDB();
     db->saveSettledPayment(payload, domain, resource);
 }
 
 
-std::optional<HttpError> PaymentManager::checkAgaistAlreadySettledPayments(const ptr<PaymentPayload> &paymentPayload,
-                                                                           const ptr<EIP712Domain> &domain) {
+std::optional<HttpError> PaymentManager::checkAgainstAlreadySettledPayments(const ptr<PaymentPayload> &paymentPayload,
+                                                                            const ptr<EIP712Domain> &domain) {
     auto db = app_.machinePayDB();
 
-
-
-
     if (db->settledPaymentExists(paymentPayload, domain)) {
-
 
         const auto &from = paymentPayload->payload()->authorization()->from();
         const auto &nonce = paymentPayload->payload()->authorization()->nonce();
@@ -87,71 +84,80 @@ std::optional<HttpError> PaymentManager::checkAgaistAlreadySettledPayments(const
 }
 
 
-bool PaymentManager::markPaymentAsBeingSettled(ptr<Authorization> authorization, ptr<EIP712Domain> domain) {
+bool PaymentManager::lockPaymentAsBeingSettled(ptr<Authorization> authorization, ptr<EIP712Domain> domain) {
     auto uniquePaymentKey = domain->uniquePaymentKey(authorization->from(), authorization->nonce());
     lock_guard<std::mutex> lock(currentlySettlingPaymentsMutex_);
     auto result = currentlySettlingPayments_.insert(uniquePaymentKey);
-    auto paymemtIsInProgress = !result.second;
-    return paymemtIsInProgress;
+    auto lockedPayment = result.second;
+    return lockedPayment;
 }
 
-void PaymentManager::unmarkPaymentAsBeingSettled(ptr<Authorization> authorization, ptr<EIP712Domain> domain) {
+void PaymentManager::unlockPaymentAsBeingSettled(ptr<Authorization> authorization, ptr<EIP712Domain> domain) {
     auto uniquePaymentKey = domain->uniquePaymentKey(authorization->from(), authorization->nonce());
     lock_guard<std::mutex> lock(currentlySettlingPaymentsMutex_);
     CHECK_STATE(currentlySettlingPayments_.erase(uniquePaymentKey) == 1);
 }
 
 
-std::optional<HttpError> PaymentManager::checkPaymentIsNewAndSettleIt(std::string &settlementInfo,
-    const NetworkConfig &networkConfig, const ResourceConfig &resource,
-    shared_ptr<PaymentPayload> paymentPayload)
-{
-
-    CHECK_STATE(paymentPayload);
-    auto authorization = paymentPayload->payload()->authorization();
-
-
+// this function assumes the payment has been locked for settlement already
+std::optional<HttpError> PaymentManager::checkPaymentIsNewAndSettleItUnsafe(std::string &settlementInfo,
+                                                      const NetworkConfig &networkConfig,
+                                                      const ResourceConfig &resource,
+                                                      shared_ptr<PaymentPayload> paymentPayload) {
     std::optional<HttpError> error = std::nullopt;
 
+    error = checkAgainstAlreadySettledPayments(paymentPayload, networkConfig.eip712Domain());
+
+    if (error) {
+        return error;
+    }
+
+    auto facilitator = networkConfig.facilitator();
+
+    error = facilitator->settlePayment(paymentPayload, settlementInfo);
+
+    if (error) {
+        return error;
+    }
+
+    recordSuccessfulSettlement(*paymentPayload, *networkConfig.eip712Domain(), resource);
+
+    return std::nullopt;
+}
+
+std::optional<HttpError> PaymentManager::checkPaymentIsNewAndSettleIt(std::string &settlementInfo,
+                                                                      const NetworkConfig &networkConfig,
+                                                                      const ResourceConfig &resource,
+                                                                      shared_ptr<PaymentPayload> paymentPayload) {
+    CHECK_STATE(paymentPayload);
+    auto authorization = paymentPayload->payload()->authorization();
     auto domain = networkConfig.eip712Domain();
 
-    try {
-
-
-        auto paymentIsBeingSettled =  markPaymentAsBeingSettled(authorization, domain);
-
-        if (paymentIsBeingSettled) {
-            // payment has already been submitted and is being processed
-            // by a different thread
-            error =  HttpError(ERR_BAD_REQUEST, "Your payment is currently being processed. "
-                               "Looks like you submitted the same payment twice.");
-            goto exit;
-        }
-
-        error = checkAgaistAlreadySettledPayments(paymentPayload, domain);
-
-        if (error)  goto exit;
-
-        auto facilitator = networkConfig.facilitator();
-
-        error = facilitator->settlePayment(paymentPayload, settlementInfo);
-
-        if (error) goto exit;
-
-        recordSuccessfulSettlement(*paymentPayload, *domain,  resource);
-
-    } catch (std::exception &e) {
-        spdlog::error("validatePayment had exception while parsing X-PAYMENT header: {}", e.what());
-        error =  HttpError(ERR_INTERNAL_SERVER_ERROR, std::string("Error parsing X-PAYMENT header: ")
-                                                      + e.what());
-    } catch (...) {
-        spdlog::error("validatePayment had unknown exception while parsing X-PAYMENT header");
-        error =  HttpError(ERR_INTERNAL_SERVER_ERROR, "Unknown error parsing X-PAYMENT header");
+    // Try to acquire the lock for this payment
+    if (!lockPaymentAsBeingSettled(authorization, domain)) {
+        // payment has already been submitted and is being processed
+        // by a different thread. Return immediately.
+        return HttpError(ERR_BAD_REQUEST, "Your payment is currently being processed. "
+                         "Looks like you submitted the same payment twice.");
     }
-exit:
-    unmarkPaymentAsBeingSettled(authorization, domain);
+
+    std::optional<HttpError> error;
+
+    try {
+        // Call the settleUnsafe function tjhat assumes that we hold the lock
+        error = checkPaymentIsNewAndSettleItUnsafe(settlementInfo, networkConfig, resource, paymentPayload);
+    } catch (const std::exception &e) {
+        spdlog::error("settleUnsafe had an exception: {}", e.what());
+        error = HttpError(ERR_INTERNAL_SERVER_ERROR, std::string("Error during payment settlement: ") + e.what());
+    } catch (...) {
+        spdlog::error("settleUnsafe had an unknown exception");
+        error = HttpError(ERR_INTERNAL_SERVER_ERROR, "Unknown error during payment settlement");
+    }
+
+    unlockPaymentAsBeingSettled(authorization, domain);
     return error;
 }
+
 
 std::optional<HttpError> PaymentManager::decodeValidateAndSettlePayment(
     const std::unique_ptr<proxygen::HTTPMessage> &req,
@@ -161,26 +167,25 @@ std::optional<HttpError> PaymentManager::decodeValidateAndSettlePayment(
     std::optional<HttpError> error = std::nullopt;
     std::string uniquePaymentKey;
 
-
     try {
         auto result = decodeAndParsePayment(req);
         if (holds_alternative<HttpError>(result)) {
             return std::get<HttpError>(result);
         }
 
-        auto paymentPayload = std::get<ptr<PaymentPayload> >(result);
+        auto paymentPayload = std::get<ptr<PaymentPayload>>(result);
 
         auto authorization = paymentPayload->payload()->authorization();;
 
-
         error = paymentPayload->validateAndVerifySignature(config, resource);
 
-        if (error) return error;
+        if (error)
+            return error;
 
         return checkPaymentIsNewAndSettleIt(settlementInfo, *config.network(), resource, paymentPayload);
     } catch (std::exception &e) {
         spdlog::error("decodeValidateAndSettlePayment had exception  {}", e.what());
-        error =  HttpError(ERR_INTERNAL_SERVER_ERROR, std::string("decodeValidateAndSettlePayment had exception")
-                                                      + e.what());
+        return HttpError(ERR_INTERNAL_SERVER_ERROR, std::string("decodeValidateAndSettlePayment had exception")
+                                                    + e.what());
     }
 }

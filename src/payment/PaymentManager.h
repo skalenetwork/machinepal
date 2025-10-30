@@ -34,15 +34,17 @@ public:
     void recordSuccessfulSettlement(const PaymentPayload & payload, const EIP712Domain& domain,
         const ResourceConfig & resource);
 
-    std::optional<HttpError>  checkAgaistAlreadySettledPayments(const ptr<PaymentPayload> & paymentPayload,
+    std::optional<HttpError>  checkAgainstAlreadySettledPayments(const ptr<PaymentPayload> & paymentPayload,
         const ptr<EIP712Domain>& domain);
 
-    bool markPaymentAsBeingSettled(ptr<Authorization> authorization, ptr<EIP712Domain> domain);
-    void unmarkPaymentAsBeingSettled(ptr<Authorization> _authorization, ptr<EIP712Domain> _domain);
+    bool lockPaymentAsBeingSettled(ptr<Authorization> authorization, ptr<EIP712Domain> domain);
+    void unlockPaymentAsBeingSettled(ptr<Authorization> _authorization, ptr<EIP712Domain> _domain);
+    std::optional<HttpError> checkPaymentIsNewAndSettleItUnsafe(std::string &settlementInfo, const NetworkConfig &networkConfig,
+                                          const ResourceConfig &resource, shared_ptr<PaymentPayload> paymentPayload);
 
     std::optional<HttpError> checkPaymentIsNewAndSettleIt(std::string &settlementInfo, const NetworkConfig &networkConfig,
-                        const ResourceConfig &resource,
-                       shared_ptr<PaymentPayload> paymentPayload);
+                                                          const ResourceConfig &resource,
+                                                          shared_ptr<PaymentPayload> paymentPayload);
 
 
     std::optional<HttpError> decodeValidateAndSettlePayment(
