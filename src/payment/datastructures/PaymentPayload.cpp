@@ -3,6 +3,7 @@
 
 #include "config/JsonUtils.h"
 #include "config/subconfigs/NetworkConfig.h"
+#include "url/URLUtils.h"
 
 // PaymentPayload implementations
 PaymentPayload::PaymentPayload() : x402Version_(1) {

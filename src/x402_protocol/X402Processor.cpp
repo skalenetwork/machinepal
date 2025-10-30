@@ -8,6 +8,8 @@
 #include "payment/datastructures/PaymentPayload.h"
 #include "payment/datastructures/PaymentRequirements.h"
 #include "payment/datastructures/PaymentRequiredResponse.h"
+#include "url/URLUtils.h"
+
 #include <boost/beast/core/detail/base64.hpp>
 #include <folly/json.h>
 
@@ -292,7 +294,8 @@ void X402Processor::onRequestFullyReceived(const std::unique_ptr<proxygen::HTTPM
             return;
         }
 
-        if (auto error = app_.paymentManager()->decodeValidateAndSettlePayment(reqHeaders, settlementInfo, *config(), *resource())) {
+        if (auto error = app_.paymentManager()->decodeValidateAndSettlePayment(reqHeaders,
+            settlementInfo, *config(), *resource(), *organization())) {
             replyToClientWithError(*error);
             return;
         }

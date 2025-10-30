@@ -48,9 +48,9 @@ variant<ptr<PaymentPayload>, HttpError> PaymentManager::decodeAndParsePayment(
 
 void PaymentManager::recordSuccessfulSettlement(const PaymentPayload &payload,
                                                 const EIP712Domain &domain,
-                                                const ResourceConfig &resource) {
+                                                const ResourceConfig &resource, const OrganizationConfig &organization) {
     auto db = app_.machinePayDB();
-    db->saveSettledPayment(payload, domain, resource);
+    db->saveSettledPayment(payload, domain, resource, organization);
 }
 
 
@@ -103,6 +103,7 @@ void PaymentManager::unlockPaymentAsBeingSettled(ptr<Authorization> authorizatio
 std::optional<HttpError> PaymentManager::checkPaymentIsNewAndSettleItUnsafe(std::string &settlementInfo,
                                                                             const NetworkConfig &networkConfig,
                                                                             const ResourceConfig &resource,
+                                                                            const OrganizationConfig &organization,
                                                                             shared_ptr<PaymentPayload> paymentPayload) {
     std::optional<HttpError> error = std::nullopt;
 
@@ -120,7 +121,7 @@ std::optional<HttpError> PaymentManager::checkPaymentIsNewAndSettleItUnsafe(std:
         return error;
     }
 
-    recordSuccessfulSettlement(*paymentPayload, *networkConfig.eip712Domain(), resource);
+    recordSuccessfulSettlement(*paymentPayload, *networkConfig.eip712Domain(), resource, organization);
 
     return std::nullopt;
 }
@@ -128,6 +129,7 @@ std::optional<HttpError> PaymentManager::checkPaymentIsNewAndSettleItUnsafe(std:
 std::optional<HttpError> PaymentManager::checkPaymentIsNewAndSettleIt(std::string &settlementInfo,
                                                                       const NetworkConfig &networkConfig,
                                                                       const ResourceConfig &resource,
+                                                                      const OrganizationConfig &organization,
                                                                       shared_ptr<PaymentPayload> paymentPayload) {
     CHECK_STATE(paymentPayload);
     auto authorization = paymentPayload->payload()->authorization();
@@ -152,7 +154,7 @@ std::optional<HttpError> PaymentManager::checkPaymentIsNewAndSettleIt(std::strin
 
     try {
         // Now that we hold the lock, proceed with the actual settlement.
-        return checkPaymentIsNewAndSettleItUnsafe(settlementInfo, networkConfig, resource, paymentPayload);
+        return checkPaymentIsNewAndSettleItUnsafe(settlementInfo, networkConfig, resource, organization, paymentPayload);
     } catch (const std::exception &e) {
         spdlog::error("Error during payment settlement: {}", e.what());
         return HttpError(ERR_INTERNAL_SERVER_ERROR, std::string("Error during payment settlement: ") + e.what());
@@ -164,7 +166,8 @@ std::optional<HttpError> PaymentManager::decodeValidateAndSettlePayment(
     const std::unique_ptr<proxygen::HTTPMessage> &req,
     std::string &settlementInfo,
     const MachinePayConfig &config,
-    const ResourceConfig &resource) {
+    const ResourceConfig &resource,
+    const OrganizationConfig &organization) {
     std::optional<HttpError> error = std::nullopt;
 
     try {
@@ -182,7 +185,7 @@ std::optional<HttpError> PaymentManager::decodeValidateAndSettlePayment(
         if (error)
             return error;
 
-        return checkPaymentIsNewAndSettleIt(settlementInfo, *config.network(), resource, paymentPayload);
+        return checkPaymentIsNewAndSettleIt(settlementInfo, *config.network(), resource, organization, paymentPayload);
     } catch (std::exception &e) {
         spdlog::error("decodeValidateAndSettlePayment had exception  {}", e.what());
         return HttpError(ERR_INTERNAL_SERVER_ERROR, std::string("decodeValidateAndSettlePayment had exception")
