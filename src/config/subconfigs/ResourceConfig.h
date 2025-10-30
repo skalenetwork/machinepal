@@ -3,11 +3,9 @@
 #include <boost/multiprecision/cpp_int.hpp>
 
 #include "MachinePayCommon.h"
-#include "crypto/Keccak.h"
 #include "filesystem/FileManager.h"
-#include "url/URLUtils.h"
 
-#include <cryptopp/keccak.h>
+class OrganizationConfig;
 
 enum class ResourceType {
     LocalFile,
@@ -34,24 +32,9 @@ private:
     std::string description_;
     std::string paymentScheme_;
 
-    ResourceConfig(const std::string& name, const std::string& location, ResourceType type, boost::multiprecision::uint256_t price, const std::string& token)
-        : name_(name), location_(location), type_(type), price_(price), token_(token) {
-        paymentScheme_ = "exact";
-        if (type_ == ResourceType::LocalFile) {
-            machinePayPath_ = location_;
-            mimeType_ = "application/octet-stream";
-        } else {
-            machinePayPath_ = URLUtils::getLocationFromUrl(location_);
-            mimeType_ = "application/json";
-        }
-    }
+    ResourceConfig(const std::string& name, const std::string& location, ResourceType type, boost::multiprecision::uint256_t price, const std::string& token);
+    std::string getIdentifierString(const OrganizationConfig& orgConfig) const;
 
-    Hash getHash() {
-        // Combine relevant fields to create a unique hash
-        std::string data = name_ + location_ + token_ + mimeType_ + description_ + paymentScheme_;
-        data += price_.str() + std::to_string(static_cast<int>(type_));
-        return KeccakHash::keccak256(data);
-    }
 
 public:
 

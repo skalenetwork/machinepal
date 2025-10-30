@@ -4,7 +4,7 @@
 #include "examples/PaymentExamples.h"
 #include "exceptions/JsonValidationException.h"
 #include "filesystem/FileManager.h"
-
+#include "url/URLUtils.h"
 
 
 FacilitatorConfig::FacilitatorConfig(FacilitatorType type,

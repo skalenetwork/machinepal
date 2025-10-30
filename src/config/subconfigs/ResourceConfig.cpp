@@ -1,7 +1,9 @@
 #include "ResourceConfig.h"
 
+#include "OrganizationConfig.h"
 #include "config/JsonUtils.h"
 #include "exceptions/JsonValidationException.h"
+#include "url/URLUtils.h"
 
 
 class FileManager;
@@ -57,3 +59,22 @@ ptr<vector<ptr<ResourceConfig> > > ResourceConfig::createVectorFromJsonArray(
     }
 }
 
+ResourceConfig::ResourceConfig(const std::string& name, const std::string& location, ResourceType type, boost::multiprecision::uint256_t price, const std::string& token)
+    : name_(name), location_(location), type_(type), price_(price), token_(token) {
+    paymentScheme_ = "exact";
+    if (type_ == ResourceType::LocalFile) {
+        machinePayPath_ = location_;
+        mimeType_ = "application/octet-stream";
+    } else {
+        machinePayPath_ = URLUtils::getLocationFromUrl(location_);
+        mimeType_ = "application/json";
+    }
+}
+
+std::string ResourceConfig::getIdentifierString(const OrganizationConfig& orgConfig) const {
+    auto orgName = orgConfig.organizationName();
+    if (orgName.empty()) {
+        return location_;
+    }
+    return orgName + "::" + location_;
+}

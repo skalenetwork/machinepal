@@ -111,10 +111,11 @@ PaymentRecord::PaymentRecord(const string &organizationName, const u256 chainId,
 }
 
 ptr<PaymentRecord> PaymentRecord::createPaymentRecord(
-    const PaymentPayload& paymentPayload, const EIP712Domain &domain,  const ResourceConfig& resource) {
-    auto innerPayload = paymentPayload.payload();
-    CHECK_STATE(innerPayload);
-    auto auth = innerPayload->authorization();
+    const PaymentPayload& paymentPayload, const EIP712Domain &domain,  const ResourceConfig& resource,
+    const OrganizationConfig& organization) {
+    auto payload = paymentPayload.payload();
+    CHECK_STATE(payload);
+    auto auth = payload->authorization();
     CHECK_STATE(auth);
 
     const EthAddress from = auth->from();

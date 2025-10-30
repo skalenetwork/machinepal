@@ -5,6 +5,7 @@
 #include "crypto/EthAddress.h"
 #include <soci/row.h>
 
+class OrganizationConfig;
 class EIP712Domain;
 class ResourceConfig;
 class PaymentPayload;
@@ -58,7 +59,8 @@ public:
     [[nodiscard]] std::string jsonInfo() const;
 
     static ptr<PaymentRecord> createPaymentRecord(
-        const PaymentPayload& payload, const EIP712Domain &domain, const ResourceConfig& resource);
+        const PaymentPayload& payload, const EIP712Domain &domain, const ResourceConfig& resource,
+        const OrganizationConfig& organization);
 
 
     PaymentRecord(const string& organizationName, const u256 chainId,
