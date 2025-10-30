@@ -101,9 +101,9 @@ void PaymentManager::unlockPaymentAsBeingSettled(ptr<Authorization> authorizatio
 
 // this function assumes the payment has been locked for settlement already
 std::optional<HttpError> PaymentManager::checkPaymentIsNewAndSettleItUnsafe(std::string &settlementInfo,
-                                                      const NetworkConfig &networkConfig,
-                                                      const ResourceConfig &resource,
-                                                      shared_ptr<PaymentPayload> paymentPayload) {
+                                                                            const NetworkConfig &networkConfig,
+                                                                            const ResourceConfig &resource,
+                                                                            shared_ptr<PaymentPayload> paymentPayload) {
     std::optional<HttpError> error = std::nullopt;
 
     error = checkAgainstAlreadySettledPayments(paymentPayload, networkConfig.eip712Domain());
@@ -133,7 +133,6 @@ std::optional<HttpError> PaymentManager::checkPaymentIsNewAndSettleIt(std::strin
     auto authorization = paymentPayload->payload()->authorization();
     auto domain = networkConfig.eip712Domain();
 
-
     // we need to make sure that the user can not submit the same payment multiple times in parallel
     // submitting the same payment twice should result in one successful settlement and one error response
     // otherwise the user could use the same payment to pay for multiple requests
@@ -150,7 +149,6 @@ std::optional<HttpError> PaymentManager::checkPaymentIsNewAndSettleIt(std::strin
     auto guard = folly::makeGuard([&]() {
         unlockPaymentAsBeingSettled(authorization, domain);
     });
-
 
     try {
         // Now that we hold the lock, proceed with the actual settlement.

@@ -67,10 +67,10 @@ void MachinePayDB::configureDBParamsAndPool() {
         if (dbType_ == DbType::SQLite) {
             sess << "PRAGMA journal_mode=WAL"; // apply to every pooled connection
             sess << "PRAGMA busy_timeout = 5000";
-            sess << "PRAGMA synchronous = NORMAL";        // Balance durability & performance
-            sess << "PRAGMA temp_store = MEMORY";         // Use RAM for temp tables/sorts
-            sess << "PRAGMA cache_size = -20000";         // 20MB in-memory page cache (negative = KB)
-            sess << "PRAGMA mmap_size = 268435456";       // 256MB memory mapping for reads
+            sess << "PRAGMA synchronous = NORMAL"; // Balance durability & performance
+            sess << "PRAGMA temp_store = MEMORY"; // Use RAM for temp tables/sorts
+            sess << "PRAGMA cache_size = -20000"; // 20MB in-memory page cache (negative = KB)
+            sess << "PRAGMA mmap_size = 268435456"; // 256MB memory mapping for reads
         }
     }
 }
@@ -150,6 +150,14 @@ void MachinePayDB::writePayment(const PaymentRecord &record) {
         std::string fromIpAddress = record.fromIpAddress();
         std::string jsonInfo = record.jsonInfo();
 
+
+        logger_->trace(
+            "Writing payment: organizationName={}, chainId={}, fromAddress={}, toAddress={}, assetAddress={}, value={}, "
+            "nonce={}, resourceHash={}, executionTime={}, authorizationSignatureHash={}, transactionHash={}, fromIpAddress={}, jsonInfo={}",
+            organizationName, chainId, fromAddress, toAddress, assetAddress, value,
+            nonce, resourceHash, executionTime,
+            authorizationSignatureHash, transactionHash, fromIpAddress, jsonInfo);
+
         // Insert into the database using explicit named bindings for safety and cross-backend consistency
         sql << R"(
             INSERT INTO payments (
@@ -165,7 +173,7 @@ void MachinePayDB::writePayment(const PaymentRecord &record) {
             soci::use(chainId, "chainId"),
             soci::use(fromAddress, "fromAddress"),
             soci::use(toAddress, "toAddress"),
-            soci::use( assetAddress, "assetAddress"),
+            soci::use(assetAddress, "assetAddress"),
             soci::use(value, "value"),
             soci::use(nonce, "nonce"),
             soci::use(resourceHash, "resourceHash"),
@@ -276,7 +284,7 @@ void MachinePayDB::ensureSchema() {
         sql << "CREATE INDEX IF NOT EXISTS idx_payments_authhash ON payments(authorizationSignatureHash)";
         sql << "CREATE INDEX IF NOT EXISTS idx_payments_txhash ON payments(transactionHash)";
         sql << "CREATE UNIQUE INDEX IF NOT EXISTS idx_payments_unique_payment ON "
-               "payments(fromAddress, chainId, assetAddress, nonce)";
+            "payments(fromAddress, chainId, assetAddress, nonce)";
 
         // --- Step 4: Log based on our check ---
         if (!tableExisted) {
@@ -302,19 +310,19 @@ bool MachinePayDB::paymentExists(const EthAddress &fromAddress, const EthAddress
 
         // Store temporary values in local variables
         std::string fromAddrHex = fromAddress.toHex(PREFIX_NONE);
-        std::string assetAddrHex = assetAddress.toHex( PREFIX_NONE);
+        std::string assetAddrHex = assetAddress.toHex(PREFIX_NONE);
         std::string nonceHex = nonce.toHex();
         std::string chainIdStr = chainId.str();
 
         // Execute the query
         sql <<
-            "SELECT COUNT(*) FROM payments WHERE fromAddress = :fromAddress AND nonce = :nonce AND assetAddress = :assetAddress AND chainId = :chainId",
+            "SELECT COUNT(*) FROM payments WHERE fromAddress = :fromAddress AND nonce = :nonce AND assetAddress = :assetAddress AND chainId = :chainId"
+            ,
             soci::use(fromAddrHex, "fromAddress"),
             soci::use(nonceHex, "nonce"),
             soci::use(assetAddrHex, "assetAddress"),
             soci::use(chainIdStr, "chainId"),
             soci::into(count);
-
 
         return count > 0;
     } catch (...) {
