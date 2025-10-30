@@ -102,7 +102,7 @@ void PaymentManager::unmarkPaymentAsBeingSettled(ptr<Authorization> authorizatio
 }
 
 
-std::optional<HttpError> PaymentManager::settle(std::string &settlementInfo,
+std::optional<HttpError> PaymentManager::checkPaymentIsNewAndSettleIt(std::string &settlementInfo,
     const NetworkConfig &networkConfig, const ResourceConfig &resource,
     shared_ptr<PaymentPayload> paymentPayload)
 {
@@ -162,21 +162,25 @@ std::optional<HttpError> PaymentManager::decodeValidateAndSettlePayment(
     std::string uniquePaymentKey;
 
 
+    try {
+        auto result = decodeAndParsePayment(req);
+        if (holds_alternative<HttpError>(result)) {
+            return std::get<HttpError>(result);
+        }
 
-    auto result = decodeAndParsePayment(req);
-    if (holds_alternative<HttpError>(result)) {
-        return std::get<HttpError>(result);
+        auto paymentPayload = std::get<ptr<PaymentPayload> >(result);
+
+        auto authorization = paymentPayload->payload()->authorization();;
+
+
+        error = paymentPayload->validateAndVerifySignature(config, resource);
+
+        if (error) return error;
+
+        return checkPaymentIsNewAndSettleIt(settlementInfo, *config.network(), resource, paymentPayload);
+    } catch (std::exception &e) {
+        spdlog::error("decodeValidateAndSettlePayment had exception  {}", e.what());
+        error =  HttpError(ERR_INTERNAL_SERVER_ERROR, std::string("decodeValidateAndSettlePayment had exception")
+                                                      + e.what());
     }
-
-    auto paymentPayload = std::get<ptr<PaymentPayload> >(result);
-
-    auto authorization = paymentPayload->payload()->authorization();;
-
-
-    error = paymentPayload->validateAndVerifySignature(config, resource);
-
-    if (error) return error;
-
-    return settle(settlementInfo, *config.network(), resource, paymentPayload);
-
 }

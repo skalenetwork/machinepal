@@ -40,7 +40,7 @@ public:
     bool markPaymentAsBeingSettled(ptr<Authorization> authorization, ptr<EIP712Domain> domain);
     void unmarkPaymentAsBeingSettled(ptr<Authorization> _authorization, ptr<EIP712Domain> _domain);
 
-    std::optional<HttpError> settle(std::string &settlementInfo, const NetworkConfig &networkConfig,
+    std::optional<HttpError> checkPaymentIsNewAndSettleIt(std::string &settlementInfo, const NetworkConfig &networkConfig,
                         const ResourceConfig &resource,
                        shared_ptr<PaymentPayload> paymentPayload);
 
