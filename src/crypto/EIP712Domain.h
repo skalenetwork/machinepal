@@ -1,4 +1,6 @@
 #pragma once
+#include "EIP3009Nonce.h"
+
 #include <string>
 #include <boost/multiprecision/cpp_int.hpp>
 #include "EthAddress.h"
@@ -27,6 +29,14 @@ public:
 
     [[nodiscard]] std::string domainSeparator() const {
         return domainSeparator_;
+    }
+
+
+    // create a unique key for this payment based on domain separator, from address and nonce
+    // domain separator includes chain id and asset address
+    // payment for a particular unique payment can only be settled once
+    std::string uniquePaymentKey(const EthAddress &from, const EIP3009Nonce nonce) const {
+        return domainSeparator_ + "_" + from.toHex(PREFIX_NONE) + "_" + nonce.toHex();
     }
 
 

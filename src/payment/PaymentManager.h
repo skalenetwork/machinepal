@@ -1,5 +1,7 @@
 #pragma once
 
+#include "config/subconfigs/NetworkConfig.h"
+
 #include <memory>
 #include <optional>
 #include <variant>
@@ -35,6 +37,14 @@ public:
     std::optional<HttpError>  checkAgaistAlreadySettledPayments(const ptr<PaymentPayload> & paymentPayload,
         const ptr<EIP712Domain>& domain);
 
+    bool markPaymentAsBeingSettled(ptr<Authorization> authorization, ptr<EIP712Domain> domain);
+    void unmarkPaymentAsBeingSettled(ptr<Authorization> _authorization, ptr<EIP712Domain> _domain);
+
+    std::optional<HttpError> settle(std::string &settlementInfo, const NetworkConfig &networkConfig,
+                        const ResourceConfig &resource,
+                       shared_ptr<PaymentPayload> paymentPayload);
+
+
     std::optional<HttpError> decodeValidateAndSettlePayment(
         const std::unique_ptr<proxygen::HTTPMessage> &req,
         std::string &settlementInfo,
@@ -42,4 +52,8 @@ public:
         const ResourceConfig& resource);
 private:
     MachinePayApp& app_;
+
+    std::set<std::string> currentlySettlingPayments_;
+    std::mutex currentlySettlingPaymentsMutex_;
+
 };
