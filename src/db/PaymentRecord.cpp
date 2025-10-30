@@ -11,6 +11,8 @@
 #include "payment/datastructures/Authorization.h"
 #include <chrono>
 
+#include "config/subconfigs/OrganizationConfig.h"
+
 ptr<PaymentRecord> PaymentRecord::deserializeFromDbRow(const soci::row &) {
     /*
     auto organizationName = row.get<std::string>("organizationName");
@@ -123,7 +125,7 @@ ptr<PaymentRecord> PaymentRecord::createPaymentRecord(
     const EIP3009Value value = auth->value();
     const EIP3009Nonce nonce = auth->nonce();
 
-    const std::string organizationName = ""; // unknown at this layer
+    auto organizationName = organization.organizationName(); // unknown at this layer
     const u256 chainId = domain.chainId();
     const EthAddress assetAddress = domain.assetAddress();
 
