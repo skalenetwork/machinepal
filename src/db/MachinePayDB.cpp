@@ -182,8 +182,8 @@ void MachinePayDB::writePayment(const PaymentRecord &record) {
             soci::use(transactionHash, "transactionHash"),
             soci::use(fromIpAddress, "fromIpAddress"),
             soci::use(jsonInfo, "jsonInfo");
-    } catch (...) {
-        RETHROW_NESTED2("Failed to write payment");
+    } catch (std::exception& e) {
+        RETHROW_NESTED2("Failed to write payment:" + string(e.what()));
     }
 }
 
@@ -292,8 +292,8 @@ void MachinePayDB::ensureSchema() {
         } else {
             logger_->info("Database schema verified, 'payments' table already exists.");
         }
-    } catch (...) {
-        RETHROW_NESTED2("Failed to ensure schema");
+    } catch (std::exception& e) {
+        RETHROW_NESTED2("Failed to ensure schema " +  string(e.what()));
     }
 }
 
@@ -325,7 +325,7 @@ bool MachinePayDB::paymentExists(const EthAddress &fromAddress, const EthAddress
             soci::into(count);
 
         return count > 0;
-    } catch (...) {
-        RETHROW_NESTED2("Failed to check if payment exists");
+    } catch (std::exception& e) {
+        RETHROW_NESTED2("Failed to check if payment exists:" + string(e.what()));
     }
 }

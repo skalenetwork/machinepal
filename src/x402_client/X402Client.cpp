@@ -68,7 +68,7 @@ size_t X402Client::writeHeader(char *_buffer, size_t _size, size_t _nitems, void
     return _size * _nitems;
 }
 
-int X402Client::debugCallback(CURL *handle, curl_infotype type, char *data, size_t size, void *userptr) {
+int X402Client::debugCallback(CURL *, curl_infotype type, char *data, size_t size, void *) {
     switch (type) {
     case CURLINFO_HEADER_OUT:
         spdlog::info("CURL SEND HEADER:\n{}", std::string(data, size));
