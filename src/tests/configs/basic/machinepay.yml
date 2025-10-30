@@ -34,7 +34,7 @@ network:
 log:
   # Optional Log verbosity level — one of: trace, debug, info, warn, error, fatal
   # Default: info
-  level: debug
+  level: trace
   # Json format for logs. Override: LOG_JSON Default: plain
   type: plain
 
