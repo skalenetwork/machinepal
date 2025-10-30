@@ -65,6 +65,10 @@ EthAddress EthAddress::parseFlexible(const std::string &hex, bool validateChecks
     return addr;
 }
 
+std::string EthAddress::toDbString() const {
+    return toHex(PREFIX_NONE);
+}
+
 std::string EthAddress::toHex(Prefix prefix) const {
     std::string out;
     out.reserve(42);

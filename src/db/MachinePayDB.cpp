@@ -136,11 +136,11 @@ void MachinePayDB::writePayment(const PaymentRecord &record) {
         soci::session sql(*pool_);
 
         // Store record fields in local variables
-        std::string organizationName = record.organizationName();
+        std::string organizationName = record.toDbString();
         std::string chainId = record.chainId().str();
-        std::string fromAddress = record.fromAddress().toHex(PREFIX_NONE);
-        std::string toAddress = record.toAddress().toHex(PREFIX_NONE);
-        std::string assetAddress = record.assetAddress().toHex(PREFIX_NONE);
+        std::string fromAddress = record.fromAddress().toDbString();
+        std::string toAddress = record.toDbString();
+        std::string assetAddress = record.assetAddress().toDbString();
         std::string value = record.value().toDecimal();
         std::string nonce = record.nonce().toHex();
         std::string resourceHash = Encoding::hashToPartialHex(record.resourceHash());

@@ -1,6 +1,12 @@
 cmake_minimum_required(VERSION 3.16)
 project(machinepay LANGUAGES CXX)
 
+find_program(NICE_EXE nice)
+if (NICE_EXE)
+    set(CMAKE_C_COMPILER_LAUNCHER "${NICE_EXE};-n;10")
+    set(CMAKE_CXX_COMPILER_LAUNCHER "${NICE_EXE};-n;10")
+endif()
+
 set(WITH_SQLITE3 ON CACHE BOOL "Build SOCI SQLite3 backend" FORCE)
 option(ENABLE_POSTGRESQL "Enable PostgreSQL backend via SOCI" OFF)
 if(ENABLE_POSTGRESQL)
