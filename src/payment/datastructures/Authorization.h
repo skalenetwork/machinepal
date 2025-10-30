@@ -2,11 +2,6 @@
 
 #include "MachinePayCommon.h"
 #include "crypto/EthAddress.h"
-#include <string>
-#include <optional>
-#include <memory>
-#include "nlohmann/json.hpp"
-#include <ostream>
 #include "config/JsonUtils.h"
 #include "crypto/EIP3009Authorization.h"
 #include "crypto/EIP3009ValidityTime.h"

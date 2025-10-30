@@ -1,11 +1,7 @@
 #pragma once
 
-#include <vector>
-#include <optional>
-#include <string>
-#include "nlohmann/json.hpp"
 #include "PaymentRequirements.h"
-#include <ostream>
+
 
 /**
  * HTTP 402 response body returned by an x402-enabled server.

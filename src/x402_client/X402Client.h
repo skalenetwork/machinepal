@@ -7,10 +7,6 @@
 #include <proxygen/httpserver/HTTPServer.h>
 #include "x402_server/ServerFactory.h"
 #include <curl/curl.h>
-#include <nlohmann/json.hpp>
-#include <boost/beast/core.hpp>
-#include <boost/beast/http.hpp>
-#include <boost/beast/version.hpp>
 
 class PaymentPayload;
 

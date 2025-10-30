@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.16)
 project(machinepay LANGUAGES CXX)
 
 
+
+
 # Use 'nice' to lower priority of compilation processes
 # vs desktop UI processes
 # Detect desktop environment (X11 or Wayland)
@@ -168,6 +170,10 @@ endfunction()
 
 enable_warnings(machinepay)
 enable_warnings(mptest)
+
+# make everything compile faster
+target_precompile_headers(machinepay PRIVATE "src/MachinePayCommon.h")
+target_precompile_headers(mptest PRIVATE "src/MachinePayCommon.h")
 
 # ---- CPack/DEB packaging ----
 set(CPACK_GENERATOR "DEB")

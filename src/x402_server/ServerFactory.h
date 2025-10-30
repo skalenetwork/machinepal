@@ -2,9 +2,6 @@
 
 
 #include "config/MachinePayConfig.h"
-#include <string>
-#include <cstdint>
-#include <memory>
 #include <proxygen/httpserver/HTTPServer.h>
 
 

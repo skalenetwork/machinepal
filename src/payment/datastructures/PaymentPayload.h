@@ -1,11 +1,6 @@
 #pragma once
 
 #include "Payload.h"
-#include <string>
-#include <memory>
-#include "nlohmann/json.hpp"
-#include <ostream>
-#include <optional>
 #include "x402_protocol/HttpError.h"
 #include "config/MachinePayConfig.h"
 #include "config/subconfigs/ResourceConfig.h"

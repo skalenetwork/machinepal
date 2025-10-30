@@ -13,6 +13,9 @@
 #include <boost/beast/core/detail/base64.hpp>
 #include <boost/locale.hpp>
 #include <boost/locale/conversion.hpp>
+#include <boost/beast/core.hpp>
+#include <boost/beast/http.hpp>
+#include <boost/beast/version.hpp>
 #include <boost/multiprecision/cpp_int.hpp>
 #include <boost/regex.hpp>
 #include <boost/url/decode_view.hpp>
@@ -42,6 +45,12 @@
 #include <vector>
 #include <span>
 #include <set>
+#include <memory>
+#include <optional>
+#include <variant>
+#include <filesystem>
+#include <string>
+#include <chrono>
 
 
 #if defined(__cpp_exceptions) || defined(__EXCEPTIONS) || defined(_CPPUNWIND)

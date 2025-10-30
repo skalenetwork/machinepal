@@ -1,9 +1,5 @@
 #pragma once
 
-#include <string>
-#include <optional>
-#include "nlohmann/json.hpp"
-#include <ostream>
 
 /**
  * @brief Represents the payment requirements object for an x402 transaction.
