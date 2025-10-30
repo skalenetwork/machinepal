@@ -51,7 +51,6 @@ struct X402GlobalFixture {
 BOOST_GLOBAL_FIXTURE(X402GlobalFixture);
 
 
-// ---- Test fixture that starts/stops the proxygen server ---------------------
 struct X402ServerFixture {
     X402ServerFixture() {
         try {
