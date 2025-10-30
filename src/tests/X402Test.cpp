@@ -150,6 +150,10 @@ BOOST_FIXTURE_TEST_SUITE(X402Suite, X402ServerFixture)
         auto [headersMap, statusLine, resp] =
             client->sendRequestWithPayloadAndParseResult("/posts/1", paymentPayload, true);
 
+
+        // this should cause exception
+        client->sendRequestWithPayloadAndParseResult("/posts/1", paymentPayload, true);
+
         BOOST_TEST(resp.status == 200);
         BOOST_TEST(headersMap.contains("X-PAYMENT-RESPONSE"));
         auto paymentResponse = headersMap.at("X-PAYMENT-RESPONSE");
