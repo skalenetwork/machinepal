@@ -143,7 +143,7 @@ void MachinePayDB::writePayment(const PaymentRecord &record) {
         std::string assetAddress = record.assetAddress().toDbString();
         std::string value = record.value().toDbString();
         std::string nonce = record.nonce().toDbString();
-        std::string resourceHash = Encoding::hashToPartialHex(record.resourceHash());
+        std::string resourceIdentifier = Encoding::hashToPartialHex(record.resourceIdentifier());
         long long executionTime = static_cast<long long>(record.executionTime());
         std::string authorizationSignatureHash = Encoding::hashToPartialHex(record.authorizationSignatureHash());
         std::string transactionHash = Encoding::hashToPartialHex(record.transactionHash());
@@ -153,19 +153,19 @@ void MachinePayDB::writePayment(const PaymentRecord &record) {
 
         logger_->trace(
             "Writing payment: organizationName={}, chainId={}, fromAddress={}, toAddress={}, assetAddress={}, value={}, "
-            "nonce={}, resourceHash={}, executionTime={}, authorizationSignatureHash={}, transactionHash={}, fromIpAddress={}, jsonInfo={}",
+            "nonce={}, resourceIdentifier={}, executionTime={}, authorizationSignatureHash={}, transactionHash={}, fromIpAddress={}, jsonInfo={}",
             organizationName, chainId, fromAddress, toAddress, assetAddress, value,
-            nonce, resourceHash, executionTime,
+            nonce, resourceIdentifier, executionTime,
             authorizationSignatureHash, transactionHash, fromIpAddress, jsonInfo);
 
         // Insert into the database using explicit named bindings for safety and cross-backend consistency
         sql << R"(
             INSERT INTO payments (
-                organizationName, chainId, fromAddress, toAddress, assetAddress, value, nonce, resourceHash,
+                organizationName, chainId, fromAddress, toAddress, assetAddress, value, nonce, resourceIdentifier,
                 executionTime, authorizationSignatureHash, transactionHash, fromIpAddress, jsonInfo
             )
             VALUES (
-                :organizationName, :chainId, :fromAddress, :toAddress, :assetAddress, :value, :nonce, :resourceHash,
+                :organizationName, :chainId, :fromAddress, :toAddress, :assetAddress, :value, :nonce, :resourceIdentifier,
                 :executionTime, :authorizationSignatureHash, :transactionHash, :fromIpAddress, :jsonInfo
             )
         )",
@@ -176,7 +176,7 @@ void MachinePayDB::writePayment(const PaymentRecord &record) {
             soci::use(assetAddress, "assetAddress"),
             soci::use(value, "value"),
             soci::use(nonce, "nonce"),
-            soci::use(resourceHash, "resourceHash"),
+            soci::use(resourceIdentifier, "resourceIdentifier"),
             soci::use(executionTime, "executionTime"),
             soci::use(authorizationSignatureHash, "authorizationSignatureHash"),
             soci::use(transactionHash, "transactionHash"),
@@ -254,7 +254,7 @@ void MachinePayDB::ensureSchema() {
                 "assetAddress TEXT NOT NULL,"
                 "value TEXT NOT NULL,"
                 "nonce TEXT NOT NULL,"
-                "resourceHash TEXT NOT NULL,"
+                "resourceIdentifier TEXT NOT NULL,"
                 "executionTime INTEGER NOT NULL," // SQLite's INTEGER handles 64-bit
                 "authorizationSignatureHash TEXT NOT NULL,"
                 "transactionHash TEXT NOT NULL,"
@@ -270,7 +270,7 @@ void MachinePayDB::ensureSchema() {
                 "assetAddress TEXT NOT NULL,"
                 "value TEXT NOT NULL,"
                 "nonce TEXT NOT NULL,"
-                "resourceHash TEXT NOT NULL,"
+                "resourceIdentifier TEXT NOT NULL,"
                 "executionTime BIGINT NOT NULL," // PostgreSQL uses BIGINT for 64-bit
                 "authorizationSignatureHash TEXT NOT NULL,"
                 "transactionHash TEXT NOT NULL,"

@@ -63,8 +63,8 @@ EIP3009Nonce PaymentRecord::nonce() const {
     return nonce_;
 }
 
-Hash PaymentRecord::resourceHash() const {
-    return resourceHash_;
+Hash PaymentRecord::resourceIdentifier() const {
+    return resourceIdentifier_;
 }
 
 uint64_t PaymentRecord::executionTime() const {
@@ -104,7 +104,7 @@ PaymentRecord::PaymentRecord(const string &organizationName, const u256 chainId,
         assetAddress_(assetAddress),
       value_(value),
       nonce_(nonce),
-      resourceHash_(resourceHash),
+      resourceIdentifier_(resourceHash),
       executionTime_(executionTime),
       authorizationSignatureHash_(authorizationSignatureHash),
       transactionHash_(transactionHash),

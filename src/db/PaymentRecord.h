@@ -23,7 +23,7 @@ class PaymentRecord {
     EthAddress assetAddress_;
     EIP3009Value value_;
     EIP3009Nonce nonce_;
-    Hash resourceHash_;
+    Hash resourceIdentifier_;
     uint64_t executionTime_;
     Hash authorizationSignatureHash_;
     Hash transactionHash_;
@@ -46,7 +46,7 @@ public:
 
     [[nodiscard]] EIP3009Nonce nonce() const;
 
-    [[nodiscard]] Hash resourceHash() const;
+    [[nodiscard]] Hash resourceIdentifier() const;
 
     [[nodiscard]] uint64_t executionTime() const;
 
