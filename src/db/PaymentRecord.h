@@ -25,8 +25,8 @@ class PaymentRecord {
     EthAddress assetAddress_;
     EIP3009Value value_;
     EIP3009Nonce nonce_;
-    string resourceIdentifier_;
-    uint64_t executionTime_;
+    string resourceLocation_;
+    uint64_t settlementTime_;
     Hash authorizationSignatureHash_;
     Hash transactionHash_;
     std::string fromIpAddress_;
@@ -48,9 +48,9 @@ public:
 
     [[nodiscard]] EIP3009Nonce nonce() const;
 
-    [[nodiscard]] string resourceIdentifier() const; // returns resource hash
+    [[nodiscard]] string resourceLocation() const; // returns resource hash
 
-    [[nodiscard]] uint64_t executionTime() const;
+    [[nodiscard]] uint64_t settlementTime() const;
 
     [[nodiscard]] Hash authorizationSignatureHash() const;
 
@@ -68,7 +68,7 @@ public:
     PaymentRecord(const std::string& organizationName, const u256 chainId,
                   const EthAddress &fromAddress, const EthAddress &toAddress, const EthAddress &assetAddress,
                   const EIP3009Value &value,
-                  const EIP3009Nonce &nonce, const string &resourceIdentifier, uint64_t executionTime,
+                  const EIP3009Nonce &nonce, const string &resourceIdentifier, uint64_t settlementTime,
                   const Hash &authorizationSignatureHash, const Hash &transactionHash,
                   const std::string& fromIpAddress,
                   const std::string &jsonInfo);

@@ -145,8 +145,8 @@ void MachinePayDB::writePayment(const PaymentRecord &record) {
         std::string assetAddress = record.assetAddress().toDbString();
         std::string value = record.value().toDbString();
         std::string nonce = record.nonce().toDbString();
-        std::string resourceIdentifier = record.resourceIdentifier();
-        long long executionTime = static_cast<long long>(record.executionTime());
+        std::string resourceLocation  = record.resourceLocation();
+        long long settlementTime = static_cast<long long>(record.settlementTime());
         std::string authorizationSignatureHash = Encoding::hashToPartialHex(record.authorizationSignatureHash());
         std::string transactionHash = Encoding::hashToPartialHex(record.transactionHash());
         std::string fromIpAddress = record.fromIpAddress();
@@ -155,20 +155,20 @@ void MachinePayDB::writePayment(const PaymentRecord &record) {
 
         logger_->trace(
             "Writing payment: organizationName={}, chainId={}, fromAddress={}, toAddress={}, assetAddress={}, value={}, "
-            "nonce={}, resourceIdentifier={}, executionTime={}, authorizationSignatureHash={}, transactionHash={}, fromIpAddress={}, jsonInfo={}",
+            "nonce={}, resourceLocation ={}, settlementTime={}, authorizationSignatureHash={}, transactionHash={}, fromIpAddress={}, jsonInfo={}",
             organizationName, chainId, fromAddress, toAddress, assetAddress, value,
-            nonce, resourceIdentifier, executionTime,
+            nonce, resourceLocation , settlementTime,
             authorizationSignatureHash, transactionHash, fromIpAddress, jsonInfo);
 
         // Insert into the database using explicit named bindings for safety and cross-backend consistency
         sql << R"(
             INSERT INTO payments (
-                organizationName, chainId, fromAddress, toAddress, assetAddress, value, nonce, resourceIdentifier,
-                executionTime, authorizationSignatureHash, transactionHash, fromIpAddress, jsonInfo
+                organizationName, chainId, fromAddress, toAddress, assetAddress, value, nonce, resourceLocation ,
+                settlementTime, authorizationSignatureHash, transactionHash, fromIpAddress, jsonInfo
             )
             VALUES (
-                :organizationName, :chainId, :fromAddress, :toAddress, :assetAddress, :value, :nonce, :resourceIdentifier,
-                :executionTime, :authorizationSignatureHash, :transactionHash, :fromIpAddress, :jsonInfo
+                :organizationName, :chainId, :fromAddress, :toAddress, :assetAddress, :value, :nonce, :resourceLocation ,
+                :settlementTime, :authorizationSignatureHash, :transactionHash, :fromIpAddress, :jsonInfo
             )
         )",
             soci::use(organizationName, "organizationName"),
@@ -178,8 +178,8 @@ void MachinePayDB::writePayment(const PaymentRecord &record) {
             soci::use(assetAddress, "assetAddress"),
             soci::use(value, "value"),
             soci::use(nonce, "nonce"),
-            soci::use(resourceIdentifier, "resourceIdentifier"),
-            soci::use(executionTime, "executionTime"),
+            soci::use(resourceLocation , "resourceLocation"),
+            soci::use(settlementTime, "settlementTime"),
             soci::use(authorizationSignatureHash, "authorizationSignatureHash"),
             soci::use(transactionHash, "transactionHash"),
             soci::use(fromIpAddress, "fromIpAddress"),
@@ -256,8 +256,8 @@ void MachinePayDB::ensureSchema() {
                 "assetAddress TEXT NOT NULL,"
                 "value TEXT NOT NULL,"
                 "nonce TEXT NOT NULL,"
-                "resourceIdentifier TEXT NOT NULL,"
-                "executionTime INTEGER NOT NULL," // SQLite's INTEGER handles 64-bit
+                "resourceLocation TEXT NOT NULL,"
+                "settlementTime INTEGER NOT NULL,"
                 "authorizationSignatureHash TEXT NOT NULL,"
                 "transactionHash TEXT NOT NULL,"
                 "fromIpAddress TEXT NOT NULL,"
@@ -272,8 +272,8 @@ void MachinePayDB::ensureSchema() {
                 "assetAddress TEXT NOT NULL,"
                 "value TEXT NOT NULL,"
                 "nonce TEXT NOT NULL,"
-                "resourceIdentifier TEXT NOT NULL,"
-                "executionTime BIGINT NOT NULL," // PostgreSQL uses BIGINT for 64-bit
+                "resourceLocation TEXT NOT NULL,"
+                "settlementTime BIGINT NOT NULL,"
                 "authorizationSignatureHash TEXT NOT NULL,"
                 "transactionHash TEXT NOT NULL,"
                 "fromIpAddress TEXT NOT NULL,"
@@ -281,8 +281,8 @@ void MachinePayDB::ensureSchema() {
         }
 
         sql << "CREATE INDEX IF NOT EXISTS idx_payments_fromaddress ON payments(fromAddress)";
-        sql << "CREATE INDEX IF NOT EXISTS idx_payments_executionTime ON payments(executionTime)";
-        sql << "CREATE INDEX IF NOT EXISTS idx_payments_to_executionTime ON payments(toAddress, executionTime)";
+        sql << "CREATE INDEX IF NOT EXISTS idx_payments_settlementTime ON payments(settlementTime)";
+        sql << "CREATE INDEX IF NOT EXISTS idx_payments_to_settlementTime ON payments(toAddress, settlementTime)";
         sql << "CREATE INDEX IF NOT EXISTS idx_payments_authhash ON payments(authorizationSignatureHash)";
         sql << "CREATE INDEX IF NOT EXISTS idx_payments_txhash ON payments(transactionHash)";
         sql << "CREATE UNIQUE INDEX IF NOT EXISTS idx_payments_unique_payment ON "

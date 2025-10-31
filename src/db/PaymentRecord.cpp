@@ -48,12 +48,12 @@ EIP3009Nonce PaymentRecord::nonce() const {
     return nonce_;
 }
 
-string PaymentRecord::resourceIdentifier() const { // renamed to match header
-    return resourceIdentifier_;
+string PaymentRecord::resourceLocation() const { // renamed to match header
+    return resourceLocation_;
 }
 
-uint64_t PaymentRecord::executionTime() const {
-    return executionTime_;
+uint64_t PaymentRecord::settlementTime() const {
+    return settlementTime_;
 }
 
 Hash PaymentRecord::authorizationSignatureHash() const {
@@ -77,7 +77,7 @@ PaymentRecord::PaymentRecord(const std::string &organizationName, const u256 cha
                              const EIP3009Value &value,
                              const EIP3009Nonce &nonce,
                              const string &resourceIdentifier,
-                             uint64_t executionTime,
+                             uint64_t settlementTime,
                              const Hash &authorizationSignatureHash,
                              const Hash &transactionHash,
                              const std::string &fromIpAddress,
@@ -89,8 +89,8 @@ PaymentRecord::PaymentRecord(const std::string &organizationName, const u256 cha
       assetAddress_(assetAddress),
       value_(value),
       nonce_(nonce),
-      resourceIdentifier_(resourceIdentifier),
-      executionTime_(executionTime),
+      resourceLocation_(resourceIdentifier),
+      settlementTime_(settlementTime),
       authorizationSignatureHash_(authorizationSignatureHash),
       transactionHash_(transactionHash),
       fromIpAddress_(fromIpAddress),
@@ -114,10 +114,10 @@ ptr<PaymentRecord> PaymentRecord::createPaymentRecord(
     const EthAddress assetAddress = domain.assetAddress();
 
     // Compute resource hash from identifier string
-    const std::string resourceIdentifier = resource.getIdentifier(organization);
+    const std::string resourceLocation = resource.getLocation();
     Hash authorizationSignatureHash = payload->signature().computeSignatureHash();
 
-    uint64_t executionTime = static_cast<uint64_t>(
+    uint64_t settlementTime = static_cast<uint64_t>(
         std::chrono::duration_cast<std::chrono::seconds>(
             std::chrono::system_clock::now().time_since_epoch()).count());
 
@@ -132,8 +132,8 @@ ptr<PaymentRecord> PaymentRecord::createPaymentRecord(
         assetAddress,
         value,
         nonce,
-        resourceIdentifier,
-        executionTime,
+        resourceLocation,
+        settlementTime,
         authorizationSignatureHash,
         transactionHash,
         fromIpAddress,

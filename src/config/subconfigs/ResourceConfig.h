@@ -38,7 +38,7 @@ private:
 
 public:
 
-    std::string getIdentifier(const OrganizationConfig& orgConfig) const;
+    std::string getLocation() const;
 
 
     const std::string& name() const { return name_; }
