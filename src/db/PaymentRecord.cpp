@@ -4,6 +4,7 @@
 #include "crypto/EthAddress.h"
 #include "crypto/EIP3009Value.h"
 #include "crypto/EIP3009Nonce.h"
+#include "crypto/Keccak.h" // for computing resource hash
 #include <soci/row.h>
 
 #include "payment/datastructures/PaymentPayload.h"
@@ -14,24 +15,8 @@
 #include "config/subconfigs/OrganizationConfig.h"
 
 ptr<PaymentRecord> PaymentRecord::deserializeFromDbRow(const soci::row &) {
-    /*
-    auto organizationName = row.get<std::string>("organizationName");
-        u256 chainId = Encoding::u256FromHexOrDecimal(row.get<std::string>("chainId"));
-    EthAddress toAddress = EthAddress::parseHexAddress(row.get<std::string>("toAddress"));
-    EthAddress assetAddress = EthAddress::parseHexAddress(row.get<std::string>("assetAddress"));
-    EIP3009Value value = EIP3009Value::fromHexOrDecimal(row.get<std::string>("value"));
-    EIP3009Nonce nonce = EIP3009Nonce::fromHex(row.get<std::string>("nonce"));
-    Hash resourceHash = Encoding::fromHexToHash(row.get<std::string>("resourceHash"));
-    Hash authorizationHash = Encoding::fromHexToHash(row.get<std::string>("authorizationHash"));
-    Hash transactionHash = Encoding::fromHexToHash(row.get<std::string>("transactionHash"));
-    auto executionTime = static_cast<uint64_t>(row.get<long long>("executionTime"));
-    auto fromIpAddress = row.get<std::string>("fromIpAddress");
-    auto jsonInfo = row.get<std::string>("jsonInfo");
-    return make_shared<PaymentRecord>(organizationName, chainId, fromAddress, toAddress, assetAddress, value, nonce, resourceHash, executionTime,
-                                      authorizationHash, transactionHash, fromIpAddress, jsonInfo);
- (*/
+    // Not implemented yet
     throw std::runtime_error("PaymentRecord::deserializeFromDbRow not implemented");
-    return nullptr;
 }
 
 
@@ -63,8 +48,8 @@ EIP3009Nonce PaymentRecord::nonce() const {
     return nonce_;
 }
 
-Hash PaymentRecord::resourceIdentifier() const {
-    return resourceIdentifier_;
+Hash PaymentRecord::resourceIdentifier() const { // renamed to match header
+    return resourceHash_;
 }
 
 uint64_t PaymentRecord::executionTime() const {
@@ -87,7 +72,7 @@ std::string PaymentRecord::jsonInfo() const {
     return jsonInfo_;
 }
 
-PaymentRecord::PaymentRecord(const string &organizationName, const u256 chainId, const EthAddress &fromAddress,
+PaymentRecord::PaymentRecord(const std::string &organizationName, const u256 chainId, const EthAddress &fromAddress,
                              const EthAddress &toAddress, const EthAddress &assetAddress,
                              const EIP3009Value &value,
                              const EIP3009Nonce &nonce,
@@ -101,20 +86,19 @@ PaymentRecord::PaymentRecord(const string &organizationName, const u256 chainId,
       chainId_(chainId),
       fromAddress_(fromAddress),
       toAddress_(toAddress),
-        assetAddress_(assetAddress),
+      assetAddress_(assetAddress),
       value_(value),
       nonce_(nonce),
-      resourceIdentifier_(resourceHash),
+      resourceHash_(resourceHash),
       executionTime_(executionTime),
       authorizationSignatureHash_(authorizationSignatureHash),
       transactionHash_(transactionHash),
       fromIpAddress_(fromIpAddress),
-      jsonInfo_(jsonInfo) {
-}
+      jsonInfo_(jsonInfo) {}
 
 ptr<PaymentRecord> PaymentRecord::createPaymentRecord(
     const PaymentPayload& paymentPayload, const EIP712Domain &domain,  const ResourceConfig& resource,
-    const OrganizationConfig& organization) {
+    const OrganizationConfig& organization)  {
     auto payload = paymentPayload.payload();
     CHECK_STATE(payload);
     auto auth = payload->authorization();
@@ -125,21 +109,21 @@ ptr<PaymentRecord> PaymentRecord::createPaymentRecord(
     const EIP3009Value value = auth->value();
     const EIP3009Nonce nonce = auth->nonce();
 
-    auto organizationName = organization.organizationName(); // unknown at this layer
+    auto organizationName = organization.organizationName();
     const u256 chainId = domain.chainId();
     const EthAddress assetAddress = domain.assetAddress();
 
-    Hash resourceHash{};
-    Hash authorizationSignatureHash{};
-    Hash transactionHash{};
+    // Compute resource hash from identifier string
+    const std::string resourceIdentifierStr = resource.getIdentifierString(organization);
+    Hash resourceHash = KeccakHash::keccak256(resourceIdentifierStr);
+    Hash authorizationSignatureHash = payload->signature().computeSignatureHash();
+    Hash transactionHash{}; // unknown at this layer
 
-    // Execution time now
     uint64_t executionTime = static_cast<uint64_t>(
         std::chrono::duration_cast<std::chrono::seconds>(
             std::chrono::system_clock::now().time_since_epoch()).count());
 
-    // Optional info fields; not available here
-    const std::string fromIpAddress;
+    const std::string fromIpAddress; // not available
     const std::string jsonInfo = paymentPayload.toJson().dump();
 
     return std::make_shared<PaymentRecord>(

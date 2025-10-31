@@ -33,11 +33,12 @@ private:
     std::string paymentScheme_;
 
     ResourceConfig(const std::string& name, const std::string& location, ResourceType type, boost::multiprecision::uint256_t price, const std::string& token);
-    std::string getIdentifierString(const OrganizationConfig& orgConfig) const;
+
 
 
 public:
 
+    std::string getIdentifierString(const OrganizationConfig& orgConfig) const;
 
 
     const std::string& name() const { return name_; }

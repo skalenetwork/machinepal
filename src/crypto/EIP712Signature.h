@@ -4,6 +4,7 @@
 #include <string>
 #include <span>
 #include <vector>
+#include "MachinePayCommon.h" // added for Hash typedef
 
 class EIP712Signature {
 public:
@@ -15,13 +16,13 @@ public:
     EIP712Signature(const std::array<uint8_t, 32>& r, const std::array<uint8_t, 32>& s, uint8_t v);
 
     // Accessors for r, s, v
-    std::array<uint8_t, 32> r() const;
-    std::array<uint8_t, 32> s() const;
-    uint8_t v() const;
+    [[nodiscard]] std::array<uint8_t, 32> r() const;
+    [[nodiscard]] std::array<uint8_t, 32> s() const;
+    [[nodiscard]] uint8_t v() const;
 
     [[nodiscard]] std::array<uint8_t, 65> &bytes() { return bytes_; }
     [[nodiscard]] const std::array<uint8_t, 65> &bytes() const { return bytes_; }
-    std::string toHex(bool withPrefix = false) const;
+    [[nodiscard]] std::string toHex(bool withPrefix = false) const;
 
     static EIP712Signature parseHex(const std::string &hex);
     static EIP712Signature parseFlexible(const std::string &hex); // optional 0x prefix
@@ -35,6 +36,8 @@ public:
     // Validity check for Ethereum/Hardhat signature
     static bool isValid(const std::array<uint8_t,65>& sigBytes);
 
+    // Compute keccak256 hash of the 65 signature bytes (r||s||v)
+    [[nodiscard]] Hash computeSignatureHash() const;
 private:
     std::array<uint8_t, 65> bytes_{};
     static bool isValidV(uint8_t v);

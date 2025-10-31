@@ -6,6 +6,7 @@
 #include <boost/algorithm/hex.hpp>
 #include <openssl/ecdsa.h>
 #include <openssl/bn.h>
+#include "Keccak.h" // added for hashing
 
 EIP712Signature::EIP712Signature() = default;
 
@@ -89,4 +90,8 @@ bool EIP712Signature::isValid(const std::array<uint8_t,65>& sigBytes) {
 
 bool EIP712Signature::isValidV(uint8_t v) {
     return v == 27 || v == 28 || v == 0 || v == 1;
+}
+
+Hash EIP712Signature::computeSignatureHash() const {
+    return KeccakHash::keccak256(std::span<const uint8_t>(bytes_.data(), bytes_.size()));
 }

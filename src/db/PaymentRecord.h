@@ -1,9 +1,11 @@
 #pragma once
+#include "MachinePayCommon.h" // added for Hash and u256
 #include "crypto/EIP3009Nonce.h"
 #include "crypto/EIP3009Value.h"
 #include "crypto/Encoding.h"
 #include "crypto/EthAddress.h"
 #include <soci/row.h>
+#include <string>
 
 class OrganizationConfig;
 class EIP712Domain;
@@ -23,7 +25,7 @@ class PaymentRecord {
     EthAddress assetAddress_;
     EIP3009Value value_;
     EIP3009Nonce nonce_;
-    Hash resourceIdentifier_;
+    Hash resourceHash_; // renamed from string resourceIdentifier_
     uint64_t executionTime_;
     Hash authorizationSignatureHash_;
     Hash transactionHash_;
@@ -46,7 +48,7 @@ public:
 
     [[nodiscard]] EIP3009Nonce nonce() const;
 
-    [[nodiscard]] Hash resourceIdentifier() const;
+    [[nodiscard]] Hash resourceIdentifier() const; // returns resource hash
 
     [[nodiscard]] uint64_t executionTime() const;
 
@@ -54,7 +56,7 @@ public:
 
     [[nodiscard]] Hash transactionHash() const;
 
-    std::string fromIpAddress() const;
+    [[nodiscard]] std::string fromIpAddress() const; // add nodiscard
 
     [[nodiscard]] std::string jsonInfo() const;
 
@@ -63,9 +65,9 @@ public:
         const OrganizationConfig& organization);
 
 
-    PaymentRecord(const string& organizationName, const u256 chainId,
-                    const EthAddress &fromAddress, const EthAddress &toAddress, const EthAddress &assetAddress,
-                    const EIP3009Value &value,
+    PaymentRecord(const std::string& organizationName, const u256 chainId,
+                  const EthAddress &fromAddress, const EthAddress &toAddress, const EthAddress &assetAddress,
+                  const EIP3009Value &value,
                   const EIP3009Nonce &nonce, const Hash &resourceHash, uint64_t executionTime,
                   const Hash &authorizationSignatureHash, const Hash &transactionHash,
                   const std::string& fromIpAddress,
