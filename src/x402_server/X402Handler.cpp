@@ -17,6 +17,7 @@ void X402Handler::onRequest(std::unique_ptr<HTTPMessage> _headers) noexcept {
         reqHeaders_ = std::move(_headers);
         std::shared_ptr<IResponseSender>  responseSender = std::make_shared<ProxygenResponseSender>(downstream_) ;
         processor_ = app_.makeX402Processor(responseSender);
+
         processor_->onRequestStart(reqHeaders_);
     } catch (const std::exception& e)
     {

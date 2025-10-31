@@ -50,9 +50,9 @@ variant<ptr<PaymentPayload>, HttpError> PaymentManager::decodeAndParsePayment(
 void PaymentManager::recordSuccessfulSettlement(const PaymentPayload &payload,
                                                 const EIP712Domain &domain,
                                                 const ResourceConfig &resource, const OrganizationConfig &organization,
-                                                const Hash& transactionHash) {
+                                                const Hash& transactionHash, const string& ipAddress) {
     auto db = app_.machinePayDB();
-    db->saveSettledPayment(payload, domain, resource, organization, transactionHash);
+    db->saveSettledPayment(payload, domain, resource, organization, transactionHash, ipAddress);
 }
 
 
@@ -106,7 +106,8 @@ std::optional<HttpError> PaymentManager::checkPaymentIsNewAndSettleItUnsafe(std:
                                                                             const NetworkConfig &networkConfig,
                                                                             const ResourceConfig &resource,
                                                                             const OrganizationConfig &organization,
-                                                                            shared_ptr<PaymentPayload> paymentPayload) {
+                                                                            shared_ptr<PaymentPayload> paymentPayload,
+                                                                            const string& ipAddress) {
     std::optional<HttpError> error = std::nullopt;
 
     error = checkAgainstAlreadySettledPayments(paymentPayload, networkConfig.eip712Domain());
@@ -125,7 +126,8 @@ std::optional<HttpError> PaymentManager::checkPaymentIsNewAndSettleItUnsafe(std:
 
     Hash transactionHash = KeccakHash::keccak256("hahaha");
 
-    recordSuccessfulSettlement(*paymentPayload, *networkConfig.eip712Domain(), resource, organization, transactionHash);
+    recordSuccessfulSettlement(*paymentPayload, *networkConfig.eip712Domain(), resource, organization, transactionHash,
+        ipAddress);
 
     return std::nullopt;
 }
@@ -134,7 +136,8 @@ std::optional<HttpError> PaymentManager::checkPaymentIsNewAndSettleIt(std::strin
                                                                       const NetworkConfig &networkConfig,
                                                                       const ResourceConfig &resource,
                                                                       const OrganizationConfig &organization,
-                                                                      shared_ptr<PaymentPayload> paymentPayload) {
+                                                                      shared_ptr<PaymentPayload> paymentPayload,
+                                                                      const string& ipAddress) {
     CHECK_STATE(paymentPayload);
     auto authorization = paymentPayload->payload()->authorization();
     auto domain = networkConfig.eip712Domain();
@@ -158,7 +161,8 @@ std::optional<HttpError> PaymentManager::checkPaymentIsNewAndSettleIt(std::strin
 
     try {
         // Now that we hold the lock, proceed with the actual settlement.
-        return checkPaymentIsNewAndSettleItUnsafe(settlementInfo, networkConfig, resource, organization, paymentPayload);
+        return checkPaymentIsNewAndSettleItUnsafe(settlementInfo, networkConfig, resource, organization, paymentPayload,
+            ipAddress);
     } catch (const std::exception &e) {
         spdlog::error("Error during payment settlement: {}", e.what());
         return HttpError(ERR_INTERNAL_SERVER_ERROR, std::string("Error during payment settlement: ") + e.what());
@@ -189,7 +193,10 @@ std::optional<HttpError> PaymentManager::decodeValidateAndSettlePayment(
         if (error)
             return error;
 
-        return checkPaymentIsNewAndSettleIt(settlementInfo, *config.network(), resource, organization, paymentPayload);
+        auto ipAddress = req->getClientAddress().getAddressStr();
+
+        return checkPaymentIsNewAndSettleIt(settlementInfo, *config.network(), resource, organization, paymentPayload,
+            ipAddress);
     } catch (std::exception &e) {
         spdlog::error("decodeValidateAndSettlePayment had exception  {}", e.what());
         return HttpError(ERR_INTERNAL_SERVER_ERROR, std::string("decodeValidateAndSettlePayment had exception")

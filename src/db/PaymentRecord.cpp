@@ -98,7 +98,7 @@ PaymentRecord::PaymentRecord(const std::string &organizationName, const u256 cha
 
 ptr<PaymentRecord> PaymentRecord::createPaymentRecord(
     const PaymentPayload& paymentPayload, const EIP712Domain &domain,  const ResourceConfig& resource,
-    const OrganizationConfig& organization, const Hash& transactionHash)  {
+    const OrganizationConfig& organization, const Hash& transactionHash, const string& fromIpAddress) {
     auto payload = paymentPayload.payload();
     CHECK_STATE(payload);
     auto auth = payload->authorization();
@@ -121,7 +121,6 @@ ptr<PaymentRecord> PaymentRecord::createPaymentRecord(
         std::chrono::duration_cast<std::chrono::seconds>(
             std::chrono::system_clock::now().time_since_epoch()).count());
 
-    const std::string fromIpAddress; // not available
     const std::string jsonInfo = paymentPayload.toJson().dump();
 
     return std::make_shared<PaymentRecord>(

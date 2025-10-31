@@ -110,9 +110,9 @@ MachinePayDB::MachinePayDB(MachinePayApp &app, DbType type, const std::optional<
 void MachinePayDB::saveSettledPayment(const PaymentPayload &payload,
                                       const EIP712Domain &domain,
                                       const ResourceConfig &resource, const OrganizationConfig &organization,
-                                      const Hash& transactionHash) {
+                                      const Hash& transactionHash, const string& ipAddress) {
     auto paymentRecord = PaymentRecord::createPaymentRecord(payload, domain, resource, organization,
-        transactionHash);
+        transactionHash, ipAddress);
     CHECK_STATE(paymentRecord);
     writePayment(*paymentRecord);
 }

@@ -30,7 +30,8 @@ public:
     [[nodiscard]] MachinePayApp& app() const { return app_; }
 
     void recordSuccessfulSettlement(const PaymentPayload & payload, const EIP712Domain& domain,
-        const ResourceConfig & resource, const OrganizationConfig & organization, const Hash& transactionHash);
+        const ResourceConfig & resource, const OrganizationConfig & organization, const Hash& transactionHash,
+        const string& ipAddress);
 
     std::optional<HttpError>  checkAgainstAlreadySettledPayments(const ptr<PaymentPayload> & paymentPayload,
         const ptr<EIP712Domain>& domain);
@@ -40,12 +41,13 @@ public:
     std::optional<HttpError> checkPaymentIsNewAndSettleItUnsafe(std::string &settlementInfo, const NetworkConfig &networkConfig,
                                           const ResourceConfig &resource,
                                           const OrganizationConfig &organization,
-                                          shared_ptr<PaymentPayload> paymentPayload);
+                                          shared_ptr<PaymentPayload> paymentPayload, const string& ipAddress);
 
     std::optional<HttpError> checkPaymentIsNewAndSettleIt(std::string &settlementInfo, const NetworkConfig &networkConfig,
                                                           const ResourceConfig &resource,
                                                           const OrganizationConfig &organization,
-                                                          shared_ptr<PaymentPayload> paymentPayload);
+                                                          shared_ptr<PaymentPayload> paymentPayload,
+                                                          const string& ipAddress);
 
 
     std::optional<HttpError> decodeValidateAndSettlePayment(
