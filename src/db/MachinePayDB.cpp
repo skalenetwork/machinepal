@@ -143,7 +143,7 @@ void MachinePayDB::writePayment(const PaymentRecord &record) {
         std::string assetAddress = record.assetAddress().toDbString();
         std::string value = record.value().toDbString();
         std::string nonce = record.nonce().toDbString();
-        std::string resourceIdentifier = Encoding::hashToPartialHex(record.resourceIdentifier());
+        std::string resourceIdentifier = record.resourceIdentifier();
         long long executionTime = static_cast<long long>(record.executionTime());
         std::string authorizationSignatureHash = Encoding::hashToPartialHex(record.authorizationSignatureHash());
         std::string transactionHash = Encoding::hashToPartialHex(record.transactionHash());

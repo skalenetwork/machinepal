@@ -71,7 +71,7 @@ ResourceConfig::ResourceConfig(const std::string& name, const std::string& locat
     }
 }
 
-std::string ResourceConfig::getIdentifierString(const OrganizationConfig& orgConfig) const {
+std::string ResourceConfig::getIdentifier(const OrganizationConfig& orgConfig) const {
     auto orgName = orgConfig.organizationName();
     if (orgName.empty()) {
         return location_;

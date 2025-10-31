@@ -48,8 +48,8 @@ EIP3009Nonce PaymentRecord::nonce() const {
     return nonce_;
 }
 
-Hash PaymentRecord::resourceIdentifier() const { // renamed to match header
-    return resourceHash_;
+string PaymentRecord::resourceIdentifier() const { // renamed to match header
+    return resourceIdentifier_;
 }
 
 uint64_t PaymentRecord::executionTime() const {
@@ -76,7 +76,7 @@ PaymentRecord::PaymentRecord(const std::string &organizationName, const u256 cha
                              const EthAddress &toAddress, const EthAddress &assetAddress,
                              const EIP3009Value &value,
                              const EIP3009Nonce &nonce,
-                             const Hash &resourceHash,
+                             const string &resourceIdentifier,
                              uint64_t executionTime,
                              const Hash &authorizationSignatureHash,
                              const Hash &transactionHash,
@@ -89,7 +89,7 @@ PaymentRecord::PaymentRecord(const std::string &organizationName, const u256 cha
       assetAddress_(assetAddress),
       value_(value),
       nonce_(nonce),
-      resourceHash_(resourceHash),
+      resourceIdentifier_(resourceIdentifier),
       executionTime_(executionTime),
       authorizationSignatureHash_(authorizationSignatureHash),
       transactionHash_(transactionHash),
@@ -114,8 +114,7 @@ ptr<PaymentRecord> PaymentRecord::createPaymentRecord(
     const EthAddress assetAddress = domain.assetAddress();
 
     // Compute resource hash from identifier string
-    const std::string resourceIdentifierStr = resource.getIdentifierString(organization);
-    Hash resourceHash = KeccakHash::keccak256(resourceIdentifierStr);
+    const std::string resourceIdentifier = resource.getIdentifier(organization);
     Hash authorizationSignatureHash = payload->signature().computeSignatureHash();
     Hash transactionHash{}; // unknown at this layer
 
@@ -134,7 +133,7 @@ ptr<PaymentRecord> PaymentRecord::createPaymentRecord(
         assetAddress,
         value,
         nonce,
-        resourceHash,
+        resourceIdentifier,
         executionTime,
         authorizationSignatureHash,
         transactionHash,
