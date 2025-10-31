@@ -14,12 +14,11 @@ const config = {
     // GitHub Pages deployment config
     // GitHub Pages deployment config
     url: 'https://skalenetwork.github.io/', // Your GitHub Pages URL
-    baseUrl: '/machinepay',                   // Base URL path for your site
+    baseUrl: '/machinepay/',                   // Base URL path for your site (needs leading and trailing slash)
     organizationName: 'skalenetwork',      // GitHub org/user name
     projectName: 'machinepay',                 // Repo name
     trailingSlash: false,
-
-    onBrokenLinks: 'warn,
+    onBrokenLinks: 'warn',
     onBrokenMarkdownLinks: 'warn',
 
     i18n: {
@@ -30,7 +29,7 @@ const config = {
     presets: [
         [
             'classic',
-            ({
+            {
                 docs: {
                     path: '.',
                     routeBasePath: '/', // Serve docs at site root
@@ -45,11 +44,11 @@ const config = {
                 theme: {
                     customCss: require.resolve('./src/css/custom.css'),
                 },
-            }),
+            },
         ],
     ],
 
-    themeConfig: ({
+    themeConfig: {
         image: 'img/og-image.png',
         colorMode: {
             defaultMode: 'light',
@@ -95,7 +94,7 @@ const config = {
             darkTheme: darkCodeTheme,
             additionalLanguages: ['bash', 'json', 'solidity', 'python', 'cpp'],
         },
-    }),
+    },
 };
 
 module.exports = config;
