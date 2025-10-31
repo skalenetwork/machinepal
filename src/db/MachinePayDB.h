@@ -43,7 +43,8 @@ public:
 
     void saveSettledPayment(const PaymentPayload &payload,
                             const EIP712Domain &domain,
-                            const ResourceConfig &resource, const OrganizationConfig &organization);
+                            const ResourceConfig &resource, const OrganizationConfig &organization,
+                            const Hash& transactionHash);
 
     bool settledPaymentExists(const ptr<PaymentPayload> &paymentPayload,
                               const ptr<EIP712Domain> &domain);

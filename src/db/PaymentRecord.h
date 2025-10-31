@@ -62,7 +62,7 @@ public:
 
     static ptr<PaymentRecord> createPaymentRecord(
         const PaymentPayload& payload, const EIP712Domain &domain, const ResourceConfig& resource,
-        const OrganizationConfig& organization);
+        const OrganizationConfig& organization, const Hash& transactionHash);
 
 
     PaymentRecord(const std::string& organizationName, const u256 chainId,

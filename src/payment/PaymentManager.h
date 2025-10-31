@@ -30,7 +30,7 @@ public:
     [[nodiscard]] MachinePayApp& app() const { return app_; }
 
     void recordSuccessfulSettlement(const PaymentPayload & payload, const EIP712Domain& domain,
-        const ResourceConfig & resource, const OrganizationConfig & organization);
+        const ResourceConfig & resource, const OrganizationConfig & organization, const Hash& transactionHash);
 
     std::optional<HttpError>  checkAgainstAlreadySettledPayments(const ptr<PaymentPayload> & paymentPayload,
         const ptr<EIP712Domain>& domain);

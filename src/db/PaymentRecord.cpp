@@ -98,7 +98,7 @@ PaymentRecord::PaymentRecord(const std::string &organizationName, const u256 cha
 
 ptr<PaymentRecord> PaymentRecord::createPaymentRecord(
     const PaymentPayload& paymentPayload, const EIP712Domain &domain,  const ResourceConfig& resource,
-    const OrganizationConfig& organization)  {
+    const OrganizationConfig& organization, const Hash& transactionHash)  {
     auto payload = paymentPayload.payload();
     CHECK_STATE(payload);
     auto auth = payload->authorization();
@@ -116,7 +116,6 @@ ptr<PaymentRecord> PaymentRecord::createPaymentRecord(
     // Compute resource hash from identifier string
     const std::string resourceIdentifier = resource.getIdentifier(organization);
     Hash authorizationSignatureHash = payload->signature().computeSignatureHash();
-    Hash transactionHash{}; // unknown at this layer
 
     uint64_t executionTime = static_cast<uint64_t>(
         std::chrono::duration_cast<std::chrono::seconds>(

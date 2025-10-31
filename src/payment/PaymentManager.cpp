@@ -4,6 +4,7 @@
 #include "config/subconfigs/FacilitatorConfig.h"
 #include "config/subconfigs/NetworkConfig.h"
 #include "config/subconfigs/ResourceConfig.h"
+#include "crypto/Keccak.h"
 #include "datastructures/PaymentPayload.h"
 #include "db/MachinePayDB.h"
 #include "db/PaymentRecord.h"
@@ -48,9 +49,10 @@ variant<ptr<PaymentPayload>, HttpError> PaymentManager::decodeAndParsePayment(
 
 void PaymentManager::recordSuccessfulSettlement(const PaymentPayload &payload,
                                                 const EIP712Domain &domain,
-                                                const ResourceConfig &resource, const OrganizationConfig &organization) {
+                                                const ResourceConfig &resource, const OrganizationConfig &organization,
+                                                const Hash& transactionHash) {
     auto db = app_.machinePayDB();
-    db->saveSettledPayment(payload, domain, resource, organization);
+    db->saveSettledPayment(payload, domain, resource, organization, transactionHash);
 }
 
 
@@ -121,7 +123,9 @@ std::optional<HttpError> PaymentManager::checkPaymentIsNewAndSettleItUnsafe(std:
         return error;
     }
 
-    recordSuccessfulSettlement(*paymentPayload, *networkConfig.eip712Domain(), resource, organization);
+    Hash transactionHash = KeccakHash::keccak256("hahaha");
+
+    recordSuccessfulSettlement(*paymentPayload, *networkConfig.eip712Domain(), resource, organization, transactionHash);
 
     return std::nullopt;
 }
