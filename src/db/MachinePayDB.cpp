@@ -147,8 +147,8 @@ void MachinePayDB::writePayment(const PaymentRecord &record) {
         std::string nonce = record.nonce().toDbString();
         std::string resourceLocation  = record.resourceLocation();
         long long settlementTime = static_cast<long long>(record.settlementTime());
-        std::string authorizationSignatureHash = Encoding::hashToPartialHex(record.authorizationSignatureHash());
-        std::string transactionHash = Encoding::hashToPartialHex(record.transactionHash());
+        std::string authorizationSignatureHash = Encoding::hashToHex(record.authorizationSignatureHash());
+        std::string transactionHash = Encoding::hashToHex(record.transactionHash());
         std::string fromIpAddress = record.fromIpAddress();
         std::string jsonInfo = record.jsonInfo();
 

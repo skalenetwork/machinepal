@@ -21,8 +21,12 @@ const std::optional<CanonicalPath> &FacilitatorConfig::apiKeyFile() const { retu
 
 variant<SettlementResponse, HttpError> FacilitatorConfig::settlePayment(const shared_ptr<PaymentPayload> &) {
     try {
-        auto settlementResponse = SettlementResponse::fromJson(
+
+        auto parsedResponse = nlohmann::json::parse(
             PaymentExamples::EXACT_UCDC_SETTLEMENT_RESPONSE_CB_SEPOLIA);
+
+        auto settlementResponse = SettlementResponse::fromJson(
+            parsedResponse);
         if (settlementResponse.success()) {
             return settlementResponse;
         }
