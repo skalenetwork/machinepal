@@ -1,16 +1,22 @@
 #include "MachinePayCommon.h"
 #include "SettlementResponse.h"
 
+#include "crypto/Encoding.h"
+#include "url/URLUtils.h"
+
 SettlementResponse::SettlementResponse(bool success,
                                        std::optional<std::string> errorReason,
                                        const std::string &transaction,
                                        const std::string &network,
-                                       const std::string &payer)
+                                       const std::string &payer,
+                                       const std::string& originalJson)
         : success_(success),
           errorReason_(std::move(errorReason)),
           transaction_(transaction),
           network_(network),
-          payer_(payer) {}
+          payer_(payer) {
+    originalJson_ = originalJson;
+}
 
 bool SettlementResponse::success() const { return success_; }
 const std::optional<std::string> &SettlementResponse::errorReason() const { return errorReason_; }
@@ -38,7 +44,8 @@ json SettlementResponse::toJson() const {
     return j;
 }
 
-SettlementResponse SettlementResponse::fromJson(const json &j) {
+SettlementResponse SettlementResponse::fromJsonString(std::string const &jsonString) {
+    auto j = json::parse(jsonString);
     bool success = j.at("success").get<bool>();
     std::string transaction = j.at("transaction").get<std::string>();
     std::string network = j.at("network").get<std::string>();
@@ -47,5 +54,10 @@ SettlementResponse SettlementResponse::fromJson(const json &j) {
     if (j.contains("errorReason") && j.at("errorReason").is_string()) {
         errorReason = j.at("errorReason").get<std::string>();
     }
-    return SettlementResponse(success, errorReason, transaction, network, payer);
+    return SettlementResponse(success, errorReason, transaction, network, payer, jsonString);
 }
+
+std::string SettlementResponse::originalJsonToBase64() const {
+    return URLUtils::base64Encode(originalJson_);
+}
+

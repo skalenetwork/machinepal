@@ -76,6 +76,8 @@ void X402Processor::reply400BadRequest(const std::string &message) {
 }
 
 
+
+
 void X402Processor::reply500InternalError(const std::string &message) {
     std::vector<std::pair<std::string, std::string> > headers = {
         {"Content-Type", "text/plain"}
@@ -91,6 +93,8 @@ void X402Processor::reply502BadGateway(const std::string &message) {
     sendResponse({502, "Bad Gateway"}, headers, message);
     state_ = State::ERROR_SENT;
 }
+
+
 
 
 void X402Processor::sendResponse(
@@ -289,13 +293,15 @@ void X402Processor::onRequestFullyReceived(const std::unique_ptr<proxygen::HTTPM
             return;
         }
 
-        std::string settlementInfo;
         if (reply402IfNoPaymentHeader(reqHeaders)) {
             return;
         }
 
-        if (auto error = app_.paymentManager()->decodeValidateAndSettlePayment(reqHeaders,
-            settlementInfo, *config(), *resource(), *organization())) {
+        auto result =  app_.paymentManager()->decodeValidateAndSettlePayment(reqHeaders,
+             *config(), *resource(), *organization());
+
+        if (holds_alternative<HttpError>(result)) {
+            auto error = std::get_if<HttpError>(&result);
             replyToClientWithError(*error);
             return;
         }
@@ -306,7 +312,10 @@ void X402Processor::onRequestFullyReceived(const std::unique_ptr<proxygen::HTTPM
         if (!proxyResponseToBackEnd(responseBody)) {
             return;
         }
-        reply200Success(settlementInfo, responseBody);
+
+        auto settlementResponse = std::get<SettlementResponse>(result);
+
+        reply200Success(settlementResponse.originalJsonToBase64(), responseBody);
     } catch (std::exception &e) {
         spdlog::critical("onRequestCompletion exception");
         printNestedException(e);
