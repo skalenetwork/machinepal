@@ -12,4 +12,7 @@ public:
     static std::string hashToHex(const std::array<uint8_t, 32>& arr);
     static std::string hashToPartialHex(const std::array<uint8_t, 32>& arr);
     static std::string hashToPartialBase64(const std::array<uint8_t, 32>& arr);
+    static std::string base64Encode(const std::string& input);
+    static std::string base64Decode(const std::string& input);
+
 };

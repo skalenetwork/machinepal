@@ -85,3 +85,20 @@ std::string Encoding::hashToPartialBase64(const std::array<uint8_t, 32>& arr) {
     return out;
 }
 
+std::string Encoding::base64Encode(const std::string& input) {
+    if (input.empty()) return {};
+    std::string encoded;
+    encoded.resize(boost::beast::detail::base64::encoded_size(input.size()));
+    std::size_t written = boost::beast::detail::base64::encode(&encoded[0], input.data(), input.size());
+    encoded.resize(written);
+    return encoded;
+}
+
+std::string Encoding::base64Decode(const std::string& input) {
+    if (input.empty()) return {};
+    std::string decoded;
+    decoded.resize(boost::beast::detail::base64::decoded_size(input.size()));
+    auto len = boost::beast::detail::base64::decode(&decoded[0], input.data(), input.size());
+    decoded.resize(len.first);
+    return decoded;
+}

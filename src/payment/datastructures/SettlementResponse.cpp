@@ -58,6 +58,6 @@ SettlementResponse SettlementResponse::fromJsonString(std::string const &jsonStr
 }
 
 std::string SettlementResponse::originalJsonToBase64() const {
-    return URLUtils::base64Encode(originalJson_);
+    return Encoding::base64Encode(originalJson_);
 }
 

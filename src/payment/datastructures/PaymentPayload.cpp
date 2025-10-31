@@ -150,5 +150,5 @@ ptr<PaymentPayload> PaymentPayload::createDefaultPaymentPayload(EthPrivateKey &p
 
 std::string PaymentPayload::createHttpHeaderValue() {
     auto paymentJson = toJson();
-    return "X-PAYMENT: " + URLUtils::base64Encode(paymentJson.dump());
+    return "X-PAYMENT: " + Encoding::base64Encode(paymentJson.dump());
 }

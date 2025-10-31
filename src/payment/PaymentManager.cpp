@@ -25,7 +25,7 @@ variant<ptr<PaymentPayload>, HttpError> PaymentManager::decodeAndParsePayment(
 
         std::string decoded;
         try {
-            decoded = URLUtils::base64Decode(payment);
+            decoded = Encoding::base64Decode(payment);
         } catch (const std::exception &e) {
             spdlog::error("Exception during base64 decode of X-PAYMENT header: {}", e.what());
             return HttpError(ERR_BAD_REQUEST, "X-PAYMENT header is not valid base64");
