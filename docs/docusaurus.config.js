@@ -2,23 +2,28 @@
 // Note: type annotations allow type checking and IDE autocompletion
 
 const {themes} = require('prism-react-renderer');
-const lightCodeTheme = themes.dracula;
-const darkCodeTheme = themes.vsDark;
+// FIX: 'github' is a light theme. 'dracula' (which you had) is dark.
+const lightCodeTheme = themes.github;
+// FIX: 'dracula' is a popular dark theme. 'vsDark' is also fine, but
+// you had two dark themes assigned.
+const darkCodeTheme = themes.dracula;
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
     title: 'MachinePay Docs',
     tagline: 'Privacy, fairness, and AI on the blockchain.',
-    favicon: 'img/favicon.ico',
+    favicon: 'img/favicon.ico', // Assumes this path is correct: static/img/favicon.ico
 
     // GitHub Pages deployment config
-    // GitHub Pages deployment config
     url: 'https://skalenetwork.github.io/', // Your GitHub Pages URL
-    baseUrl: '/machinepay/',                   // Base URL path for your site (needs leading and trailing slash)
+    baseUrl: '/machinepay/',                   // Base URL path for your site
     organizationName: 'skalenetwork',      // GitHub org/user name
     projectName: 'machinepay',                 // Repo name
     trailingSlash: false,
-    onBrokenLinks: 'warn',
+
+    // BEST PRACTICE: Use 'throw' in production to fail the build on broken links.
+    // This prevents deploying a site with errors.
+    onBrokenLinks: 'throw',
     onBrokenMarkdownLinks: 'warn',
 
     i18n: {
@@ -29,14 +34,19 @@ const config = {
     presets: [
         [
             'classic',
-            {
+            /** @type {import('@docusaurus/preset-classic').Options} */
+            ({
                 docs: {
+                    // WARNING: 'path: .' tells Docusaurus to use your *entire project root*
+                    // as the docs folder. This is unusual and can pick up unwanted .md files.
+                    // The standard practice is to create a 'docs/' folder and set 'path: 'docs''.
+                    // I am leaving this as-is since it may be intentional.
                     path: '.',
                     routeBasePath: '/', // Serve docs at site root
                     sidebarPath: require.resolve('./sidebars.js'),
                     editUrl: 'https://github.com/skalenetwork/machinepay/edit/main/',
-                    include: ['**/*.md', '**/*.mdx', 'README.md'], // include README.md
-                    exclude: ['**/node_modules/**'], // ignore dependency markdown to suppress unresolved link warnings
+                    include: ['**/*.md', '**/*.mdx', 'README.md'],
+                    exclude: ['**/node_modules/**'],
                     showLastUpdateAuthor: true,
                     showLastUpdateTime: true,
                 },
@@ -44,11 +54,13 @@ const config = {
                 theme: {
                     customCss: require.resolve('./src/css/custom.css'),
                 },
-            },
+            }),
         ],
     ],
 
+    /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     themeConfig: {
+        // Assumes this path is correct: static/img/og-image.png
         image: 'img/og-image.png',
         colorMode: {
             defaultMode: 'light',
@@ -59,7 +71,7 @@ const config = {
             title: 'MachinePay Docs',
             logo: {
                 alt: 'MachinePay Logo',
-                src: 'img/logo.svg',
+                src: 'img/logo.svg', // Assumes this path is correct: static/img/logo.svg
             },
             items: [
                 { to: '/', label: 'Docs', position: 'left' },
