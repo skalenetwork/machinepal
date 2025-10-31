@@ -1,11 +1,13 @@
 #pragma once
 #include <optional>
+#include <variant>
 
 #include "MachinePayCommon.h"
 #include "filesystem/CanonicalPath.h"
 #include "payment/datastructures/PaymentPayload.h"
 #include "x402_protocol/HttpError.h"
 
+class SettlementResponse;
 class FileManager;
 class CanonicalPath;
 
@@ -28,7 +30,7 @@ public:
     [[nodiscard]] const std::string& baseUrl() const;
     [[nodiscard]] const std::optional<CanonicalPath>& apiKeyFile() const;
 
-    optional<HttpError> settlePayment(const shared_ptr<PaymentPayload>& paymentPayload, std::string& settlementInfo);
+    variant<SettlementResponse, HttpError> settlePayment(const shared_ptr<PaymentPayload>& paymentPayload);
 
     static ptr<FacilitatorConfig> createFomJson(const nlohmann::json& j, ptr<FileManager> fileManager);
 

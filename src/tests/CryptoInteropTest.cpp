@@ -33,7 +33,7 @@ BOOST_AUTO_TEST_CASE(keccak256_abc_vector)
 
     BOOST_CHECK_MESSAGE(
         got == expected,
-        "Keccak256('abc') mismatch:\n  expected = " << expected <<
+        "Keccak256('abc') match:\n  expected = " << expected <<
         "\n  got      = " << got);
 }
 

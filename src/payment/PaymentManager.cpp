@@ -6,6 +6,7 @@
 #include "config/subconfigs/ResourceConfig.h"
 #include "crypto/Keccak.h"
 #include "datastructures/PaymentPayload.h"
+#include "datastructures/SettlementResponse.h"
 #include "db/MachinePayDB.h"
 #include "db/PaymentRecord.h"
 #include "url/URLUtils.h"
@@ -118,13 +119,13 @@ std::optional<HttpError> PaymentManager::checkPaymentIsNewAndSettleItUnsafe(std:
 
     auto facilitator = networkConfig.facilitator();
 
-    error = facilitator->settlePayment(paymentPayload, settlementInfo);
-
-    if (error) {
-        return error;
+    auto settleResult = facilitator->settlePayment(paymentPayload);
+    if (holds_alternative<HttpError>(settleResult)) {
+        return std::get<HttpError>(settleResult);
     }
+    const auto &settlementResponse = std::get<SettlementResponse>(settleResult);
 
-    Hash transactionHash = KeccakHash::keccak256("hahaha");
+    auto transactionHash = Encoding::fromHexToHash(settlementResponse.transaction());
 
     recordSuccessfulSettlement(*paymentPayload, *networkConfig.eip712Domain(), resource, organization, transactionHash,
         ipAddress);
