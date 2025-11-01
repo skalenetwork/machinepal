@@ -36,7 +36,15 @@ bool X402Processor::reply402IfNoPaymentHeader(const std::unique_ptr<proxygen::HT
 
 
 
-
+/**
+| x402 Error       | HTTP Status | Description                                     |
+| ---------------- | ----------- | ----------------------------------------------- |
+| Payment Required | 402         | Payment needed to access resource               |
+| Invalid Payment  | 400         | Malformed payment payload or requirements       |
+| Payment Failed   | 402         | Payment verification or settlement failed       |
+| Server Error     | 500         | Internal server error during payment processing |
+| Success          | 200         | Payment verified and settled successfully       |
+*/
 
 void X402Processor::reply200Success(const std::string &settlementInfo,
                                     std::string proxyBody) {
@@ -52,7 +60,7 @@ void X402Processor::reply200Success(const std::string &settlementInfo,
 void X402Processor::reply402PaymentRequired() {
     try {
         CHECK_STATE(resource_);
-        folly::dynamic req = folly::dynamic::object;
+
         auto paymentRequirements = PaymentRequiredResponse::getPaymentRequiredResponseAsString(organization(),
             resource(), config());
 
@@ -68,18 +76,30 @@ void X402Processor::reply402PaymentRequired() {
 }
 
 void X402Processor::reply400BadRequest(const std::string &message) {
+
+    CHECK_STATE(resource_);
+    auto paymentRequirements = PaymentRequiredResponse::getPaymentRequiredResponseAsString(organization(),
+        resource(), config());
+
+
     std::vector<std::pair<std::string, std::string> > headers = {
         {"Content-Type", "application/json"}
     };
-    sendResponse({400, "Bad Request"}, headers, message);
+    sendResponse({400, "Payment Required"}, headers, paymentRequirements);
     state_ = State::ERROR_SENT;
 }
 
 void X402Processor::reply400InvalidPayment(const std::string &message) {
+
+    auto paymentRequirements = PaymentRequiredResponse::getPaymentRequiredResponseAsString(organization(),
+        resource(), config());
+
     std::vector<std::pair<std::string, std::string> > headers = {
         {"Content-Type", "application/json"}
     };
-    sendResponse({400, "Invalid payment"}, headers, message);
+
+
+    sendResponse({400, "Invalid Payment"}, headers, message);
     state_ = State::ERROR_SENT;
 }
 
@@ -88,7 +108,7 @@ void X402Processor::reply500InternalError(const std::string &message) {
     std::vector<std::pair<std::string, std::string> > headers = {
         {"Content-Type", "application/json"}
     };
-    sendResponse({500, "Internal server error"}, headers, message);
+    sendResponse({500, "server Error"}, headers, message);
     state_ = State::ERROR_SENT;
 }
 
