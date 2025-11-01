@@ -18,25 +18,20 @@ public:
 
     PaymentRequiredResponse() = default;
     PaymentRequiredResponse(
-        std::vector<PaymentRequirements>& accepts
+        std::vector<PaymentRequirements>& accepts, const std::optional<string>& error
     ) : accepts_(accepts) {
         CHECK_STATE2(!accepts.empty(), "Accepts array must not be empty");
-        error_ = "X-PAYMENT header is required";
-    }
-    PaymentRequiredResponse(
-        std::vector<PaymentRequirements>& accepts,
-        optional<std::string>&  error
-    ) :
-        accepts_(accepts),
-        error_(error) {
-        // Accept either non-empty accepts or an error message explaining why accepts may be empty
-        CHECK_STATE(!accepts_.empty())
+        if (!error) {
+            error_ = "X-PAYMENT header is required";
+        } else {
+            error_ = error.value();
+        }
     }
 
     // Getters
     int x402Version() const { return x402Version_; }
     const std::vector<PaymentRequirements>& accepts() const { return accepts_; }
-    const optional<string> error() const { return error_; }
+    const string& error() const { return error_; }
 
     // Equality and stream output for convenience/testing
     bool operator==(const PaymentRequiredResponse& other) const {
@@ -54,10 +49,11 @@ public:
 
     static std::string getPaymentRequiredResponseAsString(ptr<OrganizationConfig> organization,
                                                               ptr<ResourceConfig> resource,
-                                                              ptr<MachinePayConfig> config);
+                                                              ptr<MachinePayConfig> config,
+                                                              const std::optional<string>& errorMessage = std::nullopt);;
 
 private:
     uint32_t x402Version_ {1};
     std::vector<PaymentRequirements> accepts_;
-    optional<string> error_;
+    string error_;
 };

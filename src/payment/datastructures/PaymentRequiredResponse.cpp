@@ -27,16 +27,13 @@ PaymentRequiredResponse PaymentRequiredResponse::fromJson(const json &j) {
             j);
 
 
-        std::optional<string> error = std::nullopt;
+        string error;
 
-        if (j.contains("error")) {
-            CHECK_STATE_JSON(j["error"].is_string(),
-           "PaymentRequiredResponse error must be string",
-           j);
+        CHECK_STATE_JSON(j.contains("error"),"PaymentRequiredResponse must contain error field", j);
 
-            error = j.at("error").get<std::string>();
-        }
+        CHECK_STATE_JSON(j["error"].is_string(), "PaymentRequiredResponse error must be string", j);
 
+        error = j.at("error").get<std::string>();
 
         std::vector<PaymentRequirements> paymentRequirementsList;
         for (const auto &elem: j["accepts"]) {
@@ -69,7 +66,8 @@ json PaymentRequiredResponse::toJson() const {
 
 std::string PaymentRequiredResponse::getPaymentRequiredResponseAsString(ptr<OrganizationConfig> organization,
                                                                     ptr<ResourceConfig> resource,
-                                                                    ptr<MachinePayConfig> config) {
+                                                                    ptr<MachinePayConfig> config,
+                                                                    const std::optional<string>& errorMessage) {
     CHECK_STATE(organization);
     CHECK_STATE(resource);
     CHECK_STATE(config);
@@ -106,6 +104,6 @@ std::string PaymentRequiredResponse::getPaymentRequiredResponseAsString(ptr<Orga
 
     std::vector<PaymentRequirements> reqs({req});
 
-    auto response = PaymentRequiredResponse(reqs);
+    auto response = PaymentRequiredResponse(reqs, errorMessage);
     return response.toJson().dump();
 }

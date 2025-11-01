@@ -42,7 +42,8 @@ private:
     void reply402PaymentRequired();
     void sendResponse(const std::pair<uint16_t, std::string>& statusAndMessage,
                       const std::vector<std::pair<std::string, std::string>>& headers, const std::string& body);
-    void reply400BadRequest( const std::string& message);
+    void reply400BadRequest1( const std::string& message);
+
     void reply400InvalidPayment(const std::string &message);
 
     void reply500InternalError(const std::string &message);

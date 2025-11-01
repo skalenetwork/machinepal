@@ -75,7 +75,7 @@ void X402Processor::reply402PaymentRequired() {
     }
 }
 
-void X402Processor::reply400BadRequest(const std::string &message) {
+void X402Processor::reply400BadRequest1(const std::string &message) {
 
     CHECK_STATE(resource_);
     auto paymentRequirements = PaymentRequiredResponse::getPaymentRequiredResponseAsString(organization(),
@@ -181,13 +181,13 @@ bool X402Processor::validateAndExtractSubDomainName(const std::unique_ptr<proxyg
 
 
     if (domainName.empty()) {
-        reply400BadRequest("Missing Host header");
+        reply400BadRequest1("Missing Host header");
         return false;
     }
 
 
     if (URLUtils::isIpAddress(domainName)) {
-        reply400BadRequest(
+        reply400BadRequest1(
             "Unknown host: " + domainName + ". You need to access MachinePay using a hostname, not an IP address. "
             "Please use a valid hostname to access this service.");
         return false;
@@ -201,7 +201,7 @@ bool X402Processor::validateAndExtractSubDomainName(const std::unique_ptr<proxyg
     // check for IP address again
 
     if (URLUtils::isIpAddress(domainName)) {
-        reply400BadRequest(
+        reply400BadRequest1(
             "Unknown host: " + domainName + ". You need to access MachinePay using a hostname, not an IP address. "
             "Please use a valid hostname specified in machinepay config "
             "(like localhost or xyz.com) to access this service.");
@@ -209,7 +209,7 @@ bool X402Processor::validateAndExtractSubDomainName(const std::unique_ptr<proxyg
     }
 
     if (!URLUtils::isDomainName(domainName)) {
-        reply400BadRequest(
+        reply400BadRequest1(
             "Invalid host name: " + domainName + "."
             "Please use a valid hostname specified in machinepay config "
             "(like localhost or xyz.com) to access this service.");
@@ -223,7 +223,7 @@ bool X402Processor::validateAndExtractSubDomainName(const std::unique_ptr<proxyg
     } else if (domainName.ends_with("." + hostName)) {
         subDomainName_ = domainName.substr(0, domainName.size() - hostName.size() - 1);
     } else {
-        reply400BadRequest("Unknown host: " + domainName + " "
+        reply400BadRequest1("Unknown host: " + domainName + " "
                            "Please use a valid hostname specified in machinepay config "
                            "(like localhost or xyz.com) to access this service.");
         return false;
@@ -236,7 +236,7 @@ bool X402Processor::validateAndDecodePath(const std::unique_ptr<proxygen::HTTPMe
     auto path = reqHeaders->getPath();
     std::string errorMessage;
     if (!URLUtils::decodePath(path, decodedPath_, errorMessage)) {
-        reply400BadRequest(errorMessage);
+        reply400BadRequest1(errorMessage);
         return false;
     }
     return true;
@@ -246,7 +246,7 @@ bool X402Processor::matchOrganization() {
     organization_ = config()->getOrganizationBySubdomainName(subDomainName_);
 
     if (!organization_) {
-        reply400BadRequest("Unknown subdomain  " + subDomainName_ + "." + config_->server()->hostName() +
+        reply400BadRequest1("Unknown subdomain  " + subDomainName_ + "." + config_->server()->hostName() +
                            " Please use a valid subdomain specified in machinepay config "
                            "(like localhost or xyz.com) to access this service.");
         return false;
@@ -258,14 +258,14 @@ bool X402Processor::validateMethod(const std::unique_ptr<proxygen::HTTPMessage> 
     auto method = reqHeaders->getMethod();
 
     if (!method.has_value()) {
-        reply400BadRequest("Missing HTTP method");
+        reply400BadRequest1("Missing HTTP method");
     }
 
     method_ = method.value();
 
     if (method_ != proxygen::HTTPMethod::GET &&
         method_ != proxygen::HTTPMethod::POST) {
-        reply400BadRequest("Unsupported HTTP method. Only GET and POST are supported" +
+        reply400BadRequest1("Unsupported HTTP method. Only GET and POST are supported" +
                            reqHeaders->getMethodString());
         return false;
     }
@@ -309,7 +309,7 @@ void X402Processor::replyToClientWithError(const HttpError& httpError) {
     auto httpErrorMessage = httpError.message();
     switch (httpError.type()) {
         case ErrorType::ERR_BAD_REQUEST:
-            reply400BadRequest(httpErrorMessage);
+            reply400InvalidPayment(httpErrorMessage);
             break;
         case ErrorType::ERR_INTERNAL_SERVER_ERROR:
             reply500InternalError(httpErrorMessage);
@@ -332,7 +332,7 @@ void X402Processor::onRequestFullyReceived(const std::unique_ptr<proxygen::HTTPM
         resource_ = organization_->getResourceByPath(decodedPath_, method_, body);
 
         if (!resource_) {
-            reply400BadRequest("Resource not found for path: " + decodedPath_);
+            reply400BadRequest1("Resource not found for path: " + decodedPath_);
             return;
         }
 
@@ -370,7 +370,7 @@ void X402Processor::onBodySizeIncrease(size_t newSize) {
     constexpr size_t MAX_BODY_SIZE = 1024 * 1024; // 128 KB
     spdlog::info("[onBodySizeIncrease] Request body size increased to {} bytes", newSize);
     if (newSize > MAX_BODY_SIZE) {
-        reply400BadRequest("Request body too large. Maximum allowed is 1MByte. You can increase this limit in "
+        reply400BadRequest1("Request body too large. Maximum allowed is 1MByte. You can increase this limit in "
             "machinepay config if needed.");
     }
 }

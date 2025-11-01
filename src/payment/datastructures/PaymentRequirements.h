@@ -45,7 +45,7 @@ public:
         payTo_(std::move(payTo)),
         maxTimeoutSeconds_(maxTimeoutSeconds),
         asset_(std::move(asset)),
-        extra_(std::move(extra)) {}
+        extra_(std::move(extra)){};
 
     bool operator==(const PaymentRequirements& other) const {
         return scheme_ == other.scheme_ &&
