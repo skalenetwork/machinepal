@@ -7,7 +7,7 @@
 #include "crypto/Keccak.h"
 #include "datastructures/PaymentPayload.h"
 #include "datastructures/SettlementResponse.h"
-#include "db/MachinePayDB.h"
+#include "db/MachinePayDb.h"
 #include "db/PaymentRecord.h"
 #include "url/URLUtils.h"
 

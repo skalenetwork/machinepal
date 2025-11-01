@@ -7,7 +7,7 @@
 #include "payment/PaymentManager.h"
 
 
-class MachinePayDB;
+class MachinePayDb;
 
 class MachinePayApp {
 public:
@@ -26,7 +26,7 @@ public:
         return paymentManager_;
     }
 
-    [[nodiscard]] ptr<MachinePayDB> machinePayDB() const {
+    [[nodiscard]] ptr<MachinePayDb> machinePayDB() const {
         CHECK_STATE(machinePayDB_);
         return machinePayDB_;
     }
@@ -123,7 +123,7 @@ private:
     std::atomic<bool> serverStopCalled_{false};
 
 
-    ptr<MachinePayDB> machinePayDB_;
+    ptr<MachinePayDb> machinePayDB_;
 
 
     bool isExited_{false};

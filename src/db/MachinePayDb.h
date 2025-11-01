@@ -31,7 +31,7 @@ enum class DbType {
  * @brief Manages database operations for payments using SOCI.
  * This class is now thread-safe due to the use of soci::connection_pool.
  */
-class MachinePayDB {
+class MachinePayDb {
 public:
     /**
      * @brief Constructs the PaymentDB and initializes the connection pool.
@@ -39,7 +39,7 @@ public:
      * @param type The database backend to use (SQLite or PostgreSQL).
      * @param connectionInfo For PostgreSQL: the full connection string.
      */
-    MachinePayDB(MachinePayApp &app, DbType type, const std::optional<std::string> &connectionInfo = std::nullopt);
+    MachinePayDb(MachinePayApp &app, DbType type, const std::optional<std::string> &connectionInfo = std::nullopt);
 
     void saveSettledPayment(const PaymentPayload &payload,
                             const EIP712Domain &domain,

@@ -1,5 +1,5 @@
 #include "MachinePayCommon.h"
-#include "MachinePayDB.h"
+#include "MachinePayDb.h"
 #include <soci/sqlite3/soci-sqlite3.h>
 #include <soci/postgresql/soci-postgresql.h>
 #include <filesystem>
@@ -16,7 +16,7 @@
 using namespace std;
 
 
-void MachinePayDB::checkSqliteFileOnDisk() {
+void MachinePayDb::checkSqliteFileOnDisk() {
     if (std::filesystem::exists(connectionString_)) {
         if (std::filesystem::is_directory(connectionString_)) {
             throw std::runtime_error("SQLite database path is a directory, not a file: " + connectionString_);
@@ -33,7 +33,7 @@ void MachinePayDB::checkSqliteFileOnDisk() {
     }
 }
 
-void MachinePayDB::verifyDatabaseConnectivity() {
+void MachinePayDb::verifyDatabaseConnectivity() {
     try {
         if (dbType_ == DbType::SQLite) {
             checkSqliteFileOnDisk();
@@ -57,7 +57,7 @@ void MachinePayDB::verifyDatabaseConnectivity() {
     logger_->info("Database connectivity verified successfully. Using {}.", backendName);
 }
 
-void MachinePayDB::configureDBParamsAndPool() {
+void MachinePayDb::configureDBParamsAndPool() {
     const int POOL_SIZE = 8;
     soci::backend_factory const &backend = getBackend(dbType_);
     pool_ = std::make_unique<soci::connection_pool>(POOL_SIZE);
@@ -78,7 +78,7 @@ void MachinePayDB::configureDBParamsAndPool() {
 /**
  * @brief Constructs the PaymentDB.
  */
-MachinePayDB::MachinePayDB(MachinePayApp &app, DbType type, const std::optional<std::string> &connectionInfo)
+MachinePayDb::MachinePayDb(MachinePayApp &app, DbType type, const std::optional<std::string> &connectionInfo)
     : app_(app),
       dbType_(type) {
     try {
@@ -107,7 +107,7 @@ MachinePayDB::MachinePayDB(MachinePayApp &app, DbType type, const std::optional<
     }
 }
 
-void MachinePayDB::saveSettledPayment(const PaymentPayload &payload,
+void MachinePayDb::saveSettledPayment(const PaymentPayload &payload,
                                       const EIP712Domain &domain,
                                       const ResourceConfig &resource, const OrganizationConfig &organization,
                                       const Hash& transactionHash, const string& ipAddress) {
@@ -117,7 +117,7 @@ void MachinePayDB::saveSettledPayment(const PaymentPayload &payload,
     writePayment(*paymentRecord);
 }
 
-bool MachinePayDB::settledPaymentExists(const ptr<PaymentPayload> &paymentPayload,
+bool MachinePayDb::settledPaymentExists(const ptr<PaymentPayload> &paymentPayload,
                                         const ptr<EIP712Domain> &domain) {
     // Extract fields needed to check for existing payment.
     auto from = paymentPayload->payload()->authorization()->from();
@@ -133,7 +133,7 @@ bool MachinePayDB::settledPaymentExists(const ptr<PaymentPayload> &paymentPayloa
 /**
  * @brief Writes a payment record to the database.
  */
-void MachinePayDB::writePayment(const PaymentRecord &record) {
+void MachinePayDb::writePayment(const PaymentRecord &record) {
     try {
         soci::session sql(*pool_);
 
@@ -195,7 +195,7 @@ void MachinePayDB::writePayment(const PaymentRecord &record) {
 /**
  * @brief Gets the appropriate SOCI backend factory based on the DbType.
  */
-soci::backend_factory const &MachinePayDB::getBackend(DbType type) {
+soci::backend_factory const &MachinePayDb::getBackend(DbType type) {
     switch (type) {
         case DbType::SQLite:
             return soci::sqlite3;
@@ -215,7 +215,7 @@ soci::backend_factory const &MachinePayDB::getBackend(DbType type) {
 /**
  * @brief Ensures the database schema (tables and indices) exists.
  */
-void MachinePayDB::ensureSchema() {
+void MachinePayDb::ensureSchema() {
     try {
 
         // Create a single, temporary session just for schema initialization.
@@ -299,12 +299,12 @@ void MachinePayDB::ensureSchema() {
     }
 }
 
-[[nodiscard]] std::unique_ptr<soci::connection_pool> &MachinePayDB::pool() {
+[[nodiscard]] std::unique_ptr<soci::connection_pool> &MachinePayDb::pool() {
     CHECK_STATE(pool_);
     return pool_;
 }
 
-bool MachinePayDB::paymentExists(const EthAddress &fromAddress, const EthAddress &assetAddress,
+bool MachinePayDb::paymentExists(const EthAddress &fromAddress, const EthAddress &assetAddress,
                                  const EIP3009Nonce &nonce, u256 chainId) {
     try {
         soci::session sql(*pool_);
