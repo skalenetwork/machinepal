@@ -88,10 +88,6 @@ private:
     [[nodiscard]] std::unique_ptr<soci::connection_pool> &pool();
 
 
-    /**
-     * @brief Thread-safe connection pool.
-     */
-    std::unique_ptr<soci::connection_pool> pool_;
 
 protected:
     /**
@@ -104,6 +100,12 @@ protected:
     std::string connectionString_;
 
     ptr<spdlog::logger> logger_;
+
+
+    /**
+     * @brief Thread-safe connection pool.
+     */
+    std::unique_ptr<soci::connection_pool> pool_;
 
 
 };

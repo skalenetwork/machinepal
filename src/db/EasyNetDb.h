@@ -7,5 +7,9 @@
 class EasyNetDb : public MachinePayDb {
 public:
     EasyNetDb(MachinePayApp &app, DbType type, const std::optional<std::string> &connectionInfo);
-    // Add custom methods or overrides here if needed
+
+
+     void newWallet(const EthAddress &walletAddress, const EthAddress &assetAddress, const EIP3009Value &value);
+
+
 };

@@ -133,61 +133,7 @@ bool MachinePayDb::settledPaymentExists(const ptr<PaymentPayload> &paymentPayloa
 /**
  * @brief Writes a payment record to the database.
  */
-void MachinePayDb::writePayment(const PaymentRecord &record) {
-    try {
-        soci::session sql(*pool_);
 
-        // Store record fields in local variables
-        std::string organizationName = record.organizationName();
-        std::string chainId = record.chainId().str();
-        std::string fromAddress = record.fromAddress().toDbString();
-        std::string toAddress = record.toAddress().toDbString();
-        std::string assetAddress = record.assetAddress().toDbString();
-        std::string value = record.value().toDbString();
-        std::string nonce = record.nonce().toDbString();
-        std::string resourceLocation  = record.resourceLocation();
-        long long settlementTime = static_cast<long long>(record.settlementTime());
-        std::string authorizationSignatureHash = Encoding::hashToHex(record.authorizationSignatureHash());
-        std::string transactionHash = Encoding::hashToHex(record.transactionHash());
-        std::string fromIpAddress = record.fromIpAddress();
-        std::string jsonInfo = record.jsonInfo();
-
-
-        logger_->trace(
-            "Writing payment: organizationName={}, chainId={}, fromAddress={}, toAddress={}, assetAddress={}, value={}, "
-            "nonce={}, resourceLocation ={}, settlementTime={}, authorizationSignatureHash={}, transactionHash={}, fromIpAddress={}, jsonInfo={}",
-            organizationName, chainId, fromAddress, toAddress, assetAddress, value,
-            nonce, resourceLocation , settlementTime,
-            authorizationSignatureHash, transactionHash, fromIpAddress, jsonInfo);
-
-        // Insert into the database using explicit named bindings for safety and cross-backend consistency
-        sql << R"(
-            INSERT INTO payments (
-                organizationName, chainId, fromAddress, toAddress, assetAddress, value, nonce, resourceLocation ,
-                settlementTime, authorizationSignatureHash, transactionHash, fromIpAddress, jsonInfo
-            )
-            VALUES (
-                :organizationName, :chainId, :fromAddress, :toAddress, :assetAddress, :value, :nonce, :resourceLocation ,
-                :settlementTime, :authorizationSignatureHash, :transactionHash, :fromIpAddress, :jsonInfo
-            )
-        )",
-            soci::use(organizationName, "organizationName"),
-            soci::use(chainId, "chainId"),
-            soci::use(fromAddress, "fromAddress"),
-            soci::use(toAddress, "toAddress"),
-            soci::use(assetAddress, "assetAddress"),
-            soci::use(value, "value"),
-            soci::use(nonce, "nonce"),
-            soci::use(resourceLocation , "resourceLocation"),
-            soci::use(settlementTime, "settlementTime"),
-            soci::use(authorizationSignatureHash, "authorizationSignatureHash"),
-            soci::use(transactionHash, "transactionHash"),
-            soci::use(fromIpAddress, "fromIpAddress"),
-            soci::use(jsonInfo, "jsonInfo");
-    } catch (std::exception& e) {
-        RETHROW_NESTED2("Failed to write payment:" + string(e.what()));
-    }
-}
 
 
 // --- Private Helpers ---
@@ -302,6 +248,63 @@ void MachinePayDb::ensureSchema() {
 [[nodiscard]] std::unique_ptr<soci::connection_pool> &MachinePayDb::pool() {
     CHECK_STATE(pool_);
     return pool_;
+}
+
+
+void MachinePayDb::writePayment(const PaymentRecord &record) {
+    try {
+        soci::session sql(*pool_);
+
+        // Store record fields in local variables
+        std::string organizationName = record.organizationName();
+        std::string chainId = record.chainId().str();
+        std::string fromAddress = record.fromAddress().toDbString();
+        std::string toAddress = record.toAddress().toDbString();
+        std::string assetAddress = record.assetAddress().toDbString();
+        std::string value = record.value().toDbString();
+        std::string nonce = record.nonce().toDbString();
+        std::string resourceLocation  = record.resourceLocation();
+        long long settlementTime = static_cast<long long>(record.settlementTime());
+        std::string authorizationSignatureHash = Encoding::hashToHex(record.authorizationSignatureHash());
+        std::string transactionHash = Encoding::hashToHex(record.transactionHash());
+        std::string fromIpAddress = record.fromIpAddress();
+        std::string jsonInfo = record.jsonInfo();
+
+
+        logger_->trace(
+            "Writing payment: organizationName={}, chainId={}, fromAddress={}, toAddress={}, assetAddress={}, value={}, "
+            "nonce={}, resourceLocation ={}, settlementTime={}, authorizationSignatureHash={}, transactionHash={}, fromIpAddress={}, jsonInfo={}",
+            organizationName, chainId, fromAddress, toAddress, assetAddress, value,
+            nonce, resourceLocation , settlementTime,
+            authorizationSignatureHash, transactionHash, fromIpAddress, jsonInfo);
+
+        // Insert into the database using explicit named bindings for safety and cross-backend consistency
+        sql << R"(
+            INSERT INTO payments (
+                organizationName, chainId, fromAddress, toAddress, assetAddress, value, nonce, resourceLocation ,
+                settlementTime, authorizationSignatureHash, transactionHash, fromIpAddress, jsonInfo
+            )
+            VALUES (
+                :organizationName, :chainId, :fromAddress, :toAddress, :assetAddress, :value, :nonce, :resourceLocation ,
+                :settlementTime, :authorizationSignatureHash, :transactionHash, :fromIpAddress, :jsonInfo
+            )
+        )",
+            soci::use(organizationName, "organizationName"),
+            soci::use(chainId, "chainId"),
+            soci::use(fromAddress, "fromAddress"),
+            soci::use(toAddress, "toAddress"),
+            soci::use(assetAddress, "assetAddress"),
+            soci::use(value, "value"),
+            soci::use(nonce, "nonce"),
+            soci::use(resourceLocation , "resourceLocation"),
+            soci::use(settlementTime, "settlementTime"),
+            soci::use(authorizationSignatureHash, "authorizationSignatureHash"),
+            soci::use(transactionHash, "transactionHash"),
+            soci::use(fromIpAddress, "fromIpAddress"),
+            soci::use(jsonInfo, "jsonInfo");
+    } catch (std::exception& e) {
+        RETHROW_NESTED2("Failed to write payment:" + string(e.what()));
+    }
 }
 
 bool MachinePayDb::paymentExists(const EthAddress &fromAddress, const EthAddress &assetAddress,

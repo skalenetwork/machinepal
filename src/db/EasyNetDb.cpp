@@ -55,3 +55,39 @@ EasyNetDb::EasyNetDb(MachinePayApp &app, DbType type, const std::optional<std::s
         RETHROW_NESTED2("Failed to ensure schema " + std::string(e.what()));
     }
 }
+
+
+void EasyNetDb::newWallet(const EthAddress &walletAddress, const EthAddress &assetAddress, const EIP3009Value &value) {
+    try {
+        soci::session sql(*pool_);
+
+        // Convert to database-ready strings
+        std::string walletAddressDb = walletAddress.toDbString();
+        std::string assetAddressDb = assetAddress.toDbString();
+        std::string valueDb = value.toDbString();
+
+        logger_->trace(
+            "Inserting state row: walletAddress={}, assetAddress={}, value={}",
+            walletAddressDb, assetAddressDb, valueDb);
+
+        // Insert into state table
+        if (dbType_ == DbType::SQLite) {
+            sql << R"(INSERT INTO state (walletAddress, assetAddress, value)
+                     VALUES (:walletAddress, :assetAddress, :value))",
+                soci::use(walletAddressDb, "walletAddress"),
+                soci::use(assetAddressDb, "assetAddress"),
+                soci::use(valueDb, "value");
+        } else if (dbType_ == DbType::PostgreSQL) {
+            // PostgreSQL variant (same columns). Consider ON CONFLICT if uniqueness constraints added later.
+            sql << R"(INSERT INTO state (walletAddress, assetAddress, value)
+                     VALUES (:walletAddress, :assetAddress, :value))",
+                soci::use(walletAddressDb, "walletAddress"),
+                soci::use(assetAddressDb, "assetAddress"),
+                soci::use(valueDb, "value");
+        } else {
+            RETHROW_NESTED2("Unsupported DB type for newWallet()");
+        }
+    } catch (std::exception &e) {
+        RETHROW_NESTED2("Failed to insert state row:" + std::string(e.what()));
+    }
+}
