@@ -85,7 +85,11 @@ void X402Processor::reply400BadRequest(const std::string &message) {
     std::vector<std::pair<std::string, std::string> > headers = {
         {"Content-Type", "application/json"}
     };
-    sendResponse({400, "Bad Request"}, headers, paymentRequirements);
+
+    nlohmann::json j;
+    j["error"] = message;
+    auto body = j.dump();
+    sendResponse({400, "Bad Request"}, headers, body);
     state_ = State::ERROR_SENT;
 }
 
@@ -108,7 +112,13 @@ void X402Processor::reply500InternalError(const std::string &message) {
     std::vector<std::pair<std::string, std::string> > headers = {
         {"Content-Type", "application/json"}
     };
-    sendResponse({500, "Server Error"}, headers, message);
+
+    nlohmann::json j;
+    j["error"] = message;
+    auto body = j.dump();
+
+
+    sendResponse({500, "Server Error"}, headers, body);
     state_ = State::ERROR_SENT;
 }
 
@@ -116,7 +126,14 @@ void X402Processor::reply502BadGateway(const std::string &message) {
     std::vector<std::pair<std::string, std::string> > headers = {
         {"Content-Type", "application/json"}
     };
-    sendResponse({502, "Bad Gateway"}, headers, message);
+
+
+    nlohmann::json j;
+    j["error"] = message;
+    auto body = j.dump();
+
+
+    sendResponse({502, "Bad Gateway"}, headers, body);
     state_ = State::ERROR_SENT;
 }
 
