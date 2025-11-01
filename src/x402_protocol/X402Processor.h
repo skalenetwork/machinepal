@@ -36,15 +36,18 @@ public:
     void onRequestFullyReceived(const std::unique_ptr<proxygen::HTTPMessage>& reqHeaders,
                                 const string& body) noexcept;
     void onBodySizeIncrease(size_t newSize);
+    static std::vector<std::pair<std::string, std::string>> STANDARD_HEADERS;
+
 private:
 
 
     void reply402PaymentRequired();
     void sendResponse(const std::pair<uint16_t, std::string>& statusAndMessage,
                       const std::vector<std::pair<std::string, std::string>>& headers, const std::string& body);
-    void reply400BadRequest1( const std::string& message);
 
     void reply400InvalidPayment(const std::string &message);
+
+    string getErrorBody(const std::string &message);
 
     void reply500InternalError(const std::string &message);
 
