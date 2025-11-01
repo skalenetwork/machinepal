@@ -1,7 +1,12 @@
 cmake_minimum_required(VERSION 3.16)
 project(machinepay LANGUAGES CXX)
 
-
+# Enable thread safety globally
+add_compile_definitions(
+        SQLITE_THREADSAFE=1
+        SQLITE_ENABLE_SERIALIZED=1
+        SOCI_THREAD_SAFE=ON
+)
 
 
 # Use 'nice' to lower priority of compilation processes

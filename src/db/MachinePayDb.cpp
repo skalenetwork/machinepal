@@ -58,6 +58,9 @@ void MachinePayDb::verifyDatabaseConnectivity() {
 }
 
 void MachinePayDb::configureDBParamsAndPool() {
+
+
+
     const int POOL_SIZE = 8;
     soci::backend_factory const &backend = getBackend(dbType_);
     pool_ = std::make_unique<soci::connection_pool>(POOL_SIZE);
