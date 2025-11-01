@@ -44,9 +44,10 @@ jobs:
         working-directory: docs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GIT_USER: ${{ github.actor }}
         run: |
-          # Use --yes to skip confirmation and ensure deploy works in CI
-          npx docusaurus deploy --yes --git-protocol https
+          # Deploy already-built site; --yes was invalid and removed
+          npx docusaurus deploy --git-protocol https --skip-build
 
       - name: Verify deployed site is reachable
         run: |
