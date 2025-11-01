@@ -46,8 +46,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GIT_USER: ${{ github.actor }}
         run: |
-          # Deploy already-built site; --yes was invalid and removed
-          npx docusaurus deploy --git-protocol https --skip-build
+          # Deploy already-built site; removed unsupported --git-protocol option
+          # To use SSH instead of HTTPS you can set USE_SSH=true
+          npx docusaurus deploy --skip-build
 
       - name: Verify deployed site is reachable
         run: |
