@@ -49,13 +49,13 @@ jobs:
           git config --global init.defaultBranch main
 
       - name: Deploy to GitHub Pages
-        working-directory: docs
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GIT_USER: ${{ github.actor }}
-        run: |
-          # Deploy already-built site; removed unsupported flags
-          npx docusaurus deploy --skip-build
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: docs/build
+          force_orphan: false
+          enable_jekyll: false
 
       - name: Verify deployed site is reachable
         run: |
@@ -65,11 +65,14 @@ jobs:
           DEPLOY_URL="https://${OWNER}.github.io/${REPO_NAME}/"
 
           echo "Testing $DEPLOY_URL ..."
-          sleep 30
-
-          if curl -sSfL "$DEPLOY_URL" | grep -q "<html"; then
-            echo "✅ Site is live at $DEPLOY_URL"
-          else
-            echo "❌ Could not verify site at $DEPLOY_URL"
-            exit 1
-          fi
+          # Wait for GitHub Pages to update
+          for i in (seq 1 10)
+            echo "Attempt $i..."
+            if curl -sSfL "$DEPLOY_URL" | grep -q "<html"; then
+              echo "✅ Site is live at $DEPLOY_URL"
+              exit 0
+            end
+            sleep 6
+          end
+          echo "❌ Could not verify site at $DEPLOY_URL after multiple attempts"
+          exit 1
