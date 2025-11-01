@@ -1,5 +1,3 @@
-// @ts-check
-// Note: type annotations allow type checking and IDE autocompletion
 
 const {themes} = require('prism-react-renderer');
 // FIX: 'github' is a light theme. 'dracula' (which you had) is dark.
