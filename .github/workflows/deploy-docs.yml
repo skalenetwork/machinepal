@@ -65,14 +65,14 @@ jobs:
           DEPLOY_URL="https://${OWNER}.github.io/${REPO_NAME}/"
 
           echo "Testing $DEPLOY_URL ..."
-          # Wait for GitHub Pages to update
-          for i in (seq 1 10)
+          # Wait for GitHub Pages to update (bash-compatible loop)
+          for i in $(seq 1 10); do
             echo "Attempt $i..."
             if curl -sSfL "$DEPLOY_URL" | grep -q "<html"; then
               echo "✅ Site is live at $DEPLOY_URL"
               exit 0
-            end
+            fi
             sleep 6
-          end
+          done
           echo "❌ Could not verify site at $DEPLOY_URL after multiple attempts"
           exit 1
