@@ -36,8 +36,6 @@ bool X402Processor::reply402IfNoPaymentHeader(const std::unique_ptr<proxygen::HT
 
 
 
-
-
 void X402Processor::reply200Success(const std::string &settlementInfo,
                                     std::string proxyBody) {
     std::vector<std::pair<std::string, std::string> > headers = {
@@ -55,12 +53,10 @@ void X402Processor::reply402PaymentRequired() {
         folly::dynamic req = folly::dynamic::object;
         auto paymentRequirements = PaymentRequiredResponse::getPaymentRequiredResponseAsString(organization(),
             resource(), config());
-        req = folly::parseJson(paymentRequirements);
-        auto json = folly::toJson(req);
         std::vector<std::pair<std::string, std::string> > headers = {
             {"Content-Type", "application/json"}
         };
-        sendResponse({402, "Payment Required"}, headers, json);
+        sendResponse({402, "Payment Required"}, headers, paymentRequirements);
         state_ = State::SUCCESS_PAYMENT_REQUIRED_SENT;
     } catch (std::exception &e) {
         RETHROW_NESTED;
@@ -75,7 +71,13 @@ void X402Processor::reply400BadRequest(const std::string &message) {
     state_ = State::ERROR_SENT;
 }
 
-
+void X402Processor::reply400InvalidPayment(const std::string &message) {
+    std::vector<std::pair<std::string, std::string> > headers = {
+        {"Content-Type", "text/plain"}
+    };
+    sendResponse({400, "Invalid payment"}, headers, message);
+    state_ = State::ERROR_SENT;
+}
 
 
 void X402Processor::reply500InternalError(const std::string &message) {
