@@ -2,6 +2,7 @@
 #include "EasyNetDb.h"
 #include <soci/soci.h>
 #include "crypto/Encoding.h" // added for u256 conversions
+#include <limits> // for overflow check
 
 EasyNetDb::EasyNetDb(MachinePayApp &app, DbType type, const std::optional<std::string> &connectionInfo)
     : MachinePayDb(app, type, connectionInfo) {
@@ -94,25 +95,35 @@ void EasyNetDb::newWallet(const EthAddress &walletAddress, const EthAddress &ass
     }
 }
 
-void EasyNetDb::processTransferRequest(const EthAddress &fromAddress,
+EasyNetDb::TransferResult EasyNetDb::processTransferRequest(const EthAddress &fromAddress,
                               const EthAddress &toAddress,
                               const EthAddress &assetAddress,
                               const EIP3009Value &value) {
     fundUserWalletWithFundsIfNewWallet(fromAddress, assetAddress);
-    transferValue(fromAddress, toAddress, assetAddress, value);
+    return transferValue(fromAddress, toAddress, assetAddress, value);
 }
 
-void EasyNetDb::transferValue(const EthAddress &fromAddress,
+EasyNetDb::TransferResult EasyNetDb::transferValue(const EthAddress &fromAddress,
                               const EthAddress &toAddress,
                               const EthAddress &assetAddress,
                               const EIP3009Value &value) {
+    // Early no-op success cases
+    if (fromAddress.toDbString() == toAddress.toDbString()) {
+        logger_->trace("transferValue: fromAddress == toAddress, no-op success");
+        return TransferResult::TransferSuccess;
+    }
+    if (value.value() == 0) {
+        logger_->trace("transferValue: amount == 0, no-op success");
+        return TransferResult::TransferSuccess;
+    }
+
     std::unique_lock<std::shared_mutex> stateMutexUniqueLock(stateMutex_); // lock for read-modify-write sequence
     try {
         soci::session databaseSession(*pool_);
         soci::transaction databaseTransactionScope(databaseSession); // RAII transaction
 
         std::string fromWalletAddressDatabaseString = fromAddress.toDbString();
-        std::string toWalletAddressAddressDatabaseString = toAddress.toDbString();
+        std::string toWalletAddressDatabaseString = toAddress.toDbString();
         std::string assetContractAddressDatabaseString = assetAddress.toDbString();
         u256 transferAmountValue = value.value();
 
@@ -130,7 +141,12 @@ void EasyNetDb::transferValue(const EthAddress &fromAddress,
 
         u256 senderCurrentBalanceValue = Encoding::u256FromHexOrDecimal(senderBalanceValueStringFromDatabase);
         if (transferAmountValue > senderCurrentBalanceValue) {
-            RETHROW_NESTED2("Insufficient balance: have=" + Encoding::u256ToDecimal(senderCurrentBalanceValue) + ", need=" + Encoding::u256ToDecimal(transferAmountValue));
+            logger_->trace("transferValue: insufficient funds walletAddress={} assetAddress={} have={} need={}",
+                           fromWalletAddressDatabaseString,
+                           assetContractAddressDatabaseString,
+                           Encoding::u256ToDecimal(senderCurrentBalanceValue),
+                           Encoding::u256ToDecimal(transferAmountValue));
+            return TransferResult::InsufficientFunds;
         }
 
         // 2. Fetch receiver balance (may be absent)
@@ -138,13 +154,25 @@ void EasyNetDb::transferValue(const EthAddress &fromAddress,
         soci::indicator receiverBalanceIndicator = soci::i_ok;
         databaseSession << "SELECT value FROM state WHERE walletAddress = :walletAddress AND assetAddress = :assetAddress",
             soci::into(receiverBalanceValueStringFromDatabase, receiverBalanceIndicator),
-            soci::use(toWalletAddressAddressDatabaseString, "walletAddress"),
+            soci::use(toWalletAddressDatabaseString, "walletAddress"),
             soci::use(assetContractAddressDatabaseString, "assetAddress");
 
         u256 receiverCurrentBalanceValue = 0;
         bool receiverStateRowExists = !(receiverBalanceIndicator == soci::i_null || receiverBalanceValueStringFromDatabase.empty());
         if (receiverStateRowExists) {
             receiverCurrentBalanceValue = Encoding::u256FromHexOrDecimal(receiverBalanceValueStringFromDatabase);
+        }
+
+        // Overflow check: receiverCurrentBalanceValue + transferAmountValue must not exceed max
+        const u256 maxUint256Value = (std::numeric_limits<u256>::max)();
+        if (transferAmountValue > maxUint256Value - receiverCurrentBalanceValue) {
+            logger_->trace("transferValue: overflow would occur receiverWalletAddress={} assetAddress={} receiverBalance={} amount={} max={} treating as insufficient funds",
+                           toWalletAddressDatabaseString,
+                           assetContractAddressDatabaseString,
+                           Encoding::u256ToDecimal(receiverCurrentBalanceValue),
+                           Encoding::u256ToDecimal(transferAmountValue),
+                           Encoding::u256ToDecimal(maxUint256Value));
+            return TransferResult::InsufficientFunds;
         }
 
         // 3. Compute new balances
@@ -163,25 +191,26 @@ void EasyNetDb::transferValue(const EthAddress &fromAddress,
         if (receiverStateRowExists) {
             databaseSession << "UPDATE state SET value = :value WHERE walletAddress = :walletAddress AND assetAddress = :assetAddress",
                 soci::use(receiverUpdatedBalanceDecimalString, "value"),
-                soci::use(toWalletAddressAddressDatabaseString, "walletAddress"),
+                soci::use(toWalletAddressDatabaseString, "walletAddress"),
                 soci::use(assetContractAddressDatabaseString, "assetAddress");
         } else {
             databaseSession << "INSERT INTO state (walletAddress, assetAddress, value) VALUES (:walletAddress, :assetAddress, :value)",
-                soci::use(toWalletAddressAddressDatabaseString, "walletAddress"),
+                soci::use(toWalletAddressDatabaseString, "walletAddress"),
                 soci::use(assetContractAddressDatabaseString, "assetAddress"),
                 soci::use(receiverUpdatedBalanceDecimalString, "value");
         }
 
         logger_->trace(
-            "transferValue: fromWalletAddress={} toWalletAddress={} assetContractAddress={} transferAmount={} senderUpdatedBalance={} receiverUpdatedBalance={}",
+            "transferValue success: fromWalletAddress={} toWalletAddress={} assetContractAddress={} transferAmount={} senderUpdatedBalance={} receiverUpdatedBalance={}",
             fromWalletAddressDatabaseString,
-            toWalletAddressAddressDatabaseString,
+            toWalletAddressDatabaseString,
             assetContractAddressDatabaseString,
             Encoding::u256ToDecimal(transferAmountValue),
             senderUpdatedBalanceDecimalString,
             receiverUpdatedBalanceDecimalString);
 
         databaseTransactionScope.commit();
+        return TransferResult::TransferSuccess;
     } catch (std::exception &e) {
         RETHROW_NESTED2("Failed to transfer value: " + std::string(e.what()));
     }
