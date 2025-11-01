@@ -45,6 +45,7 @@ EasyNetDb::EasyNetDb(MachinePayApp &app, DbType type, const std::optional<std::s
 
         // --- Step 3: Indices ---
         sql << "CREATE INDEX IF NOT EXISTS idx_state_walletaddress ON state(walletAddress)";
+        sql << "CREATE INDEX IF NOT EXISTS idx_state_value ON state(value)"; // added index by value
 
         // --- Step 4: Log based on our check ---
         if (!tableExisted) {
@@ -59,33 +60,32 @@ EasyNetDb::EasyNetDb(MachinePayApp &app, DbType type, const std::optional<std::s
 
 
 void EasyNetDb::newWallet(const EthAddress &walletAddress, const EthAddress &assetAddress, const EIP3009Value &value) {
-    std::unique_lock<std::shared_mutex> lock(stateMutex_); // exclusive lock for write
+    std::unique_lock<std::shared_mutex> stateMutexUniqueLock(stateMutex_); // exclusive lock for write
     try {
-        soci::session sql(*pool_);
+        soci::session databaseSession(*pool_);
 
         // Convert to database-ready strings
-        std::string walletAddressDb = walletAddress.toDbString();
-        std::string assetAddressDb = assetAddress.toDbString();
-        std::string valueDb = value.toDbString();
+        std::string walletAddressDatabaseString = walletAddress.toDbString();
+        std::string assetContractAddressDatabaseString = assetAddress.toDbString();
+        std::string initialValueDecimalString = value.toDbString();
 
         logger_->trace(
-            "Inserting state row: walletAddress={}, assetAddress={}, value={}",
-            walletAddressDb, assetAddressDb, valueDb);
+            "newWallet: inserting state row walletAddress={} assetAddress={} initialValue={}",
+            walletAddressDatabaseString, assetContractAddressDatabaseString, initialValueDecimalString);
 
         // Insert into state table
         if (dbType_ == DbType::SQLite) {
-            sql << R"(INSERT INTO state (walletAddress, assetAddress, value)
+            databaseSession << R"(INSERT INTO state (walletAddress, assetAddress, value)
                      VALUES (:walletAddress, :assetAddress, :value))",
-                soci::use(walletAddressDb, "walletAddress"),
-                soci::use(assetAddressDb, "assetAddress"),
-                soci::use(valueDb, "value");
+                soci::use(walletAddressDatabaseString, "walletAddress"),
+                soci::use(assetContractAddressDatabaseString, "assetAddress"),
+                soci::use(initialValueDecimalString, "value");
         } else if (dbType_ == DbType::PostgreSQL) {
-            // PostgreSQL variant (same columns). Consider ON CONFLICT if uniqueness constraints added later.
-            sql << R"(INSERT INTO state (walletAddress, assetAddress, value)
+            databaseSession << R"(INSERT INTO state (walletAddress, assetAddress, value)
                      VALUES (:walletAddress, :assetAddress, :value))",
-                soci::use(walletAddressDb, "walletAddress"),
-                soci::use(assetAddressDb, "assetAddress"),
-                soci::use(valueDb, "value");
+                soci::use(walletAddressDatabaseString, "walletAddress"),
+                soci::use(assetContractAddressDatabaseString, "assetAddress"),
+                soci::use(initialValueDecimalString, "value");
         } else {
             RETHROW_NESTED2("Unsupported DB type for newWallet()");
         }
@@ -94,84 +94,135 @@ void EasyNetDb::newWallet(const EthAddress &walletAddress, const EthAddress &ass
     }
 }
 
+void EasyNetDb::processTransferRequest(const EthAddress &fromAddress,
+                              const EthAddress &toAddress,
+                              const EthAddress &assetAddress,
+                              const EIP3009Value &value) {
+    fundUserWalletWithFundsIfNewWallet(fromAddress, assetAddress);
+    transferValue(fromAddress, toAddress, assetAddress, value);
+}
+
 void EasyNetDb::transferValue(const EthAddress &fromAddress,
                               const EthAddress &toAddress,
                               const EthAddress &assetAddress,
                               const EIP3009Value &value) {
-    std::unique_lock<std::shared_mutex> lock(stateMutex_); // lock for read-modify-write sequence
+    std::unique_lock<std::shared_mutex> stateMutexUniqueLock(stateMutex_); // lock for read-modify-write sequence
     try {
+        soci::session databaseSession(*pool_);
+        soci::transaction databaseTransactionScope(databaseSession); // RAII transaction
 
-        soci::session sql(*pool_);
-        soci::transaction tr(sql); // RAII transaction
-
-        std::string fromAddressDb = fromAddress.toDbString();
-        std::string toAddressDb = toAddress.toDbString();
-        std::string assetAddressDb = assetAddress.toDbString();
-        u256 amount = value.value();
+        std::string fromWalletAddressDatabaseString = fromAddress.toDbString();
+        std::string toWalletAddressAddressDatabaseString = toAddress.toDbString();
+        std::string assetContractAddressDatabaseString = assetAddress.toDbString();
+        u256 transferAmountValue = value.value();
 
         // 1. Fetch sender balance
-        std::string fromValueStr;
-        soci::indicator indFrom = soci::i_ok;
-        sql << "SELECT value FROM state WHERE walletAddress = :walletAddress AND assetAddress = :assetAddress",
-            soci::into(fromValueStr, indFrom),
-            soci::use(fromAddressDb, "walletAddress"),
-            soci::use(assetAddressDb, "assetAddress");
+        std::string senderBalanceValueStringFromDatabase;
+        soci::indicator senderBalanceIndicator = soci::i_ok;
+        databaseSession << "SELECT value FROM state WHERE walletAddress = :walletAddress AND assetAddress = :assetAddress",
+            soci::into(senderBalanceValueStringFromDatabase, senderBalanceIndicator),
+            soci::use(fromWalletAddressDatabaseString, "walletAddress"),
+            soci::use(assetContractAddressDatabaseString, "assetAddress");
 
-        if (indFrom == soci::i_null || fromValueStr.empty()) {
-            RETHROW_NESTED2("Sender wallet state row not found for walletAddress=" + fromAddressDb + ", assetAddress=" + assetAddressDb);
+        if (senderBalanceIndicator == soci::i_null || senderBalanceValueStringFromDatabase.empty()) {
+            RETHROW_NESTED2("Sender wallet state row not found for walletAddress=" + fromWalletAddressDatabaseString + ", assetAddress=" + assetContractAddressDatabaseString);
         }
 
-        u256 fromBalance = Encoding::u256FromHexOrDecimal(fromValueStr);
-        if (amount > fromBalance) {
-            RETHROW_NESTED2("Insufficient balance: have=" + Encoding::u256ToDecimal(fromBalance) + ", need=" + Encoding::u256ToDecimal(amount));
+        u256 senderCurrentBalanceValue = Encoding::u256FromHexOrDecimal(senderBalanceValueStringFromDatabase);
+        if (transferAmountValue > senderCurrentBalanceValue) {
+            RETHROW_NESTED2("Insufficient balance: have=" + Encoding::u256ToDecimal(senderCurrentBalanceValue) + ", need=" + Encoding::u256ToDecimal(transferAmountValue));
         }
 
         // 2. Fetch receiver balance (may be absent)
-        std::string toValueStr;
-        soci::indicator indTo = soci::i_ok;
-        sql << "SELECT value FROM state WHERE walletAddress = :walletAddress AND assetAddress = :assetAddress",
-            soci::into(toValueStr, indTo),
-            soci::use(toAddressDb, "walletAddress"),
-            soci::use(assetAddressDb, "assetAddress");
+        std::string receiverBalanceValueStringFromDatabase;
+        soci::indicator receiverBalanceIndicator = soci::i_ok;
+        databaseSession << "SELECT value FROM state WHERE walletAddress = :walletAddress AND assetAddress = :assetAddress",
+            soci::into(receiverBalanceValueStringFromDatabase, receiverBalanceIndicator),
+            soci::use(toWalletAddressAddressDatabaseString, "walletAddress"),
+            soci::use(assetContractAddressDatabaseString, "assetAddress");
 
-        u256 toBalance = 0;
-        bool toExists = !(indTo == soci::i_null || toValueStr.empty());
-        if (toExists) {
-            toBalance = Encoding::u256FromHexOrDecimal(toValueStr);
+        u256 receiverCurrentBalanceValue = 0;
+        bool receiverStateRowExists = !(receiverBalanceIndicator == soci::i_null || receiverBalanceValueStringFromDatabase.empty());
+        if (receiverStateRowExists) {
+            receiverCurrentBalanceValue = Encoding::u256FromHexOrDecimal(receiverBalanceValueStringFromDatabase);
         }
 
         // 3. Compute new balances
-        u256 newFromBalance = fromBalance - amount;
-        u256 newToBalance = toBalance + amount;
+        u256 senderUpdatedBalanceValueAfterTransfer = senderCurrentBalanceValue - transferAmountValue;
+        u256 receiverUpdatedBalanceValueAfterTransfer = receiverCurrentBalanceValue + transferAmountValue;
 
-        std::string newFromStr = Encoding::u256ToDecimal(newFromBalance);
-        std::string newToStr = Encoding::u256ToDecimal(newToBalance);
+        std::string senderUpdatedBalanceDecimalString = Encoding::u256ToDecimal(senderUpdatedBalanceValueAfterTransfer);
+        std::string receiverUpdatedBalanceDecimalString = Encoding::u256ToDecimal(receiverUpdatedBalanceValueAfterTransfer);
 
         // 4. Persist changes
-        sql << "UPDATE state SET value = :value WHERE walletAddress = :walletAddress AND assetAddress = :assetAddress",
-            soci::use(newFromStr, "value"),
-            soci::use(fromAddressDb, "walletAddress"),
-            soci::use(assetAddressDb, "assetAddress");
+        databaseSession << "UPDATE state SET value = :value WHERE walletAddress = :walletAddress AND assetAddress = :assetAddress",
+            soci::use(senderUpdatedBalanceDecimalString, "value"),
+            soci::use(fromWalletAddressDatabaseString, "walletAddress"),
+            soci::use(assetContractAddressDatabaseString, "assetAddress");
 
-        if (toExists) {
-            sql << "UPDATE state SET value = :value WHERE walletAddress = :walletAddress AND assetAddress = :assetAddress",
-                soci::use(newToStr, "value"),
-                soci::use(toAddressDb, "walletAddress"),
-                soci::use(assetAddressDb, "assetAddress");
+        if (receiverStateRowExists) {
+            databaseSession << "UPDATE state SET value = :value WHERE walletAddress = :walletAddress AND assetAddress = :assetAddress",
+                soci::use(receiverUpdatedBalanceDecimalString, "value"),
+                soci::use(toWalletAddressAddressDatabaseString, "walletAddress"),
+                soci::use(assetContractAddressDatabaseString, "assetAddress");
         } else {
-            sql << "INSERT INTO state (walletAddress, assetAddress, value) VALUES (:walletAddress, :assetAddress, :value)",
-                soci::use(toAddressDb, "walletAddress"),
-                soci::use(assetAddressDb, "assetAddress"),
-                soci::use(newToStr, "value");
+            databaseSession << "INSERT INTO state (walletAddress, assetAddress, value) VALUES (:walletAddress, :assetAddress, :value)",
+                soci::use(toWalletAddressAddressDatabaseString, "walletAddress"),
+                soci::use(assetContractAddressDatabaseString, "assetAddress"),
+                soci::use(receiverUpdatedBalanceDecimalString, "value");
         }
 
         logger_->trace(
-            "transferValue: from={} to={} asset={} amount={} newFromBalance={} newToBalance={}",
-            fromAddressDb, toAddressDb, assetAddressDb,
-            Encoding::u256ToDecimal(amount), newFromStr, newToStr);
+            "transferValue: fromWalletAddress={} toWalletAddress={} assetContractAddress={} transferAmount={} senderUpdatedBalance={} receiverUpdatedBalance={}",
+            fromWalletAddressDatabaseString,
+            toWalletAddressAddressDatabaseString,
+            assetContractAddressDatabaseString,
+            Encoding::u256ToDecimal(transferAmountValue),
+            senderUpdatedBalanceDecimalString,
+            receiverUpdatedBalanceDecimalString);
 
-        tr.commit();
+        databaseTransactionScope.commit();
     } catch (std::exception &e) {
         RETHROW_NESTED2("Failed to transfer value: " + std::string(e.what()));
+    }
+}
+
+void EasyNetDb::fundUserWalletWithFundsIfNewWallet(const EthAddress &walletAddress, const EthAddress &assetAddress) {
+    std::unique_lock<std::shared_mutex> stateMutexUniqueLock(stateMutex_); // exclusive lock for potential insert
+    try {
+        soci::session databaseSession(*pool_);
+
+        std::string walletAddressDatabaseString = walletAddress.toDbString();
+        std::string assetContractAddressDatabaseString = assetAddress.toDbString();
+
+        // Check if the wallet+asset state row already exists.
+        std::string existingValueStringFromDatabase;
+        soci::indicator existingValueIndicator = soci::i_ok;
+        databaseSession << "SELECT value FROM state WHERE walletAddress = :walletAddress AND assetAddress = :assetAddress",
+            soci::into(existingValueStringFromDatabase, existingValueIndicator),
+            soci::use(walletAddressDatabaseString, "walletAddress"),
+            soci::use(assetContractAddressDatabaseString, "assetAddress");
+
+        if (!(existingValueIndicator == soci::i_null || existingValueStringFromDatabase.empty())) {
+            logger_->trace("fundUserWalletWithFundsIfNewWallet: wallet already funded walletAddress={} assetAddress={} existingValue={}",
+                           walletAddressDatabaseString, assetContractAddressDatabaseString, existingValueStringFromDatabase);
+            return; // Already exists; no action.
+        }
+
+        // Compute initial funding amount: 1,000,000,000 * 10^18 = 10^27 token units.
+        // Use decimal string to build u256 reliably.
+        u256 initialFundingAmountValue = Encoding::u256FromHexOrDecimal("1000000000000000000000000000"); // 1e27
+        EIP3009Value initialFundingEip3009Value(initialFundingAmountValue);
+        std::string initialFundingDecimalString = initialFundingEip3009Value.toDbString();
+
+        databaseSession << "INSERT INTO state (walletAddress, assetAddress, value) VALUES (:walletAddress, :assetAddress, :value)",
+            soci::use(walletAddressDatabaseString, "walletAddress"),
+            soci::use(assetContractAddressDatabaseString, "assetAddress"),
+            soci::use(initialFundingDecimalString, "value");
+
+        logger_->trace("fundUserWalletWithFundsIfNewWallet: funded new wallet walletAddress={} assetAddress={} initialValue={}",
+                       walletAddressDatabaseString, assetContractAddressDatabaseString, initialFundingDecimalString);
+    } catch (std::exception &e) {
+        RETHROW_NESTED2("Failed to fund user wallet: " + std::string(e.what()));
     }
 }

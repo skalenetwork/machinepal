@@ -13,11 +13,17 @@ public:
 
 
      void newWallet(const EthAddress &walletAddress, const EthAddress &assetAddress, const EIP3009Value &value);
+    void processTransferRequest(const EthAddress &fromAddress, const EthAddress &toAddress,
+                                const EthAddress &assetAddress,
+                                const EIP3009Value &value);
 
 
     // Transfer value between two wallet addresses for a given asset.
     // Throws if sender wallet/asset pair does not exist or insufficient balance.
     void transferValue(const EthAddress &fromAddress, const EthAddress &toAddress, const EthAddress &assetAddress, const EIP3009Value &value);
+    // Funds a wallet with initial tokens if it does not yet exist for the given asset.
+    // Initial amount: 1,000,000,000 * 10^18 (1e27) token units.
+    void fundUserWalletWithFundsIfNewWallet(const EthAddress &walletAddress, const EthAddress &assetAddress);
 private:
     mutable std::shared_mutex stateMutex_; // protects state table operations
 };
