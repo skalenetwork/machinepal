@@ -36,6 +36,8 @@ bool X402Processor::reply402IfNoPaymentHeader(const std::unique_ptr<proxygen::HT
 
 
 
+
+
 void X402Processor::reply200Success(const std::string &settlementInfo,
                                     std::string proxyBody) {
     std::vector<std::pair<std::string, std::string> > headers = {
@@ -53,9 +55,11 @@ void X402Processor::reply402PaymentRequired() {
         folly::dynamic req = folly::dynamic::object;
         auto paymentRequirements = PaymentRequiredResponse::getPaymentRequiredResponseAsString(organization(),
             resource(), config());
+
         std::vector<std::pair<std::string, std::string> > headers = {
             {"Content-Type", "application/json"}
         };
+
         sendResponse({402, "Payment Required"}, headers, paymentRequirements);
         state_ = State::SUCCESS_PAYMENT_REQUIRED_SENT;
     } catch (std::exception &e) {
