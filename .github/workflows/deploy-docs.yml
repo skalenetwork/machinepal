@@ -25,6 +25,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: false
+          persist-credentials: true # ensure token is available for push
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -41,14 +42,19 @@ jobs:
         working-directory: docs
         run: npm run build
 
+      - name: Configure Git identity
+        run: |
+          git config --global user.email "${{ github.actor }}@users.noreply.github.com"
+          git config --global user.name "${{ github.actor }}"
+          git config --global init.defaultBranch main
+
       - name: Deploy to GitHub Pages
         working-directory: docs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GIT_USER: ${{ github.actor }}
         run: |
-          # Deploy already-built site; removed unsupported --git-protocol option
-          # To use SSH instead of HTTPS you can set USE_SSH=true
+          # Deploy already-built site; removed unsupported flags
           npx docusaurus deploy --skip-build
 
       - name: Verify deployed site is reachable
@@ -59,7 +65,7 @@ jobs:
           DEPLOY_URL="https://${OWNER}.github.io/${REPO_NAME}/"
 
           echo "Testing $DEPLOY_URL ..."
-          sleep 30  # Give GitHub Pages a moment to update
+          sleep 30
 
           if curl -sSfL "$DEPLOY_URL" | grep -q "<html"; then
             echo "✅ Site is live at $DEPLOY_URL"
