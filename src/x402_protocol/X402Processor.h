@@ -58,7 +58,7 @@ private:
     bool validateMethod(const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders);
 
     void reply200Success(const std::string& settlementInfo,
-                         std::string proxyBody);
+                         std::string& proxyBody);
 
     [[nodiscard]] ptr<MachinePayConfig> config() const {
         CHECK_STATE(config_);

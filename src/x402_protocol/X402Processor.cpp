@@ -47,7 +47,7 @@ bool X402Processor::reply402IfNoPaymentHeader(const std::unique_ptr<proxygen::HT
 */
 
 void X402Processor::reply200Success(const std::string &settlementInfo,
-                                    std::string proxyBody) {
+                                    std::string& proxyBody) {
     std::vector<std::pair<std::string, std::string> > headers = {
         {"Content-Type", "text/plain"},
         {"X-PAYMENT-RESPONSE", settlementInfo}
@@ -85,7 +85,7 @@ void X402Processor::reply400BadRequest(const std::string &message) {
     std::vector<std::pair<std::string, std::string> > headers = {
         {"Content-Type", "application/json"}
     };
-    sendResponse({400, "Payment Required"}, headers, paymentRequirements);
+    sendResponse({400, "Bad Request"}, headers, paymentRequirements);
     state_ = State::ERROR_SENT;
 }
 
@@ -108,7 +108,7 @@ void X402Processor::reply500InternalError(const std::string &message) {
     std::vector<std::pair<std::string, std::string> > headers = {
         {"Content-Type", "application/json"}
     };
-    sendResponse({500, "server Error"}, headers, message);
+    sendResponse({500, "Server Error"}, headers, message);
     state_ = State::ERROR_SENT;
 }
 
@@ -126,7 +126,7 @@ void X402Processor::reply502BadGateway(const std::string &message) {
 void X402Processor::sendResponse(
     const std::pair<uint16_t, std::string> &statusAndMessage,
     const std::vector<std::pair<std::string, std::string> > &headers,
-    const std::string &body = "") {
+    const std::string &body ) {
     if (state_ == State::ERROR_SENT)
     {
         spdlog::info("Attempted to send response after error response already sent.");
