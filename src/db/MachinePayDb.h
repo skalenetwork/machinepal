@@ -76,10 +76,6 @@ private:
     bool paymentExists(const EthAddress &fromAddress, const EthAddress &assetAddress, const EIP3009Nonce &nonce,
                        u256 chainId);
 
-    /**
-     * @brief Gets the appropriate SOCI backend factory based on the DbType.
-     */
-    soci::backend_factory const &getBackend(DbType type);
 
     /**
      * @brief Ensures the database schema (tables and indices) exists.
@@ -88,16 +84,26 @@ private:
 
     // Member variables
     MachinePayApp &app_;
-    DbType dbType_;
-    std::string connectionString_;
 
     [[nodiscard]] std::unique_ptr<soci::connection_pool> &pool();
 
-private:
-    ptr<spdlog::logger> logger_;
 
     /**
      * @brief Thread-safe connection pool.
      */
     std::unique_ptr<soci::connection_pool> pool_;
+
+protected:
+    /**
+ * @brief Gets the appropriate SOCI backend factory based on the DbType.
+ */
+    soci::backend_factory const &getBackend(DbType type);
+
+    DbType dbType_;
+
+    std::string connectionString_;
+
+    ptr<spdlog::logger> logger_;
+
+
 };
