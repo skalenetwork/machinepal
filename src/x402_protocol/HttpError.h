@@ -12,17 +12,13 @@ class HttpError {
     std::string message_;
 
 public:
-    HttpError(ErrorType type, const std::string &message)
-        : type_(type),
-          message_(message) {
-    }
+    HttpError(ErrorType type, const std::string &message);
+    HttpError(const HttpError& other);
+    HttpError(HttpError&& other) noexcept;
+    HttpError& operator=(const HttpError& other);
+    HttpError& operator=(HttpError&& other) noexcept;
+    ~HttpError();
 
-    [[nodiscard]] ErrorType type() const {
-        return type_;
-    }
-
-    [[nodiscard]] std::string message() const {
-        return message_;
-    }
+    [[nodiscard]] ErrorType type() const;
+    [[nodiscard]] std::string message() const;
 };
-

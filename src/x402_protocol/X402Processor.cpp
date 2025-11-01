@@ -326,24 +326,23 @@ void X402Processor::onRequestFullyReceived(const std::unique_ptr<proxygen::HTTPM
                                                                             authorization);
 
         if (holds_alternative<HttpError>(result)) {
-            auto error = std::get_if<HttpError>(&result);
-
-            string payer;
-
-            if (authorization) {
-                payer = authorization->from().toHex(PREFIX_0x);
-            }
-
-            auto errorSettlementResponse = SettlementResponse::getErrorSettlementResponse(
-                error->message(),
-                config()->network()->name(), payer);
-
-            CHECK_STATE(errorSettlementResponse);
+            auto const error = std::get_if<HttpError>(&result);
 
             if (error->type() == ErrorType::ERR_INTERNAL_SERVER_ERROR) {
                 reply500InternalError(error->message());
             } else {
-                    reply402PaymentRequired(*errorSettlementResponse);
+                string payer;
+                if (authorization) {
+                    // extract payer address from authorization
+                    // if we do not have authorization, we put empty payer
+                    payer = authorization->from().toHex(PREFIX_0x);
+                }
+                auto errorSettlementResponse =
+                    SettlementResponse::getErrorSettlementResponse(
+                    *error,
+                    config()->network()->name(), payer);
+                CHECK_STATE(errorSettlementResponse);
+                reply402PaymentRequired(*errorSettlementResponse);
                 return;
             }
         }

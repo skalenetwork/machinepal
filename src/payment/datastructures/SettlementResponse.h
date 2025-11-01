@@ -1,8 +1,6 @@
 #pragma once
 
-#include <string>
-#include <optional>
-#include <nlohmann/json.hpp>
+#include "x402_protocol/HttpError.h"
 
 using json = nlohmann::json;
 
@@ -22,7 +20,9 @@ public:
     // JSON serialization
     json toJson() const;
     // Factory for error response
-    static ptr<SettlementResponse> getErrorSettlementResponse(const std::string &message, const std::string &network, const std::string &payer);
+    static ptr<SettlementResponse> getErrorSettlementResponse(HttpError& error,
+        const std::string &network,
+        const std::string &payer);
     // JSON deserialization
     static SettlementResponse fromJsonString(const std::string &jsonString);
     // Return base64 encoding of original JSON string captured at construction

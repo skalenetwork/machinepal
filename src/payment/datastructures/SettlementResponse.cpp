@@ -1,8 +1,10 @@
 #include "MachinePayCommon.h"
+
 #include "SettlementResponse.h"
 
 #include "crypto/Encoding.h"
 #include "url/URLUtils.h"
+
 
 SettlementResponse::SettlementResponse(bool success,
                                        std::optional<std::string> errorReason,
@@ -50,11 +52,11 @@ json SettlementResponse::toJson() const {
     return j;
 }
 
-ptr<SettlementResponse> SettlementResponse::getErrorSettlementResponse(const string &message,
-    const std::string &name, const std::string &payer) {
+
+ptr<SettlementResponse> SettlementResponse::getErrorSettlementResponse(HttpError& error, const std::string &network, const std::string &payer) {
     auto result = make_shared<SettlementResponse>(false,
-        message, "",
-        name, payer,
+        error.message(), "",
+        network, payer,
         std::nullopt);
     return result;
 }
