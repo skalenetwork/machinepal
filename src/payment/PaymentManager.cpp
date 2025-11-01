@@ -174,7 +174,7 @@ variant<SettlementResponse, HttpError> PaymentManager::decodeValidateAndSettlePa
     const std::unique_ptr<proxygen::HTTPMessage> &req,
     const MachinePayConfig &config,
     const ResourceConfig &resource,
-    const OrganizationConfig &organization) {
+    const OrganizationConfig &organization, ptr<Authorization> &authorization) {
     std::optional<HttpError> error = std::nullopt;
 
     try {
@@ -185,7 +185,7 @@ variant<SettlementResponse, HttpError> PaymentManager::decodeValidateAndSettlePa
 
         auto paymentPayload = std::get<ptr<PaymentPayload> >(result);
 
-        auto authorization = paymentPayload->payload()->authorization();;
+        authorization = paymentPayload->payload()->authorization();;
 
         error = paymentPayload->validateAndVerifySignature(config, resource);
 

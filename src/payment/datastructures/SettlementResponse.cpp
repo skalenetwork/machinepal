@@ -9,13 +9,19 @@ SettlementResponse::SettlementResponse(bool success,
                                        const std::string &transaction,
                                        const std::string &network,
                                        const std::string &payer,
-                                       const std::string& originalJson)
+                                       const optional<std::string>& originalJson)
         : success_(success),
           errorReason_(std::move(errorReason)),
           transaction_(transaction),
           network_(network),
           payer_(payer) {
-    originalJson_ = originalJson;
+    if (originalJson) {
+        originalJson_ = originalJson.value();
+    } else {
+        // construct originalJson_ from the fields
+        json j = toJson();
+        originalJson_ = j.dump();
+    }
 }
 
 bool SettlementResponse::success() const { return success_; }
@@ -44,6 +50,16 @@ json SettlementResponse::toJson() const {
     return j;
 }
 
+ptr<SettlementResponse> SettlementResponse::getErrorSettlementResponse(const string &message,
+    const std::string &name, const std::string &payer) {
+    auto result = make_shared<SettlementResponse>(false,
+        message, "",
+        name, payer,
+        std::nullopt);
+    return result;
+}
+
+
 SettlementResponse SettlementResponse::fromJsonString(std::string const &jsonString) {
     auto j = json::parse(jsonString);
     bool success = j.at("success").get<bool>();
@@ -60,4 +76,3 @@ SettlementResponse SettlementResponse::fromJsonString(std::string const &jsonStr
 std::string SettlementResponse::originalJsonToBase64() const {
     return Encoding::base64Encode(originalJson_);
 }
-

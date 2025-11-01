@@ -21,10 +21,19 @@ public:
     bool operator==(const SettlementResponse &other) const;
     // JSON serialization
     json toJson() const;
+    // Factory for error response
+    static ptr<SettlementResponse> getErrorSettlementResponse(const std::string &message, const std::string &network, const std::string &payer);
     // JSON deserialization
     static SettlementResponse fromJsonString(const std::string &jsonString);
     // Return base64 encoding of original JSON string captured at construction
     std::string originalJsonToBase64() const;
+
+
+    SettlementResponse(bool success,
+                      std::optional<std::string> errorReason,
+                      const std::string &transaction,
+                      const std::string &network,
+                      const std::string &payer, const optional<std::string>& originalJson);
 
 private:
     bool success_;
@@ -34,10 +43,5 @@ private:
     std::string payer_;
     std::string originalJson_;
 
-    SettlementResponse(bool success,
-                      std::optional<std::string> errorReason,
-                      const std::string &transaction,
-                      const std::string &network,
-                      const std::string &payer, const std::string& originalJson);
 
 };

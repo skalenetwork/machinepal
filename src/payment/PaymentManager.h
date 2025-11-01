@@ -60,8 +60,8 @@ public:
         const std::unique_ptr<proxygen::HTTPMessage> &req,
         const MachinePayConfig &config,
         const ResourceConfig &resource,
-        const OrganizationConfig &organization
-    );
+        const OrganizationConfig &organization,
+        ptr<Authorization> &outAuthorization);
 
 private:
     MachinePayApp &app_;

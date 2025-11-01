@@ -159,8 +159,8 @@ BOOST_FIXTURE_TEST_SUITE(X402Suite, X402ServerFixture)
         auto [headersMap2, statusLine2, resp2] = client->sendRequestWithPayloadAndParseResult(
             "/posts/1", paymentPayload, true);
 
-        BOOST_TEST(resp2.status == 400);
-        BOOST_TEST(!headersMap2.contains("X-PAYMENT-RESPONSE"));
+        BOOST_TEST(resp2.status == 402);
+        BOOST_TEST(headersMap2.contains("X-PAYMENT-RESPONSE"));
         BOOST_TEST(resp2.body.size() > 0);
 
 

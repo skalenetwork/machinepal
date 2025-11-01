@@ -7,6 +7,7 @@
 #include "X402ProcessorState.h"
 
 
+class SettlementResponse;
 class ResourceConfig;
 
 namespace proxygen {
@@ -41,7 +42,7 @@ public:
 private:
 
 
-    void reply402PaymentRequired();
+    void reply402PaymentRequired(std::optional <SettlementResponse> errorResponse);
     void sendResponse(const std::pair<uint16_t, std::string>& statusAndMessage,
                       const std::vector<std::pair<std::string, std::string>>& headers, const std::string& body);
 
