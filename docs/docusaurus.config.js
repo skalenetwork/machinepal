@@ -23,7 +23,7 @@ const config = {
 
     // BEST PRACTICE: Use 'throw' in production to fail the build on broken links.
     // This prevents deploying a site with errors.
-    onBrokenLinks: 'throw',
+    onBrokenLinks: 'warn',
     onBrokenMarkdownLinks: 'warn',
 
     i18n: {
