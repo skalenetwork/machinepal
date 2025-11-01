@@ -69,7 +69,7 @@ void X402Processor::reply402PaymentRequired() {
 
 void X402Processor::reply400BadRequest(const std::string &message) {
     std::vector<std::pair<std::string, std::string> > headers = {
-        {"Content-Type", "text/plain"}
+        {"Content-Type", "application/json"}
     };
     sendResponse({400, "Bad Request"}, headers, message);
     state_ = State::ERROR_SENT;
@@ -77,7 +77,7 @@ void X402Processor::reply400BadRequest(const std::string &message) {
 
 void X402Processor::reply400InvalidPayment(const std::string &message) {
     std::vector<std::pair<std::string, std::string> > headers = {
-        {"Content-Type", "text/plain"}
+        {"Content-Type", "application/json"}
     };
     sendResponse({400, "Invalid payment"}, headers, message);
     state_ = State::ERROR_SENT;
@@ -86,7 +86,7 @@ void X402Processor::reply400InvalidPayment(const std::string &message) {
 
 void X402Processor::reply500InternalError(const std::string &message) {
     std::vector<std::pair<std::string, std::string> > headers = {
-        {"Content-Type", "text/plain"}
+        {"Content-Type", "application/json"}
     };
     sendResponse({500, "Internal server error"}, headers, message);
     state_ = State::ERROR_SENT;
@@ -94,7 +94,7 @@ void X402Processor::reply500InternalError(const std::string &message) {
 
 void X402Processor::reply502BadGateway(const std::string &message) {
     std::vector<std::pair<std::string, std::string> > headers = {
-        {"Content-Type", "text/plain"}
+        {"Content-Type", "application/json"}
     };
     sendResponse({502, "Bad Gateway"}, headers, message);
     state_ = State::ERROR_SENT;
