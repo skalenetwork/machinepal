@@ -39,6 +39,12 @@ public:
      */
     TransferResult processTransferRequest( const EthAddress& fromAddress,
         const EthAddress& toAddress, const EthAddress& assetAddress, const EIP3009Value& value );
+    void insertTransaction( soci::session& databaseSession,
+        const std::string& fromWalletAddressDatabaseString,
+        const std::string& toWalletAddressDatabaseString,
+        const std::string& assetContractAddressDatabaseString, const std::string& organizationName,
+        const std::string& chainId, const std::string& resourceLocation, const std::string& fromIpAddress,
+        const std::string& jsonInfo, std::string& transferAmountValueStr );
 
 
     /**

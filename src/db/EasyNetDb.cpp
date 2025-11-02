@@ -2,8 +2,8 @@
 #include "MachinePayCommon.h"
 #include "crypto/Encoding.h"  // added for u256 conversions
 #include <soci/soci.h>
-#include <limits>  // for overflow check
 #include <chrono>   // added for settlementTime
+#include <limits>   // for overflow check
 #include <random>   // added for nonce
 #include <sstream>  // added for nonce hex formatting
 
@@ -24,19 +24,23 @@ EasyNetDb::EasyNetDb(
         // --- Check if the state table already exists ---
         if ( dbType_ == DbType::SQLite ) {
             int count = 0;
-            sql << "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='state'", soci::into( count );
+            sql << "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='state'",
+                soci::into( count );
             stateTableExisted = ( count > 0 );
             int tcount = 0;
-            sql << "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='transactions'", soci::into( tcount );
+            sql << "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='transactions'",
+                soci::into( tcount );
             transactionsTableExisted = ( tcount > 0 );
-        }  else if ( dbType_ == DbType::PostgreSQL ) {
+        } else if ( dbType_ == DbType::PostgreSQL ) {
             std::string regclassResultState;  // will be empty if NULL
             soci::indicator indState = soci::i_ok;
-            sql << "SELECT to_regclass('public.state')", soci::into( regclassResultState, indState );
+            sql << "SELECT to_regclass('public.state')",
+                soci::into( regclassResultState, indState );
             stateTableExisted = ( indState != soci::i_null && !regclassResultState.empty() );
             std::string regclassResultTx;  // will be empty if NULL
             soci::indicator indTx = soci::i_ok;
-            sql << "SELECT to_regclass('public.transactions')", soci::into( regclassResultTx, indTx );
+            sql << "SELECT to_regclass('public.transactions')",
+                soci::into( regclassResultTx, indTx );
             transactionsTableExisted = ( indTx != soci::i_null && !regclassResultTx.empty() );
         }
 
@@ -44,51 +48,51 @@ EasyNetDb::EasyNetDb(
         // --- Create state table if needed ---
         if ( dbType_ == DbType::SQLite ) {
             sql << "CREATE TABLE IF NOT EXISTS state ("
-                   "id INTEGER PRIMARY KEY AUTOINCREMENT," // id only in sqlite flavor
+                   "id INTEGER PRIMARY KEY AUTOINCREMENT,"  // id only in sqlite flavor
                    "walletAddress TEXT NOT NULL,"
                    "assetAddress TEXT NOT NULL,"
-                   "value TEXT NOT NULL" \
+                   "value TEXT NOT NULL"
                    ")";
         } else if ( dbType_ == DbType::PostgreSQL ) {
             sql << "CREATE TABLE IF NOT EXISTS state ("
-                   "walletAddress TEXT NOT NULL,"\
-                   "assetAddress TEXT NOT NULL,"\
-                   "value TEXT NOT NULL"\
+                   "walletAddress TEXT NOT NULL,"
+                   "assetAddress TEXT NOT NULL,"
+                   "value TEXT NOT NULL"
                    ")";
         }
 
         // --- Create transactions table if needed ---
         if ( dbType_ == DbType::SQLite ) {
             sql << "CREATE TABLE IF NOT EXISTS transactions ("
-                   "id INTEGER PRIMARY KEY AUTOINCREMENT,"\
-                   "organizationName TEXT NOT NULL,"\
-                   "chainId TEXT NOT NULL,"\
-                   "fromAddress TEXT NOT NULL,"\
-                   "toAddress TEXT NOT NULL,"\
-                   "assetAddress TEXT NOT NULL,"\
-                   "value TEXT NOT NULL,"\
-                   "nonce TEXT NOT NULL,"\
-                   "resourceLocation TEXT NOT NULL,"\
-                   "settlementTime INTEGER NOT NULL,"\
-                   "transactionHash TEXT NOT NULL,"\
-                   "fromIpAddress TEXT NOT NULL,"\
-                   "jsonInfo TEXT"\
+                   "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                   "organizationName TEXT NOT NULL,"
+                   "chainId TEXT NOT NULL,"
+                   "fromAddress TEXT NOT NULL,"
+                   "toAddress TEXT NOT NULL,"
+                   "assetAddress TEXT NOT NULL,"
+                   "value TEXT NOT NULL,"
+                   "nonce TEXT NOT NULL,"
+                   "resourceLocation TEXT NOT NULL,"
+                   "settlementTime INTEGER NOT NULL,"
+                   "transactionHash TEXT NOT NULL,"
+                   "fromIpAddress TEXT NOT NULL,"
+                   "jsonInfo TEXT"
                    ")";
         } else if ( dbType_ == DbType::PostgreSQL ) {
             sql << "CREATE TABLE IF NOT EXISTS transactions ("
-                   "id SERIAL PRIMARY KEY,"\
-                   "organizationName TEXT NOT NULL,"\
-                   "chainId TEXT NOT NULL,"\
-                   "fromAddress TEXT NOT NULL,"\
-                   "toAddress TEXT NOT NULL,"\
-                   "assetAddress TEXT NOT NULL,"\
-                   "value TEXT NOT NULL,"\
-                   "nonce TEXT NOT NULL,"\
-                   "resourceLocation TEXT NOT NULL,"\
+                   "id SERIAL PRIMARY KEY,"
+                   "organizationName TEXT NOT NULL,"
+                   "chainId TEXT NOT NULL,"
+                   "fromAddress TEXT NOT NULL,"
+                   "toAddress TEXT NOT NULL,"
+                   "assetAddress TEXT NOT NULL,"
+                   "value TEXT NOT NULL,"
+                   "nonce TEXT NOT NULL,"
+                   "resourceLocation TEXT NOT NULL,"
                    "settlementTime INTEGER NOT NULL,"
-                   "transactionHash TEXT NOT NULL,"\
-                   "fromIpAddress TEXT NOT NULL,"\
-                   "jsonInfo TEXT"\
+                   "transactionHash TEXT NOT NULL,"
+                   "fromIpAddress TEXT NOT NULL,"
+                   "jsonInfo TEXT"
                    ")";
         }
 
@@ -97,11 +101,12 @@ EasyNetDb::EasyNetDb(
         sql << "CREATE INDEX IF NOT EXISTS idx_state_value ON state(value)";
 
         // --- Indices for transactions table (small performance improvement) ---
-        sql << "CREATE INDEX IF NOT EXISTS idx_transactions_fromAddress ON transactions(fromAddress)";
-        sql << "CREATE INDEX IF NOT EXISTS idx_transactions_transactionHash ON transactions(transactionHash)";
+        sql << "CREATE INDEX IF NOT EXISTS idx_transactions_fromAddress ON "
+               "transactions(fromAddress)";
+        sql << "CREATE INDEX IF NOT EXISTS idx_transactions_transactionHash ON "
+               "transactions(transactionHash)";
         sql << "CREATE INDEX IF NOT EXISTS idx_transactions_nonce ON transactions(nonce)";
         sql << "CREATE INDEX IF NOT EXISTS idx_settlement_time ON transactions(settlementTime)";
-
 
 
         if ( !stateTableExisted ) {
@@ -158,9 +163,45 @@ void EasyNetDb::newWalletUnsafe(
 
 EasyNetDb::TransferResult EasyNetDb::processTransferRequest( const EthAddress& fromAddress,
     const EthAddress& toAddress, const EthAddress& assetAddress, const EIP3009Value& value ) {
-    std::unique_lock<std::shared_mutex> lock(stateMutex_);
+    std::unique_lock< std::shared_mutex > lock( stateMutex_ );
     fundUserWalletWithFundsIfNewWalletUnsafe( fromAddress, assetAddress );
     return transferValueUnsafe( fromAddress, toAddress, assetAddress, value );
+}
+
+void EasyNetDb::insertTransaction( soci::session& databaseSession,
+    const std::string& fromWalletAddressDatabaseString,
+    const std::string& toWalletAddressDatabaseString,
+    const std::string& assetContractAddressDatabaseString, const std::string& organizationName,
+    const std::string& chainId, const std::string& resourceLocation, const std::string& fromIpAddress,
+    const std::string& jsonInfo, std::string& transferAmountValueStr ) {
+    // Generate a simple random hex nonce
+    std::stringstream nonceStream;
+    nonceStream << std::hex << std::random_device{}() << std::random_device{}();
+    const std::string nonce = nonceStream.str();
+
+    // For now reuse nonce as a pseudo transaction hash (replace with real hash if available)
+    const std::string transactionHash = nonce;
+
+    // Settlement time = current unix epoch seconds
+    auto now = std::chrono::system_clock::now();
+    long long settlementTime =
+        chrono::duration_cast< std::chrono::seconds >( now.time_since_epoch() ).count();
+
+    databaseSession << "INSERT INTO transactions (organizationName, chainId, fromAddress, "
+                       "toAddress, assetAddress, value, nonce, resourceLocation, "
+                       "settlementTime, transactionHash, fromIpAddress, jsonInfo) "
+                       "VALUES (:organizationName, :chainId, :fromAddress, :toAddress, "
+                       ":assetAddress, :value, :nonce, :resourceLocation, :settlementTime, "
+                       ":transactionHash, :fromIpAddress, :jsonInfo)",
+        soci::use( organizationName, "organizationName" ), soci::use( chainId, "chainId" ),
+        soci::use( fromWalletAddressDatabaseString, "fromAddress" ),
+        soci::use( toWalletAddressDatabaseString, "toAddress" ),
+        soci::use( assetContractAddressDatabaseString, "assetAddress" ),
+        soci::use( transferAmountValueStr, "value" ), soci::use( nonce, "nonce" ),
+        soci::use( resourceLocation, "resourceLocation" ),
+        soci::use( settlementTime, "settlementTime" ),
+        soci::use( transactionHash, "transactionHash" ),
+        soci::use( fromIpAddress, "fromIpAddress" ), soci::use( jsonInfo, "jsonInfo" );
 }
 
 EasyNetDb::TransferResult EasyNetDb::transferValueUnsafe( const EthAddress& fromAddress,
@@ -187,7 +228,8 @@ EasyNetDb::TransferResult EasyNetDb::transferValueUnsafe( const EthAddress& from
         // 1. Fetch sender balance
         std::string senderBalanceValueStringFromDatabase;
         soci::indicator senderBalanceIndicator = soci::i_ok;
-        databaseSession << "SELECT value FROM state WHERE walletAddress = :walletAddress AND assetAddress = :assetAddress",
+        databaseSession << "SELECT value FROM state WHERE walletAddress = :walletAddress AND "
+                           "assetAddress = :assetAddress",
             soci::into( senderBalanceValueStringFromDatabase, senderBalanceIndicator ),
             soci::use( fromWalletAddressDatabaseString, "walletAddress" ),
             soci::use( assetContractAddressDatabaseString, "assetAddress" );
@@ -216,7 +258,8 @@ EasyNetDb::TransferResult EasyNetDb::transferValueUnsafe( const EthAddress& from
         // 2. Fetch receiver balance (may be absent)
         std::string receiverBalanceValueStringFromDatabase;
         soci::indicator receiverBalanceIndicator = soci::i_ok;
-        databaseSession << "SELECT value FROM state WHERE walletAddress = :walletAddress AND assetAddress = :assetAddress",
+        databaseSession << "SELECT value FROM state WHERE walletAddress = :walletAddress AND "
+                           "assetAddress = :assetAddress",
             soci::into( receiverBalanceValueStringFromDatabase, receiverBalanceIndicator ),
             soci::use( toWalletAddressDatabaseString, "walletAddress" ),
             soci::use( assetContractAddressDatabaseString, "assetAddress" );
@@ -255,18 +298,21 @@ EasyNetDb::TransferResult EasyNetDb::transferValueUnsafe( const EthAddress& from
             Encoding::u256ToDecimal( receiverUpdatedBalanceValueAfterTransfer );
 
         // 4. Persist changes
-        databaseSession << "UPDATE state SET value = :value WHERE walletAddress = :walletAddress AND assetAddress = :assetAddress",
+        databaseSession << "UPDATE state SET value = :value WHERE walletAddress = :walletAddress "
+                           "AND assetAddress = :assetAddress",
             soci::use( senderUpdatedBalanceDecimalString, "value" ),
             soci::use( fromWalletAddressDatabaseString, "walletAddress" ),
             soci::use( assetContractAddressDatabaseString, "assetAddress" );
 
         if ( receiverStateRowExists ) {
-            databaseSession << "UPDATE state SET value = :value WHERE walletAddress = :walletAddress AND assetAddress = :assetAddress",
+            databaseSession << "UPDATE state SET value = :value WHERE walletAddress = "
+                               ":walletAddress AND assetAddress = :assetAddress",
                 soci::use( receiverUpdatedBalanceDecimalString, "value" ),
                 soci::use( toWalletAddressDatabaseString, "walletAddress" ),
                 soci::use( assetContractAddressDatabaseString, "assetAddress" );
         } else {
-            databaseSession << "INSERT INTO state (walletAddress, assetAddress, value) VALUES (:walletAddress, :assetAddress, :value)",
+            databaseSession << "INSERT INTO state (walletAddress, assetAddress, value) VALUES "
+                               "(:walletAddress, :assetAddress, :value)",
                 soci::use( toWalletAddressDatabaseString, "walletAddress" ),
                 soci::use( assetContractAddressDatabaseString, "assetAddress" ),
                 soci::use( receiverUpdatedBalanceDecimalString, "value" );
@@ -281,7 +327,6 @@ EasyNetDb::TransferResult EasyNetDb::transferValueUnsafe( const EthAddress& from
             senderUpdatedBalanceDecimalString, receiverUpdatedBalanceDecimalString );
 
         // --- New: insert transaction record ---
-        // TODO: Replace placeholder context fields with real values from your application.
         const std::string organizationName = "defaultOrg";
         const std::string chainId = "testChain";
         const std::string resourceLocation = "";
@@ -289,37 +334,9 @@ EasyNetDb::TransferResult EasyNetDb::transferValueUnsafe( const EthAddress& from
         const std::string jsonInfo = "{}";
         auto transferAmountValueStr = Encoding::u256ToDecimal( transferAmountValue );
 
-        // Generate a simple random hex nonce
-        std::stringstream nonceStream;
-        nonceStream << std::hex << std::random_device{}() << std::random_device{}();
-        const std::string nonce = nonceStream.str();
-
-        // For now reuse nonce as a pseudo transaction hash (replace with real hash if available)
-        const std::string transactionHash = nonce;
-
-        // Settlement time = current unix epoch seconds
-        auto now = std::chrono::system_clock::now();
-        long long settlementTime =
-            std::chrono::duration_cast<std::chrono::seconds>( now.time_since_epoch() ).count();
-
-        databaseSession << "INSERT INTO transactions (organizationName, chainId, fromAddress, "
-                           "toAddress, assetAddress, value, nonce, resourceLocation, "
-                           "settlementTime, transactionHash, fromIpAddress, jsonInfo) "
-                           "VALUES (:organizationName, :chainId, :fromAddress, :toAddress, "
-                           ":assetAddress, :value, :nonce, :resourceLocation, :settlementTime, "
-                           ":transactionHash, :fromIpAddress, :jsonInfo)",
-            soci::use( organizationName, "organizationName" ),
-            soci::use( chainId, "chainId" ),
-            soci::use( fromWalletAddressDatabaseString, "fromAddress" ),
-            soci::use( toWalletAddressDatabaseString, "toAddress" ),
-            soci::use( assetContractAddressDatabaseString, "assetAddress" ),
-            soci::use( transferAmountValueStr, "value" ),
-            soci::use( nonce, "nonce" ),
-            soci::use( resourceLocation, "resourceLocation" ),
-            soci::use( settlementTime, "settlementTime" ),
-            soci::use( transactionHash, "transactionHash" ),
-            soci::use( fromIpAddress, "fromIpAddress" ),
-            soci::use( jsonInfo, "jsonInfo" );
+        insertTransaction( databaseSession, fromWalletAddressDatabaseString,
+            toWalletAddressDatabaseString, assetContractAddressDatabaseString, organizationName,
+            chainId, resourceLocation, fromIpAddress, jsonInfo, transferAmountValueStr );
 
         databaseTransactionScope.commit();
         return TransferResult::TransferSuccess;
@@ -330,8 +347,6 @@ EasyNetDb::TransferResult EasyNetDb::transferValueUnsafe( const EthAddress& from
 
 void EasyNetDb::fundUserWalletWithFundsIfNewWalletUnsafe(
     const EthAddress& walletAddress, const EthAddress& assetAddress ) {
-
-
     try {
         soci::session databaseSession( *pool_ );
 
@@ -382,7 +397,7 @@ void EasyNetDb::fundUserWalletWithFundsIfNewWalletUnsafe(
 
 std::optional< u256 > EasyNetDb::getBalance(
     const EthAddress& walletAddress, const EthAddress& assetAddress ) const {
-    std::shared_lock<std::shared_mutex> lock(stateMutex_);
+    std::shared_lock< std::shared_mutex > lock( stateMutex_ );
     try {
         soci::session databaseSession( *pool_ );
         std::string walletAddressDatabaseString = walletAddress.toDbString();
@@ -390,7 +405,8 @@ std::optional< u256 > EasyNetDb::getBalance(
 
         std::string balanceValueStringFromDatabase;
         soci::indicator balanceIndicator = soci::i_ok;
-        databaseSession << "SELECT value FROM state WHERE walletAddress = :walletAddress AND assetAddress = :assetAddress",
+        databaseSession << "SELECT value FROM state WHERE walletAddress = :walletAddress AND "
+                           "assetAddress = :assetAddress",
             soci::into( balanceValueStringFromDatabase, balanceIndicator ),
             soci::use( walletAddressDatabaseString, "walletAddress" ),
             soci::use( assetContractAddressDatabaseString, "assetAddress" );
