@@ -65,8 +65,6 @@ EasyNetDb::EasyNetDb(
         if ( dbType_ == DbType::SQLite ) {
             sql << "CREATE TABLE IF NOT EXISTS transactions ("
                    "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                   "organizationName TEXT NOT NULL,"
-                   "chainId TEXT NOT NULL,"
                    "fromAddress TEXT NOT NULL,"
                    "toAddress TEXT NOT NULL,"
                    "assetAddress TEXT NOT NULL,"
@@ -81,8 +79,6 @@ EasyNetDb::EasyNetDb(
         } else if ( dbType_ == DbType::PostgreSQL ) {
             sql << "CREATE TABLE IF NOT EXISTS transactions ("
                    "id SERIAL PRIMARY KEY,"
-                   "organizationName TEXT NOT NULL,"
-                   "chainId TEXT NOT NULL,"
                    "fromAddress TEXT NOT NULL,"
                    "toAddress TEXT NOT NULL,"
                    "assetAddress TEXT NOT NULL,"
@@ -168,12 +164,12 @@ EasyNetDb::TransferResult EasyNetDb::processTransferRequest( const EthAddress& f
     return transferValueUnsafe( fromAddress, toAddress, assetAddress, value );
 }
 
-void EasyNetDb::insertTransaction( soci::session& databaseSession,
+void EasyNetDb::insertTransaction(soci::session& databaseSession,
     const string& fromWalletAddressDatabaseString,
     const string& toWalletAddressDatabaseString,
-    const string& assetContractAddressDatabaseString, const string& organizationName,
-    const string& chainId, const string& resourceLocation, const string& fromIpAddress,
-    const string& jsonInfo, string& transferAmountValueStr ) {
+    const string& assetContractAddressDatabaseString,
+    const string& resourceLocation, const string& fromIpAddress,
+    const string& jsonInfo, string& transferAmountValueStr) {
     // Generate a simple random hex nonce
     stringstream nonceStream;
     nonceStream << hex << random_device{}() << random_device{}();
@@ -187,13 +183,12 @@ void EasyNetDb::insertTransaction( soci::session& databaseSession,
     long long settlementTime =
         chrono::duration_cast< chrono::seconds >( now.time_since_epoch() ).count();
 
-    databaseSession << "INSERT INTO transactions (organizationName, chainId, fromAddress, "
+    databaseSession << "INSERT INTO transactions (fromAddress, "
                        "toAddress, assetAddress, value, nonce, resourceLocation, "
                        "settlementTime, transactionHash, fromIpAddress, jsonInfo) "
-                       "VALUES (:organizationName, :chainId, :fromAddress, :toAddress, "
+                       "VALUES (:fromAddress, :toAddress, "
                        ":assetAddress, :value, :nonce, :resourceLocation, :settlementTime, "
                        ":transactionHash, :fromIpAddress, :jsonInfo)",
-        soci::use( organizationName, "organizationName" ), soci::use( chainId, "chainId" ),
         soci::use( fromWalletAddressDatabaseString, "fromAddress" ),
         soci::use( toWalletAddressDatabaseString, "toAddress" ),
         soci::use( assetContractAddressDatabaseString, "assetAddress" ),
@@ -340,17 +335,15 @@ EasyNetDb::TransferResult EasyNetDb::transferValueUnsafe( const EthAddress& from
             assetContractAddressDatabaseString, Encoding::u256ToDecimal( transferAmountValue ),
             senderUpdatedBalanceDecimalString, receiverUpdatedBalanceDecimalString );
 
-        // --- New: insert transaction record ---
-        const string organizationName = "defaultOrg";
-        const string chainId = "testChain";
+
         const string resourceLocation = "";
         const string fromIpAddress = "0.0.0.0";
         const string jsonInfo = "{}";
         auto transferAmountValueStr = Encoding::u256ToDecimal( transferAmountValue );
 
         insertTransaction( databaseSession, fromWalletAddressDatabaseString,
-            toWalletAddressDatabaseString, assetContractAddressDatabaseString, organizationName,
-            chainId, resourceLocation, fromIpAddress, jsonInfo, transferAmountValueStr );
+            toWalletAddressDatabaseString, assetContractAddressDatabaseString, resourceLocation,
+            fromIpAddress, jsonInfo, transferAmountValueStr);
 
         databaseTransactionScope.commit();
         return TransferResult::TransferSuccess;
