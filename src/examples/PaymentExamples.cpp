@@ -1,5 +1,5 @@
-#include "MachinePayCommon.h"
 #include "PaymentExamples.h"
+#include "MachinePayCommon.h"
 
 
 const string PaymentExamples::EXACT_UCDC_PAYMENT_REQ_CB_SEPOLIA = R"({
@@ -74,12 +74,12 @@ const string PaymentExamples::EXACT_UCDC_SETTLEMENT_RESPONSE_CB_SEPOLIA = R"({
 ```
 
 
-| Field Name    | Type      | Required | Description                                                     |
-| ------------- | --------- | -------- | --------------------------------------------------------------- |
-| `success`     | `boolean` | Required | Indicates whether the payment settlement was successful         |
-| `errorReason` | `string`  | Optional | Error reason if settlement failed (omitted if successful)       |
-| `transaction` | `string`  | Required | Blockchain transaction hash (empty string if settlement failed) |
-| `network`     | `string`  | Required | Blockchain network identifier                                   |
-| `payer`       | `string`  | Required | Address of the payer's wallet                                   |
+| Field Name    | Type      | Required | Description | | ------------- | --------- | -------- |
+--------------------------------------------------------------- | | `success`     | `boolean` |
+Required | Indicates whether the payment settlement was successful         | | `errorReason` |
+`string`  | Optional | Error reason if settlement failed (omitted if successful)       | |
+`transaction` | `string`  | Required | Blockchain transaction hash (empty string if settlement
+failed) | | `network`     | `string`  | Required | Blockchain network identifier | | `payer`       |
+`string`  | Required | Address of the payer's wallet                                   |
 
 */

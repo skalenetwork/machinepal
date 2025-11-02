@@ -4,20 +4,15 @@
 #include "payment/datastructures/PaymentRequirements.h"
 #include "payment/datastructures/SettlementResponse.h"
 
-#include <limits> // for numeric_limits<u256>::max()
+#include <limits>  // for numeric_limits<u256>::max()
 
-EasyNetFacilitatorClient::EasyNetFacilitatorClient( EasyNetDb& database, EthAddress& assetAddress,
-    u256& chainId )
-    : db_( database ),
-      assetAddress_( assetAddress ),
-      chainId_( chainId ) {
-}
+EasyNetFacilitatorClient::EasyNetFacilitatorClient(
+    EasyNetDb& database, EthAddress& assetAddress, u256& chainId )
+    : db_( database ), assetAddress_( assetAddress ), chainId_( chainId ) {}
 
 ptr< PaymentPayload > EasyNetFacilitatorClient::verifyCore(
-    const nlohmann::json& paymentPayloadJson,
-    const nlohmann::json& paymentRequirementsJson,
-    EthAddress& fromWalletAddress,
-    optional< string >& error ) const {
+    const nlohmann::json& paymentPayloadJson, const nlohmann::json& paymentRequirementsJson,
+    EthAddress& fromWalletAddress, optional< string >& error ) const {
     auto paymentPayload = PaymentPayload::fromJson( paymentPayloadJson );
     auto paymentRequirements = PaymentRequirements::fromJson( paymentRequirementsJson );
 
@@ -29,22 +24,22 @@ ptr< PaymentPayload > EasyNetFacilitatorClient::verifyCore(
     u256 currentBalance = 1000000000 * u256( 1000000000000000000ULL );
     // 1e27 initial funding for new wallets
     auto senderBalanceOpt = db_.getBalance( fromWalletAddress, assetWalletAddress );
-    if (senderBalanceOpt.has_value()) {
+    if ( senderBalanceOpt.has_value() ) {
         currentBalance = senderBalanceOpt.value();
     }
 
     // Overflow check on receiver side (if we can read it) purely informational
     auto receiverBalanceOpt = db_.getBalance( toWalletAddress, assetWalletAddress );
-    if (receiverBalanceOpt.has_value()) {
+    if ( receiverBalanceOpt.has_value() ) {
         const u256 maxVal = ( std::numeric_limits< u256 >::max )();
         u256 receiverBalance = receiverBalanceOpt.value();
-        if (transferValue.value() > maxVal - receiverBalance) {
+        if ( transferValue.value() > maxVal - receiverBalance ) {
             error = "Overflow: Receiver balance would overflow 256-bit limit";
             return paymentPayload;
         }
     }
 
-    if (transferValue.value() > currentBalance) {
+    if ( transferValue.value() > currentBalance ) {
         error = "InsufficientFunds: Balance lower than requested transfer amount";
         return paymentPayload;
     }
@@ -52,35 +47,31 @@ ptr< PaymentPayload > EasyNetFacilitatorClient::verifyCore(
     return paymentPayload;
 }
 
-nlohmann::json EasyNetFacilitatorClient::verify(
-    const nlohmann::json& paymentRequirementsJson,
+nlohmann::json EasyNetFacilitatorClient::verify( const nlohmann::json& paymentRequirementsJson,
     const nlohmann::json& paymentPayloadJson ) const {
     try {
         EthAddress fromWalletAddress;
         optional< string > error;
-        auto payload = verifyCore( paymentPayloadJson, paymentRequirementsJson, fromWalletAddress,
-            error );
-        if (error) {
-            return nlohmann::json{ { "valid", false },
-                                   { "invalidReason", error.value() },
-                                   { "payer", fromWalletAddress.toDbString() } };
+        auto payload =
+            verifyCore( paymentPayloadJson, paymentRequirementsJson, fromWalletAddress, error );
+        if ( error ) {
+            return nlohmann::json{ { "valid", false }, { "invalidReason", error.value() },
+                { "payer", fromWalletAddress.toDbString() } };
         } else {
-            return nlohmann::json{ { "valid", true },
-                                   { "from", fromWalletAddress.toDbString() } };
+            return nlohmann::json{ { "valid", true }, { "from", fromWalletAddress.toDbString() } };
         }
-    } catch (const std::exception& e) {
+    } catch ( const std::exception& e ) {
         return nlohmann::json{ { "valid", false }, { "invalidReason", e.what() } };
     }
 }
 
-nlohmann::json EasyNetFacilitatorClient::settle(
-    const nlohmann::json& paymentRequirementsJson,
+nlohmann::json EasyNetFacilitatorClient::settle( const nlohmann::json& paymentRequirementsJson,
     const nlohmann::json& paymentPayloadJson ) const {
     try {
         EthAddress fromWalletAddress;
         optional< string > error;
-        auto paymentPayload = verifyCore( paymentPayloadJson, paymentRequirementsJson,
-            fromWalletAddress, error );
+        auto paymentPayload =
+            verifyCore( paymentPayloadJson, paymentRequirementsJson, fromWalletAddress, error );
         EthAddress toWalletAddress = paymentPayload->payload()->authorization()->to();
         EthAddress assetWalletAddress = EthAddress::parseFlexible(
             PaymentRequirements::fromJson( paymentRequirementsJson )->asset() );
@@ -91,35 +82,26 @@ nlohmann::json EasyNetFacilitatorClient::settle(
         auto balanceBeforeOpt = db_.getBalance( fromWalletAddress, assetWalletAddress );
         u256 balanceBefore = balanceBeforeOpt.value_or( 0 );
 
-        auto result = db_.transferValue( fromWalletAddress, toWalletAddress, assetWalletAddress,
-            transferValue );
+        auto result = db_.transferValue(
+            fromWalletAddress, toWalletAddress, assetWalletAddress, transferValue );
 
-        if (result == EasyNetDb::TransferResult::TransferSuccess) {
+        if ( result == EasyNetDb::TransferResult::TransferSuccess ) {
             auto balanceAfterOpt = db_.getBalance( fromWalletAddress, assetWalletAddress );
             u256 balanceAfter = balanceAfterOpt.value_or( 0 );
-            return nlohmann::json{
-                { "settled", true },
-                { "status", "TransferSuccess" },
-                { "from", fromWalletAddress.toDbString() },
-                { "to", toWalletAddress.toDbString() },
+            return nlohmann::json{ { "settled", true }, { "status", "TransferSuccess" },
+                { "from", fromWalletAddress.toDbString() }, { "to", toWalletAddress.toDbString() },
                 { "asset", assetWalletAddress.toDbString() },
                 { "amount", transferValue.toDbString() },
                 { "balanceBefore", Encoding::u256ToDecimal( balanceBefore ) },
-                { "balanceAfter", Encoding::u256ToDecimal( balanceAfter ) }
-            };
+                { "balanceAfter", Encoding::u256ToDecimal( balanceAfter ) } };
         }
 
-        return nlohmann::json{
-            { "settled", false },
-            { "status", "InsufficientFunds" },
-            { "from", fromWalletAddress.toDbString() },
-            { "to", toWalletAddress.toDbString() },
-            { "asset", assetWalletAddress.toDbString() },
-            { "amount", transferValue.toDbString() },
-            { "balanceBefore", Encoding::u256ToDecimal( balanceBefore ) }
-        };
-    } catch (const std::exception& e) {
+        return nlohmann::json{ { "settled", false }, { "status", "InsufficientFunds" },
+            { "from", fromWalletAddress.toDbString() }, { "to", toWalletAddress.toDbString() },
+            { "asset", assetWalletAddress.toDbString() }, { "amount", transferValue.toDbString() },
+            { "balanceBefore", Encoding::u256ToDecimal( balanceBefore ) } };
+    } catch ( const std::exception& e ) {
         return nlohmann::json{ { "settled", false }, { "status", "Exception" },
-                               { "message", e.what() } };
+            { "message", e.what() } };
     }
 }

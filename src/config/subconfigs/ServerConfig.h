@@ -1,32 +1,28 @@
 #pragma once
 
-#include "MachinePayCommon.h"
 #include "HTTPConfig.h"
 #include "HTTPSConfig.h"
+#include "MachinePayCommon.h"
 
 class FileManager;
 
-class ServerConfig
-{
+class ServerConfig {
     std::string hostName_;
     std::string bindIp_;
-    ptr<HTTPConfig> http_;
+    ptr< HTTPConfig > http_;
 
 private:
-    ptr<HTTPSConfig> https_;
+    ptr< HTTPSConfig > https_;
 
-    ServerConfig(const std::string& hostName, const std::string& bindIp,
-                 ptr<HTTPConfig> http,
-                 ptr<HTTPSConfig> https);
+    ServerConfig( const std::string& hostName, const std::string& bindIp, ptr< HTTPConfig > http,
+        ptr< HTTPSConfig > https );
 
 public:
     const std::string& bindIp() const;
-    const ptr<HTTPConfig> http() const;
-    const ptr<HTTPSConfig> https() const;
-    static ptr<ServerConfig> createFromJson(const nlohmann::json& j, ptr<FileManager> fileManager);
+    const ptr< HTTPConfig > http() const;
+    const ptr< HTTPSConfig > https() const;
+    static ptr< ServerConfig > createFromJson(
+        const nlohmann::json& j, ptr< FileManager > fileManager );
 
-    [[nodiscard]] std::string hostName() const
-    {
-        return hostName_;
-    }
+    [[nodiscard]] std::string hostName() const { return hostName_; }
 };

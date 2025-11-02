@@ -1,15 +1,15 @@
-#include "MachinePayCommon.h"
 #include "PaymentRecord.h"
+#include "MachinePayCommon.h"
+#include "crypto/EIP3009Nonce.h"
+#include "crypto/EIP3009Value.h"
 #include "crypto/Encoding.h"
 #include "crypto/EthAddress.h"
-#include "crypto/EIP3009Value.h"
-#include "crypto/EIP3009Nonce.h"
-#include "crypto/Keccak.h" // for computing resource hash
+#include "crypto/Keccak.h"  // for computing resource hash
 #include <soci/row.h>
 
-#include "payment/datastructures/PaymentPayload.h"
-#include "payment/datastructures/Payload.h"
 #include "payment/datastructures/Authorization.h"
+#include "payment/datastructures/Payload.h"
+#include "payment/datastructures/PaymentPayload.h"
 #include <chrono>
 
 #include "config/subconfigs/OrganizationConfig.h"
@@ -74,16 +74,10 @@ std::string PaymentRecord::jsonInfo() const {
 }
 
 PaymentRecord::PaymentRecord( const std::string& organizationName, const u256 chainId,
-    const EthAddress& fromAddress,
-    const EthAddress& toAddress, const EthAddress& assetAddress,
-    const EIP3009Value& value,
-    const EIP3009Nonce& nonce,
-    const string& resourceIdentifier,
-    uint64_t settlementTime,
-    const Hash& authorizationSignatureHash,
-    const Hash& transactionHash,
-    const std::string& fromIpAddress,
-    const std::string& jsonInfo )
+    const EthAddress& fromAddress, const EthAddress& toAddress, const EthAddress& assetAddress,
+    const EIP3009Value& value, const EIP3009Nonce& nonce, const string& resourceIdentifier,
+    uint64_t settlementTime, const Hash& authorizationSignatureHash, const Hash& transactionHash,
+    const std::string& fromIpAddress, const std::string& jsonInfo )
     : organizationName_( organizationName ),
       chainId_( chainId ),
       fromAddress_( fromAddress ),
@@ -96,12 +90,10 @@ PaymentRecord::PaymentRecord( const std::string& organizationName, const u256 ch
       authorizationSignatureHash_( authorizationSignatureHash ),
       transactionHash_( transactionHash ),
       fromIpAddress_( fromIpAddress ),
-      jsonInfo_( jsonInfo ) {
-}
+      jsonInfo_( jsonInfo ) {}
 
-ptr< PaymentRecord > PaymentRecord::createPaymentRecord(
-    const PaymentPayload& paymentPayload, const EIP712Domain& domain,
-    const ResourceConfig& resource,
+ptr< PaymentRecord > PaymentRecord::createPaymentRecord( const PaymentPayload& paymentPayload,
+    const EIP712Domain& domain, const ResourceConfig& resource,
     const OrganizationConfig& organization, const Hash& transactionHash,
     const string& fromIpAddress ) {
     auto payload = paymentPayload.payload();
@@ -122,25 +114,14 @@ ptr< PaymentRecord > PaymentRecord::createPaymentRecord(
     const std::string resourceLocation = resource.getLocation();
     Hash authorizationSignatureHash = payload->signature().computeSignatureHash();
 
-    uint64_t settlementTime = static_cast< uint64_t >(
-        std::chrono::duration_cast< std::chrono::seconds >(
-            std::chrono::system_clock::now().time_since_epoch() ).count() );
+    uint64_t settlementTime =
+        static_cast< uint64_t >( std::chrono::duration_cast< std::chrono::seconds >(
+            std::chrono::system_clock::now().time_since_epoch() )
+                                     .count() );
 
     const std::string jsonInfo = paymentPayload.toJson().dump();
 
-    return std::make_shared< PaymentRecord >(
-        organizationName,
-        chainId,
-        from,
-        to,
-        assetAddress,
-        value,
-        nonce,
-        resourceLocation,
-        settlementTime,
-        authorizationSignatureHash,
-        transactionHash,
-        fromIpAddress,
-        jsonInfo
-        );
+    return std::make_shared< PaymentRecord >( organizationName, chainId, from, to, assetAddress,
+        value, nonce, resourceLocation, settlementTime, authorizationSignatureHash, transactionHash,
+        fromIpAddress, jsonInfo );
 }

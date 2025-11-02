@@ -1,8 +1,8 @@
 #pragma once
+#include "FacilitatorClient.h"
+#include <nlohmann/json.hpp>
 #include <string>
 #include <vector>
-#include <nlohmann/json.hpp>
-#include "FacilitatorClient.h"
 
 /// Minimal client for Coinbase x402 facilitator (REST JSON API).
 /// Depends on: libcurl, nlohmann::json
@@ -13,11 +13,8 @@
 ///
 class CBFacilitatorClient : public FacilitatorClient {
 public:
-    explicit CBFacilitatorClient(
-        std::string _base_url = "https://x402.org/facilitator/",
-        std::string _auth = "",
-        long _connect_timeout_ms = 5000,
-        long _total_timeout_ms = 15000 );
+    explicit CBFacilitatorClient( std::string _base_url = "https://x402.org/facilitator/",
+        std::string _auth = "", long _connect_timeout_ms = 5000, long _total_timeout_ms = 15000 );
 
     ~CBFacilitatorClient() override = default;
 
@@ -31,8 +28,8 @@ public:
 
     std::string extractCBInvalidReason( std::string& _responseData ) const;
 
-    void checkForGenericHttpError( std::string url, std::string payload, std::string responseData,
-        long httpCode ) const;
+    void checkForGenericHttpError(
+        std::string url, std::string payload, std::string responseData, long httpCode ) const;
 
 private:
     static void ensureCurlGlobalInit();

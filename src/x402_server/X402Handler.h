@@ -1,8 +1,8 @@
 #pragma once
 
+#include <folly/json.h>
 #include <proxygen/httpserver/RequestHandler.h>
 #include <proxygen/httpserver/ResponseBuilder.h>
-#include <folly/json.h>
 #include <string>
 
 #include "MachinePayApp.h"
@@ -10,50 +10,42 @@
 
 class MachinePayApp;
 
-class X402Handler : public proxygen::RequestHandler
-{
+class X402Handler : public proxygen::RequestHandler {
 public:
-    void onRequest(std::unique_ptr<proxygen::HTTPMessage> _headers) noexcept override;
-    void onBody(std::unique_ptr<folly::IOBuf> _body) noexcept override;
+    void onRequest( std::unique_ptr< proxygen::HTTPMessage > _headers ) noexcept override;
+    void onBody( std::unique_ptr< folly::IOBuf > _body ) noexcept override;
     void onEOM() noexcept override;
 
-    void requestComplete() noexcept override
-    {
+    void requestComplete() noexcept override {
         // clean object if not used by different thread
         self_.reset();
     }
 
-    ~X402Handler() override
-    {
-    }
+    ~X402Handler() override {}
 
-    void onError(proxygen::ProxygenError _err) noexcept override
-    {
-        spdlog::error("X402Handler::onError called: {}", proxygen::getErrorString((_err)));
+    void onError( proxygen::ProxygenError _err ) noexcept override {
+        spdlog::error( "X402Handler::onError called: {}", proxygen::getErrorString( ( _err ) ) );
         // clean object if not used by different thread
         self_.reset();
     }
 
-    void onUpgrade(proxygen::UpgradeProtocol /*_prot*/) noexcept override
-    {
+    void onUpgrade( proxygen::UpgradeProtocol /*_prot*/ ) noexcept override {
         // No upgrade handling needed for now
     }
 
-    explicit X402Handler(MachinePayApp& app)
-        : app_(app)
-    {
+    explicit X402Handler( MachinePayApp& app ) : app_( app ) {
         // we take the latest condig at the start
         config_ = app_.configManager()->latestConfig();
-        CHECK_STATE(config_);
+        CHECK_STATE( config_ );
     }
 
 private:
     MachinePayApp& app_;
-    ptr<MachinePayConfig> config_;
-    std::unique_ptr<proxygen::HTTPMessage> reqHeaders_;
+    ptr< MachinePayConfig > config_;
+    std::unique_ptr< proxygen::HTTPMessage > reqHeaders_;
     std::string bodyBuffer_;
-    ptr<X402Processor> processor_;
-    ptr<X402Handler> self_{nullptr};
+    ptr< X402Processor > processor_;
+    ptr< X402Handler > self_{ nullptr };
 
     friend class X402HandlerFactory;
 };

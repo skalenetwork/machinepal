@@ -1,26 +1,23 @@
-#include "MachinePayCommon.h"
 #include "CBFacilitatorClient.h"
+#include "MachinePayCommon.h"
 
-#include <stdexcept>
-#include <mutex>
 #include <curl/curl.h>
+#include <mutex>
+#include <stdexcept>
 
 
-#include "exceptions/VerificationError.h"
-#include "exceptions/UnauthorizedException.h"
-#include "exceptions/ForbiddenException.h"
-#include "exceptions/ServiceUnavailableException.h"
-#include "exceptions/UnknownServerErrorException.h"
 #include "exceptions/BadGatewayException.h"
-#include "exceptions/NotFoundException.h"
-#include "exceptions/TooManyRequestsException.h"
+#include "exceptions/ForbiddenException.h"
 #include "exceptions/GatewayTimeoutException.h"
+#include "exceptions/NotFoundException.h"
+#include "exceptions/ServiceUnavailableException.h"
+#include "exceptions/TooManyRequestsException.h"
+#include "exceptions/UnauthorizedException.h"
+#include "exceptions/UnknownServerErrorException.h"
+#include "exceptions/VerificationError.h"
 
 CBFacilitatorClient::CBFacilitatorClient(
-    std::string _base_url,
-    std::string _auth,
-    long _connect_timeout_ms,
-    long _total_timeout_ms )
+    std::string _base_url, std::string _auth, long _connect_timeout_ms, long _total_timeout_ms )
     : base_url( std::move( _base_url ) ),
       authHeaderValue( std::move( _auth ) ),
       connect_timeout_ms( _connect_timeout_ms ),
@@ -30,13 +27,11 @@ CBFacilitatorClient::CBFacilitatorClient(
 
 void CBFacilitatorClient::ensureCurlGlobalInit() {
     static std::once_flag once;
-    std::call_once( once, []() {
-        curl_global_init( CURL_GLOBAL_DEFAULT );
-    } );
+    std::call_once( once, []() { curl_global_init( CURL_GLOBAL_DEFAULT ); } );
 }
 
-size_t CBFacilitatorClient::writeCallback( char* _ptr, size_t _size, size_t _nmemb,
-    void* _userdata ) {
+size_t CBFacilitatorClient::writeCallback(
+    char* _ptr, size_t _size, size_t _nmemb, void* _userdata ) {
     const size_t real_size = _size * _nmemb;
     auto* buf = static_cast< std::string* >( _userdata );
     buf->append( _ptr, real_size );
@@ -44,15 +39,15 @@ size_t CBFacilitatorClient::writeCallback( char* _ptr, size_t _size, size_t _nme
 }
 
 std::string CBFacilitatorClient::joinUrl( const std::string& _base, const std::string& _path ) {
-    if (_base.empty())
+    if ( _base.empty() )
         return _path;
-    if (_path.empty())
+    if ( _path.empty() )
         return _base;
     const bool b = _base.back() == '/';
     const bool p = _path.front() == '/';
-    if (b && p)
+    if ( b && p )
         return _base + _path.substr( 1 );
-    if (!b && !p)
+    if ( !b && !p )
         return _base + "/" + _path;
     return _base + _path;
 }
@@ -93,16 +88,16 @@ const std::string VERIFY_PAYLOAD_EXAMPLE = R"JSON(
 )JSON";
 
 
-nlohmann::json CBFacilitatorClient::verify( const nlohmann::json& _paymentInstruction,
-    const nlohmann::json& _paymentPayload ) const {
+nlohmann::json CBFacilitatorClient::verify(
+    const nlohmann::json& _paymentInstruction, const nlohmann::json& _paymentPayload ) const {
     nlohmann::json body;
     body["paymentInstruction"] = _paymentInstruction;
     body["paymentPayload"] = _paymentPayload;
     return postJson( "/verify", body );
 }
 
-nlohmann::json CBFacilitatorClient::settle( const nlohmann::json& _paymentInstruction,
-    const nlohmann::json& _paymentPayload ) const {
+nlohmann::json CBFacilitatorClient::settle(
+    const nlohmann::json& _paymentInstruction, const nlohmann::json& _paymentPayload ) const {
     nlohmann::json body;
     body["paymentInstruction"] = _paymentInstruction;
     body["paymentPayload"] = _paymentPayload;
@@ -112,20 +107,20 @@ nlohmann::json CBFacilitatorClient::settle( const nlohmann::json& _paymentInstru
 std::string CBFacilitatorClient::extractCBInvalidReason( std::string& _responseData ) const {
     try {
         auto errJson = nlohmann::json::parse( _responseData );
-        if (errJson.contains( "reason" ) && errJson["reason"].is_string()) {
+        if ( errJson.contains( "reason" ) && errJson["reason"].is_string() ) {
             return errJson["reason"].get< std::string >();
         }
-    } catch (...) {
+    } catch ( ... ) {
         // Ignore JSON parse errors here
     }
     return {};
 }
 
-void CBFacilitatorClient::checkForGenericHttpError( const std::string url, std::string payload,
-    std::string responseData, long httpCode ) const {
-    if (httpCode < 200 || httpCode >= 300) {
+void CBFacilitatorClient::checkForGenericHttpError(
+    const std::string url, std::string payload, std::string responseData, long httpCode ) const {
+    if ( httpCode < 200 || httpCode >= 300 ) {
         std::string errorExplanationForUser;
-        switch (httpCode) {
+        switch ( httpCode ) {
         case 400: {
             errorExplanationForUser = "Bad Request";
             std::string invalidReason = extractCBInvalidReason( responseData );
@@ -161,13 +156,13 @@ void CBFacilitatorClient::checkForGenericHttpError( const std::string url, std::
             break;
         }
 
-        std::string errorString = ( "HTTP " + std::to_string( httpCode ) + " (" +
-                                    errorExplanationForUser + ") error at "
-                                    + url + ": " + responseData + "\n | Payload: " + payload );
+        std::string errorString =
+            ( "HTTP " + std::to_string( httpCode ) + " (" + errorExplanationForUser +
+                ") error at " + url + ": " + responseData + "\n | Payload: " + payload );
 
         LOG( ERROR ) << errorString;
 
-        switch (httpCode) {
+        switch ( httpCode ) {
         case 401:
             throw UnauthorizedException( errorExplanationForUser );
         case 403:
@@ -190,15 +185,15 @@ void CBFacilitatorClient::checkForGenericHttpError( const std::string url, std::
     }
 }
 
-nlohmann::json CBFacilitatorClient::postJson( const std::string& _path,
-    const nlohmann::json& _body ) const {
+nlohmann::json CBFacilitatorClient::postJson(
+    const std::string& _path, const nlohmann::json& _body ) const {
     const std::string url = joinUrl( base_url, _path );
     std::string payload = _body.dump();
 
     payload = VERIFY_PAYLOAD_EXAMPLE;
 
     CURL* curl = curl_easy_init();
-    if (!curl)
+    if ( !curl )
         throw std::runtime_error( "Failed to init CURL easy handle" );
 
     std::string responseData;
@@ -207,11 +202,11 @@ nlohmann::json CBFacilitatorClient::postJson( const std::string& _path,
     // Build headers
     struct curl_slist* headers = nullptr;
     headers = curl_slist_append( headers, "Content-Type: application/json" );
-    if (!authHeaderValue.empty()) {
+    if ( !authHeaderValue.empty() ) {
         std::string auth = "Authorization: " + authHeaderValue;
         headers = curl_slist_append( headers, auth.c_str() );
     }
-    for (const auto& h : extraHeaders) {
+    for ( const auto& h : extraHeaders ) {
         headers = curl_slist_append( headers, h.c_str() );
     }
 
@@ -227,7 +222,7 @@ nlohmann::json CBFacilitatorClient::postJson( const std::string& _path,
     curl_easy_setopt( curl, CURLOPT_CONNECTTIMEOUT_MS, connect_timeout_ms );
     curl_easy_setopt( curl, CURLOPT_TIMEOUT_MS, total_timeout_ms );
     curl_easy_setopt( curl, CURLOPT_FOLLOWLOCATION, 1L );
-    if (!proxyUrl.empty()) {
+    if ( !proxyUrl.empty() ) {
         curl_easy_setopt( curl, CURLOPT_PROXY, proxyUrl.c_str() );
     }
 
@@ -238,27 +233,25 @@ nlohmann::json CBFacilitatorClient::postJson( const std::string& _path,
     curl_easy_getinfo( curl, CURLINFO_RESPONSE_CODE, &httpCode );
 
     // Cleanup
-    if (headers)
+    if ( headers )
         curl_slist_free_all( headers );
     curl_easy_cleanup( curl );
 
 
-    if (res != CURLE_OK) {
+    if ( res != CURLE_OK ) {
         throw std::runtime_error( std::string( "CURL error: " ) + curl_easy_strerror( res ) );
     }
 
-    if (httpCode == 400) {
+    if ( httpCode == 400 ) {
         std::string errorExplanationForUser = "Bad Request";
         std::string invalidReason = extractCBInvalidReason( responseData );
         errorExplanationForUser += ":" + invalidReason;
         throw VerificationError( errorExplanationForUser );
     }
 
-    {
-        checkForGenericHttpError( url, payload, responseData, httpCode );
-    }
+    { checkForGenericHttpError( url, payload, responseData, httpCode ); }
 
-    if (responseData.empty()) {
+    if ( responseData.empty() ) {
         throw std::runtime_error( "HTTP server at " + url + " returned empty response (HTTP " +
                                   std::to_string( httpCode ) + ")" );
     }
@@ -267,10 +260,10 @@ nlohmann::json CBFacilitatorClient::postJson( const std::string& _path,
     nlohmann::json j;
     try {
         j = nlohmann::json::parse( responseData );
-    } catch (const std::exception& e) {
+    } catch ( const std::exception& e ) {
         throw std::runtime_error( "Failed to parse JSON (HTTP " + std::to_string( httpCode ) +
-                                  ") from " + url + ": " + std::string( e.what() ) + " | Raw: " +
-                                  responseData );
+                                  ") from " + url + ": " + std::string( e.what() ) +
+                                  " | Raw: " + responseData );
     }
 
 

@@ -1,6 +1,6 @@
 #pragma once
-#include <optional>
 #include <proxygen/lib/http/HTTPMethod.h>
+#include <optional>
 
 #include "HttpError.h"
 #include "IResponseSender.h"
@@ -14,9 +14,9 @@ namespace proxygen {
 enum class HTTPMethod;
 class ResponseHandler;
 class HTTPMessage;
-}
+}  // namespace proxygen
 
-class MachinePayApp; // Forward declaration
+class MachinePayApp;  // Forward declaration
 class MachinePayConfig;
 class OrganizationConfig;
 
@@ -32,8 +32,8 @@ public:
 
     void replyToClientWithError( const HttpError& httpError );
 
-    void onRequestFullyReceived( const std::unique_ptr< proxygen::HTTPMessage >& reqHeaders,
-        const string& body ) noexcept;
+    void onRequestFullyReceived(
+        const std::unique_ptr< proxygen::HTTPMessage >& reqHeaders, const string& body ) noexcept;
     void onBodySizeIncrease( size_t newSize );
     static std::vector< std::pair< std::string, std::string > > STANDARD_HEADERS;
 
@@ -60,8 +60,7 @@ private:
 
     bool validateMethod( const std::unique_ptr< proxygen::HTTPMessage >& reqHeaders );
 
-    void reply200Success( const std::string& settlementInfo,
-        std::string& proxyBody );
+    void reply200Success( const std::string& settlementInfo, std::string& proxyBody );
 
     [[nodiscard]] ptr< MachinePayConfig > config() const {
         CHECK_STATE( config_ );

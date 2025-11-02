@@ -1,8 +1,8 @@
-#include <boost/test/unit_test.hpp>
 #include "facilitator_clients/CBFacilitatorClient.h"
+#include <boost/test/unit_test.hpp>
 
-#include <iostream>
 #include <glog/logging.h>
+#include <iostream>
 
 #include "exceptions/VerificationError.h"
 
@@ -11,79 +11,70 @@
 // The signature/address values are dummy values — the real facilitator will reject them,
 // but the purpose here is to exercise the request/response path against the real API.
 
-static nlohmann::json makeInstruction()
-{
+static nlohmann::json makeInstruction() {
     return nlohmann::json{
-        {"network", "base-sepolia"},
-        {"asset", "usdc"},
-        {"amount", "1000000"}, // 1.000000 USDC (6 decimals)
-        {"scheme", "exact"},
-        {"receiver", "0x8ba1f109551bD432803012645Ac136ddd64DBA72"} // example receiver
+        { "network", "base-sepolia" }, { "asset", "usdc" },
+        { "amount", "1000000" },  // 1.000000 USDC (6 decimals)
+        { "scheme", "exact" },
+        { "receiver", "0x8ba1f109551bD432803012645Ac136ddd64DBA72" }  // example receiver
     };
 }
 
-static nlohmann::json makePayload()
-{
+static nlohmann::json makePayload() {
     return nlohmann::json{
-        {"from", "0x8ba1f109551bD432803012645Ac136ddd64DBA72"},
-        {"to", "0x8ba1f109551bD432803012645Ac136ddd64DBA72"},
-        {"amount", "1000000"},
-        {"nonce", "0xdeadbeef"},
-        {"validAfter", 1699999999},
-        {"validBefore", 1999999999},
+        { "from", "0x8ba1f109551bD432803012645Ac136ddd64DBA72" },
+        { "to", "0x8ba1f109551bD432803012645Ac136ddd64DBA72" }, { "amount", "1000000" },
+        { "nonce", "0xdeadbeef" }, { "validAfter", 1699999999 }, { "validBefore", 1999999999 },
         // Dummy signature (not valid). Facilitator will likely reject this payload.
         //{"signature",   "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}
     };
 }
 
-BOOST_AUTO_TEST_CASE (verify_call_real_server_invalid_sig)
-{
-    CBFacilitatorClient client; // defaults to https://x402.org/facilitator
+BOOST_AUTO_TEST_CASE( verify_call_real_server_invalid_sig ) {
+    CBFacilitatorClient client;  // defaults to https://x402.org/facilitator
 
     auto instruction = makeInstruction();
     auto payload = makePayload();
 
-    try
-    {
-        auto res = client.verify(instruction, payload);
+    try {
+        auto res = client.verify( instruction, payload );
         // We expect the facilitator to either return a JSON object describing invalid signature
         // or another error object. Accept either.
-        BOOST_TEST(res.is_object());
-        // Contains "valid" (bool) for some facilitator implementations or "error" for rejected payloads.
-        BOOST_TEST((res.contains("valid") || res.contains("error") || res.contains("message")));
-        BOOST_TEST_MESSAGE("verify response: " + res.dump());
-    }
-    catch (VerificationError& e)
-    {
-        BOOST_TEST_MESSAGE(std::string("verify threw VerificationError (expected with dummy signature): ") + e.what());
-    }
-    catch (const std::exception& e)
-    {
+        BOOST_TEST( res.is_object() );
+        // Contains "valid" (bool) for some facilitator implementations or "error" for rejected
+        // payloads.
+        BOOST_TEST(
+            ( res.contains( "valid" ) || res.contains( "error" ) || res.contains( "message" ) ) );
+        BOOST_TEST_MESSAGE( "verify response: " + res.dump() );
+    } catch ( VerificationError& e ) {
+        BOOST_TEST_MESSAGE(
+            std::string( "verify threw VerificationError (expected with dummy signature): " ) +
+            e.what() );
+    } catch ( const std::exception& e ) {
         // Network or HTTP-level errors should fail the test — record message for debugging.
-        BOOST_FAIL(std::string("verify threw exception: ") + e.what());
+        BOOST_FAIL( std::string( "verify threw exception: " ) + e.what() );
     }
 }
 
-BOOST_AUTO_TEST_CASE (settle_call_real_server_stub)
-{
+BOOST_AUTO_TEST_CASE( settle_call_real_server_stub ) {
     CBFacilitatorClient client;
 
     auto instruction = makeInstruction();
     auto payload = makePayload();
 
-    try
-    {
-        auto res = client.settle(instruction, payload);
-        // On success, facilitator returns txHash; on failure it may return error JSON or HTTP non-2xx.
-        // We accept any valid JSON object but assert that the response is parsed.
-        BOOST_TEST(res.is_object());
-        BOOST_TEST((res.contains("txHash") || res.contains("error") || res.contains("message")));
-        BOOST_TEST_MESSAGE("settle response: " + res.dump());
-    }
-    catch (const std::exception& e)
-    {
-        // Likely outcome for dummy signature: facilitator rejects with an HTTP error that our client throws.
-        // Record the message but don't fail the whole test suite — use a warning instead.
-        BOOST_TEST_MESSAGE(std::string("settle threw exception (expected with dummy signature): ") + e.what());
+    try {
+        auto res = client.settle( instruction, payload );
+        // On success, facilitator returns txHash; on failure it may return error JSON or HTTP
+        // non-2xx. We accept any valid JSON object but assert that the response is parsed.
+        BOOST_TEST( res.is_object() );
+        BOOST_TEST(
+            ( res.contains( "txHash" ) || res.contains( "error" ) || res.contains( "message" ) ) );
+        BOOST_TEST_MESSAGE( "settle response: " + res.dump() );
+    } catch ( const std::exception& e ) {
+        // Likely outcome for dummy signature: facilitator rejects with an HTTP error that our
+        // client throws. Record the message but don't fail the whole test suite — use a warning
+        // instead.
+        BOOST_TEST_MESSAGE(
+            std::string( "settle threw exception (expected with dummy signature): " ) + e.what() );
     }
 }

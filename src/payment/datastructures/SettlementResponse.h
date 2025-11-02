@@ -20,20 +20,17 @@ public:
     // JSON serialization
     json toJson() const;
     // Factory for error response
-    static ptr< SettlementResponse > getErrorSettlementResponse( HttpError& error,
-        const std::string& network,
-        const std::string& payer );
+    static ptr< SettlementResponse > getErrorSettlementResponse(
+        HttpError& error, const std::string& network, const std::string& payer );
     // JSON deserialization
     static SettlementResponse fromJsonString( const std::string& jsonString );
     // Return base64 encoding of original JSON string captured at construction
     std::string originalJsonToBase64() const;
 
 
-    SettlementResponse( bool success,
-        std::optional< std::string > errorReason,
-        const std::string& transaction,
-        const std::string& network,
-        const std::string& payer, const optional< std::string >& originalJson );
+    SettlementResponse( bool success, std::optional< std::string > errorReason,
+        const std::string& transaction, const std::string& network, const std::string& payer,
+        const optional< std::string >& originalJson );
 
 private:
     bool success_;

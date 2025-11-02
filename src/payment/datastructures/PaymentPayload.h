@@ -1,9 +1,9 @@
 #pragma once
 
 #include "Payload.h"
-#include "x402_protocol/HttpError.h"
 #include "config/MachinePayConfig.h"
 #include "config/subconfigs/ResourceConfig.h"
+#include "x402_protocol/HttpError.h"
 
 
 class PaymentPayload {
@@ -15,20 +15,19 @@ public:
     [[nodiscard]] int x402Version() const;
     [[nodiscard]] const std::string& scheme() const;
     [[nodiscard]] const std::string& network() const;
-    [[nodiscard]] std::shared_ptr< Payload > payload() const; // returns shared_ptr to payload
+    [[nodiscard]] std::shared_ptr< Payload > payload() const;  // returns shared_ptr to payload
 
     bool operator==( const PaymentPayload& other ) const;
     static std::shared_ptr< PaymentPayload > fromJson( const json& j );
     [[nodiscard]] json toJson() const;
-    std::optional< HttpError > validateAndVerifySignature( const MachinePayConfig& config,
-        const ResourceConfig& resource ) const;
+    std::optional< HttpError > validateAndVerifySignature(
+        const MachinePayConfig& config, const ResourceConfig& resource ) const;
 
-    std::optional< HttpError > verifyEIP3009Signature( const MachinePayConfig& config,
-        const ResourceConfig& resource ) const;
+    std::optional< HttpError > verifyEIP3009Signature(
+        const MachinePayConfig& config, const ResourceConfig& resource ) const;
 
     static ptr< PaymentPayload > createDefaultPaymentPayload( EthPrivateKey& privKey,
-        EthAddress& to, EIP3009Value& value,
-        EIP3009Nonce& nonce, std::string networkName );
+        EthAddress& to, EIP3009Value& value, EIP3009Nonce& nonce, std::string networkName );
 
     std::string createHttpHeaderValue();
 

@@ -1,5 +1,5 @@
 #pragma once
-#include "MachinePayCommon.h" // added for Hash and u256
+#include "MachinePayCommon.h"  // added for Hash and u256
 #include "crypto/EIP3009Nonce.h"
 #include "crypto/EIP3009Value.h"
 #include "crypto/Encoding.h"
@@ -17,8 +17,7 @@ class EthAddress;
 /**
  * @brief Represents a payment record.
  */
-class PaymentRecord
-{
+class PaymentRecord {
     std::string organizationName_;
     u256 chainId_;
     EthAddress fromAddress_;
@@ -48,7 +47,7 @@ public:
 
     [[nodiscard]] EIP3009Nonce nonce() const;
 
-    [[nodiscard]] string resourceLocation() const; // returns resource hash
+    [[nodiscard]] string resourceLocation() const;  // returns resource hash
 
     [[nodiscard]] uint64_t settlementTime() const;
 
@@ -56,22 +55,22 @@ public:
 
     [[nodiscard]] Hash transactionHash() const;
 
-    [[nodiscard]] std::string fromIpAddress() const; // add nodiscard
+    [[nodiscard]] std::string fromIpAddress() const;  // add nodiscard
 
     [[nodiscard]] std::string jsonInfo() const;
 
-    static ptr<PaymentRecord> createPaymentRecord(
-        const PaymentPayload& payload, const EIP712Domain& domain, const ResourceConfig& resource,
-        const OrganizationConfig& organization, const Hash& transactionHash, const string& ipAddress);
+    static ptr< PaymentRecord > createPaymentRecord( const PaymentPayload& payload,
+        const EIP712Domain& domain, const ResourceConfig& resource,
+        const OrganizationConfig& organization, const Hash& transactionHash,
+        const string& ipAddress );
 
 
-    PaymentRecord(const std::string& organizationName, const u256 chainId,
-                  const EthAddress& fromAddress, const EthAddress& toAddress, const EthAddress& assetAddress,
-                  const EIP3009Value& value,
-                  const EIP3009Nonce& nonce, const string& resourceIdentifier, uint64_t settlementTime,
-                  const Hash& authorizationSignatureHash, const Hash& transactionHash,
-                  const std::string& fromIpAddress,
-                  const std::string& jsonInfo);
+    PaymentRecord( const std::string& organizationName, const u256 chainId,
+        const EthAddress& fromAddress, const EthAddress& toAddress, const EthAddress& assetAddress,
+        const EIP3009Value& value, const EIP3009Nonce& nonce, const string& resourceIdentifier,
+        uint64_t settlementTime, const Hash& authorizationSignatureHash,
+        const Hash& transactionHash, const std::string& fromIpAddress,
+        const std::string& jsonInfo );
 
-    static ptr<PaymentRecord> deserializeFromDbRow(const soci::row& row);
+    static ptr< PaymentRecord > deserializeFromDbRow( const soci::row& row );
 };

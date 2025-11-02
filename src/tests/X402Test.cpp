@@ -4,23 +4,23 @@
 #include "MachinePayCommon.h"
 #include "init/Init.h"
 #include "x402_server/ServerFactory.h"
-#include <boost/test/included/unit_test.hpp> // or <boost/test/unit_test.hpp> if using dynamic link
+#include <boost/test/included/unit_test.hpp>  // or <boost/test/unit_test.hpp> if using dynamic link
 
 #include "x402_client/X402Client.h"
 
 
-#include "MachinePayApp.h"
-#include "../payment/datastructures/PaymentRequirements.h"
 #include "../examples/PaymentExamples.h"
+#include "../payment/datastructures/PaymentRequiredResponse.h"
+#include "../payment/datastructures/PaymentRequirements.h"
+#include "MachinePayApp.h"
 #include "config/ConfigLoader.h"
 #include "config/ConfigManager.h"
 #include "config/subconfigs/ServerConfig.h"
-#include "../payment/datastructures/PaymentRequiredResponse.h"
 #include "examples/PaymentExamples.h"
 #include "url/URLUtils.h"
+#include <curl/curl.h>
 #include <folly/SocketAddress.h>
 #include <proxygen/httpserver/HTTPServer.h>
-#include <curl/curl.h>
 #include <nlohmann/json.hpp>
 
 
@@ -32,10 +32,10 @@ constexpr uint32_t DEFAULT_TEST_PORT = 8080;
 struct X402GlobalFixture {
     X402GlobalFixture() {
         std::vector< std::string > args;
-        args.push_back( "x402test" ); // program name
+        args.push_back( "x402test" );  // program name
         int fake_argc = static_cast< int >( args.size() );
         std::vector< char* > fake_argv;
-        for (auto& s : args) {
+        for ( auto& s : args ) {
             fake_argv.push_back( const_cast< char* >( s.c_str() ) );
         }
         Init::initAllLibs( fake_argc, fake_argv.data() );
@@ -44,8 +44,7 @@ struct X402GlobalFixture {
         boost::unit_test::unit_test_log.set_stream( std::cerr );
     }
 
-    ~X402GlobalFixture() {
-    }
+    ~X402GlobalFixture() {}
 };
 
 BOOST_GLOBAL_FIXTURE( X402GlobalFixture );
@@ -54,32 +53,31 @@ BOOST_GLOBAL_FIXTURE( X402GlobalFixture );
 struct X402ServerFixture {
     X402ServerFixture() {
         try {
-            std::map< std::string, std::string > configMap = {
-                { "CONFIG", "src/tests/configs/basic/machinepay.yml" }
-            };
+            std::map< std::string, std::string > configMap = { { "CONFIG",
+                "src/tests/configs/basic/machinepay.yml" } };
             app_ = MachinePayApp::makeInstance( configMap );
             auto config = app_->configManager()->latestConfig();
-            client = std::make_shared< X402Client >( config->server()->hostName(),
-                config->server()->http()->port() );
+            client = std::make_shared< X402Client >(
+                config->server()->hostName(), config->server()->http()->port() );
 
             srvThread = std::thread( [this] {
-                app_->runUntilExit(); //
+                app_->runUntilExit();  //
             } );
 
-            while (!app_->isStarted()) {
+            while ( !app_->isStarted() ) {
                 spdlog::info( "Waiting for server to start..." );
-                usleep( 1000 * 100 ); // 100ms
-                if (app_->isExited()) {
+                usleep( 1000 * 100 );  // 100ms
+                if ( app_->isExited() ) {
                     BOOST_FAIL( "Server exited unexpectedly during startup." );
                 }
             }
 
 
             spdlog::info( "Test server started on port {}", config->server()->http()->port() );
-        } catch (const std::exception& ex) {
+        } catch ( const std::exception& ex ) {
             printNestedException( ex );
             BOOST_FAIL( "Exception starting test server" );
-        } catch (...) {
+        } catch ( ... ) {
             spdlog::critical( "Unknown error starting test server." );
             BOOST_FAIL( "Exception starting test server" );
         }
@@ -87,9 +85,9 @@ struct X402ServerFixture {
     }
 
     ~X402ServerFixture() {
-        if (app_)
+        if ( app_ )
             app_->stopServer();
-        if (srvThread.joinable())
+        if ( srvThread.joinable() )
             srvThread.join();
     }
 
@@ -106,8 +104,7 @@ struct X402ServerFixture {
 BOOST_FIXTURE_TEST_SUITE( X402Suite, X402ServerFixture )
 
 BOOST_AUTO_TEST_CASE( Returns402WhenNoPaymentHeader ) {
-    auto [headersMap, statusLine, resp] = client->sendRequestAndParseResult(
-        "/posts/1", {}, true );
+    auto [headersMap, statusLine, resp] = client->sendRequestAndParseResult( "/posts/1", {}, true );
 
 
     BOOST_TEST( resp.status == 402 );
@@ -118,7 +115,7 @@ BOOST_AUTO_TEST_CASE( Returns402WhenNoPaymentHeader ) {
 
     try {
         response = PaymentRequiredResponse::fromJson( nlohmann::json::parse( resp.body ) );
-    } catch (const std::exception& ex) {
+    } catch ( const std::exception& ex ) {
         printNestedException( ex );
         BOOST_FAIL( "Failed to parse 402 response body as PaymentRequiredResponse" );
     }
@@ -140,29 +137,24 @@ BOOST_AUTO_TEST_CASE( Returns200WhenPaymentHeaderPresent ) {
     EthPrivateKey privKey( privKeyHex );
 
 
-    auto paymentPayload = PaymentPayload().createDefaultPaymentPayload(
-        privKey,
-        to,
-        value,
-        nonce,
-        "base-sepolia"
-        );
+    auto paymentPayload =
+        PaymentPayload().createDefaultPaymentPayload( privKey, to, value, nonce, "base-sepolia" );
 
     auto [headersMap, statusLine, resp] =
         client->sendRequestWithPayloadAndParseResult( "/posts/1", paymentPayload, true );
 
 
     BOOST_TEST( resp.status == 200 );
-    BOOST_TEST( headersMap.contains("X-PAYMENT-RESPONSE") );
+    BOOST_TEST( headersMap.contains( "X-PAYMENT-RESPONSE" ) );
     auto paymentResponse = headersMap.at( "X-PAYMENT-RESPONSE" );
     BOOST_TEST( resp.body.size() > 0 );
 
     // this should cause exception
-    auto [headersMap2, statusLine2, resp2] = client->sendRequestWithPayloadAndParseResult(
-        "/posts/1", paymentPayload, true );
+    auto [headersMap2, statusLine2, resp2] =
+        client->sendRequestWithPayloadAndParseResult( "/posts/1", paymentPayload, true );
 
     BOOST_TEST( resp2.status == 402 );
-    BOOST_TEST( headersMap2.contains("X-PAYMENT-RESPONSE") );
+    BOOST_TEST( headersMap2.contains( "X-PAYMENT-RESPONSE" ) );
     BOOST_TEST( resp2.body.size() > 0 );
 
 

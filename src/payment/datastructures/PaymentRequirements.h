@@ -23,19 +23,10 @@ using json = nlohmann::json;
 
 class PaymentRequirements {
 public:
-    PaymentRequirements(
-        std::string scheme,
-        std::string network,
-        std::string maxAmountRequired,
-        std::string resource,
-        std::string description,
-        std::string mimeType,
-        std::optional< json > outputSchema,
-        std::string payTo,
-        uint64_t maxTimeoutSeconds,
-        std::string asset,
-        json extra
-        )
+    PaymentRequirements( std::string scheme, std::string network, std::string maxAmountRequired,
+        std::string resource, std::string description, std::string mimeType,
+        std::optional< json > outputSchema, std::string payTo, uint64_t maxTimeoutSeconds,
+        std::string asset, json extra )
         : scheme_( std::move( scheme ) ),
           network_( std::move( network ) ),
           maxAmountRequired_( std::move( maxAmountRequired ) ),
@@ -46,36 +37,24 @@ public:
           payTo_( std::move( payTo ) ),
           maxTimeoutSeconds_( maxTimeoutSeconds ),
           asset_( std::move( asset ) ),
-          extra_( std::move( extra ) ) {
-    };
+          extra_( std::move( extra ) ){};
 
     bool operator==( const PaymentRequirements& other ) const {
-        return scheme_ == other.scheme_ &&
-               network_ == other.network_ &&
-               maxAmountRequired_ == other.maxAmountRequired_ &&
-               resource_ == other.resource_ &&
-               description_ == other.description_ &&
-               mimeType_ == other.mimeType_ &&
-               outputSchema_ == other.outputSchema_ &&
-               payTo_ == other.payTo_ &&
-               maxTimeoutSeconds_ == other.maxTimeoutSeconds_ &&
-               asset_ == other.asset_ &&
+        return scheme_ == other.scheme_ && network_ == other.network_ &&
+               maxAmountRequired_ == other.maxAmountRequired_ && resource_ == other.resource_ &&
+               description_ == other.description_ && mimeType_ == other.mimeType_ &&
+               outputSchema_ == other.outputSchema_ && payTo_ == other.payTo_ &&
+               maxTimeoutSeconds_ == other.maxTimeoutSeconds_ && asset_ == other.asset_ &&
                extra_ == other.extra_;
     }
 
     friend std::ostream& operator<<( std::ostream& os, const PaymentRequirements& p ) {
-        os << "{scheme: " << p.scheme_
-            << ", network: " << p.network_
-            << ", maxAmountRequired: " << p.maxAmountRequired_
-            << ", resource: " << p.resource_
-            << ", description: " << p.description_
-            << ", mimeType: " << p.mimeType_
-            << ", outputSchema: " << ( p.outputSchema_ ? p.outputSchema_->dump() : "null" )
-            << ", payTo: " << p.payTo_
-            << ", maxTimeoutSeconds: " << p.maxTimeoutSeconds_
-            << ", asset: " << p.asset_
-            << ", extra: " << p.extra_.dump()
-            << "}";
+        os << "{scheme: " << p.scheme_ << ", network: " << p.network_
+           << ", maxAmountRequired: " << p.maxAmountRequired_ << ", resource: " << p.resource_
+           << ", description: " << p.description_ << ", mimeType: " << p.mimeType_
+           << ", outputSchema: " << ( p.outputSchema_ ? p.outputSchema_->dump() : "null" )
+           << ", payTo: " << p.payTo_ << ", maxTimeoutSeconds: " << p.maxTimeoutSeconds_
+           << ", asset: " << p.asset_ << ", extra: " << p.extra_.dump() << "}";
         return os;
     }
 
@@ -112,7 +91,7 @@ private:
     std::string payTo_;
     uint64_t maxTimeoutSeconds_;
     std::string asset_;
-    json extra_; // New: object | null
+    json extra_;  // New: object | null
 };
 
 // Add these declarations for ADL:

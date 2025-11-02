@@ -1,70 +1,65 @@
-#include "MachinePayCommon.h"
 #include "URLUtils.h"
+#include "MachinePayCommon.h"
 
+#include <boost/beast/core/detail/base64.hpp>
 #include <boost/locale/encoding.hpp>
 #include <boost/url/decode_view.hpp>
-#include <boost/url/url.hpp>
-#include <boost/url/parse.hpp>
 #include <boost/url/error.hpp>
-#include <boost/beast/core/detail/base64.hpp>
+#include <boost/url/parse.hpp>
+#include <boost/url/url.hpp>
 #include <cstring>
 
 using namespace boost::urls;
 
-std::string URLUtils::getLocationFromUrl(const std::string& urlStr)
-{
+std::string URLUtils::getLocationFromUrl( const std::string& urlStr ) {
     // Parse using Boost.URL
-    boost::system::result<boost::urls::url_view> result = parse_uri(urlStr);
+    boost::system::result< boost::urls::url_view > result = parse_uri( urlStr );
 
-    CHECK_STATE2(result, "Invalid URL: " + urlStr);
+    CHECK_STATE2( result, "Invalid URL: " + urlStr );
 
     url_view u = *result;
     // Return just the path (or "/" if empty)
-    std::string path = u.encoded_path().empty() ? "/" : std::string(u.encoded_path());
+    std::string path = u.encoded_path().empty() ? "/" : std::string( u.encoded_path() );
 
     // Optionally include query string
-    if (!u.encoded_query().empty())
-    {
+    if ( !u.encoded_query().empty() ) {
         path += "?";
         path += u.encoded_query();
     }
 
-    CHECK_STATE2(path.starts_with("/"), "URL path must start with '/': " + path);
-    if (path.size() > 1 && path.back() == '/')
-    {
-        path = path.substr(0, path.size() - 1);
+    CHECK_STATE2( path.starts_with( "/" ), "URL path must start with '/': " + path );
+    if ( path.size() > 1 && path.back() == '/' ) {
+        path = path.substr( 0, path.size() - 1 );
     }
 
     return path;
 }
 
-bool URLUtils::isIpAddress(const std::string& host)
-{
+bool URLUtils::isIpAddress( const std::string& host ) {
     // Try IPv4 first
-    boost::system::result<boost::urls::ipv4_address> v4 = boost::urls::parse_ipv4_address(host);
-    if (v4)
+    boost::system::result< boost::urls::ipv4_address > v4 = boost::urls::parse_ipv4_address( host );
+    if ( v4 )
         return true;
 
     // Try IPv6 (with or without brackets)
     std::string cleanHost = host;
-    if (!cleanHost.empty() && cleanHost.front() == '[' && cleanHost.back() == ']')
-        cleanHost = cleanHost.substr(1, cleanHost.size() - 2);
+    if ( !cleanHost.empty() && cleanHost.front() == '[' && cleanHost.back() == ']' )
+        cleanHost = cleanHost.substr( 1, cleanHost.size() - 2 );
 
-    boost::system::result<boost::urls::ipv6_address> v6 = boost::urls::parse_ipv6_address(cleanHost);
+    boost::system::result< boost::urls::ipv6_address > v6 =
+        boost::urls::parse_ipv6_address( cleanHost );
     return v6.has_value();
 }
 
-bool URLUtils::isDomainName(const std::string& host)
-{
+bool URLUtils::isDomainName( const std::string& host ) {
     using namespace boost::urls;
     using boost::system::result;
 
     // Wrap host in dummy authority so Boost can parse it
     // e.g., "example.com" → "example.com:80"
-    result<authority_view> res = parse_authority(host);
+    result< authority_view > res = parse_authority( host );
 
-    if (!res)
-    {
+    if ( !res ) {
         // Not even a valid authority syntax
         return false;
     }
@@ -75,53 +70,47 @@ bool URLUtils::isDomainName(const std::string& host)
     return ht == host_type::name;
 }
 
-bool URLUtils::decodePath(const std::string& path, std::string& result, std::string& errorMessage)
-{
-    try
-    {
-        if (path.empty())
-        {
+bool URLUtils::decodePath(
+    const std::string& path, std::string& result, std::string& errorMessage ) {
+    try {
+        if ( path.empty() ) {
             errorMessage = "Empty URL path " + path;
             goto error;
         }
 
 
         std::string decodedPath;
-        try
-        {
-            auto decoded = boost::urls::decode_view(path);
-            decodedPath = std::string(decoded.begin(), decoded.end());
-        }
-        catch (const std::exception& e)
-        {
+        try {
+            auto decoded = boost::urls::decode_view( path );
+            decodedPath = std::string( decoded.begin(), decoded.end() );
+        } catch ( const std::exception& e ) {
             errorMessage = "Path contains invalid characters";
-            goto error;;
+            goto error;
+            ;
         }
-        if (decodedPath.empty())
-        {
+        if ( decodedPath.empty() ) {
             errorMessage = "Empty decoded URL path " + path;
             goto error;
         }
-        if (decodedPath.front() != '/')
-        {
+        if ( decodedPath.front() != '/' ) {
             errorMessage = "URL path does not start with '/'";
-            goto error;;;
+            goto error;
+            ;
+            ;
         }
         // Reject traversal attempts (including encoded)
-        if (decodedPath.find("..") != std::string::npos)
-        {
+        if ( decodedPath.find( ".." ) != std::string::npos ) {
             errorMessage = "URL path traversal not allowed";
-            goto error;;
+            goto error;
+            ;
         }
 
 
-        std::wstring wideText = boost::locale::conv::to_utf<wchar_t>(decodedPath, "UTF-8");
+        std::wstring wideText = boost::locale::conv::to_utf< wchar_t >( decodedPath, "UTF-8" );
 
-        for (wchar_t ch : wideText)
-        {
-            auto isValid = iswalnum(ch) || ch == L'/';
-            if (!isValid)
-            {
+        for ( wchar_t ch : wideText ) {
+            auto isValid = iswalnum( ch ) || ch == L'/';
+            if ( !isValid ) {
                 errorMessage = "URL path contains invalid character:" + path;
                 goto error;
             }
@@ -129,14 +118,12 @@ bool URLUtils::decodePath(const std::string& path, std::string& result, std::str
 
         result = decodedPath;
         return true;
-    }
-    catch (std::exception& e)
-    {
+    } catch ( std::exception& e ) {
         errorMessage = e.what();
         goto error;
     }
 
 error:
-    spdlog::error("Error parsing user submitted URL path in X402Processor: {}", errorMessage);
+    spdlog::error( "Error parsing user submitted URL path in X402Processor: {}", errorMessage );
     return false;
 }

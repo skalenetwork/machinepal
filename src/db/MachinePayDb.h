@@ -4,10 +4,10 @@
 #include "payment/datastructures/PaymentPayload.h"
 #include "x402_protocol/HttpError.h"
 
-#include <soci/soci.h>
 #include <soci/connection-pool.h>
-#include <string>
+#include <soci/soci.h>
 #include <memory>
+#include <string>
 
 class EIP712Domain;
 class HttpError;
@@ -22,18 +22,13 @@ class MachinePayApp;
 /**
  * @brief Defines the supported database backend types.
  */
-enum class DbType
-{
-    SQLite,
-    PostgreSQL
-};
+enum class DbType { SQLite, PostgreSQL };
 
 /**
  * @brief Manages database operations for payments using SOCI.
  * This class is now thread-safe due to the use of soci::connection_pool.
  */
-class MachinePayDb
-{
+class MachinePayDb {
 public:
     /**
      * @brief Constructs the PaymentDB and initializes the connection pool.
@@ -41,15 +36,15 @@ public:
      * @param type The database backend to use (SQLite or PostgreSQL).
      * @param connectionInfo For PostgreSQL: the full connection string.
      */
-    MachinePayDb(MachinePayApp& app, DbType type, const std::optional<std::string>& connectionInfo = std::nullopt);
+    MachinePayDb( MachinePayApp& app, DbType type,
+        const std::optional< std::string >& connectionInfo = std::nullopt );
 
-    void saveSettledPayment(const PaymentPayload& payload,
-                            const EIP712Domain& domain,
-                            const ResourceConfig& resource, const OrganizationConfig& organization,
-                            const Hash& transactionHash, const string& ipAddress);
+    void saveSettledPayment( const PaymentPayload& payload, const EIP712Domain& domain,
+        const ResourceConfig& resource, const OrganizationConfig& organization,
+        const Hash& transactionHash, const string& ipAddress );
 
-    bool settledPaymentExists(const ptr<PaymentPayload>& paymentPayload,
-                              const ptr<EIP712Domain>& domain);
+    bool settledPaymentExists(
+        const ptr< PaymentPayload >& paymentPayload, const ptr< EIP712Domain >& domain );
 
     /** Critical properties - should be analyzed in detail during code review
      *
@@ -68,15 +63,15 @@ private:
      * @brief Writes a payment record to the database.
      * This method is thread-safe.
      */
-    void writePayment(const PaymentRecord& record);
+    void writePayment( const PaymentRecord& record );
 
 
     /**
      * @brief Checks if a payment with the given parameters already exists.
      * This method is thread-safe.
      */
-    bool paymentExists(const EthAddress& fromAddress, const EthAddress& assetAddress, const EIP3009Nonce& nonce,
-                       u256 chainId);
+    bool paymentExists( const EthAddress& fromAddress, const EthAddress& assetAddress,
+        const EIP3009Nonce& nonce, u256 chainId );
 
 
     /**
@@ -87,23 +82,23 @@ private:
     // Member variables
     MachinePayApp& app_;
 
-    [[nodiscard]] std::unique_ptr<soci::connection_pool>& pool();
+    [[nodiscard]] std::unique_ptr< soci::connection_pool >& pool();
 
 protected:
     /**
- * @brief Gets the appropriate SOCI backend factory based on the DbType.
- */
-    soci::backend_factory const& getBackend(DbType type);
+     * @brief Gets the appropriate SOCI backend factory based on the DbType.
+     */
+    soci::backend_factory const& getBackend( DbType type );
 
     DbType dbType_;
 
     std::string connectionString_;
 
-    ptr<spdlog::logger> logger_;
+    ptr< spdlog::logger > logger_;
 
 
     /**
      * @brief Thread-safe connection pool.
      */
-    std::unique_ptr<soci::connection_pool> pool_;
+    std::unique_ptr< soci::connection_pool > pool_;
 };

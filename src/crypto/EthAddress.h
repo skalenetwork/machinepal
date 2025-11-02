@@ -1,10 +1,10 @@
 #pragma once
 
+#include <algorithm>
 #include <array>
 #include <cstdint>
-#include <string>
-#include <algorithm>
 #include <span>
+#include <string>
 
 class EthAddress {
 public:

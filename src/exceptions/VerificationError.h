@@ -4,11 +4,8 @@
 #include <string>
 
 
-class VerificationError : public BackendException
-{
+class VerificationError : public BackendException {
 public:
-    explicit VerificationError(const std::string& message)
-        : BackendException("VerificationError", message)
-    {
-    }
+    explicit VerificationError( const std::string& message )
+        : BackendException( "VerificationError", message ) {}
 };

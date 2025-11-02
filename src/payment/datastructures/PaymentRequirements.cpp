@@ -1,5 +1,5 @@
-#include "MachinePayCommon.h"
 #include "PaymentRequirements.h"
+#include "MachinePayCommon.h"
 #include "config/JsonUtils.h"
 #include "config/subconfigs/NetworkConfig.h"
 #include "config/subconfigs/OrganizationConfig.h"
@@ -25,27 +25,16 @@ std::shared_ptr< PaymentRequirements > PaymentRequirements::fromJson( const json
     auto resource = JsonUtils::mustContainString( j, "resource" );
     auto description = JsonUtils::mustContainString( j, "description" );
     auto mimeType = JsonUtils::mustContainString( j, "mimeType" );
-    std::optional< json > outputSchema = ( j.contains( "outputSchema" ) && !j.at( "outputSchema" ).
-                                           is_null() ) ?
-                                             std::optional< json >( j.at( "outputSchema" ) ) :
-                                             std::nullopt;
+    std::optional< json > outputSchema =
+        ( j.contains( "outputSchema" ) && !j.at( "outputSchema" ).is_null() ) ?
+            std::optional< json >( j.at( "outputSchema" ) ) :
+            std::nullopt;
     auto payTo = JsonUtils::mustContainString( j, "payTo" );
     int maxTimeoutSeconds = j.at( "maxTimeoutSeconds" ).get< int >();
     std::string asset = JsonUtils::mustContainString( j, "asset" );
     json extra = j.at( "extra" );
-    auto p = std::make_shared< PaymentRequirements >(
-        scheme,
-        network,
-        maxAmountRequired,
-        resource,
-        description,
-        mimeType,
-        outputSchema,
-        payTo,
-        maxTimeoutSeconds,
-        asset,
-        extra
-        );
+    auto p = std::make_shared< PaymentRequirements >( scheme, network, maxAmountRequired, resource,
+        description, mimeType, outputSchema, payTo, maxTimeoutSeconds, asset, extra );
     return p;
 }
 
@@ -61,11 +50,8 @@ json PaymentRequirements::toJson() const {
     j["maxTimeoutSeconds"] = maxTimeoutSeconds_;
     j["asset"] = asset_;
     j["extra"] = extra_;
-    if (outputSchema_.has_value()) {
+    if ( outputSchema_.has_value() ) {
         j["outputSchema"] = outputSchema_.value();
     }
     return j;
 }
-
-
-

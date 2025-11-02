@@ -1,40 +1,32 @@
 #pragma once
-#include <string>
-#include <boost/multiprecision/cpp_int.hpp>
+#include "EIP3009Nonce.h"
+#include "EIP712Domain.h"
+#include "EIP712Signature.h"
+#include "EthAddress.h"
 #include "EthPrivateKey.h"
 #include "EthPublicKey.h"
-#include "EthAddress.h"
-#include "EIP712Signature.h"
-#include "EIP712Domain.h"
-#include "EIP3009Nonce.h"
+#include <boost/multiprecision/cpp_int.hpp>
+#include <string>
 
 class HttpError;
 class EIP3009ValidityTime;
 class EIP3009Value;
 
 
-class EIP3009Authorization
-{
+class EIP3009Authorization {
 public:
     // Signs an EIP-3009 authorization message
-    [[nodiscard]] static EIP712Signature signAuthorization(const EIP712Domain& domain,
-                                                           const EthAddress& from,
-                                                           const EthAddress& to,
-                                                           const EIP3009Value& value,
-                                                           const EIP3009ValidityTime& validAfter,
-                                                           const EIP3009ValidityTime& validBefore,
-                                                           const EIP3009Nonce& nonce,
-                                                           const EthPrivateKey& privateKey);
+    [[nodiscard]] static EIP712Signature signAuthorization( const EIP712Domain& domain,
+        const EthAddress& from, const EthAddress& to, const EIP3009Value& value,
+        const EIP3009ValidityTime& validAfter, const EIP3009ValidityTime& validBefore,
+        const EIP3009Nonce& nonce, const EthPrivateKey& privateKey );
 
     // Verifies an EIP-3009 authorization signature
-    [[nodiscard]] static std::optional<HttpError> verifyAuthorizationSignature(const EIP712Domain& domain,
-                                                                               const EthAddress& from,
-                                                                               const EthAddress& to,
-                                                                               const EIP3009Value& value,
-                                                                               const EIP3009ValidityTime& validAfter,
-                                                                               const EIP3009ValidityTime& validBefore,
-                                                                               const EIP3009Nonce& nonce,
-                                                                               const EIP712Signature& signature);
+    [[nodiscard]] static std::optional< HttpError > verifyAuthorizationSignature(
+        const EIP712Domain& domain, const EthAddress& from, const EthAddress& to,
+        const EIP3009Value& value, const EIP3009ValidityTime& validAfter,
+        const EIP3009ValidityTime& validBefore, const EIP3009Nonce& nonce,
+        const EIP712Signature& signature );
 
     static constexpr const char* PERMIT_TYPE_HASH =
         "6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9";

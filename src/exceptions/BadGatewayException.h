@@ -3,11 +3,8 @@
 #include "BackendException.h"
 #include <string>
 
-class BadGatewayException : public BackendException
-{
+class BadGatewayException : public BackendException {
 public:
-    explicit BadGatewayException(const std::string& message)
-        : BackendException("BadGatewayException", message)
-    {
-    }
+    explicit BadGatewayException( const std::string& message )
+        : BackendException( "BadGatewayException", message ) {}
 };
