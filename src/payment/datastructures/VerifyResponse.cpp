@@ -50,12 +50,6 @@ json VerifyResponse::toJson() const {
 }
 
 
-ptr< VerifyResponse > VerifyResponse::getErrorVerifyResponse(
-    HttpError& error, const std::string& payer ) {
-    auto result = make_shared< VerifyResponse >(
-        false, error.message(), payer, std::nullopt );
-    return result;
-}
 
 
 VerifyResponse VerifyResponse::fromJsonString( std::string const& jsonString ) {

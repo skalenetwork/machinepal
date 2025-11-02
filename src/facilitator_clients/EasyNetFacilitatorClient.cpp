@@ -3,6 +3,7 @@
 #include "crypto/Encoding.h"
 #include "payment/datastructures/PaymentRequirements.h"
 #include "payment/datastructures/SettlementResponse.h"
+#include "payment/datastructures/VerifyResponse.h"
 
 #include <limits>  // for numeric_limits<u256>::max()
 
@@ -59,13 +60,22 @@ nlohmann::json EasyNetFacilitatorClient::verify( const nlohmann::json& paymentRe
         auto payload =
             verifyUnsafe( paymentPayloadJson, paymentRequirementsJson, fromWalletAddress, error );
         if (error) {
-            return nlohmann::json{ { "valid", false }, { "invalidReason", error.value() },
-                                   { "payer", fromWalletAddress.toDbString() } };
+            VerifyResponse errorResponse( false,
+                error.value(), fromWalletAddress.toDbString(),
+                std::nullopt );
+
+            return errorResponse.toJson();
         } else {
-            return nlohmann::json{ { "valid", true }, { "from", fromWalletAddress.toDbString() } };
+            VerifyResponse verifyResponse( true,
+                            std::nullopt, fromWalletAddress.toDbString(),
+                            std::nullopt );
+            return verifyResponse.toJson();
         }
     } catch (const std::exception& e) {
-        return nlohmann::json{ { "valid", false }, { "invalidReason", e.what() } };
+        VerifyResponse errorResponse( false,
+                e.what(), "",
+                std::nullopt );
+        return errorResponse.toJson();
     }
 }
 

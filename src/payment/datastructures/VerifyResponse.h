@@ -19,9 +19,6 @@ public:
     bool operator==( const VerifyResponse& other ) const;
     // JSON serialization
     json toJson() const;
-    // Factory for error response
-    static ptr< VerifyResponse > getErrorVerifyResponse(
-        HttpError& error, const std::string& payer );
     // JSON deserialization
     static VerifyResponse fromJsonString( const std::string& jsonString );
     // Return base64 encoding of original JSON string captured at construction
