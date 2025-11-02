@@ -82,9 +82,10 @@ nlohmann::json EasyNetFacilitatorClient::settle(
             verifyUnsafe( paymentPayloadJson, paymentRequirementsJson, fromWalletAddress, error );
 
         if (error) {
-            return nlohmann::json{ { "valid", false }, { "invalidReason", error.value() },
-                                   { "payer", fromWalletAddress.toDbString() },
-                                   { "transaction", "" } };
+            SettlementResponse response(false , error.value(),
+                "", "",
+                fromWalletAddress.toHex( PREFIX_0x ), std::nullopt );
+            return response.toJson();
         }
 
         EthAddress toWalletAddress = paymentPayload->payload()->authorization()->to();
@@ -96,17 +97,20 @@ nlohmann::json EasyNetFacilitatorClient::settle(
             fromWalletAddress, toWalletAddress, assetWalletAddress, transferValue );
 
         if (result == EasyNetDb::TransferResult::TransferSuccess) {
-            return nlohmann::json{
-                { "valid", true },
-                { "from", fromWalletAddress.toDbString() },
-                { "transaction", "" }
-            };
+            SettlementResponse response(true , std::nullopt,
+                  "", "",
+                  fromWalletAddress.toHex( PREFIX_0x ), std::nullopt );
+            return response.toJson();
         } else {
-            return nlohmann::json{ { "valid", false }, { "from", fromWalletAddress.toDbString() },
-                { "transaction", "" }, { "status", "InsufficientFunds" } };
+            SettlementResponse response(false , error.value(),
+                "", "",
+                fromWalletAddress.toHex( PREFIX_0x ), std::nullopt );
+                return response.toJson();
         }
     } catch (const std::exception& e) {
-        return nlohmann::json{ { "settled", false }, { "status", "Exception" },
-            { "message", e.what() } };
+        SettlementResponse response(false , e.what(),
+            "", "",
+            "", std::nullopt );
+        return response.toJson();
     }
 }
