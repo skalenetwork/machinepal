@@ -6,6 +6,7 @@
 #include "payment/datastructures/VerifyResponse.h"
 
 #include <limits>  // for numeric_limits<u256>::max()
+#include <shared_mutex>  // added for std::shared_mutex, std::shared_lock, std::unique_lock
 
 EasyNetFacilitatorClient::EasyNetFacilitatorClient(
     EasyNetDb& database, EthAddress& assetAddress, u256& chainId )
@@ -36,7 +37,7 @@ ptr< PaymentPayload > EasyNetFacilitatorClient::verifyUnsafe(
     auto receiverBalanceOpt = db_.getBalance( toWalletAddress, assetWalletAddress );
     if (receiverBalanceOpt.has_value()) {
         const u256 maxVal = ( std::numeric_limits< u256 >::max )();
-        u256 receiverBalance = receiverBalanceOpt.value();
+        const u256 receiverBalance = receiverBalanceOpt.value();
         if (transferValue.value() > maxVal - receiverBalance) {
             error = "Overflow: Receiver balance would overflow 256-bit limit";
             return paymentPayload;
@@ -92,8 +93,9 @@ nlohmann::json EasyNetFacilitatorClient::settle(
             verifyUnsafe( paymentPayloadJson, paymentRequirementsJson, fromWalletAddress, error );
 
         if (error) {
-            SettlementResponse response(false , error.value(),
-                "", "",
+            // Constructor order: success, errorReason, transaction, network, payer, originalJson
+            SettlementResponse response( false, error.value(),
+                "", "", // transaction, network (none here)
                 fromWalletAddress.toHex( PREFIX_0x ), std::nullopt );
             return response.toJson();
         }
@@ -107,19 +109,20 @@ nlohmann::json EasyNetFacilitatorClient::settle(
             fromWalletAddress, toWalletAddress, assetWalletAddress, transferValue );
 
         if (result == EasyNetDb::TransferResult::TransferSuccess) {
-            SettlementResponse response(true , std::nullopt,
-                  "", "",
+            SettlementResponse response( true, std::nullopt,
+                  "", "", // transaction, network (empty placeholders)
                   fromWalletAddress.toHex( PREFIX_0x ), std::nullopt );
             return response.toJson();
         } else {
-            SettlementResponse response(false , error.value(),
-                "", "",
+            // Insufficient funds explicit error message
+            SettlementResponse response( false, std::string("InsufficientFunds"),
+                "", "", // transaction, network
                 fromWalletAddress.toHex( PREFIX_0x ), std::nullopt );
-                return response.toJson();
+            return response.toJson();
         }
     } catch (const std::exception& e) {
-        SettlementResponse response(false , e.what(),
-            "", "",
+        SettlementResponse response( false, std::string(e.what()),
+            "", "", // transaction, network
             "", std::nullopt );
         return response.toJson();
     }

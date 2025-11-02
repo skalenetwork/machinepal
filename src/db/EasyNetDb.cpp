@@ -8,7 +8,6 @@ EasyNetDb::EasyNetDb(
     MachinePayApp& app, DbType type, const std::optional< std::string >& connectionInfo )
     : MachinePayDb( app, type, connectionInfo ) {
     try {
-        // Create a single, temporary session just for schema initialization.
         soci::backend_factory const& backend = getBackend( dbType_ );
         soci::session sql( backend, connectionString_ );
 
@@ -16,46 +15,101 @@ EasyNetDb::EasyNetDb(
             sql << "PRAGMA journal_mode=WAL";
         }
 
-        bool tableExisted = false;
+        bool stateTableExisted = false;
+        bool transactionsTableExisted = false;
 
-        // --- Step 1: Check if the state table already exists ---
+        // --- Check if the state table already exists ---
         if ( dbType_ == DbType::SQLite ) {
             int count = 0;
-            sql << "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='state'",
-                soci::into( count );
-            tableExisted = ( count > 0 );
-        } else if ( dbType_ == DbType::PostgreSQL ) {
-            std::string regclassResult;  // will be empty if NULL
-            soci::indicator ind = soci::i_ok;
-            sql << "SELECT to_regclass('public.state')", soci::into( regclassResult, ind );
-            tableExisted = ( ind != soci::i_null );
+            sql << "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='state'", soci::into( count );
+            stateTableExisted = ( count > 0 );
+            int tcount = 0;
+            sql << "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='transactions'", soci::into( tcount );
+            transactionsTableExisted = ( tcount > 0 );
+        }  else if ( dbType_ == DbType::PostgreSQL ) {
+            std::string regclassResultState;  // will be empty if NULL
+            soci::indicator indState = soci::i_ok;
+            sql << "SELECT to_regclass('public.state')", soci::into( regclassResultState, indState );
+            stateTableExisted = ( indState != soci::i_null && !regclassResultState.empty() );
+            std::string regclassResultTx;  // will be empty if NULL
+            soci::indicator indTx = soci::i_ok;
+            sql << "SELECT to_regclass('public.transactions')", soci::into( regclassResultTx, indTx );
+            transactionsTableExisted = ( indTx != soci::i_null && !regclassResultTx.empty() );
         }
 
-        // --- Step 2: Create table if needed ---
+
+        // --- Create state table if needed ---
         if ( dbType_ == DbType::SQLite ) {
             sql << "CREATE TABLE IF NOT EXISTS state ("
-                   "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                   "id INTEGER PRIMARY KEY AUTOINCREMENT," // id only in sqlite flavor
                    "walletAddress TEXT NOT NULL,"
                    "assetAddress TEXT NOT NULL,"
-                   "value TEXT NOT NULL"
-                   ")";  // no extra )
+                   "value TEXT NOT NULL" \
+                   ")";
         } else if ( dbType_ == DbType::PostgreSQL ) {
             sql << "CREATE TABLE IF NOT EXISTS state ("
-                   "walletAddress TEXT NOT NULL,"
-                   "assetAddress TEXT NOT NULL,"
-                   "value TEXT NOT NULL)";
+                   "walletAddress TEXT NOT NULL,"\
+                   "assetAddress TEXT NOT NULL,"\
+                   "value TEXT NOT NULL"\
+                   ")";
         }
 
-        // --- Step 3: Indices ---
-        sql << "CREATE INDEX IF NOT EXISTS idx_state_walletaddress ON state(walletAddress)";
-        sql << "CREATE INDEX IF NOT EXISTS idx_state_value ON state(value)";  // added index by
-                                                                              // value
+        // --- Create transactions table if needed ---
+        if ( dbType_ == DbType::SQLite ) {
+            sql << "CREATE TABLE IF NOT EXISTS transactions ("
+                   "id INTEGER PRIMARY KEY AUTOINCREMENT,"\
+                   "organizationName TEXT NOT NULL,"\
+                   "chainId TEXT NOT NULL,"\
+                   "fromAddress TEXT NOT NULL,"\
+                   "toAddress TEXT NOT NULL,"\
+                   "assetAddress TEXT NOT NULL,"\
+                   "value TEXT NOT NULL,"\
+                   "nonce TEXT NOT NULL,"\
+                   "resourceLocation TEXT NOT NULL,"\
+                   "settlementTime INTEGER NOT NULL,"\
+                   "transactionHash TEXT NOT NULL,"\
+                   "fromIpAddress TEXT NOT NULL,"\
+                   "jsonInfo TEXT"\
+                   ")";
+        } else if ( dbType_ == DbType::PostgreSQL ) {
+            sql << "CREATE TABLE IF NOT EXISTS transactions ("
+                   "id SERIAL PRIMARY KEY,"\
+                   "organizationName TEXT NOT NULL,"\
+                   "chainId TEXT NOT NULL,"\
+                   "fromAddress TEXT NOT NULL,"\
+                   "toAddress TEXT NOT NULL,"\
+                   "assetAddress TEXT NOT NULL,"\
+                   "value TEXT NOT NULL,"\
+                   "nonce TEXT NOT NULL,"\
+                   "resourceLocation TEXT NOT NULL,"\
+                   "settlementTime INTEGER NOT NULL,"
+                   "transactionHash TEXT NOT NULL,"\
+                   "fromIpAddress TEXT NOT NULL,"\
+                   "jsonInfo TEXT"\
+                   ")";
+        }
 
-        // --- Step 4: Log based on our check ---
-        if ( !tableExisted ) {
+        // --- Indices for state table ---
+        sql << "CREATE INDEX IF NOT EXISTS idx_state_walletaddress ON state(walletAddress)";
+        sql << "CREATE INDEX IF NOT EXISTS idx_state_value ON state(value)";
+
+        // --- Indices for transactions table (small performance improvement) ---
+        sql << "CREATE INDEX IF NOT EXISTS idx_transactions_fromAddress ON transactions(fromAddress)";
+        sql << "CREATE INDEX IF NOT EXISTS idx_transactions_transactionHash ON transactions(transactionHash)";
+        sql << "CREATE INDEX IF NOT EXISTS idx_transactions_nonce ON transactions(nonce)";
+        sql << "CREATE INDEX IF NOT EXISTS idx_settlement_time ON transactions(settlementTime)";
+
+
+
+        if ( !stateTableExisted ) {
             logger_->info( "New 'state' table created and schema initialized." );
         } else {
             logger_->info( "Database schema verified, 'state' table already exists." );
+        }
+        if ( !transactionsTableExisted ) {
+            logger_->info( "New 'transactions' table created and schema initialized." );
+        } else {
+            logger_->info( "Database schema verified, 'transactions' table already exists." );
         }
     } catch ( std::exception& e ) {
         RETHROW_NESTED2( "Failed to ensure schema " + std::string( e.what() ) );
@@ -130,8 +184,7 @@ EasyNetDb::TransferResult EasyNetDb::transferValueUnsafe( const EthAddress& from
         // 1. Fetch sender balance
         std::string senderBalanceValueStringFromDatabase;
         soci::indicator senderBalanceIndicator = soci::i_ok;
-        databaseSession << "SELECT value FROM state WHERE walletAddress = :walletAddress AND "
-                           "assetAddress = :assetAddress",
+        databaseSession << "SELECT value FROM state WHERE walletAddress = :walletAddress AND assetAddress = :assetAddress",
             soci::into( senderBalanceValueStringFromDatabase, senderBalanceIndicator ),
             soci::use( fromWalletAddressDatabaseString, "walletAddress" ),
             soci::use( assetContractAddressDatabaseString, "assetAddress" );
@@ -160,8 +213,7 @@ EasyNetDb::TransferResult EasyNetDb::transferValueUnsafe( const EthAddress& from
         // 2. Fetch receiver balance (may be absent)
         std::string receiverBalanceValueStringFromDatabase;
         soci::indicator receiverBalanceIndicator = soci::i_ok;
-        databaseSession << "SELECT value FROM state WHERE walletAddress = :walletAddress AND "
-                           "assetAddress = :assetAddress",
+        databaseSession << "SELECT value FROM state WHERE walletAddress = :walletAddress AND assetAddress = :assetAddress",
             soci::into( receiverBalanceValueStringFromDatabase, receiverBalanceIndicator ),
             soci::use( toWalletAddressDatabaseString, "walletAddress" ),
             soci::use( assetContractAddressDatabaseString, "assetAddress" );
@@ -200,21 +252,18 @@ EasyNetDb::TransferResult EasyNetDb::transferValueUnsafe( const EthAddress& from
             Encoding::u256ToDecimal( receiverUpdatedBalanceValueAfterTransfer );
 
         // 4. Persist changes
-        databaseSession << "UPDATE state SET value = :value WHERE walletAddress = :walletAddress "
-                           "AND assetAddress = :assetAddress",
+        databaseSession << "UPDATE state SET value = :value WHERE walletAddress = :walletAddress AND assetAddress = :assetAddress",
             soci::use( senderUpdatedBalanceDecimalString, "value" ),
             soci::use( fromWalletAddressDatabaseString, "walletAddress" ),
             soci::use( assetContractAddressDatabaseString, "assetAddress" );
 
         if ( receiverStateRowExists ) {
-            databaseSession << "UPDATE state SET value = :value WHERE walletAddress = "
-                               ":walletAddress AND assetAddress = :assetAddress",
+            databaseSession << "UPDATE state SET value = :value WHERE walletAddress = :walletAddress AND assetAddress = :assetAddress",
                 soci::use( receiverUpdatedBalanceDecimalString, "value" ),
                 soci::use( toWalletAddressDatabaseString, "walletAddress" ),
                 soci::use( assetContractAddressDatabaseString, "assetAddress" );
         } else {
-            databaseSession << "INSERT INTO state (walletAddress, assetAddress, value) VALUES "
-                               "(:walletAddress, :assetAddress, :value)",
+            databaseSession << "INSERT INTO state (walletAddress, assetAddress, value) VALUES (:walletAddress, :assetAddress, :value)",
                 soci::use( toWalletAddressDatabaseString, "walletAddress" ),
                 soci::use( assetContractAddressDatabaseString, "assetAddress" ),
                 soci::use( receiverUpdatedBalanceDecimalString, "value" );
@@ -248,8 +297,7 @@ void EasyNetDb::fundUserWalletWithFundsIfNewWalletUnsafe(
         // Check if the wallet+asset state row already exists.
         std::string existingValueStringFromDatabase;
         soci::indicator existingValueIndicator = soci::i_ok;
-        databaseSession << "SELECT value FROM state WHERE walletAddress = :walletAddress AND "
-                           "assetAddress = :assetAddress",
+        databaseSession << "SELECT value FROM state WHERE walletAddress = :walletAddress AND assetAddress = :assetAddress",
             soci::into( existingValueStringFromDatabase, existingValueIndicator ),
             soci::use( walletAddressDatabaseString, "walletAddress" ),
             soci::use( assetContractAddressDatabaseString, "assetAddress" );
@@ -297,8 +345,7 @@ std::optional< u256 > EasyNetDb::getBalance(
 
         std::string balanceValueStringFromDatabase;
         soci::indicator balanceIndicator = soci::i_ok;
-        databaseSession << "SELECT value FROM state WHERE walletAddress = :walletAddress AND "
-                           "assetAddress = :assetAddress",
+        databaseSession << "SELECT value FROM state WHERE walletAddress = :walletAddress AND assetAddress = :assetAddress",
             soci::into( balanceValueStringFromDatabase, balanceIndicator ),
             soci::use( walletAddressDatabaseString, "walletAddress" ),
             soci::use( assetContractAddressDatabaseString, "assetAddress" );
