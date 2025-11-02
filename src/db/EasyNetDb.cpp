@@ -257,3 +257,27 @@ void EasyNetDb::fundUserWalletWithFundsIfNewWallet(const EthAddress &walletAddre
         RETHROW_NESTED2("Failed to fund user wallet: " + std::string(e.what()));
     }
 }
+
+std::optional<u256> EasyNetDb::getBalance(const EthAddress &walletAddress, const EthAddress &assetAddress) const {
+    std::shared_lock<std::shared_mutex> stateMutexSharedLock(stateMutex_); // shared read lock
+    try {
+        soci::session databaseSession(*pool_);
+        std::string walletAddressDatabaseString = walletAddress.toDbString();
+        std::string assetContractAddressDatabaseString = assetAddress.toDbString();
+
+        std::string balanceValueStringFromDatabase;
+        soci::indicator balanceIndicator = soci::i_ok;
+        databaseSession << "SELECT value FROM state WHERE walletAddress = :walletAddress AND assetAddress = :assetAddress",
+            soci::into(balanceValueStringFromDatabase, balanceIndicator),
+            soci::use(walletAddressDatabaseString, "walletAddress"),
+            soci::use(assetContractAddressDatabaseString, "assetAddress");
+
+        if (balanceIndicator == soci::i_null || balanceValueStringFromDatabase.empty()) {
+            return std::nullopt; // no row
+        }
+        u256 currentBalanceValue = Encoding::u256FromHexOrDecimal(balanceValueStringFromDatabase);
+        return currentBalanceValue;
+    } catch (std::exception &e) {
+        RETHROW_NESTED2("Failed to read balance: " + std::string(e.what()));
+    }
+}

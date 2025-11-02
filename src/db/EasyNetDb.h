@@ -22,6 +22,9 @@ public:
     // Funds a wallet with initial tokens if it does not yet exist for the given asset.
     // Initial amount: 1,000,000,000 * 10^18 (1e27) token units.
     void fundUserWalletWithFundsIfNewWallet(const EthAddress &walletAddress, const EthAddress &assetAddress);
+
+    // Read-only balance query. Returns nullopt if wallet/asset pair does not exist.
+    std::optional<u256> getBalance(const EthAddress &walletAddress, const EthAddress &assetAddress) const;
 private:
     mutable std::shared_mutex stateMutex_; // protects state table operations
 };
