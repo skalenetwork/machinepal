@@ -6,112 +6,99 @@
 
 #include <limits> // for numeric_limits<u256>::max()
 
-EasyNetFacilitatorClient::EasyNetFacilitatorClient(EasyNetDb &db, EthAddress assetAddress,
-                                                   u256 chainId)
-    : db_(db),
-      asetAddress_(std::move(assetAddress)),
-      chainId_(chainId_) {
+EasyNetFacilitatorClient::EasyNetFacilitatorClient(EasyNetDb &database, EthAddress& assetAddress, u256& chainId)
+    : db_(database),
+      assetAddress_(assetAddress),
+      chainId_(chainId) {
 }
 
-
-EthAddress EasyNetFacilitatorClient::getAssetAddress(const nlohmann::json &paymentReqs) const {
-    auto paymentRequirements = PaymentRequirements::fromJson(paymentReqs);
-    return EthAddress::parseFlexible(paymentRequirements->asset());
-}
-
-ptr<PaymentPayload>  EasyNetFacilitatorClient::verifyCore(const nlohmann::json &paymentPayloadJson, EthAddress &fromAddress, optional<string> &error) const
+ptr<PaymentPayload> EasyNetFacilitatorClient::verifyCore(
+    const nlohmann::json &paymentPayloadJson,
+    const nlohmann::json &paymentRequirementsJson,
+    EthAddress &fromWalletAddress,
+    optional<string> &error) const
 {
     auto paymentPayload = PaymentPayload::fromJson(paymentPayloadJson);
-    auto paymentsRequirements = PaymentRequirements::fromJson(paymentReqs);
+    auto paymentRequirements = PaymentRequirements::fromJson(paymentRequirementsJson);
 
-    fromAddress = paymentPayload->payload()->authorization()->from();
-    EthAddress toAddress = paymentPayload->payload()->authorization()->to();
-    EthAddress assetAddress = paymentsRequirements.assetAddress();
-    EIP3009Value amountValue = paymentPayload->payload()->authorization()->value();
-
-    SettlementResponse response = SettlementResponse::createValidResponse(
-        fromAddress, toAddress, assetAddress, amountValue);
+    fromWalletAddress = paymentPayload->payload()->authorization()->from();
+    EthAddress toWalletAddress = paymentPayload->payload()->authorization()->to();
+    EthAddress assetWalletAddress = EthAddress::parseFlexible(paymentRequirements->asset());
+    EIP3009Value transferValue = paymentPayload->payload()->authorization()->value();
 
     u256 currentBalance = 1000000000 * u256(1000000000000000000ULL); // 1e27 initial funding for new wallets
-    auto balanceOpt = db_.getBalance(fromAddress, assetAddress);
-    if (balanceOpt.has_value()) {
-        currentBalance = balanceOpt.value();
+    auto senderBalanceOpt = db_.getBalance(fromWalletAddress, assetWalletAddress);
+    if (senderBalanceOpt.has_value()) {
+        currentBalance = senderBalanceOpt.value();
     }
-    // Overflow check on receiver side (if we can read it) purely informational
 
-    auto receiverBalanceOpt = db_.getBalance(toAddress, assetAddress);
+    // Overflow check on receiver side (if we can read it) purely informational
+    auto receiverBalanceOpt = db_.getBalance(toWalletAddress, assetWalletAddress);
     if (receiverBalanceOpt.has_value()) {
         const u256 maxVal = (std::numeric_limits<u256>::max)();
-        u256 receiverBal = receiverBalanceOpt.value();
-        if (requested > maxVal - receiverBal) {
-            error = "Overflow:Receiver balance would overflow 256-bit limit";
+        u256 receiverBalance = receiverBalanceOpt.value();
+        if (transferValue.value() > maxVal - receiverBalance) {
+            error = "Overflow: Receiver balance would overflow 256-bit limit";
             return paymentPayload;
         }
     }
 
-    if (requested > currentBalance) {
-        error = "InsufficientFunds : Balance lower than requested transfer amount";
+    if (transferValue.value() > currentBalance) {
+        error = "InsufficientFunds: Balance lower than requested transfer amount";
         return paymentPayload;
     }
 
     return paymentPayload;
 }
 
-nlohmann::json EasyNetFacilitatorClient::verify(const nlohmann::json &paymentRequirementsJson,
-                                                const nlohmann::json &paymentPayloadJson) const {
+nlohmann::json EasyNetFacilitatorClient::verify(
+    const nlohmann::json &paymentRequirementsJson,
+    const nlohmann::json &paymentPayloadJson) const {
     try {
-        EthAddress fromAddress;
+        EthAddress fromWalletAddress;
         optional<string> error;
-        verifyCore(paymentPayloadJson, fromAddress, error);
+        auto payload = verifyCore(paymentPayloadJson, paymentRequirementsJson, fromWalletAddress, error);
         if (error) {
             return nlohmann::json{{"valid", false},
                                   {"invalidReason", error.value()},
-                                  {"payer", fromAddress.toDbString()}};
+                                  {"payer", fromWalletAddress.toDbString()}};
         } else {
-            return nlohmann::json{
-                {"valid", true},
-                {"from", fromAddress.toDbString()}};
+            return nlohmann::json{{"valid", true},
+                                  {"from", fromWalletAddress.toDbString()}};
         }
-    } catch ( const std::exception & e) {
+    } catch (const std::exception &e) {
         return nlohmann::json{{"valid", false}, {"invalidReason", e.what()}};
     }
 }
 
-nlohmann::json EasyNetFacilitatorClient::settle(const nlohmann::json &paymentInstruction,
-                                                const nlohmann::json &paymentPayload) const {
-
+nlohmann::json EasyNetFacilitatorClient::settle(
+    const nlohmann::json &paymentRequirementsJson,
+    const nlohmann::json &paymentPayloadJson) const {
     try {
-
-        EthAddress fromAddress;
+        EthAddress fromWalletAddress;
         optional<string> error;
-        verifyCore(paymentPayloadJson, fromAddress, error);
-
-
-        EthAddress fromAddress = parseAddressFromJson(paymentPayload, "from");
-        EthAddress toAddress = parseAddressFromJson(paymentPayload, "to");
-        EthAddress assetAddress = getAssetAddress(paymentInstruction, paymentPayload);
-
-        EIP3009Value amountValue;
-
-        amountValue = EIP3009Value::fromHexOrDecimal(paymentPayload["amount"].get<std::string>());
+        auto paymentPayload = verifyCore(paymentPayloadJson, paymentRequirementsJson, fromWalletAddress, error);
+        EthAddress toWalletAddress = paymentPayload->payload()->authorization()->to();
+        EthAddress assetWalletAddress = EthAddress::parseFlexible(PaymentRequirements::fromJson(paymentRequirementsJson)->asset());
+        EIP3009Value transferValue = paymentPayload->payload()->authorization()->value();
 
         // Optionally auto-fund sender if new (development convenience)
-        db_.fundUserWalletWithFundsIfNewWallet(fromAddress, assetAddress);
-        auto balanceBeforeOpt = db_.getBalance(fromAddress, assetAddress);
+        db_.fundUserWalletWithFundsIfNewWallet(fromWalletAddress, assetWalletAddress);
+        auto balanceBeforeOpt = db_.getBalance(fromWalletAddress, assetWalletAddress);
         u256 balanceBefore = balanceBeforeOpt.value_or(0);
 
-        auto result = db_.transferValue(fromAddress, toAddress, assetAddress, amountValue);
+        auto result = db_.transferValue(fromWalletAddress, toWalletAddress, assetWalletAddress, transferValue);
 
         if (result == EasyNetDb::TransferResult::TransferSuccess) {
-            auto balanceAfterOpt = db_.getBalance(fromAddress, assetAddress);
+            auto balanceAfterOpt = db_.getBalance(fromWalletAddress, assetWalletAddress);
             u256 balanceAfter = balanceAfterOpt.value_or(0);
             return nlohmann::json{
                 {"settled", true},
                 {"status", "TransferSuccess"},
-                {"from", fromAddress.toDbString()},
-                {"to", toAddress.toDbString()},
-                {"asset", assetAddress.toDbString()},
-                {"amount", amountValue.toDbString()},
+                {"from", fromWalletAddress.toDbString()},
+                {"to", toWalletAddress.toDbString()},
+                {"asset", assetWalletAddress.toDbString()},
+                {"amount", transferValue.toDbString()},
                 {"balanceBefore", Encoding::u256ToDecimal(balanceBefore)},
                 {"balanceAfter", Encoding::u256ToDecimal(balanceAfter)}
             };
@@ -120,10 +107,10 @@ nlohmann::json EasyNetFacilitatorClient::settle(const nlohmann::json &paymentIns
         return nlohmann::json{
             {"settled", false},
             {"status", "InsufficientFunds"},
-            {"from", fromAddress.toDbString()},
-            {"to", toAddress.toDbString()},
-            {"asset", assetAddress.toDbString()},
-            {"amount", amountValue.toDbString()},
+            {"from", fromWalletAddress.toDbString()},
+            {"to", toWalletAddress.toDbString()},
+            {"asset", assetWalletAddress.toDbString()},
+            {"amount", transferValue.toDbString()},
             {"balanceBefore", Encoding::u256ToDecimal(balanceBefore)}
         };
     } catch (const std::exception &e) {

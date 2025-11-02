@@ -15,8 +15,10 @@ class EasyNetFacilitatorClient : public FacilitatorClient {
 public:
     explicit EasyNetFacilitatorClient(EasyNetDb &db, EthAddress &assetAddress,
         u256 &chainId);
+    ptr<PaymentPayload> verifyCore(const nlohmann::json &paymentPayloadJson,
+                                   const nlohmann::json &paymentRequirementsJson,
+                                   EthAddress &fromWalletAddress, optional<string> &error) const;
 
-    ptr<PaymentPayload> verifyCore(const nlohmann::json &paymentPayloadJson, EthAddress &fromAddress, optional<string> &error) const;
     nlohmann::json verify(const nlohmann::json &paymentReqs,
                           const nlohmann::json &paymentPayload) const override;
 
