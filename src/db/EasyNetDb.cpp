@@ -136,7 +136,8 @@ EasyNetDb::TransferResult EasyNetDb::transferValue(const EthAddress &fromAddress
             soci::use(assetContractAddressDatabaseString, "assetAddress");
 
         if (senderBalanceIndicator == soci::i_null || senderBalanceValueStringFromDatabase.empty()) {
-            RETHROW_NESTED2("Sender wallet state row not found for walletAddress=" + fromWalletAddressDatabaseString + ", assetAddress=" + assetContractAddressDatabaseString);
+            RETHROW_NESTED2("Sender wallet state row not found for walletAddress=" + fromWalletAddressDatabaseString +
+                ", assetAddress=" + assetContractAddressDatabaseString);
         }
 
         u256 senderCurrentBalanceValue = Encoding::u256FromHexOrDecimal(senderBalanceValueStringFromDatabase);
@@ -166,7 +167,8 @@ EasyNetDb::TransferResult EasyNetDb::transferValue(const EthAddress &fromAddress
         // Overflow check: receiverCurrentBalanceValue + transferAmountValue must not exceed max
         const u256 maxUint256Value = (std::numeric_limits<u256>::max)();
         if (transferAmountValue > maxUint256Value - receiverCurrentBalanceValue) {
-            logger_->trace("transferValue: overflow would occur receiverWalletAddress={} assetAddress={} receiverBalance={} amount={} max={} treating as insufficient funds",
+            logger_->trace("transferValue: overflow would occur receiverWalletAddress={} assetAddress={} receiverBalance={} "
+                           "amount={} max={} treating as insufficient funds",
                            toWalletAddressDatabaseString,
                            assetContractAddressDatabaseString,
                            Encoding::u256ToDecimal(receiverCurrentBalanceValue),
