@@ -2,7 +2,9 @@
 #include "MachinePayCommon.h"
 #include "crypto/EIP712Domain.h"
 #include "crypto/EthAddress.h"
+#include "facilitator_clients/EasyNetFacilitatorClient.h"
 
+class FacilitatorClient;
 class FacilitatorConfig;
 class FileManager;
 
@@ -11,6 +13,7 @@ class NetworkConfig {
     EthAddress walletAddress_;
     std::shared_ptr< FacilitatorConfig > facilitator_;
     ptr< EIP712Domain > eip712Domain_;
+    ptr<FacilitatorClient>  facilitatorClient_;
 
     NetworkConfig( const std::string& name, const EthAddress& walletAddress,
         std::shared_ptr< FacilitatorConfig >& facilitator, ptr< EIP712Domain >& domain )
@@ -18,6 +21,10 @@ class NetworkConfig {
           walletAddress_( walletAddress ),
           facilitator_( facilitator ),
           eip712Domain_( domain ) {
+        auto assetAddress = domain->assetAddress();
+        auto chainId = domain->chainId();
+        facilitatorClient_  =
+            make_shared<EasyNetFacilitatorClient>(assetAddress, chainId );
         CHECK_STATE( eip712Domain_ );
         CHECK_STATE( facilitator_ );
     }

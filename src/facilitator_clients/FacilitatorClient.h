@@ -8,6 +8,7 @@ class FacilitatorClient {
 public:
     virtual ~FacilitatorClient();
 
+    /*
     // POST /verify — validates the payment payload (no chain call)
     virtual nlohmann::json verify(
         const nlohmann::json& verifyRequestJson) const = 0;
@@ -15,4 +16,5 @@ public:
     // POST /settle — performs the on-chain transfer (gas sponsored by facilitator)
     virtual nlohmann::json settle(
         const nlohmann::json& settlementRequestJson) const = 0;
+        */
 };

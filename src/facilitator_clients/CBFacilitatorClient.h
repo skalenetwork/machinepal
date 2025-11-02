@@ -34,7 +34,7 @@ public:
 
     // POST /settle — performs the on-chain transfer (gas sponsored by facilitator)
     nlohmann::json settle(
-        const nlohmann::json& ) const override {
+        const nlohmann::json& ) const {
         throw std::runtime_error( "Not implemented: settle with single argument" );
     };
 

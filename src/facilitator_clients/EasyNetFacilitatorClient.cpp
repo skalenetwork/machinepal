@@ -9,13 +9,12 @@
 #include <limits>        // for numeric_limits<u256>::max()
 #include <shared_mutex>  // added for std::shared_mutex, std::shared_lock, std::unique_lock
 
-EasyNetFacilitatorClient::EasyNetFacilitatorClient(
-    EasyNetDb& database, EthAddress& assetAddress, u256& chainId )
-    : db_( database ), assetAddress_( assetAddress ), chainId_( chainId ) {}
+EasyNetFacilitatorClient::EasyNetFacilitatorClient(EthAddress& assetAddress, u256& chainId )
+    :  assetAddress_( assetAddress ), chainId_( chainId ) {}
 
 pair< ptr< PaymentPayload >, ptr< PaymentRequirements > > EasyNetFacilitatorClient::verifyUnsafe(
     const nlohmann::json& verifyRequestJson,
-    optional< string >& error) const {
+    optional< string >& error, EasyNetDb& db) const {
     auto verifyRequest = SettlementRequest::fromJson( verifyRequestJson );
     auto paymentPayload = verifyRequest.paymentPayload();
     auto paymentRequirements = verifyRequest.paymentRequirements();
@@ -26,13 +25,13 @@ pair< ptr< PaymentPayload >, ptr< PaymentRequirements > > EasyNetFacilitatorClie
 
     u256 currentBalance = 1000000000 * u256( 1000000000000000000ULL );
     // 1e27 initial funding for new wallets
-    auto senderBalanceOpt = db_.getBalance( fromWalletAddress, assetWalletAddress );
+    auto senderBalanceOpt = db.getBalance( fromWalletAddress, assetWalletAddress );
     if ( senderBalanceOpt.has_value() ) {
         currentBalance = senderBalanceOpt.value();
     }
 
     // Overflow check on receiver side (if we can read it) purely informational
-    auto receiverBalanceOpt = db_.getBalance( toWalletAddress, assetWalletAddress );
+    auto receiverBalanceOpt = db.getBalance( toWalletAddress, assetWalletAddress );
     if ( receiverBalanceOpt.has_value() ) {
         const u256 maxVal = ( std::numeric_limits< u256 >::max )();
         const u256 receiverBalance = receiverBalanceOpt.value();
@@ -50,12 +49,13 @@ pair< ptr< PaymentPayload >, ptr< PaymentRequirements > > EasyNetFacilitatorClie
     return { paymentPayload, paymentRequirements };
 }
 
-nlohmann::json EasyNetFacilitatorClient::verify(const nlohmann::json& verifyRequestJson) const {
+nlohmann::json EasyNetFacilitatorClient::verify(const nlohmann::json& verifyRequestJson,
+    EasyNetDb& db)  {
     std::shared_lock< std::shared_mutex > lock( mutex_ );
     try {
         optional< string > error;
         auto [payload, paymentReqs] =
-            verifyUnsafe( verifyRequestJson, error );
+            verifyUnsafe( verifyRequestJson, error, db );
         auto fromWalletAddress = payload->payload()->authorization()->from();
         if ( error ) {
             VerifyResponse errorResponse(
@@ -73,13 +73,14 @@ nlohmann::json EasyNetFacilitatorClient::verify(const nlohmann::json& verifyRequ
     }
 }
 
-nlohmann::json EasyNetFacilitatorClient::settle( const nlohmann::json& settlementRequestJson) const {
+nlohmann::json EasyNetFacilitatorClient::settle( const nlohmann::json& settlementRequestJson,
+    EasyNetDb& db) {
     std::unique_lock< std::shared_mutex > lock( mutex_ );
     try {
         EthAddress fromWalletAddress;
         optional< string > error;
         auto [paymentPayload, paymentReqs] =
-            verifyUnsafe( settlementRequestJson, error);
+            verifyUnsafe( settlementRequestJson, error, db);
 
         if ( error ) {
             // Constructor order: success, errorReason, transaction, network, payer, originalJson
@@ -96,7 +97,7 @@ nlohmann::json EasyNetFacilitatorClient::settle( const nlohmann::json& settlemen
         EIP3009Nonce nonce = paymentPayload->payload()->authorization()->nonce();
         const string& resource = paymentReqs->resource();
 
-        auto result = db_.processTransferRequest( fromWalletAddress, toWalletAddress,
+        auto result = db.processTransferRequest( fromWalletAddress, toWalletAddress,
             assetWalletAddress, transferValue, nonce, resource, "0.0.0.0", paymentPayload->toJson(),
             paymentPayload->payload()->signature().toHex( PREFIX_0x ) );
 
