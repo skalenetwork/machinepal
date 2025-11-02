@@ -63,10 +63,8 @@ EasyNetDb::EasyNetDb(
 }
 
 
-void EasyNetDb::newWallet(
+void EasyNetDb::newWalletUnsafe(
     const EthAddress& walletAddress, const EthAddress& assetAddress, const EIP3009Value& value ) {
-    std::unique_lock< std::shared_mutex > stateMutexUniqueLock( stateMutex_ );
-    // exclusive lock for write
     try {
         soci::session databaseSession( *pool_ );
 
@@ -103,11 +101,12 @@ void EasyNetDb::newWallet(
 
 EasyNetDb::TransferResult EasyNetDb::processTransferRequest( const EthAddress& fromAddress,
     const EthAddress& toAddress, const EthAddress& assetAddress, const EIP3009Value& value ) {
-    fundUserWalletWithFundsIfNewWallet( fromAddress, assetAddress );
-    return transferValue( fromAddress, toAddress, assetAddress, value );
+    std::unique_lock<std::shared_mutex> lock(stateMutex_);
+    fundUserWalletWithFundsIfNewWalletUnsafe( fromAddress, assetAddress );
+    return transferValueUnsafe( fromAddress, toAddress, assetAddress, value );
 }
 
-EasyNetDb::TransferResult EasyNetDb::transferValue( const EthAddress& fromAddress,
+EasyNetDb::TransferResult EasyNetDb::transferValueUnsafe( const EthAddress& fromAddress,
     const EthAddress& toAddress, const EthAddress& assetAddress, const EIP3009Value& value ) {
     // Early no-op success cases
     if ( fromAddress.toDbString() == toAddress.toDbString() ) {
@@ -119,8 +118,6 @@ EasyNetDb::TransferResult EasyNetDb::transferValue( const EthAddress& fromAddres
         return TransferResult::TransferSuccess;
     }
 
-    std::unique_lock< std::shared_mutex > stateMutexUniqueLock( stateMutex_ );
-    // lock for read-modify-write sequence
     try {
         soci::session databaseSession( *pool_ );
         soci::transaction databaseTransactionScope( databaseSession );  // RAII transaction
@@ -148,6 +145,8 @@ EasyNetDb::TransferResult EasyNetDb::transferValue( const EthAddress& fromAddres
 
         u256 senderCurrentBalanceValue =
             Encoding::u256FromHexOrDecimal( senderBalanceValueStringFromDatabase );
+
+
         if ( transferAmountValue > senderCurrentBalanceValue ) {
             logger_->trace(
                 "transferValue: insufficient funds walletAddress={} assetAddress={} have={} "
@@ -236,10 +235,10 @@ EasyNetDb::TransferResult EasyNetDb::transferValue( const EthAddress& fromAddres
     }
 }
 
-void EasyNetDb::fundUserWalletWithFundsIfNewWallet(
+void EasyNetDb::fundUserWalletWithFundsIfNewWalletUnsafe(
     const EthAddress& walletAddress, const EthAddress& assetAddress ) {
-    std::unique_lock< std::shared_mutex > stateMutexUniqueLock( stateMutex_ );
-    // exclusive lock for potential insert
+
+
     try {
         soci::session databaseSession( *pool_ );
 
@@ -290,7 +289,7 @@ void EasyNetDb::fundUserWalletWithFundsIfNewWallet(
 
 std::optional< u256 > EasyNetDb::getBalance(
     const EthAddress& walletAddress, const EthAddress& assetAddress ) const {
-    std::shared_lock< std::shared_mutex > stateMutexSharedLock( stateMutex_ );  // shared read lock
+    std::shared_lock<std::shared_mutex> lock(stateMutex_);
     try {
         soci::session databaseSession( *pool_ );
         std::string walletAddressDatabaseString = walletAddress.toDbString();

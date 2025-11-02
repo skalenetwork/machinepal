@@ -14,7 +14,7 @@
 class EasyNetFacilitatorClient : public FacilitatorClient {
 public:
     explicit EasyNetFacilitatorClient( EasyNetDb& db, EthAddress& assetAddress, u256& chainId );
-    ptr< PaymentPayload > verifyCore( const nlohmann::json& paymentPayloadJson,
+    ptr< PaymentPayload > verifyUnsafe( const nlohmann::json& paymentPayloadJson,
         const nlohmann::json& paymentRequirementsJson, EthAddress& fromWalletAddress,
         optional< string >& error ) const;
 
@@ -28,9 +28,13 @@ private:
     EasyNetDb& db_;
     EthAddress assetAddress_;
     u256 chainId_;
+    mutable std::shared_mutex mutex_;
 
     // Extract required fields or throw with nested context.
     EthAddress parseAddressFromJson( const nlohmann::json& j, const std::string& key ) const;
     EthAddress getAssetAddress(
         const nlohmann::json& instruction, const nlohmann::json& payload ) const;
+
+
+
 };
