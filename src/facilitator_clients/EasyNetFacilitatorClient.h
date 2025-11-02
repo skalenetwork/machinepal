@@ -15,12 +15,11 @@ class PaymentRequirements;
 class EasyNetFacilitatorClient : public FacilitatorClient {
 public:
     explicit EasyNetFacilitatorClient( EasyNetDb& db, EthAddress& assetAddress, u256& chainId );
-    pair<ptr< PaymentPayload >, ptr<PaymentRequirements>> verifyUnsafe(const nlohmann::json& paymentPayloadJson,
-        const nlohmann::json& paymentRequirementsJson,
+    pair<ptr< PaymentPayload >, ptr<PaymentRequirements>> verifyUnsafe(const nlohmann::json& verifyRequestJson,
         optional< string >& error) const;
 
     nlohmann::json verify(
-        const nlohmann::json& paymentReqs, const nlohmann::json& paymentPayload ) const override;
+        const nlohmann::json& verifyRequestJson) const override;
 
     nlohmann::json settle( const nlohmann::json& paymentInstruction,
         const nlohmann::json& paymentPayload ) const override;

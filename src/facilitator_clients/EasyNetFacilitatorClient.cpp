@@ -2,6 +2,7 @@
 #include "MachinePayCommon.h"
 #include "crypto/Encoding.h"
 #include "payment/datastructures/PaymentRequirements.h"
+#include "payment/datastructures/SettlementRequest.h"
 #include "payment/datastructures/SettlementResponse.h"
 #include "payment/datastructures/VerifyResponse.h"
 
@@ -13,14 +14,15 @@ EasyNetFacilitatorClient::EasyNetFacilitatorClient(
     : db_( database ), assetAddress_( assetAddress ), chainId_( chainId ) {}
 
 pair< ptr< PaymentPayload >, ptr< PaymentRequirements > > EasyNetFacilitatorClient::verifyUnsafe(
-    const nlohmann::json& paymentPayloadJson, const nlohmann::json& paymentRequirementsJson,
-    optional< string >& error ) const {
-    auto paymentPayload = PaymentPayload::fromJson( paymentPayloadJson );
-    auto paymentRequirements = PaymentRequirements::fromJson( paymentRequirementsJson );
+    const nlohmann::json& verifyRequestJson,
+    optional< string >& error) const {
+    auto verifyRequest = SettlementRequest::fromJson( verifyRequestJson );
+    auto paymentPayload = verifyRequest.paymentPayload();
+    auto paymentRequirements = verifyRequest.paymentRequirements();
     auto fromWalletAddress = paymentPayload->payload()->authorization()->from();
-    EthAddress toWalletAddress = paymentPayload->payload()->authorization()->to();
-    EthAddress assetWalletAddress = EthAddress::parseFlexible( paymentRequirements->asset() );
-    EIP3009Value transferValue = paymentPayload->payload()->authorization()->value();
+    auto toWalletAddress = paymentPayload->payload()->authorization()->to();
+    auto assetWalletAddress = EthAddress::parseFlexible( paymentRequirements->asset() );
+    auto transferValue = paymentPayload->payload()->authorization()->value();
 
     u256 currentBalance = 1000000000 * u256( 1000000000000000000ULL );
     // 1e27 initial funding for new wallets
@@ -48,13 +50,12 @@ pair< ptr< PaymentPayload >, ptr< PaymentRequirements > > EasyNetFacilitatorClie
     return { paymentPayload, paymentRequirements };
 }
 
-nlohmann::json EasyNetFacilitatorClient::verify( const nlohmann::json& paymentRequirementsJson,
-    const nlohmann::json& paymentPayloadJson ) const {
+nlohmann::json EasyNetFacilitatorClient::verify(const nlohmann::json& verifyRequestJson) const {
     std::shared_lock< std::shared_mutex > lock( mutex_ );
     try {
         optional< string > error;
         auto [payload, paymentReqs] =
-            verifyUnsafe( paymentPayloadJson, paymentRequirementsJson, error );
+            verifyUnsafe( verifyRequestJson, error );
         auto fromWalletAddress = payload->payload()->authorization()->from();
         if ( error ) {
             VerifyResponse errorResponse(
@@ -79,7 +80,7 @@ nlohmann::json EasyNetFacilitatorClient::settle( const nlohmann::json& paymentRe
         EthAddress fromWalletAddress;
         optional< string > error;
         auto [paymentPayload, paymentReqs] =
-            verifyUnsafe( paymentPayloadJson, paymentRequirementsJson, error );
+            verifyUnsafe( paymentPayloadJson, error);
 
         if ( error ) {
             // Constructor order: success, errorReason, transaction, network, payer, originalJson

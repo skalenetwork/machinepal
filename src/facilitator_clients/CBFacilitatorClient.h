@@ -16,11 +16,17 @@ public:
     explicit CBFacilitatorClient( std::string _base_url = "https://x402.org/facilitator/",
         std::string _auth = "", long _connect_timeout_ms = 5000, long _total_timeout_ms = 15000 );
 
+
     ~CBFacilitatorClient() override = default;
+
+
+    // POST /verify — validates the payment payload (no chain call)
+    nlohmann::json verify( const nlohmann::json& _settlementRequest) const;
+
 
     // POST /verify — validates the payment payload (no chain call)
     nlohmann::json verify( const nlohmann::json& _paymentInstruction,
-        const nlohmann::json& _paymentPayload ) const override;
+        const nlohmann::json& _paymentPayload ) const;
 
     // POST /settle — performs the on-chain transfer (gas sponsored by facilitator)
     nlohmann::json settle( const nlohmann::json& _paymentInstruction,
