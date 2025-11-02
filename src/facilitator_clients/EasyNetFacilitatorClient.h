@@ -6,6 +6,7 @@
 #include "db/EasyNetDb.h"
 #include <optional>
 
+class PaymentRequirements;
 // A local in-process facilitator implementation that uses EasyNetDb instead of
 // making remote HTTP calls. Intended for development, testing, or offline mode.
 //
@@ -14,9 +15,9 @@
 class EasyNetFacilitatorClient : public FacilitatorClient {
 public:
     explicit EasyNetFacilitatorClient( EasyNetDb& db, EthAddress& assetAddress, u256& chainId );
-    ptr< PaymentPayload > verifyUnsafe( const nlohmann::json& paymentPayloadJson,
-        const nlohmann::json& paymentRequirementsJson, EthAddress& fromWalletAddress,
-        optional< string >& error ) const;
+    pair<ptr< PaymentPayload >, ptr<PaymentRequirements>> verifyUnsafe(const nlohmann::json& paymentPayloadJson,
+        const nlohmann::json& paymentRequirementsJson,
+        optional< string >& error) const;
 
     nlohmann::json verify(
         const nlohmann::json& paymentReqs, const nlohmann::json& paymentPayload ) const override;

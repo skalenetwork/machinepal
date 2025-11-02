@@ -7,8 +7,7 @@
 #include <random>   // added for nonce
 #include <sstream>  // added for nonce hex formatting
 
-EasyNetDb::EasyNetDb(
-    MachinePayApp& app, DbType type, const optional< string >& connectionInfo )
+EasyNetDb::EasyNetDb( MachinePayApp& app, DbType type, const optional< string >& connectionInfo )
     : MachinePayDb( app, type, connectionInfo ) {
     try {
         soci::backend_factory const& backend = getBackend( dbType_ );
@@ -157,24 +156,21 @@ void EasyNetDb::newWalletUnsafe(
     }
 }
 
-EasyNetDb::TransferResult EasyNetDb::processTransferRequest(const EthAddress& fromAddress,
+EasyNetDb::TransferResult EasyNetDb::processTransferRequest( const EthAddress& fromAddress,
     const EthAddress& toAddress, const EthAddress& assetAddress, const EIP3009Value& value,
-    EIP3009Nonce nonce) {
+    EIP3009Nonce nonce, const string& resourceLocation, const string& fromIpAddress,
+    const string& jsonInfo, const string& transactionHash ) {
     unique_lock< shared_mutex > lock( stateMutex_ );
     fundUserWalletWithFundsIfNewWalletUnsafe( fromAddress, assetAddress );
-    return transferValueUnsafe( fromAddress, toAddress, assetAddress, value, nonce );
+    return transferValueUnsafe( fromAddress, toAddress, assetAddress, value, nonce,
+        resourceLocation, fromIpAddress, jsonInfo, transactionHash);
 }
 
-void EasyNetDb::insertTransaction(soci::session& databaseSession,
-    const string& fromWalletAddressDatabaseString,
-    const string& toWalletAddressDatabaseString,
-    const string& assetContractAddressDatabaseString,
-    const string& nonceString,
-    const string& transactionHash,
-    const string& resourceLocation, const string& fromIpAddress,
-    const string& jsonInfo, string& transferAmountValueStr) {
-
-
+void EasyNetDb::insertTransaction( soci::session& databaseSession,
+    const string& fromWalletAddressDatabaseString, const string& toWalletAddressDatabaseString,
+    const string& assetContractAddressDatabaseString, const string& nonceString,
+    const string& transactionHash, const string& resourceLocation, const string& fromIpAddress,
+    const string& jsonInfo, string& transferAmountValueStr ) {
     // Settlement time = current unix epoch seconds
     auto now = chrono::system_clock::now();
     long long settlementTime =
@@ -196,23 +192,20 @@ void EasyNetDb::insertTransaction(soci::session& databaseSession,
         soci::use( fromIpAddress, "fromIpAddress" ), soci::use( jsonInfo, "jsonInfo" );
 }
 
-void EasyNetDb::insertIntoState(soci::session& databaseSession,
+void EasyNetDb::insertIntoState( soci::session& databaseSession,
     string& toWalletAddressDatabaseString, string& assetContractAddressDatabaseString,
-    string& receiverUpdatedBalanceDecimalString)
-{
+    string& receiverUpdatedBalanceDecimalString ) {
     databaseSession << "INSERT INTO state (walletAddress, assetAddress, value) VALUES "
-        "(:walletAddress, :assetAddress, :value)",
+                       "(:walletAddress, :assetAddress, :value)",
         soci::use( toWalletAddressDatabaseString, "walletAddress" ),
         soci::use( assetContractAddressDatabaseString, "assetAddress" ),
         soci::use( receiverUpdatedBalanceDecimalString, "value" );
 }
 
-void EasyNetDb::updateState(soci::session& databaseSession,
-    string& toWalletAddressDatabaseString, string& assetContractAddressDatabaseString,
-    string& receiverUpdatedBalanceDecimalString)
-{
+void EasyNetDb::updateState( soci::session& databaseSession, string& toWalletAddressDatabaseString,
+    string& assetContractAddressDatabaseString, string& receiverUpdatedBalanceDecimalString ) {
     databaseSession << "UPDATE state SET value = :value WHERE walletAddress = "
-        ":walletAddress AND assetAddress = :assetAddress",
+                       ":walletAddress AND assetAddress = :assetAddress",
         soci::use( receiverUpdatedBalanceDecimalString, "value" ),
         soci::use( toWalletAddressDatabaseString, "walletAddress" ),
         soci::use( assetContractAddressDatabaseString, "assetAddress" );
@@ -220,7 +213,8 @@ void EasyNetDb::updateState(soci::session& databaseSession,
 
 EasyNetDb::TransferResult EasyNetDb::transferValueUnsafe( const EthAddress& fromAddress,
     const EthAddress& toAddress, const EthAddress& assetAddress, const EIP3009Value& value,
-    EIP3009Nonce& nonce) {
+    EIP3009Nonce& nonce, const string& resourceLocation, const string& fromIpAddress,
+    const string& jsonInfo, const string& transactionHash ) {
     // Early no-op success cases
     if ( fromAddress.toDbString() == toAddress.toDbString() ) {
         logger_->trace( "transferValue: fromAddress == toAddress, no-op success" );
@@ -313,16 +307,15 @@ EasyNetDb::TransferResult EasyNetDb::transferValueUnsafe( const EthAddress& from
             Encoding::u256ToDecimal( receiverUpdatedBalanceValueAfterTransfer );
 
         // 4. Persist changes
-        updateState( databaseSession, toWalletAddressDatabaseString, assetContractAddressDatabaseString,
-            senderUpdatedBalanceDecimalString);
+        updateState( databaseSession, toWalletAddressDatabaseString,
+            assetContractAddressDatabaseString, senderUpdatedBalanceDecimalString );
 
         if ( receiverStateRowExists ) {
-            updateState( databaseSession, toWalletAddressDatabaseString, assetContractAddressDatabaseString,
-                receiverUpdatedBalanceDecimalString );
+            updateState( databaseSession, toWalletAddressDatabaseString,
+                assetContractAddressDatabaseString, receiverUpdatedBalanceDecimalString );
         } else {
             insertIntoState( databaseSession, toWalletAddressDatabaseString,
-                assetContractAddressDatabaseString,
-                receiverUpdatedBalanceDecimalString );
+                assetContractAddressDatabaseString, receiverUpdatedBalanceDecimalString );
         }
 
         logger_->trace(
@@ -334,16 +327,11 @@ EasyNetDb::TransferResult EasyNetDb::transferValueUnsafe( const EthAddress& from
             senderUpdatedBalanceDecimalString, receiverUpdatedBalanceDecimalString );
 
 
-        const string resourceLocation = "";
-        const string fromIpAddress = "0.0.0.0";
-        const string jsonInfo = "{}";
         auto transferAmountValueStr = Encoding::u256ToDecimal( transferAmountValue );
 
         insertTransaction( databaseSession, fromWalletAddressDatabaseString,
-            toWalletAddressDatabaseString, assetContractAddressDatabaseString,
-            nonce.toDbString(),
-            "", resourceLocation,
-            fromIpAddress, jsonInfo, transferAmountValueStr);
+            toWalletAddressDatabaseString, assetContractAddressDatabaseString, nonce.toDbString(),
+            transactionHash, resourceLocation, fromIpAddress, jsonInfo, transferAmountValueStr );
 
         databaseTransactionScope.commit();
         return TransferResult::TransferSuccess;

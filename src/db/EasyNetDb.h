@@ -35,23 +35,23 @@ public:
      * @param nonce
      * @return TransferResult enum indicating success or insufficient funds.
      *
-     * This method acquires a write lock, checks balances, and updates the state table if the transfer is valid.
-     * It ensures thread-safe modification of wallet balances and prevents overdrafts.
+     * This method acquires a write lock, checks balances, and updates the state table if the
+     * transfer is valid. It ensures thread-safe modification of wallet balances and prevents
+     * overdrafts.
      */
     TransferResult processTransferRequest( const EthAddress& fromAddress,
         const EthAddress& toAddress, const EthAddress& assetAddress, const EIP3009Value& value,
-        EIP3009Nonce nonce );
+        EIP3009Nonce nonce, const string& resourceLocation, const string& fromIpAddress,
+        const string& jsonInfo, const string& transactionHash );
     void insertTransaction( soci::session& databaseSession,
         const std::string& fromWalletAddressDatabaseString,
         const std::string& toWalletAddressDatabaseString,
-        const std::string& assetContractAddressDatabaseString,
-        const string& nonceString,
-        const string& transactionHash,
-        const std::string& resourceLocation, const std::string& fromIpAddress,
-        const std::string& jsonInfo, std::string& transferAmountValueStr );
+        const std::string& assetContractAddressDatabaseString, const string& nonceString,
+        const string& transactionHash, const std::string& resourceLocation,
+        const std::string& fromIpAddress, const std::string& jsonInfo,
+        std::string& transferAmountValueStr );
     void insertIntoState( soci::session& databaseSession,
-        std::string& toWalletAddressDatabaseString,
-        std::string& assetContractAddressDatabaseString,
+        std::string& toWalletAddressDatabaseString, std::string& assetContractAddressDatabaseString,
         std::string& receiverUpdatedBalanceDecimalString );
     void updateState( soci::session& databaseSession, std::string& toWalletAddressDatabaseString,
         std::string& assetContractAddressDatabaseString,
@@ -62,9 +62,11 @@ public:
      * @brief Queries the balance of a wallet for a specific asset.
      * @param walletAddress Wallet address to query.
      * @param assetAddress Asset (token) address.
-     * @return std::optional<u256> containing the balance, or std::nullopt if the wallet/asset pair does not exist.
+     * @return std::optional<u256> containing the balance, or std::nullopt if the wallet/asset pair
+     * does not exist.
      *
-     * This method acquires a read lock and provides a thread-safe, read-only view of the wallet's balance for the given asset.
+     * This method acquires a read lock and provides a thread-safe, read-only view of the wallet's
+     * balance for the given asset.
      */
     std::optional< u256 > getBalance(
         const EthAddress& walletAddress, const EthAddress& assetAddress ) const;
@@ -75,12 +77,13 @@ private:
 
 
     TransferResult transferValueUnsafe( const EthAddress& fromAddress, const EthAddress& toAddress,
-        const EthAddress& assetAddress, const EIP3009Value& value,
-        EIP3009Nonce& nonce );
+        const EthAddress& assetAddress, const EIP3009Value& value, EIP3009Nonce& nonce,
+        const string& resourceLocation, const string& fromIpAddress, const string& jsonInfo,
+        const string& transactionHash );
     // Funds a wallet with initial tokens if it does not yet exist for the given asset.
     // Initial amount: 1,000,000,000 * 10^18 (1e27) token units.
     void fundUserWalletWithFundsIfNewWalletUnsafe(
         const EthAddress& walletAddress, const EthAddress& assetAddress );
 
-    mutable std::shared_mutex stateMutex_; // protects state table operations
+    mutable std::shared_mutex stateMutex_;  // protects state table operations
 };

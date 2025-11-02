@@ -5,23 +5,19 @@
 #include "payment/datastructures/SettlementResponse.h"
 #include "payment/datastructures/VerifyResponse.h"
 
-#include <limits>  // for numeric_limits<u256>::max()
+#include <limits>        // for numeric_limits<u256>::max()
 #include <shared_mutex>  // added for std::shared_mutex, std::shared_lock, std::unique_lock
 
 EasyNetFacilitatorClient::EasyNetFacilitatorClient(
     EasyNetDb& database, EthAddress& assetAddress, u256& chainId )
-    : db_( database ),
-      assetAddress_( assetAddress ),
-      chainId_( chainId ) {
-}
+    : db_( database ), assetAddress_( assetAddress ), chainId_( chainId ) {}
 
-ptr< PaymentPayload > EasyNetFacilitatorClient::verifyUnsafe(
+pair< ptr< PaymentPayload >, ptr< PaymentRequirements > > EasyNetFacilitatorClient::verifyUnsafe(
     const nlohmann::json& paymentPayloadJson, const nlohmann::json& paymentRequirementsJson,
-    EthAddress& fromWalletAddress, optional< string >& error ) const {
+    optional< string >& error ) const {
     auto paymentPayload = PaymentPayload::fromJson( paymentPayloadJson );
     auto paymentRequirements = PaymentRequirements::fromJson( paymentRequirementsJson );
-
-    fromWalletAddress = paymentPayload->payload()->authorization()->from();
+    auto fromWalletAddress = paymentPayload->payload()->authorization()->from();
     EthAddress toWalletAddress = paymentPayload->payload()->authorization()->to();
     EthAddress assetWalletAddress = EthAddress::parseFlexible( paymentRequirements->asset() );
     EIP3009Value transferValue = paymentPayload->payload()->authorization()->value();
@@ -29,73 +25,66 @@ ptr< PaymentPayload > EasyNetFacilitatorClient::verifyUnsafe(
     u256 currentBalance = 1000000000 * u256( 1000000000000000000ULL );
     // 1e27 initial funding for new wallets
     auto senderBalanceOpt = db_.getBalance( fromWalletAddress, assetWalletAddress );
-    if (senderBalanceOpt.has_value()) {
+    if ( senderBalanceOpt.has_value() ) {
         currentBalance = senderBalanceOpt.value();
     }
 
     // Overflow check on receiver side (if we can read it) purely informational
     auto receiverBalanceOpt = db_.getBalance( toWalletAddress, assetWalletAddress );
-    if (receiverBalanceOpt.has_value()) {
+    if ( receiverBalanceOpt.has_value() ) {
         const u256 maxVal = ( std::numeric_limits< u256 >::max )();
         const u256 receiverBalance = receiverBalanceOpt.value();
-        if (transferValue.value() > maxVal - receiverBalance) {
+        if ( transferValue.value() > maxVal - receiverBalance ) {
             error = "Overflow: Receiver balance would overflow 256-bit limit";
-            return paymentPayload;
+            return { paymentPayload, paymentRequirements };
         }
     }
 
-    if (transferValue.value() > currentBalance) {
+    if ( transferValue.value() > currentBalance ) {
         error = "InsufficientFunds: Balance lower than requested transfer amount";
-        return paymentPayload;
+        return { paymentPayload, paymentRequirements };
     }
 
-    return paymentPayload;
+    return { paymentPayload, paymentRequirements };
 }
 
 nlohmann::json EasyNetFacilitatorClient::verify( const nlohmann::json& paymentRequirementsJson,
     const nlohmann::json& paymentPayloadJson ) const {
-    std::shared_lock<std::shared_mutex> lock(mutex_);
+    std::shared_lock< std::shared_mutex > lock( mutex_ );
     try {
-        EthAddress fromWalletAddress;
         optional< string > error;
-        auto payload =
-            verifyUnsafe( paymentPayloadJson, paymentRequirementsJson, fromWalletAddress, error );
-        if (error) {
-            VerifyResponse errorResponse( false,
-                error.value(), fromWalletAddress.toDbString(),
-                std::nullopt );
+        auto [payload, paymentReqs] =
+            verifyUnsafe( paymentPayloadJson, paymentRequirementsJson, error );
+        auto fromWalletAddress = payload->payload()->authorization()->from();
+        if ( error ) {
+            VerifyResponse errorResponse(
+                false, error.value(), fromWalletAddress.toDbString(), std::nullopt );
 
             return errorResponse.toJson();
         } else {
-            VerifyResponse verifyResponse( true,
-                            std::nullopt, fromWalletAddress.toDbString(),
-                            std::nullopt );
+            VerifyResponse verifyResponse(
+                true, std::nullopt, fromWalletAddress.toDbString(), std::nullopt );
             return verifyResponse.toJson();
         }
-    } catch (const std::exception& e) {
-        VerifyResponse errorResponse( false,
-                e.what(), "",
-                std::nullopt );
+    } catch ( const std::exception& e ) {
+        VerifyResponse errorResponse( false, e.what(), "", std::nullopt );
         return errorResponse.toJson();
     }
 }
 
-nlohmann::json EasyNetFacilitatorClient::settle(
-    const nlohmann::json& paymentRequirementsJson,
-    const nlohmann::json& paymentPayloadJson ) const
-{
-
-    std::unique_lock<std::shared_mutex> lock(mutex_);
+nlohmann::json EasyNetFacilitatorClient::settle( const nlohmann::json& paymentRequirementsJson,
+    const nlohmann::json& paymentPayloadJson ) const {
+    std::unique_lock< std::shared_mutex > lock( mutex_ );
     try {
         EthAddress fromWalletAddress;
         optional< string > error;
-        auto paymentPayload =
-            verifyUnsafe( paymentPayloadJson, paymentRequirementsJson, fromWalletAddress, error );
+        auto [paymentPayload, paymentReqs] =
+            verifyUnsafe( paymentPayloadJson, paymentRequirementsJson, error );
 
-        if (error) {
+        if ( error ) {
             // Constructor order: success, errorReason, transaction, network, payer, originalJson
-            SettlementResponse response( false, error.value(),
-                "", "", // transaction, network (none here)
+            SettlementResponse response( false, error.value(), "",
+                "",  // transaction, network (none here)
                 fromWalletAddress.toHex( PREFIX_0x ), std::nullopt );
             return response.toJson();
         }
@@ -105,25 +94,27 @@ nlohmann::json EasyNetFacilitatorClient::settle(
             PaymentRequirements::fromJson( paymentRequirementsJson )->asset() );
         EIP3009Value transferValue = paymentPayload->payload()->authorization()->value();
         EIP3009Nonce nonce = paymentPayload->payload()->authorization()->nonce();
+        const string& resource = paymentReqs->resource();
 
-        auto result = db_.processTransferRequest(
-            fromWalletAddress, toWalletAddress, assetWalletAddress, transferValue, nonce );
+        auto result = db_.processTransferRequest( fromWalletAddress, toWalletAddress,
+            assetWalletAddress, transferValue, nonce, resource, "0.0.0.0", paymentPayload->toJson(),
+            paymentPayload->payload()->signature().toHex( PREFIX_0x ) );
 
-        if (result == EasyNetDb::TransferResult::TransferSuccess) {
-            SettlementResponse response( true, std::nullopt,
-                  "", "", // transaction, network (empty placeholders)
-                  fromWalletAddress.toHex( PREFIX_0x ), std::nullopt );
+        if ( result == EasyNetDb::TransferResult::TransferSuccess ) {
+            SettlementResponse response( true, std::nullopt, "",
+                "",  // transaction, network (empty placeholders)
+                fromWalletAddress.toHex( PREFIX_0x ), std::nullopt );
             return response.toJson();
         } else {
             // Insufficient funds explicit error message
-            SettlementResponse response( false, std::string("InsufficientFunds"),
-                "", "", // transaction, network
+            SettlementResponse response( false, std::string( "InsufficientFunds" ), "",
+                "",  // transaction, network
                 fromWalletAddress.toHex( PREFIX_0x ), std::nullopt );
             return response.toJson();
         }
-    } catch (const std::exception& e) {
-        SettlementResponse response( false, std::string(e.what()),
-            "", "", // transaction, network
+    } catch ( const std::exception& e ) {
+        SettlementResponse response( false, std::string( e.what() ), "",
+            "",  // transaction, network
             "", std::nullopt );
         return response.toJson();
     }
