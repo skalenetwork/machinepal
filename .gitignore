@@ -3,3 +3,5 @@
 /.cmake/
 /.idea/
 /external/
+/build/
+*.db
