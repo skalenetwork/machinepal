@@ -1,7 +1,5 @@
+#include "MachinePayCommon.h"
 #include "SettlementRequest.h"
-
-#include <nlohmann/json.hpp>
-#include "MachinePayCommon.h" // added for CHECK_STATE macro
 #include "PaymentPayload.h"
 #include "PaymentRequirements.h"
 
@@ -27,8 +25,8 @@ SettlementRequest::SettlementRequest( const ptr<PaymentPayload>& paymentPayload,
 
 nlohmann::json SettlementRequest::toJson() const {
     nlohmann::json j;
-    j["paymentPayload"] = paymentPayload_ ? paymentPayload_->toJson() : nullptr;
-    j["paymentRequirements"] = paymentRequirements_ ? paymentRequirements_->toJson() : nullptr;
+    j["paymentPayload"] = paymentPayload()->toJson();
+    j["paymentRequirements"] = paymentRequirements()->toJson();
     return j;
 }
 
@@ -36,10 +34,10 @@ SettlementRequest SettlementRequest::fromJson(const nlohmann::json& j) {
     ptr<PaymentPayload> payload;
     ptr<PaymentRequirements> requirements;
     if (j.contains("paymentPayload") && !j["paymentPayload"].is_null()) {
-        payload = std::make_shared<PaymentPayload>(PaymentPayload::fromJson(j["paymentPayload"]));
+        payload = PaymentPayload::fromJson(j["paymentPayload"]);
     }
     if (j.contains("paymentRequirements") && !j["paymentRequirements"].is_null()) {
-        requirements = std::make_shared<PaymentRequirements>(PaymentRequirements::fromJson(j["paymentRequirements"]));
+        requirements = PaymentRequirements::fromJson(j["paymentRequirements"]);
     }
     return SettlementRequest(payload, requirements);
 }
