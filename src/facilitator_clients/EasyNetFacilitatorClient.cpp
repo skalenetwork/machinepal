@@ -104,9 +104,10 @@ nlohmann::json EasyNetFacilitatorClient::settle(
         EthAddress assetWalletAddress = EthAddress::parseFlexible(
             PaymentRequirements::fromJson( paymentRequirementsJson )->asset() );
         EIP3009Value transferValue = paymentPayload->payload()->authorization()->value();
+        EIP3009Nonce nonce = paymentPayload->payload()->authorization()->nonce();
 
         auto result = db_.processTransferRequest(
-            fromWalletAddress, toWalletAddress, assetWalletAddress, transferValue );
+            fromWalletAddress, toWalletAddress, assetWalletAddress, transferValue, nonce );
 
         if (result == EasyNetDb::TransferResult::TransferSuccess) {
             SettlementResponse response( true, std::nullopt,

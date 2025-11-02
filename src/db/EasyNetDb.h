@@ -32,20 +32,25 @@ public:
      * @param toAddress Recipient's wallet address.
      * @param assetAddress Asset (token) address.
      * @param value Amount to transfer.
+     * @param nonce
      * @return TransferResult enum indicating success or insufficient funds.
      *
      * This method acquires a write lock, checks balances, and updates the state table if the transfer is valid.
      * It ensures thread-safe modification of wallet balances and prevents overdrafts.
      */
     TransferResult processTransferRequest( const EthAddress& fromAddress,
-        const EthAddress& toAddress, const EthAddress& assetAddress, const EIP3009Value& value );
-    void insertTransaction(soci::session& databaseSession,
+        const EthAddress& toAddress, const EthAddress& assetAddress, const EIP3009Value& value,
+        EIP3009Nonce nonce );
+    void insertTransaction( soci::session& databaseSession,
         const std::string& fromWalletAddressDatabaseString,
         const std::string& toWalletAddressDatabaseString,
         const std::string& assetContractAddressDatabaseString,
+        const string& nonceString,
+        const string& transactionHash,
         const std::string& resourceLocation, const std::string& fromIpAddress,
-        const std::string& jsonInfo, std::string& transferAmountValueStr);
-    void insertIntoState( soci::session& databaseSession, std::string& toWalletAddressDatabaseString,
+        const std::string& jsonInfo, std::string& transferAmountValueStr );
+    void insertIntoState( soci::session& databaseSession,
+        std::string& toWalletAddressDatabaseString,
         std::string& assetContractAddressDatabaseString,
         std::string& receiverUpdatedBalanceDecimalString );
     void updateState( soci::session& databaseSession, std::string& toWalletAddressDatabaseString,
@@ -65,17 +70,17 @@ public:
         const EthAddress& walletAddress, const EthAddress& assetAddress ) const;
 
 private:
-
     void newWalletUnsafe( const EthAddress& walletAddress, const EthAddress& assetAddress,
-           const EIP3009Value& value );
+        const EIP3009Value& value );
 
 
     TransferResult transferValueUnsafe( const EthAddress& fromAddress, const EthAddress& toAddress,
-            const EthAddress& assetAddress, const EIP3009Value& value );
+        const EthAddress& assetAddress, const EIP3009Value& value,
+        EIP3009Nonce& nonce );
     // Funds a wallet with initial tokens if it does not yet exist for the given asset.
     // Initial amount: 1,000,000,000 * 10^18 (1e27) token units.
     void fundUserWalletWithFundsIfNewWalletUnsafe(
         const EthAddress& walletAddress, const EthAddress& assetAddress );
 
-    mutable std::shared_mutex stateMutex_;  // protects state table operations
+    mutable std::shared_mutex stateMutex_; // protects state table operations
 };

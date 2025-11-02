@@ -157,26 +157,23 @@ void EasyNetDb::newWalletUnsafe(
     }
 }
 
-EasyNetDb::TransferResult EasyNetDb::processTransferRequest( const EthAddress& fromAddress,
-    const EthAddress& toAddress, const EthAddress& assetAddress, const EIP3009Value& value ) {
+EasyNetDb::TransferResult EasyNetDb::processTransferRequest(const EthAddress& fromAddress,
+    const EthAddress& toAddress, const EthAddress& assetAddress, const EIP3009Value& value,
+    EIP3009Nonce nonce) {
     unique_lock< shared_mutex > lock( stateMutex_ );
     fundUserWalletWithFundsIfNewWalletUnsafe( fromAddress, assetAddress );
-    return transferValueUnsafe( fromAddress, toAddress, assetAddress, value );
+    return transferValueUnsafe( fromAddress, toAddress, assetAddress, value, nonce );
 }
 
 void EasyNetDb::insertTransaction(soci::session& databaseSession,
     const string& fromWalletAddressDatabaseString,
     const string& toWalletAddressDatabaseString,
     const string& assetContractAddressDatabaseString,
+    const string& nonceString,
+    const string& transactionHash,
     const string& resourceLocation, const string& fromIpAddress,
     const string& jsonInfo, string& transferAmountValueStr) {
-    // Generate a simple random hex nonce
-    stringstream nonceStream;
-    nonceStream << hex << random_device{}() << random_device{}();
-    const string nonce = nonceStream.str();
 
-    // For now reuse nonce as a pseudo transaction hash (replace with real hash if available)
-    const string transactionHash = nonce;
 
     // Settlement time = current unix epoch seconds
     auto now = chrono::system_clock::now();
@@ -192,7 +189,7 @@ void EasyNetDb::insertTransaction(soci::session& databaseSession,
         soci::use( fromWalletAddressDatabaseString, "fromAddress" ),
         soci::use( toWalletAddressDatabaseString, "toAddress" ),
         soci::use( assetContractAddressDatabaseString, "assetAddress" ),
-        soci::use( transferAmountValueStr, "value" ), soci::use( nonce, "nonce" ),
+        soci::use( transferAmountValueStr, "value" ), soci::use( nonceString, "nonce" ),
         soci::use( resourceLocation, "resourceLocation" ),
         soci::use( settlementTime, "settlementTime" ),
         soci::use( transactionHash, "transactionHash" ),
@@ -222,7 +219,8 @@ void EasyNetDb::updateState(soci::session& databaseSession,
 }
 
 EasyNetDb::TransferResult EasyNetDb::transferValueUnsafe( const EthAddress& fromAddress,
-    const EthAddress& toAddress, const EthAddress& assetAddress, const EIP3009Value& value ) {
+    const EthAddress& toAddress, const EthAddress& assetAddress, const EIP3009Value& value,
+    EIP3009Nonce& nonce) {
     // Early no-op success cases
     if ( fromAddress.toDbString() == toAddress.toDbString() ) {
         logger_->trace( "transferValue: fromAddress == toAddress, no-op success" );
@@ -342,7 +340,9 @@ EasyNetDb::TransferResult EasyNetDb::transferValueUnsafe( const EthAddress& from
         auto transferAmountValueStr = Encoding::u256ToDecimal( transferAmountValue );
 
         insertTransaction( databaseSession, fromWalletAddressDatabaseString,
-            toWalletAddressDatabaseString, assetContractAddressDatabaseString, resourceLocation,
+            toWalletAddressDatabaseString, assetContractAddressDatabaseString,
+            nonce.toDbString(),
+            "", resourceLocation,
             fromIpAddress, jsonInfo, transferAmountValueStr);
 
         databaseTransactionScope.commit();
