@@ -8,7 +8,7 @@
 #include <sstream>  // added for nonce hex formatting
 
 EasyNetDb::EasyNetDb(
-    MachinePayApp& app, DbType type, const std::optional< std::string >& connectionInfo )
+    MachinePayApp& app, DbType type, const optional< string >& connectionInfo )
     : MachinePayDb( app, type, connectionInfo ) {
     try {
         soci::backend_factory const& backend = getBackend( dbType_ );
@@ -32,12 +32,12 @@ EasyNetDb::EasyNetDb(
                 soci::into( tcount );
             transactionsTableExisted = ( tcount > 0 );
         } else if ( dbType_ == DbType::PostgreSQL ) {
-            std::string regclassResultState;  // will be empty if NULL
+            string regclassResultState;  // will be empty if NULL
             soci::indicator indState = soci::i_ok;
             sql << "SELECT to_regclass('public.state')",
                 soci::into( regclassResultState, indState );
             stateTableExisted = ( indState != soci::i_null && !regclassResultState.empty() );
-            std::string regclassResultTx;  // will be empty if NULL
+            string regclassResultTx;  // will be empty if NULL
             soci::indicator indTx = soci::i_ok;
             sql << "SELECT to_regclass('public.transactions')",
                 soci::into( regclassResultTx, indTx );
@@ -119,8 +119,8 @@ EasyNetDb::EasyNetDb(
         } else {
             logger_->info( "Database schema verified, 'transactions' table already exists." );
         }
-    } catch ( std::exception& e ) {
-        RETHROW_NESTED2( "Failed to ensure schema " + std::string( e.what() ) );
+    } catch ( exception& e ) {
+        RETHROW_NESTED2( "Failed to ensure schema " + string( e.what() ) );
     }
 }
 
@@ -131,9 +131,9 @@ void EasyNetDb::newWalletUnsafe(
         soci::session databaseSession( *pool_ );
 
         // Convert to database-ready strings
-        std::string walletAddressDatabaseString = walletAddress.toDbString();
-        std::string assetContractAddressDatabaseString = assetAddress.toDbString();
-        std::string initialValueDecimalString = value.toDbString();
+        string walletAddressDatabaseString = walletAddress.toDbString();
+        string assetContractAddressDatabaseString = assetAddress.toDbString();
+        string initialValueDecimalString = value.toDbString();
 
         logger_->trace(
             "newWallet: inserting state row walletAddress={} assetAddress={} initialValue={}",
@@ -156,36 +156,36 @@ void EasyNetDb::newWalletUnsafe(
         } else {
             RETHROW_NESTED2( "Unsupported DB type for newWallet()" );
         }
-    } catch ( std::exception& e ) {
-        RETHROW_NESTED2( "Failed to insert state row:" + std::string( e.what() ) );
+    } catch ( exception& e ) {
+        RETHROW_NESTED2( "Failed to insert state row:" + string( e.what() ) );
     }
 }
 
 EasyNetDb::TransferResult EasyNetDb::processTransferRequest( const EthAddress& fromAddress,
     const EthAddress& toAddress, const EthAddress& assetAddress, const EIP3009Value& value ) {
-    std::unique_lock< std::shared_mutex > lock( stateMutex_ );
+    unique_lock< shared_mutex > lock( stateMutex_ );
     fundUserWalletWithFundsIfNewWalletUnsafe( fromAddress, assetAddress );
     return transferValueUnsafe( fromAddress, toAddress, assetAddress, value );
 }
 
 void EasyNetDb::insertTransaction( soci::session& databaseSession,
-    const std::string& fromWalletAddressDatabaseString,
-    const std::string& toWalletAddressDatabaseString,
-    const std::string& assetContractAddressDatabaseString, const std::string& organizationName,
-    const std::string& chainId, const std::string& resourceLocation, const std::string& fromIpAddress,
-    const std::string& jsonInfo, std::string& transferAmountValueStr ) {
+    const string& fromWalletAddressDatabaseString,
+    const string& toWalletAddressDatabaseString,
+    const string& assetContractAddressDatabaseString, const string& organizationName,
+    const string& chainId, const string& resourceLocation, const string& fromIpAddress,
+    const string& jsonInfo, string& transferAmountValueStr ) {
     // Generate a simple random hex nonce
-    std::stringstream nonceStream;
-    nonceStream << std::hex << std::random_device{}() << std::random_device{}();
-    const std::string nonce = nonceStream.str();
+    stringstream nonceStream;
+    nonceStream << hex << random_device{}() << random_device{}();
+    const string nonce = nonceStream.str();
 
     // For now reuse nonce as a pseudo transaction hash (replace with real hash if available)
-    const std::string transactionHash = nonce;
+    const string transactionHash = nonce;
 
     // Settlement time = current unix epoch seconds
-    auto now = std::chrono::system_clock::now();
+    auto now = chrono::system_clock::now();
     long long settlementTime =
-        chrono::duration_cast< std::chrono::seconds >( now.time_since_epoch() ).count();
+        chrono::duration_cast< chrono::seconds >( now.time_since_epoch() ).count();
 
     databaseSession << "INSERT INTO transactions (organizationName, chainId, fromAddress, "
                        "toAddress, assetAddress, value, nonce, resourceLocation, "
@@ -204,6 +204,28 @@ void EasyNetDb::insertTransaction( soci::session& databaseSession,
         soci::use( fromIpAddress, "fromIpAddress" ), soci::use( jsonInfo, "jsonInfo" );
 }
 
+void EasyNetDb::insertIntoState(soci::session& databaseSession,
+    string& toWalletAddressDatabaseString, string& assetContractAddressDatabaseString,
+    string& receiverUpdatedBalanceDecimalString)
+{
+    databaseSession << "INSERT INTO state (walletAddress, assetAddress, value) VALUES "
+        "(:walletAddress, :assetAddress, :value)",
+        soci::use( toWalletAddressDatabaseString, "walletAddress" ),
+        soci::use( assetContractAddressDatabaseString, "assetAddress" ),
+        soci::use( receiverUpdatedBalanceDecimalString, "value" );
+}
+
+void EasyNetDb::updateState(soci::session& databaseSession,
+    string& toWalletAddressDatabaseString, string& assetContractAddressDatabaseString,
+    string& receiverUpdatedBalanceDecimalString)
+{
+    databaseSession << "UPDATE state SET value = :value WHERE walletAddress = "
+        ":walletAddress AND assetAddress = :assetAddress",
+        soci::use( receiverUpdatedBalanceDecimalString, "value" ),
+        soci::use( toWalletAddressDatabaseString, "walletAddress" ),
+        soci::use( assetContractAddressDatabaseString, "assetAddress" );
+}
+
 EasyNetDb::TransferResult EasyNetDb::transferValueUnsafe( const EthAddress& fromAddress,
     const EthAddress& toAddress, const EthAddress& assetAddress, const EIP3009Value& value ) {
     // Early no-op success cases
@@ -220,13 +242,13 @@ EasyNetDb::TransferResult EasyNetDb::transferValueUnsafe( const EthAddress& from
         soci::session databaseSession( *pool_ );
         soci::transaction databaseTransactionScope( databaseSession );  // RAII transaction
 
-        std::string fromWalletAddressDatabaseString = fromAddress.toDbString();
-        std::string toWalletAddressDatabaseString = toAddress.toDbString();
-        std::string assetContractAddressDatabaseString = assetAddress.toDbString();
+        string fromWalletAddressDatabaseString = fromAddress.toDbString();
+        string toWalletAddressDatabaseString = toAddress.toDbString();
+        string assetContractAddressDatabaseString = assetAddress.toDbString();
         u256 transferAmountValue = value.value();
 
         // 1. Fetch sender balance
-        std::string senderBalanceValueStringFromDatabase;
+        string senderBalanceValueStringFromDatabase;
         soci::indicator senderBalanceIndicator = soci::i_ok;
         databaseSession << "SELECT value FROM state WHERE walletAddress = :walletAddress AND "
                            "assetAddress = :assetAddress",
@@ -256,7 +278,7 @@ EasyNetDb::TransferResult EasyNetDb::transferValueUnsafe( const EthAddress& from
         }
 
         // 2. Fetch receiver balance (may be absent)
-        std::string receiverBalanceValueStringFromDatabase;
+        string receiverBalanceValueStringFromDatabase;
         soci::indicator receiverBalanceIndicator = soci::i_ok;
         databaseSession << "SELECT value FROM state WHERE walletAddress = :walletAddress AND "
                            "assetAddress = :assetAddress",
@@ -273,7 +295,7 @@ EasyNetDb::TransferResult EasyNetDb::transferValueUnsafe( const EthAddress& from
         }
 
         // Overflow check: receiverCurrentBalanceValue + transferAmountValue must not exceed max
-        const u256 maxUint256Value = ( std::numeric_limits< u256 >::max )();
+        const u256 maxUint256Value = ( numeric_limits< u256 >::max )();
         if ( transferAmountValue > maxUint256Value - receiverCurrentBalanceValue ) {
             logger_->trace(
                 "transferValue: overflow would occur receiverWalletAddress={} assetAddress={} "
@@ -292,30 +314,22 @@ EasyNetDb::TransferResult EasyNetDb::transferValueUnsafe( const EthAddress& from
         u256 receiverUpdatedBalanceValueAfterTransfer =
             receiverCurrentBalanceValue + transferAmountValue;
 
-        std::string senderUpdatedBalanceDecimalString =
+        string senderUpdatedBalanceDecimalString =
             Encoding::u256ToDecimal( senderUpdatedBalanceValueAfterTransfer );
-        std::string receiverUpdatedBalanceDecimalString =
+        string receiverUpdatedBalanceDecimalString =
             Encoding::u256ToDecimal( receiverUpdatedBalanceValueAfterTransfer );
 
         // 4. Persist changes
-        databaseSession << "UPDATE state SET value = :value WHERE walletAddress = :walletAddress "
-                           "AND assetAddress = :assetAddress",
-            soci::use( senderUpdatedBalanceDecimalString, "value" ),
-            soci::use( fromWalletAddressDatabaseString, "walletAddress" ),
-            soci::use( assetContractAddressDatabaseString, "assetAddress" );
+        updateState( databaseSession, toWalletAddressDatabaseString, assetContractAddressDatabaseString,
+            senderUpdatedBalanceDecimalString);
 
         if ( receiverStateRowExists ) {
-            databaseSession << "UPDATE state SET value = :value WHERE walletAddress = "
-                               ":walletAddress AND assetAddress = :assetAddress",
-                soci::use( receiverUpdatedBalanceDecimalString, "value" ),
-                soci::use( toWalletAddressDatabaseString, "walletAddress" ),
-                soci::use( assetContractAddressDatabaseString, "assetAddress" );
+            updateState( databaseSession, toWalletAddressDatabaseString, assetContractAddressDatabaseString,
+                receiverUpdatedBalanceDecimalString );
         } else {
-            databaseSession << "INSERT INTO state (walletAddress, assetAddress, value) VALUES "
-                               "(:walletAddress, :assetAddress, :value)",
-                soci::use( toWalletAddressDatabaseString, "walletAddress" ),
-                soci::use( assetContractAddressDatabaseString, "assetAddress" ),
-                soci::use( receiverUpdatedBalanceDecimalString, "value" );
+            insertIntoState( databaseSession, toWalletAddressDatabaseString,
+                assetContractAddressDatabaseString,
+                receiverUpdatedBalanceDecimalString );
         }
 
         logger_->trace(
@@ -327,11 +341,11 @@ EasyNetDb::TransferResult EasyNetDb::transferValueUnsafe( const EthAddress& from
             senderUpdatedBalanceDecimalString, receiverUpdatedBalanceDecimalString );
 
         // --- New: insert transaction record ---
-        const std::string organizationName = "defaultOrg";
-        const std::string chainId = "testChain";
-        const std::string resourceLocation = "";
-        const std::string fromIpAddress = "0.0.0.0";
-        const std::string jsonInfo = "{}";
+        const string organizationName = "defaultOrg";
+        const string chainId = "testChain";
+        const string resourceLocation = "";
+        const string fromIpAddress = "0.0.0.0";
+        const string jsonInfo = "{}";
         auto transferAmountValueStr = Encoding::u256ToDecimal( transferAmountValue );
 
         insertTransaction( databaseSession, fromWalletAddressDatabaseString,
@@ -340,8 +354,8 @@ EasyNetDb::TransferResult EasyNetDb::transferValueUnsafe( const EthAddress& from
 
         databaseTransactionScope.commit();
         return TransferResult::TransferSuccess;
-    } catch ( std::exception& e ) {
-        RETHROW_NESTED2( "Failed to transfer value: " + std::string( e.what() ) );
+    } catch ( exception& e ) {
+        RETHROW_NESTED2( "Failed to transfer value: " + string( e.what() ) );
     }
 }
 
@@ -350,11 +364,11 @@ void EasyNetDb::fundUserWalletWithFundsIfNewWalletUnsafe(
     try {
         soci::session databaseSession( *pool_ );
 
-        std::string walletAddressDatabaseString = walletAddress.toDbString();
-        std::string assetContractAddressDatabaseString = assetAddress.toDbString();
+        string walletAddressDatabaseString = walletAddress.toDbString();
+        string assetContractAddressDatabaseString = assetAddress.toDbString();
 
         // Check if the wallet+asset state row already exists.
-        std::string existingValueStringFromDatabase;
+        string existingValueStringFromDatabase;
         soci::indicator existingValueIndicator = soci::i_ok;
         databaseSession << "SELECT value FROM state WHERE walletAddress = :walletAddress AND"
                            " assetAddress = :assetAddress",
@@ -377,7 +391,7 @@ void EasyNetDb::fundUserWalletWithFundsIfNewWalletUnsafe(
         u256 initialFundingAmountValue =
             Encoding::u256FromHexOrDecimal( "1000000000000000000000000000" );  // 1e27
         EIP3009Value initialFundingEip3009Value( initialFundingAmountValue );
-        std::string initialFundingDecimalString = initialFundingEip3009Value.toDbString();
+        string initialFundingDecimalString = initialFundingEip3009Value.toDbString();
 
         databaseSession << "INSERT INTO state (walletAddress, assetAddress, value) VALUES "
                            "(:walletAddress, :assetAddress, :value)",
@@ -390,20 +404,20 @@ void EasyNetDb::fundUserWalletWithFundsIfNewWalletUnsafe(
             "assetAddress={} initialValue={}",
             walletAddressDatabaseString, assetContractAddressDatabaseString,
             initialFundingDecimalString );
-    } catch ( std::exception& e ) {
-        RETHROW_NESTED2( "Failed to fund user wallet: " + std::string( e.what() ) );
+    } catch ( exception& e ) {
+        RETHROW_NESTED2( "Failed to fund user wallet: " + string( e.what() ) );
     }
 }
 
-std::optional< u256 > EasyNetDb::getBalance(
+optional< u256 > EasyNetDb::getBalance(
     const EthAddress& walletAddress, const EthAddress& assetAddress ) const {
-    std::shared_lock< std::shared_mutex > lock( stateMutex_ );
+    shared_lock< shared_mutex > lock( stateMutex_ );
     try {
         soci::session databaseSession( *pool_ );
-        std::string walletAddressDatabaseString = walletAddress.toDbString();
-        std::string assetContractAddressDatabaseString = assetAddress.toDbString();
+        string walletAddressDatabaseString = walletAddress.toDbString();
+        string assetContractAddressDatabaseString = assetAddress.toDbString();
 
-        std::string balanceValueStringFromDatabase;
+        string balanceValueStringFromDatabase;
         soci::indicator balanceIndicator = soci::i_ok;
         databaseSession << "SELECT value FROM state WHERE walletAddress = :walletAddress AND "
                            "assetAddress = :assetAddress",
@@ -412,11 +426,11 @@ std::optional< u256 > EasyNetDb::getBalance(
             soci::use( assetContractAddressDatabaseString, "assetAddress" );
 
         if ( balanceIndicator == soci::i_null || balanceValueStringFromDatabase.empty() ) {
-            return std::nullopt;  // no row
+            return nullopt;  // no row
         }
         u256 currentBalanceValue = Encoding::u256FromHexOrDecimal( balanceValueStringFromDatabase );
         return currentBalanceValue;
-    } catch ( std::exception& e ) {
-        RETHROW_NESTED2( "Failed to read balance: " + std::string( e.what() ) );
+    } catch ( exception& e ) {
+        RETHROW_NESTED2( "Failed to read balance: " + string( e.what() ) );
     }
 }

@@ -45,6 +45,12 @@ public:
         const std::string& assetContractAddressDatabaseString, const std::string& organizationName,
         const std::string& chainId, const std::string& resourceLocation, const std::string& fromIpAddress,
         const std::string& jsonInfo, std::string& transferAmountValueStr );
+    void insertIntoState( soci::session& databaseSession, std::string& toWalletAddressDatabaseString,
+        std::string& assetContractAddressDatabaseString,
+        std::string& receiverUpdatedBalanceDecimalString );
+    void updateState( soci::session& databaseSession, std::string& toWalletAddressDatabaseString,
+        std::string& assetContractAddressDatabaseString,
+        std::string& receiverUpdatedBalanceDecimalString );
 
 
     /**
