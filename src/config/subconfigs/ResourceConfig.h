@@ -7,17 +7,19 @@
 
 class OrganizationConfig;
 
-enum class ResourceType {
+enum class ResourceType
+{
     LocalFile,
     ApiJsonRpc,
     ApiRest
 };
 
 
-
-class ResourceConfig {
+class ResourceConfig
+{
 public:
-    [[nodiscard]] std::string machinePayPath() const {
+    [[nodiscard]] std::string machinePayPath() const
+    {
         return machinePayPath_;
     }
 
@@ -32,12 +34,10 @@ private:
     std::string description_;
     std::string paymentScheme_;
 
-    ResourceConfig(const std::string& name, const std::string& location, ResourceType type, boost::multiprecision::uint256_t price, const std::string& token);
-
-
+    ResourceConfig(const std::string& name, const std::string& location, ResourceType type,
+                   boost::multiprecision::uint256_t price, const std::string& token);
 
 public:
-
     std::string getLocation() const;
 
 
@@ -46,26 +46,30 @@ public:
     ResourceType type() const { return type_; }
     const boost::multiprecision::uint256_t price() const { return price_; }
     const std::string& token() const { return token_; }
-    const std::string priceStr() const {
+
+    const std::string priceStr() const
+    {
         return price_.str();
     }
 
-    [[nodiscard]] std::string paymentScheme() const {
+    [[nodiscard]] std::string paymentScheme() const
+    {
         return paymentScheme_;
     }
 
-    [[nodiscard]] std::string mimeType() const {
+    [[nodiscard]] std::string mimeType() const
+    {
         return mimeType_;
     }
 
-    [[nodiscard]] std::string description() const {
+    [[nodiscard]] std::string description() const
+    {
         return description_;
     }
 
-    static ResourceType mustContainType(const nlohmann::json &j);
+    static ResourceType mustContainType(const nlohmann::json& j);
 
-    static ptr<ResourceConfig> createFromJson(const nlohmann::json &j, ptr<FileManager> fileManager);
-    static ptr<vector<ptr<ResourceConfig>>> createVectorFromJsonArray(const nlohmann::json &j, ptr<FileManager> fileManager);
-
-
+    static ptr<ResourceConfig> createFromJson(const nlohmann::json& j, ptr<FileManager> fileManager);
+    static ptr<vector<ptr<ResourceConfig>>> createVectorFromJsonArray(const nlohmann::json& j,
+                                                                      ptr<FileManager> fileManager);
 };

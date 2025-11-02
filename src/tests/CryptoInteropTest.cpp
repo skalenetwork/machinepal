@@ -11,16 +11,18 @@
 
 
 // Helper: convert std::array<uint8_t, 32> to lowercase hex string
-static std::string to_hex(const std::array<uint8_t, 32>& arr) {
+static std::string to_hex(const std::array<uint8_t, 32>& arr)
+{
     std::ostringstream oss;
-    for (auto b : arr) {
+    for (auto b : arr)
+    {
         oss << std::hex << std::setw(2) << std::setfill('0') << (int)b;
     }
     return oss.str();
 }
 
 
-BOOST_AUTO_TEST_CASE(keccak256_abc_vector)
+BOOST_AUTO_TEST_CASE (keccak256_abc_vector)
 {
     const std::vector<uint8_t> input = {'a', 'b', 'c'};
 
@@ -38,7 +40,8 @@ BOOST_AUTO_TEST_CASE(keccak256_abc_vector)
 }
 
 // Deterministic test using private key = 1
-BOOST_AUTO_TEST_CASE(private_key_scalar_one) {
+BOOST_AUTO_TEST_CASE (private_key_scalar_one)
+{
     std::string privateKeyStr = "0x" + std::string(63, '0') + "1"; // 64 hex chars ending with 1
     auto privateKey = EthPrivateKey::parseFlexible(privateKeyStr);
 
@@ -56,18 +59,20 @@ BOOST_AUTO_TEST_CASE(private_key_scalar_one) {
 
     auto addr = publicKey.getAddress();
 
-    BOOST_TEST(addr.toHex( PREFIX_0x) == "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf");
+    BOOST_TEST(addr.toHex(PREFIX_0x) == "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf");
     BOOST_TEST(addr.toChecksumHex() == "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf");
 }
 
 
-BOOST_AUTO_TEST_CASE(checksum_validation_scalar_one_address) {
+BOOST_AUTO_TEST_CASE (checksum_validation_scalar_one_address)
+{
     std::string checksumAddr = "0x8626f6940E2eb28930eFb4CeF49B2d1F2C9C1199";
     auto addr = EthAddress::parseFlexible(checksumAddr, true);
     BOOST_TEST(addr.toHex(PREFIX_0x) == "0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199");
 }
 
-BOOST_AUTO_TEST_CASE(range_checks) {
+BOOST_AUTO_TEST_CASE (range_checks)
+{
     std::string zeroKey = "0x" + std::string(64, '0');
     BOOST_CHECK_THROW(EthPrivateKey::parseFlexible(zeroKey), std::invalid_argument);
     std::string n = "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141"; // n invalid
@@ -77,7 +82,7 @@ BOOST_AUTO_TEST_CASE(range_checks) {
     std::string expectedLower;
     expectedLower.reserve(2 + nMinus1.size());
     expectedLower += "0x";
-    for(char c: nMinus1) expectedLower.push_back(std::tolower(static_cast<unsigned char>(c)));
+    for (char c : nMinus1) expectedLower.push_back(std::tolower(static_cast<unsigned char>(c)));
     BOOST_TEST(pk.toHex() == expectedLower);
 }
 

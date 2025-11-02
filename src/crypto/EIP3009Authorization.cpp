@@ -15,7 +15,8 @@ using u256 = boost::multiprecision::uint256_t;
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
 
-static inline void packUint256(std::vector<uint8_t>& out, const u256& value) {
+static inline void packUint256(std::vector<uint8_t>& out, const u256& value)
+{
     constexpr size_t targetLen = 32;
 
     // Avoid extra reallocations if this is called in a tight loop.
@@ -26,7 +27,8 @@ static inline void packUint256(std::vector<uint8_t>& out, const u256& value) {
     tmp.reserve(targetLen);
     export_bits(value, std::back_inserter(tmp), 8); // big-endian, minimal length
 
-    if (tmp.size() > targetLen) {
+    if (tmp.size() > targetLen)
+    {
         // Should never happen for a true 256-bit type, but guard anyway.
         throw std::invalid_argument("packUint256: value does not fit in 32 bytes");
     }
@@ -37,16 +39,14 @@ static inline void packUint256(std::vector<uint8_t>& out, const u256& value) {
 }
 
 
-
-
 // Helper to encode and hash the authorization message struct
-static std::array<uint8_t, 32> hashTransferWithAuthorizationStruct(const EthAddress &from,
-                                                                   const EthAddress &to,
-                                                                   const EIP3009Value &value,
+static std::array<uint8_t, 32> hashTransferWithAuthorizationStruct(const EthAddress& from,
+                                                                   const EthAddress& to,
+                                                                   const EIP3009Value& value,
                                                                    const EIP3009ValidityTime& validAfter,
                                                                    const EIP3009ValidityTime& validBefore,
-                                                                   const EIP3009Nonce &nonce) {
-
+                                                                   const EIP3009Nonce& nonce)
+{
     std::vector<uint8_t> message;
     message.reserve(7 * 32); // 7 fields * 32 bytes each
 
@@ -80,32 +80,37 @@ static std::array<uint8_t, 32> hashTransferWithAuthorizationStruct(const EthAddr
 }
 
 
-EIP712Signature EIP3009Authorization::signAuthorization(const EIP712Domain &domain,
-                                                        const EthAddress &from,
-                                                        const EthAddress &to,
+EIP712Signature EIP3009Authorization::signAuthorization(const EIP712Domain& domain,
+                                                        const EthAddress& from,
+                                                        const EthAddress& to,
                                                         const EIP3009Value& value,
                                                         const EIP3009ValidityTime& validAfter,
                                                         const EIP3009ValidityTime& validBefore,
-                                                        const EIP3009Nonce &nonce,
-                                                        const EthPrivateKey &privateKey) {
+                                                        const EIP3009Nonce& nonce,
+                                                        const EthPrivateKey& privateKey)
+{
     auto structHash = hashTransferWithAuthorizationStruct(from, to, value, validAfter, validBefore, nonce);
     return domain.signWithDomain(structHash, privateKey);
-
 }
 
-std::optional<HttpError> EIP3009Authorization::verifyAuthorizationSignature(const EIP712Domain &domain,
-                                               const EthAddress &from,
-                                               const EthAddress &to,
-                                               const EIP3009Value &value,
-                                               const EIP3009ValidityTime& validAfter,
-                                               const EIP3009ValidityTime& validBefore,
-                                               const EIP3009Nonce &nonce,
-                                               const EIP712Signature &signature) {
-    try {
+std::optional<HttpError> EIP3009Authorization::verifyAuthorizationSignature(const EIP712Domain& domain,
+                                                                            const EthAddress& from,
+                                                                            const EthAddress& to,
+                                                                            const EIP3009Value& value,
+                                                                            const EIP3009ValidityTime& validAfter,
+                                                                            const EIP3009ValidityTime& validBefore,
+                                                                            const EIP3009Nonce& nonce,
+                                                                            const EIP712Signature& signature)
+{
+    try
+    {
         auto structHash = hashTransferWithAuthorizationStruct(from, to, value, validAfter, validBefore, nonce);
         return domain.verifyWithDomain(structHash, signature, from);
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception& e)
+    {
         printNestedException(e);
-        return HttpError(ErrorType::ERR_INTERNAL_SERVER_ERROR, std::string("Could not verify EIP-3009 authorization signature: ") + e.what());
+        return HttpError(ErrorType::ERR_INTERNAL_SERVER_ERROR,
+                         std::string("Could not verify EIP-3009 authorization signature: ") + e.what());
     }
 }

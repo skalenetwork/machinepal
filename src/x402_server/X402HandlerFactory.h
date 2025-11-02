@@ -9,23 +9,30 @@
 
 class MachinePayApp;
 
-class X402HandlerFactory : public proxygen::RequestHandlerFactory {
+class X402HandlerFactory : public proxygen::RequestHandlerFactory
+{
 public:
-    explicit X402HandlerFactory(MachinePayApp &app)
-        : app_(app) {
+    explicit X402HandlerFactory(MachinePayApp& app)
+        : app_(app)
+    {
     }
 
-    void onServerStart(folly::EventBase* /*_evb*/) noexcept override {}
-    void onServerStop() noexcept override {}
+    void onServerStart(folly::EventBase* /*_evb*/) noexcept override
+    {
+    }
+
+    void onServerStop() noexcept override
+    {
+    }
 
     proxygen::RequestHandler* onRequest(proxygen::RequestHandler* /*_handler*/,
-                                        proxygen::HTTPMessage* /*_msg*/) noexcept override {
+                                        proxygen::HTTPMessage* /*_msg*/) noexcept override
+    {
         auto handler = std::shared_ptr<X402Handler>(new X402Handler(app_));
-        handler->self_ = handler;  // self-owning ref, ensures lifetime
+        handler->self_ = handler; // self-owning ref, ensures lifetime
         return handler.get();
     }
 
 private:
-
-    MachinePayApp & app_;
+    MachinePayApp& app_;
 };

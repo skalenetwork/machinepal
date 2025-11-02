@@ -9,16 +9,15 @@
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 
-filesystem::path FileManager::checkFileExistsAndReadableAndResolve(const std::string&  userProvidedPath)
+filesystem::path FileManager::checkFileExistsAndReadableAndResolve(const std::string& userProvidedPath)
 {
-
-
     namespace fs = std::filesystem;
 
     try
     {
         // Disallow parent directory traversal in userProvidedPath (e.g. ../../somefile)
-        if (userProvidedPath.find("..") != std::string::npos) {
+        if (userProvidedPath.find("..") != std::string::npos)
+        {
             throw std::runtime_error("Parent directory traversal ('..') is not allowed in file path: '" +
                 userProvidedPath + "'. Current config dir: " + canonicalConfigDirPath_.string());
         }
@@ -31,7 +30,8 @@ filesystem::path FileManager::checkFileExistsAndReadableAndResolve(const std::st
 
         filesystem::path p(userProvidedPath);
 
-        if (!p.is_absolute()) {
+        if (!p.is_absolute())
+        {
             // path is relative. Resolve against current config dir
             p = this->canonicalConfigDirPath_ / p;
         }
@@ -47,7 +47,8 @@ filesystem::path FileManager::checkFileExistsAndReadableAndResolve(const std::st
         }
 
         // Check that configFile is not a directory
-        if (std::filesystem::is_directory(p)) {
+        if (std::filesystem::is_directory(p))
+        {
             throw std::runtime_error(
                 "File '" + userProvidedPath + "' is a directory, not a file. Current config dir: " +
                 canonicalConfigDirPath_.string());
@@ -65,17 +66,16 @@ filesystem::path FileManager::checkFileExistsAndReadableAndResolve(const std::st
         }
 
         return p;
-    } catch (const std::exception& e)
+    }
+    catch (const std::exception& e)
     {
         RETHROW_NESTED;
     }
-
 }
 
 
 void FileManager::checkFileExistsAndReadableCwd(const std::string& path)
 {
-
     namespace fs = std::filesystem;
 
     try
@@ -91,7 +91,8 @@ void FileManager::checkFileExistsAndReadableCwd(const std::string& path)
         }
 
         // Check that configFile is not a directory
-        if (std::filesystem::is_directory(path)) {
+        if (std::filesystem::is_directory(path))
+        {
             throw std::runtime_error(
                 "File '" + path + "' is a directory, not a file. Current working directory: " +
                 std::string(cwd));
@@ -99,7 +100,8 @@ void FileManager::checkFileExistsAndReadableCwd(const std::string& path)
 
         if (!fs::is_regular_file(path))
         {
-            throw std::runtime_error("File '" + path + "' is not a regular file (a directory?). Current working directory: " + cwd);
+            throw std::runtime_error(
+                "File '" + path + "' is not a regular file (a directory?). Current working directory: " + cwd);
         }
         if (access(path.c_str(), R_OK) != 0)
         {
@@ -109,14 +111,16 @@ void FileManager::checkFileExistsAndReadableCwd(const std::string& path)
         {
             throw std::runtime_error("File '" + path + "' is empty. Current working directory: " + cwd);
         }
-    } catch (const std::exception& e)
+    }
+    catch (const std::exception& e)
     {
         RETHROW_NESTED;
     }
 }
 
 
-std::chrono::system_clock::time_point FileManager::getLastFileModificationTime(const std::string& _path) {
+std::chrono::system_clock::time_point FileManager::getLastFileModificationTime(const std::string& _path)
+{
     auto ftime = std::filesystem::last_write_time(_path);
     return std::chrono::system_clock::time_point(
         std::chrono::duration_cast<std::chrono::system_clock::duration>(
@@ -125,22 +129,31 @@ std::chrono::system_clock::time_point FileManager::getLastFileModificationTime(c
     );
 }
 
-std::filesystem::path FileManager::resolveCanonicalPathAgainstCwd(const std::string& _path) {
-    try {
+std::filesystem::path FileManager::resolveCanonicalPathAgainstCwd(const std::string& _path)
+{
+    try
+    {
         return std::filesystem::weakly_canonical(std::filesystem::absolute(_path));
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception& e)
+    {
         RETHROW_NESTED;
     }
 }
 
-std::filesystem::path FileManager::resolveCanonicalPath(const std::string& _path) const {
-    try {
+std::filesystem::path FileManager::resolveCanonicalPath(const std::string& _path) const
+{
+    try
+    {
         std::filesystem::path rel{_path};
-        if (rel.is_absolute()) {
+        if (rel.is_absolute())
+        {
             return std::filesystem::weakly_canonical(rel);
         }
         return std::filesystem::weakly_canonical(this->canonicalConfigPath_ / rel);
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception& e)
+    {
         RETHROW_NESTED;
     }
 }

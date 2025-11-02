@@ -4,11 +4,9 @@
 #include "MachinePayConfig.h"
 
 
-class ConfigManager {
+class ConfigManager
+{
 public:
-
-
-
     static ptr<ConfigManager> initManager(const std::map<std::string, std::string>& configValuesFromCliAndEnv);
     static ptr<ConfigManager> createInstance(const std::map<std::string, std::string>& configValuesFromCliAndEnv);
 
@@ -18,17 +16,16 @@ public:
     const std::string& latestConfigSha256();
 
 
-    [[nodiscard]] ptr<FileManager> fileManager() const {
+    [[nodiscard]] ptr<FileManager> fileManager() const
+    {
         CHECK_STATE(fileManager_);
         return fileManager_;
     }
-
 
 public:
     ConfigManager() = default;
 
 private:
-
     ptr<FileManager> fileManager_;
 
     ConfigManager(const ConfigManager&) = delete;

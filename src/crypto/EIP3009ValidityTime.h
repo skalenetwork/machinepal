@@ -5,13 +5,16 @@
 
 using u256 = boost::multiprecision::uint256_t;
 
-class EIP3009ValidityTime {
+class EIP3009ValidityTime
+{
     u256 time_{};
+
 public:
     EIP3009ValidityTime() = default;
     explicit EIP3009ValidityTime(const u256& val);
 
-    [[nodiscard]] u256 time() const {
+    [[nodiscard]] u256 time() const
+    {
         return time_;
     }
 

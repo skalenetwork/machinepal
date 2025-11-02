@@ -12,12 +12,13 @@
 #include "config/subconfigs/ResourceConfig.h"
 
 
-Authorization::Authorization(const std::string &fromStr,
-                             const std::string &toStr,
-                             const std::string &value,
-                             const std::string &validAfter,
-                             const std::string &validBefore,
-                             const std::string &nonce) {
+Authorization::Authorization(const std::string& fromStr,
+                             const std::string& toStr,
+                             const std::string& value,
+                             const std::string& validAfter,
+                             const std::string& validBefore,
+                             const std::string& nonce)
+{
     value_ = EIP3009Value::fromHexOrDecimal(value);
     validAfter_ = EIP3009ValidityTime::fromHexOrDecimal(validAfter);
     validBefore_ = EIP3009ValidityTime::fromHexOrDecimal(validBefore);
@@ -26,22 +27,24 @@ Authorization::Authorization(const std::string &fromStr,
     nonce_ = EIP3009Nonce::fromHex(nonce);
 }
 
-const EIP3009Value &Authorization::value() const { return value_; }
-const EIP3009ValidityTime &Authorization::validAfter() const { return validAfter_; }
-const EIP3009ValidityTime &Authorization::validBefore() const { return validBefore_; }
-const EIP3009Nonce &Authorization::nonce() const { return nonce_; }
+const EIP3009Value& Authorization::value() const { return value_; }
+const EIP3009ValidityTime& Authorization::validAfter() const { return validAfter_; }
+const EIP3009ValidityTime& Authorization::validBefore() const { return validBefore_; }
+const EIP3009Nonce& Authorization::nonce() const { return nonce_; }
 
 
-bool Authorization::operator==(const Authorization &other) const {
+bool Authorization::operator==(const Authorization& other) const
+{
     return from_ == other.from_ &&
-           to_ == other.to_ &&
-           value_ == other.value_ &&
-           validAfter_ == other.validAfter_ &&
-           validBefore_ == other.validBefore_ &&
-           nonce_ == other.nonce_;
+        to_ == other.to_ &&
+        value_ == other.value_ &&
+        validAfter_ == other.validAfter_ &&
+        validBefore_ == other.validBefore_ &&
+        nonce_ == other.nonce_;
 }
 
-std::shared_ptr<Authorization> Authorization::fromJson(const json &j) {
+std::shared_ptr<Authorization> Authorization::fromJson(const json& j)
+{
     CHECK_STATE_JSON(j.contains("from"), "Missing required field 'from' in Authorization JSON", j);
     CHECK_STATE_JSON(j.contains("to"), "Missing required field 'to' in Authorization JSON", j);
     CHECK_STATE_JSON(j.contains("value"), "Missing required field 'value' in Authorization JSON", j);
@@ -56,7 +59,7 @@ std::shared_ptr<Authorization> Authorization::fromJson(const json &j) {
     CHECK_STATE_JSON(j.at("validBefore").is_string(), "'validBefore' must be a string in Authorization JSON", j);
     CHECK_STATE_JSON(j.at("nonce").is_string(), "'nonce' must be a string in Authorization JSON", j);
 
-    return std::make_shared<Authorization>(
+    return std::make_shared < Authorization > (
         j.at("from").get<std::string>(),
         j.at("to").get<std::string>(),
         j.at("value").get<std::string>(),
@@ -66,7 +69,8 @@ std::shared_ptr<Authorization> Authorization::fromJson(const json &j) {
     );
 }
 
-json Authorization::toJson() const {
+json Authorization::toJson() const
+{
     json j;
     j["from"] = from_.toChecksumHex();
     j["to"] = to_.toChecksumHex();
@@ -77,49 +81,53 @@ json Authorization::toJson() const {
     return j;
 }
 
-std::optional<HttpError> Authorization::checkValidityTime() {
-
-
-
+std::optional<HttpError> Authorization::checkValidityTime()
+{
     // add disabling of valid time checks for testing so we can use fixed validAfter/validBefore values in tests
-    if (std::getenv("TEST_DISABLE_AUTHORIZATION_TIME_CHECK")) {
-        return  std::nullopt;
+    if (std::getenv("TEST_DISABLE_AUTHORIZATION_TIME_CHECK"))
+    {
+        return std::nullopt;
     }
 
     auto now = EIP3009ValidityTime::fromTimeT(
         std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
 
-    if (validAfter() > now) {
+    if (validAfter() > now)
+    {
         return HttpError(ErrorType::ERR_BAD_REQUEST,
-                           "Authorization not yet valid: current time (" + now.toDecimal() +
-                           ") is less than validAfter (" + validAfter().toDecimal() + ")");
+                         "Authorization not yet valid: current time (" + now.toDecimal() +
+                         ") is less than validAfter (" + validAfter().toDecimal() + ")");
     }
-    if (validBefore() < now) {
+    if (validBefore() < now)
+    {
         return HttpError(ErrorType::ERR_BAD_REQUEST,
-                           "Authorization expired: current time (" + now.toDecimal() + ") is after validBefore ("
-                           + validBefore().toDecimal() + ")");
+                         "Authorization expired: current time (" + now.toDecimal() + ") is after validBefore ("
+                         + validBefore().toDecimal() + ")");
     }
     return std::nullopt;
 }
 
-std::optional<HttpError> Authorization::validate(const MachinePayConfig &config, const ResourceConfig &resource) {
+std::optional<HttpError> Authorization::validate(const MachinePayConfig& config, const ResourceConfig& resource)
+{
     // Check validAfter is less than or equal to current time
     // Check validBefore is greater than current time
-    try {
-
-
-        if (this->to() != config.network()->walletAddress()) {
+    try
+    {
+        if (this->to() != config.network()->walletAddress())
+        {
             return HttpError(ErrorType::ERR_BAD_REQUEST,
                              std::string(
                                  "Authorization payment destination address does not match configured destination address: ")
                              +
-                             "authorization.to=" + to().toHex(PREFIX_0x) + ", configured.to=" + config.network()->walletAddress()
+                             "authorization.to=" + to().toHex(PREFIX_0x) + ", configured.to=" + config.network()->
+                             walletAddress()
                              .toHex(PREFIX_0x));
         }
 
         EIP3009Value price(resource.price());
 
-        if (value() != price) {
+        if (value() != price)
+        {
             return HttpError(ErrorType::ERR_BAD_REQUEST,
                              std::string(
                                  "Payment value does not equal price of the resource (maxAmountRequired): ")
@@ -129,7 +137,9 @@ std::optional<HttpError> Authorization::validate(const MachinePayConfig &config,
         }
 
         return checkValidityTime();
-    } catch (const std::exception &e) {
+    }
+    catch (const std::exception& e)
+    {
         return HttpError(ErrorType::ERR_INTERNAL_SERVER_ERROR,
                          std::string("Authorization failed to validate") + e.what());
     }

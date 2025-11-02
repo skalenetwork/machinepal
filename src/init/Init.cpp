@@ -25,7 +25,8 @@
 #include <iomanip>
 
 // Helper function for libcurl write callback
-static size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
+static size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp)
+{
     ((std::string*)userp)->append((char*)contents, size * nmemb);
     return size * nmemb;
 }
@@ -33,14 +34,16 @@ static size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* use
 atomic<bool> Init::inited_{false};
 
 
-void ThrowOnFailure() {
+void ThrowOnFailure()
+{
     std::cerr << "Fatal log or CHECK failed in proxygen" << std::endl;
     throw std::runtime_error("Fatal log or CHECK failed");
 }
 
-void Init::initAllLibs(int _argc, char *_argv[]) {
-    if (!inited_.exchange(true)) {
-
+void Init::initAllLibs(int _argc, char* _argv[])
+{
+    if (!inited_.exchange(true))
+    {
         auto rc = curl_global_init(CURL_GLOBAL_DEFAULT);
         CHECK_STATE2(rc == CURLE_OK, "curl_global_init failed");
 
@@ -60,16 +63,19 @@ void Init::initAllLibs(int _argc, char *_argv[]) {
     }
 }
 
-bool Init::isInited() {
+bool Init::isInited()
+{
     return inited_;
 }
 
 
-map<string, string> Init::getMachinePayEnvironmentOverloads() {
+map<string, string> Init::getMachinePayEnvironmentOverloads()
+{
     map<string, string> envOverloads;
-    extern char **environ;
+    extern char** environ;
     const string prefix = "MACHINE_PAY_";
-    for (char **env = environ; *env != nullptr; ++env) {
+    for (char** env = environ; *env != nullptr; ++env)
+    {
         string environmentVariable(*env);
         if (!environmentVariable.starts_with(prefix))
             continue;
@@ -79,11 +85,13 @@ map<string, string> Init::getMachinePayEnvironmentOverloads() {
         string key = environmentVariable.substr(0, pos);
         string strippedKey = key.substr(prefix.size());
 
-        if (strippedKey.empty()) {
+        if (strippedKey.empty())
+        {
             continue;
         }
 
-        if (envOverloads.contains(strippedKey) > 0) {
+        if (envOverloads.contains(strippedKey) > 0)
+        {
             throw std::runtime_error("Duplicate environment variable: " + string(key));
         }
         envOverloads[strippedKey] = environmentVariable.substr(pos + 1);
@@ -92,8 +100,8 @@ map<string, string> Init::getMachinePayEnvironmentOverloads() {
 }
 
 
-
-void Init::initLogLevelFromConfig(ptr<ConfigManager> manager) {
+void Init::initLogLevelFromConfig(ptr<ConfigManager> manager)
+{
     CHECK_STATE(manager);
     auto logConfig = manager->latestConfig()->log();
     auto logLevel = logConfig->level();
@@ -114,9 +122,11 @@ void Init::initLogLevelFromConfig(ptr<ConfigManager> manager) {
     spdlog::set_level(spdlogLevel);
 }
 
-bool Init::fetchInternetTime(const char* url, std::string& utcDatetime, std::string& responseOut, std::string& errorOut) {
+bool Init::fetchInternetTime(const char* url, std::string& utcDatetime, std::string& responseOut, std::string& errorOut)
+{
     CURL* curl = curl_easy_init();
-    if (!curl) {
+    if (!curl)
+    {
         errorOut = "Failed to initialize curl for time check";
         return false;
     }
@@ -127,18 +137,22 @@ bool Init::fetchInternetTime(const char* url, std::string& utcDatetime, std::str
     curl_easy_setopt(curl, CURLOPT_TIMEOUT, 5L);
     CURLcode res = curl_easy_perform(curl);
     curl_easy_cleanup(curl);
-    if (res != CURLE_OK) {
+    if (res != CURLE_OK)
+    {
         errorOut = std::string("Failed to fetch internet time from ") + url + ": " + curl_easy_strerror(res);
         return false;
     }
     responseOut = readBuffer;
     // Try to find utc_datetime (worldtimeapi.org)
     auto pos = readBuffer.find("\"utc_datetime\":");
-    if (pos != std::string::npos) {
+    if (pos != std::string::npos)
+    {
         pos = readBuffer.find('"', pos + 15);
-        if (pos != std::string::npos) {
+        if (pos != std::string::npos)
+        {
             auto end = readBuffer.find('"', pos + 1);
-            if (end != std::string::npos) {
+            if (end != std::string::npos)
+            {
                 utcDatetime = readBuffer.substr(pos + 1, end - pos - 1);
                 return true;
             }
@@ -146,11 +160,14 @@ bool Init::fetchInternetTime(const char* url, std::string& utcDatetime, std::str
     }
     // Try to find dateTime (timeapi.io)
     pos = readBuffer.find("\"dateTime\":");
-    if (pos != std::string::npos) {
+    if (pos != std::string::npos)
+    {
         pos = readBuffer.find('"', pos + 10);
-        if (pos != std::string::npos) {
+        if (pos != std::string::npos)
+        {
             auto end = readBuffer.find('"', pos + 1);
-            if (end != std::string::npos) {
+            if (end != std::string::npos)
+            {
                 utcDatetime = readBuffer.substr(pos + 1, end - pos - 1);
                 return true;
             }
@@ -164,11 +181,13 @@ void Init::checkSystemTime()
 {
     std::string utcDatetime, response, error;
     bool ok = fetchInternetTime("http://worldtimeapi.org/api/timezone/Etc/UTC", utcDatetime, response, error);
-    if (!ok) {
+    if (!ok)
+    {
         spdlog::warn("{}", error);
         // Try fallback
         ok = fetchInternetTime("https://timeapi.io/api/Time/current/zone?timeZone=UTC", utcDatetime, response, error);
-        if (!ok) {
+        if (!ok)
+        {
             spdlog::warn("{}", error);
             return;
         }
@@ -179,7 +198,8 @@ void Init::checkSystemTime()
     std::tm tm = {};
     std::istringstream ss(datetime);
     ss >> std::get_time(&tm, "%Y-%m-%dT%H:%M:%S");
-    if (ss.fail()) {
+    if (ss.fail())
+    {
         spdlog::warn("Failed to parse utcDatetime: {}", utcDatetime);
         spdlog::warn("Full response: {}", response);
         return;
@@ -188,17 +208,22 @@ void Init::checkSystemTime()
     time_t systemTime = time(nullptr);
     long diff = std::labs(systemTime - internetTime);
     spdlog::info("System time: {} | Internet time: {} | Diff: {} seconds", systemTime, internetTime, diff);
-    if (diff > 60) {
-        throw std::runtime_error("System time differs from internet time by more than 60 seconds. Its too much for machinepay to operate correctly. Please synchronize system time and then start machinepay.");
+    if (diff > 60)
+    {
+        throw std::runtime_error(
+            "System time differs from internet time by more than 60 seconds. Its too much for machinepay to operate correctly. Please synchronize system time and then start machinepay.");
     }
 }
 
-void Init::checkOperatingSystemConfiguration() {
+void Init::checkOperatingSystemConfiguration()
+{
     utsname buffer{};
-    if (uname(&buffer) != 0) {
+    if (uname(&buffer) != 0)
+    {
         throw std::runtime_error("Failed to get OS information");
     }
-    if (std::string(buffer.sysname) != "Linux") {
+    if (std::string(buffer.sysname) != "Linux")
+    {
         throw std::runtime_error("Unsupported OS: " + std::string(buffer.sysname) + ". Only Linux is supported.");
     }
     spdlog::info("Operating system: {}", buffer.sysname);

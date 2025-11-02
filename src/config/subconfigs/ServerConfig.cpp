@@ -6,48 +6,52 @@
 #include "config/JsonUtils.h"
 #include "exceptions/JsonValidationException.h"
 
-static const std::regex ipv4_regex(R"(^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$)");
+static const std::regex ipv4_regex(
+    R"(^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$)");
 static const std::regex ipv6_regex(R"(^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$)");
 
 ServerConfig::ServerConfig(const std::string& hostName, const std::string& bindIp,
                            ptr<HTTPConfig> http,
                            ptr<HTTPSConfig> https)
-    : hostName_(hostName), bindIp_(bindIp), http_(http), https_(https) {
-
-
-
-    if (hostName_.empty()) {
+    : hostName_(hostName), bindIp_(bindIp), http_(http), https_(https)
+{
+    if (hostName_.empty())
+    {
         throw std::invalid_argument("hostName cannot be empty.");
     }
 
     // Hostname validation: must be a valid local or internet hostname
     static const std::regex hostname_regex(R"(^([a-zA-Z0-9][-a-zA-Z0-9]{0,62})(\.[a-zA-Z0-9][-a-zA-Z0-9]{0,62})*$)");
-    if (!std::regex_match(hostName_, hostname_regex)) {
+    if (!std::regex_match(hostName_, hostname_regex))
+    {
         throw std::invalid_argument("hostName is not a valid local or internet hostname." + hostName_);
     }
 
 
-    if (bindIp_.empty()) {
+    if (bindIp_.empty())
+    {
         throw std::invalid_argument("bindIp cannot be empty.");
     }
-    if (!std::regex_match(bindIp_, ipv4_regex) && !std::regex_match(bindIp_, ipv6_regex) && bindIp_ != "0.0.0.0" && bindIp_ != "::") {
+    if (!std::regex_match(bindIp_, ipv4_regex) && !std::regex_match(bindIp_, ipv6_regex) && bindIp_ != "0.0.0.0" &&
+        bindIp_ != "::")
+    {
         throw std::invalid_argument("bindIp is not a valid IPv4 or IPv6 address.");
     }
 
-    if (!http_ && !https_) {
+    if (!http_ && !https_)
+    {
         throw std::invalid_argument("At least one of HTTP or HTTPS configuration must be provided.");
     }
-    if (!http_->isEnabled() && !https_->isEnabled()) {
-        throw std::invalid_argument("At least one protocol (HTTP or HTTPS) must be enabled in the server configuration.");
+    if (!http_->isEnabled() && !https_->isEnabled())
+    {
+        throw std::invalid_argument(
+            "At least one protocol (HTTP or HTTPS) must be enabled in the server configuration.");
     }
-
-
 }
 
 
-ptr<ServerConfig> ServerConfig::createFromJson(const nlohmann::json& j,  ptr<FileManager> fileManager)
+ptr<ServerConfig> ServerConfig::createFromJson(const nlohmann::json& j, ptr<FileManager> fileManager)
 {
-
     try
     {
         CHECK_STATE(fileManager);
@@ -67,20 +71,20 @@ ptr<ServerConfig> ServerConfig::createFromJson(const nlohmann::json& j,  ptr<Fil
             CHECK_STATE(j.at("https").is_object());
             const auto& jt = j.at("https");
             httpsConfig = HTTPSConfig::createFromJson(jt, fileManager);
-
         }
         if (!httpConfig && !httpsConfig)
         {
             throw JsonValidationException("At least one of HTTP or HTTPS must be configured in server config", j);
         }
 
-        return ptr<ServerConfig>(new ServerConfig(
+        return ptr < ServerConfig > (new ServerConfig(
             JsonUtils::getStringWithDefault(j, "hostname", ""),
             JsonUtils::getStringWithDefault(j, "bind_ip", "0.0.0.0"),
             httpConfig,
             httpsConfig
         ));
-    } catch (exception& ex)
+    }
+    catch (exception& ex)
     {
         RETHROW_NESTED;
     }

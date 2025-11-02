@@ -12,18 +12,24 @@
  *   "error": "Optional error message"
  * }
  */
-class PaymentRequiredResponse {
+class PaymentRequiredResponse
+{
 public:
     using json = nlohmann::json;
 
     PaymentRequiredResponse() = default;
+
     PaymentRequiredResponse(
         std::vector<PaymentRequirements>& accepts, const std::optional<string>& error
-    ) : accepts_(accepts) {
+    ) : accepts_(accepts)
+    {
         CHECK_STATE2(!accepts.empty(), "Accepts array must not be empty");
-        if (!error) {
+        if (!error)
+        {
             error_ = "X-PAYMENT header is required";
-        } else {
+        }
+        else
+        {
             error_ = error.value();
         }
     }
@@ -34,10 +40,11 @@ public:
     const string& error() const { return error_; }
 
     // Equality and stream output for convenience/testing
-    bool operator==(const PaymentRequiredResponse& other) const {
+    bool operator==(const PaymentRequiredResponse& other) const
+    {
         return x402Version_ == other.x402Version_ &&
-               accepts_ == other.accepts_ &&
-               error_ == other.error_;
+            accepts_ == other.accepts_ &&
+            error_ == other.error_;
     }
 
 
@@ -46,14 +53,13 @@ public:
     json toJson() const;
 
 
-
     static std::string getPaymentRequiredResponseAsString(ptr<OrganizationConfig> organization,
-                                                              ptr<ResourceConfig> resource,
-                                                              ptr<MachinePayConfig> config,
-                                                              const std::optional<string>& errorMessage = std::nullopt);;
+                                                          ptr<ResourceConfig> resource,
+                                                          ptr<MachinePayConfig> config,
+                                                          const std::optional<string>& errorMessage = std::nullopt);;
 
 private:
-    uint32_t x402Version_ {1};
+    uint32_t x402Version_{1};
     std::vector<PaymentRequirements> accepts_;
     string error_;
 };

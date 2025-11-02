@@ -14,9 +14,10 @@
 
 using u256 = boost::multiprecision::uint256_t;
 
-BOOST_AUTO_TEST_CASE(EIP3009_SignAndVerify_ReferenceValues) {
-
-    try {
+BOOST_AUTO_TEST_CASE (EIP3009_SignAndVerify_ReferenceValues)
+{
+    try
+    {
         // Reference values (example test vectors)
         EthAddress to("0xffcf8fdee72ac11b5c542428b35eef5769c409f0");
         EIP3009Value value(1000000000000000000ULL);
@@ -31,20 +32,23 @@ BOOST_AUTO_TEST_CASE(EIP3009_SignAndVerify_ReferenceValues) {
         EthAddress from = pubKey.getAddress();
 
         // Sign authorization
-        EIP712Signature signature = EIP3009Authorization::signAuthorization(*EIP712Domain::machinePayEasyTestNet(), from, to,
-                                                                            value,
-                                                                            validAfter,
-                                                                            validBefore,
-                                                                            nonce, privKey);
+        EIP712Signature signature = EIP3009Authorization::signAuthorization(
+            *EIP712Domain::machinePayEasyTestNet(), from, to,
+            value,
+            validAfter,
+            validBefore,
+            nonce, privKey);
         BOOST_TEST(!signature.toHex().empty());
 
         // Verify authorization
-       auto error = EIP3009Authorization::verifyAuthorizationSignature(*EIP712Domain::machinePayEasyTestNet(), from, to, value, validAfter,
-                                                  validBefore, nonce , signature);
+        auto error = EIP3009Authorization::verifyAuthorizationSignature(*EIP712Domain::machinePayEasyTestNet(), from,
+                                                                        to, value, validAfter,
+                                                                        validBefore, nonce, signature);
         BOOST_TEST(!error);
-    } catch (exception &ex) {
+    }
+    catch (exception& ex)
+    {
         printNestedException(ex);
         BOOST_FAIL(std::string("Exception during EIP3009 sign/verify test: ") + ex.what());
     }
-
 }

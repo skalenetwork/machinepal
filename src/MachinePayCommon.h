@@ -54,13 +54,12 @@
 
 
 #if defined(__cpp_exceptions) || defined(__EXCEPTIONS) || defined(_CPPUNWIND)
-    constexpr bool exceptions_enabled = true;
+constexpr bool exceptions_enabled = true;
 #else
 constexpr bool exceptions_enabled = false;
 #endif
 
 static_assert(exceptions_enabled, "Exceptions must be enabled!");
-
 
 
 #define CHECK_STATE(_EXPRESSION_) \
@@ -71,7 +70,6 @@ static_assert(exceptions_enabled, "Exceptions must be enabled!");
     }
 
 
-
 #define CHECK_STATE2(_EXPRESSION_, __MSG__) \
     if (!(_EXPRESSION_)) { \
         auto __msg__ = std::string("Check failed::") + #_EXPRESSION_ + " " + std::string(__FILE__) + \
@@ -80,25 +78,28 @@ static_assert(exceptions_enabled, "Exceptions must be enabled!");
     }
 
 
-
-
-inline std::string stripSpaces(std::string _s) {
+inline std::string stripSpaces(std::string _s)
+{
     _s.erase(std::remove_if(_s.begin(), _s.end(), ::isspace), _s.end());
     return _s;
 }
 
-inline void printNestedException(const std::exception& e, int level = 0) {
+inline void printNestedException(const std::exception& e, int level = 0)
+{
     spdlog::error("{}Exception: {}", std::string(level, '*'), e.what());
-    try {
+    try
+    {
         std::rethrow_if_nested(e);
-    } catch (const std::exception& nested) {
+    }
+    catch (const std::exception& nested)
+    {
         printNestedException(nested, level + 2);
-    } catch (...) {
+    }
+    catch (...)
+    {
         spdlog::error("{}Non-std::exception nested", std::string(level + 2, '*'));
     }
 }
-
-
 
 
 #define RETHROW_NESTED \
@@ -112,7 +113,7 @@ do { std::throw_with_nested(std::runtime_error(std::string(__FILE__) + ":" \
 } while(0)
 
 
-template<typename T>
+template <typename T>
 using ptr = std::shared_ptr<T>;
 
 using Hash = std::array<uint8_t, 32>;
@@ -123,7 +124,8 @@ using json = nlohmann::json;
 
 using namespace std;
 
-enum Prefix {
+enum Prefix
+{
     PREFIX_NONE,
     PREFIX_0x
 };

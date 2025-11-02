@@ -11,13 +11,15 @@ class SettlementResponse;
 class FileManager;
 class CanonicalPath;
 
-enum class FacilitatorType {
+enum class FacilitatorType
+{
     cdp,
     base,
 };
 
 
-class FacilitatorConfig {
+class FacilitatorConfig
+{
     FacilitatorType type_;
     std::string baseUrl_;
     std::optional<CanonicalPath> apiKeyFile_;
@@ -25,6 +27,7 @@ class FacilitatorConfig {
     FacilitatorConfig(FacilitatorType type,
                       std::string baseUrl,
                       std::optional<CanonicalPath> apiKeyFile = std::nullopt);
+
 public:
     [[nodiscard]] FacilitatorType type() const;
     [[nodiscard]] const std::string& baseUrl() const;
@@ -35,16 +38,15 @@ public:
     static ptr<FacilitatorConfig> createFomJson(const nlohmann::json& j, ptr<FileManager> fileManager);
 
 
-
     static FacilitatorType mustContainType(const nlohmann::json& j);
-
-
 };
 
-inline std::string to_string(FacilitatorType type) {
-    switch (type) {
-        case FacilitatorType::cdp: return "cdp";
-        case FacilitatorType::base: return "base";
+inline std::string to_string(FacilitatorType type)
+{
+    switch (type)
+    {
+    case FacilitatorType::cdp: return "cdp";
+    case FacilitatorType::base: return "base";
     }
     throw std::invalid_argument("Unknown FacilitatorType");
 }

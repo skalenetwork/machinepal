@@ -15,7 +15,8 @@
 class HttpError;
 
 
-class EIP712Domain {
+class EIP712Domain
+{
     std::string name_;
     std::string version_;
     u256 chainId_;
@@ -23,11 +24,13 @@ class EIP712Domain {
     std::string domainSeparator_;
 
 public:
-    [[nodiscard]] EthAddress assetAddress() const {
+    [[nodiscard]] EthAddress assetAddress() const
+    {
         return assetAddress_;
     }
 
-    [[nodiscard]] std::string domainSeparator() const {
+    [[nodiscard]] std::string domainSeparator() const
+    {
         return domainSeparator_;
     }
 
@@ -35,7 +38,8 @@ public:
     // create a unique key for this payment based on domain separator, from address and nonce
     // domain separator includes chain id and asset address
     // payment for a particular unique payment can only be settled once
-    std::string uniquePaymentKey(const EthAddress &from, const EIP3009Nonce nonce) const {
+    std::string uniquePaymentKey(const EthAddress& from, const EIP3009Nonce nonce) const
+    {
         return domainSeparator_ + "_" + from.toHex(PREFIX_NONE) + "_" + nonce.toHex(PREFIX_NONE);
     }
 
@@ -43,9 +47,9 @@ public:
     // Default constructor
     EIP712Domain() = default;
 
-    EIP712Domain(const std::string &name, const std::string &version, const u256 &chainId,
-                 const EthAddress &verifyingContract, const std::optional<std::string> domainSeparator
-                         = std::nullopt);
+    EIP712Domain(const std::string& name, const std::string& version, const u256& chainId,
+                 const EthAddress& verifyingContract, const std::optional<std::string> domainSeparator
+                     = std::nullopt);
 
     // Computes the EIP-712 domain separator hash
     std::array<uint8_t, 32> hashDomain() const;
@@ -53,14 +57,16 @@ public:
     static std::array<uint8_t, 32> getDomainTypeHash();
 
 
-    static shared_ptr<EIP712Domain> machinePayEasyTestNet() {
+    static shared_ptr<EIP712Domain> machinePayEasyTestNet()
+    {
         auto static result = make_shared<EIP712Domain>("USDC", "2", 84542,
                                                        EthAddress("0x036CbD53842c5426634e7929541eC2318f3dCF7e")
         );
         return result;
     }
 
-    static shared_ptr<EIP712Domain> baseSepolia() {
+    static shared_ptr<EIP712Domain> baseSepolia()
+    {
         auto static result = make_shared<EIP712Domain>("USDC", "2", 84532,
                                                        EthAddress("0x036CbD53842c5426634e7929541eC2318f3dCF7e"),
                                                        "0x71f17a3b2ff373b803d70a5a07c046c1a2bc8e89c09ef722fcb047abe94c9818");
@@ -68,7 +74,8 @@ public:
     }
 
 
-    static shared_ptr<EIP712Domain> baseMainnet() {
+    static shared_ptr<EIP712Domain> baseMainnet()
+    {
         auto static result = make_shared<EIP712Domain>("USD Coin", "2", 8453,
                                                        EthAddress("0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"),
                                                        "0x02fa7265e7c5d81118673727957699e4d68f74cd74b7db77da710fe8a2c7834f");
@@ -76,29 +83,33 @@ public:
     }
 
 public:
-    [[nodiscard]] std::string name() const {
+    [[nodiscard]] std::string name() const
+    {
         return name_;
     }
 
-    [[nodiscard]] std::string version() const {
+    [[nodiscard]] std::string version() const
+    {
         return version_;
     }
 
-    [[nodiscard]] u256 chainId() const {
+    [[nodiscard]] u256 chainId() const
+    {
         return chainId_;
     }
 
-    [[nodiscard]] EthAddress verifyingContract() const {
+    [[nodiscard]] EthAddress verifyingContract() const
+    {
         return assetAddress_;
     }
 
-    std::array<uint8_t, 32> hashWithDomain(const std::array<uint8_t, 32> &structHash) const;
+    std::array<uint8_t, 32> hashWithDomain(const std::array<uint8_t, 32>& structHash) const;
 
-    EIP712Signature signWithDomain(const std::array<uint8_t, 32> &structHash,
-                                   const EthPrivateKey &privateKey) const;
+    EIP712Signature signWithDomain(const std::array<uint8_t, 32>& structHash,
+                                   const EthPrivateKey& privateKey) const;
 
 
-    std::optional<HttpError> verifyWithDomain(const std::array<uint8_t, 32> &structHash,
-                          const EIP712Signature &signature,
-                          const EthAddress& expectedAddress) const;
+    std::optional<HttpError> verifyWithDomain(const std::array<uint8_t, 32>& structHash,
+                                              const EIP712Signature& signature,
+                                              const EthAddress& expectedAddress) const;
 };

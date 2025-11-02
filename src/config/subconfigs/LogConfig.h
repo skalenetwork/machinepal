@@ -2,11 +2,13 @@
 #include "MachinePayCommon.h"
 
 
-enum class LogLevel {
+enum class LogLevel
+{
     trace, debug, info, warn, error, fatal
 };
 
-enum class LogType {
+enum class LogType
+{
     plain, json
 };
 
@@ -15,7 +17,8 @@ LogType parseLogType(const std::string& type);
 
 class FileManager;
 
-class LogConfig {
+class LogConfig
+{
     LogLevel level_;
     LogType type_;
 
@@ -29,4 +32,3 @@ public:
     static ptr<LogConfig> createDefault();
     static ptr<LogConfig> createFromJson(const nlohmann::json& j, ptr<FileManager> fileManager);
 };
-

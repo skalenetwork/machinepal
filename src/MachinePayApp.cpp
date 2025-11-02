@@ -5,36 +5,40 @@
 
 #include "db/MachinePayDb.h"
 
-MachinePayApp::MachinePayApp(const std::map<std::string, std::string>& configValuesFromCliAndEnv) {
-    try {
-    spdlog::info("Looking for config");
-    configManager_  = ConfigManager::initManager(configValuesFromCliAndEnv);
-    configPath_ = configManager_->fileManager()->canonicalConfigDirPath();
-    Init::initLogLevelFromConfig(configManager());
-    paymentManager_ = std::make_shared<PaymentManager>(*this);
-    machinePayDB_ = std::make_shared<MachinePayDb>(*this, DbType::SQLite);
-    } catch (...) {
+MachinePayApp::MachinePayApp(const std::map<std::string, std::string>& configValuesFromCliAndEnv)
+{
+    try
+    {
+        spdlog::info("Looking for config");
+        configManager_ = ConfigManager::initManager(configValuesFromCliAndEnv);
+        configPath_ = configManager_->fileManager()->canonicalConfigDirPath();
+        Init::initLogLevelFromConfig(configManager());
+        paymentManager_ = std::make_shared<PaymentManager>(*this);
+        machinePayDB_ = std::make_shared<MachinePayDb>(*this, DbType::SQLite);
+    }
+    catch (...)
+    {
         RETHROW_NESTED2("Failed to initialize MachinePayApp");
     }
 }
 
 
-
 static std::atomic<int> sigReceived{0};
 
 
-
-static void machinepayTerminateSignalHandler(int sig) {
-        sigReceived = sig;
+static void machinepayTerminateSignalHandler(int sig)
+{
+    sigReceived = sig;
 }
 
-uint32_t MachinePayApp::runUntilExit() {
-
+uint32_t MachinePayApp::runUntilExit()
+{
     std::signal(SIGTERM, machinepayTerminateSignalHandler);
     std::signal(SIGINT, machinepayTerminateSignalHandler);
 
 
-    try {
+    try
+    {
         spdlog::info("Creating and starting machinepay server");
         serverFactory_ = std::make_shared<ServerFactory>(*this);
         auto serverConfig = configManager_->latestConfig()->server();
@@ -43,64 +47,82 @@ uint32_t MachinePayApp::runUntilExit() {
 
         spdlog::info("Creating thread pool");
         auto ioExecutor = std::make_shared<folly::IOThreadPoolExecutor>(
-        256,
-        std::make_shared<folly::NamedThreadFactory>("x402Processor"));
+            256,
+            std::make_shared<folly::NamedThreadFactory>("x402Processor"));
 
         spdlog::info("Starting machinepay server");
 
-        auto onSuccess = [this]() {
+        auto onSuccess = [this]()
+        {
             spdlog::info("Machinepay server started successfully.");
             this->isStarted_ = true;
         };
-        auto onError = [this](std::exception_ptr eptr) {
-            try {
+        auto onError = [this](std::exception_ptr eptr)
+        {
+            try
+            {
                 if (eptr) std::rethrow_exception(eptr);
-            } catch (const std::exception& ex) {
+            }
+            catch (const std::exception& ex)
+            {
                 spdlog::error("Machinepay server failed to start: {}", ex.what());
                 this->setExited(1, ex.what());
                 return;
-            } catch (...) {
+            }
+            catch (...)
+            {
             }
             spdlog::error("Machinepay server failed to start: unknown error");
             this->setExited(1, "Machinepay server failed to start: unknown error");
         };
 
-        std::thread serverThread([this, ioExecutor, onSuccess, onError]() {
-            try {
+        std::thread serverThread([this, ioExecutor, onSuccess, onError]()
+        {
+            try
+            {
                 proxygenServer_->start(onSuccess, onError, nullptr, ioExecutor);
                 setExited();
-            } catch (...) {
+            }
+            catch (...)
+            {
                 spdlog::error("Proxygen server failed to start: unknown error");
                 setExited(1, "Unknown error starting machinepay server");
             }
         });
 
-        while (!isExited() && !sigReceived) {
+        while (!isExited() && !sigReceived)
+        {
             usleep(100 * 1000);
         }
-        if (sigReceived) {
+        if (sigReceived)
+        {
             if (sigReceived == SIGINT)
                 spdlog::info("SIGINT (Ctrl-C) received, stopping server.");
             else if (sigReceived == SIGTERM)
                 spdlog::info("SIGTERM received, stopping server.");
-            else {
+            else
+            {
                 CHECK_STATE2(false, std::string("Unexpected signal {}") + to_string(sigReceived.load()));
             }
-            stopServer();        }
+            stopServer();
+        }
         // Wait for server to exit after stopServer is called
-        while (!isExited()) {
+        while (!isExited())
+        {
             usleep(100 * 1000);
         }
 
 
         serverThread.join();
-        if (exitCode_ != 0) {
+        if (exitCode_ != 0)
+        {
             spdlog::error("Error running machinepay server: {}. Server exited.", exitErrorMessage_);
             return exitCode_;
         }
         spdlog::info("Machinepay server exited normally.");
         return 0;
-    } catch (const std::exception& ex)
+    }
+    catch (const std::exception& ex)
     {
         spdlog::critical("Fatal error running machinepay server: {}. Server exited", ex.what());
         printNestedException(ex);
@@ -114,7 +136,6 @@ void MachinePayApp::stopServer()
         return;
 
     proxygenServer_->stop();
-
 }
 
 std::weak_ptr<MachinePayApp> MachinePayApp::sLatestInstance;

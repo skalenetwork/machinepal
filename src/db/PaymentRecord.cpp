@@ -14,9 +14,9 @@
 
 #include "config/subconfigs/OrganizationConfig.h"
 
-ptr<PaymentRecord> PaymentRecord::deserializeFromDbRow(const soci::row &) {
+ptr< PaymentRecord > PaymentRecord::deserializeFromDbRow( const soci::row& ) {
     // Not implemented yet
-    throw std::runtime_error("PaymentRecord::deserializeFromDbRow not implemented");
+    throw std::runtime_error( "PaymentRecord::deserializeFromDbRow not implemented" );
 }
 
 
@@ -48,7 +48,8 @@ EIP3009Nonce PaymentRecord::nonce() const {
     return nonce_;
 }
 
-string PaymentRecord::resourceLocation() const { // renamed to match header
+string PaymentRecord::resourceLocation() const {
+    // renamed to match header
     return resourceLocation_;
 }
 
@@ -72,37 +73,41 @@ std::string PaymentRecord::jsonInfo() const {
     return jsonInfo_;
 }
 
-PaymentRecord::PaymentRecord(const std::string &organizationName, const u256 chainId, const EthAddress &fromAddress,
-                             const EthAddress &toAddress, const EthAddress &assetAddress,
-                             const EIP3009Value &value,
-                             const EIP3009Nonce &nonce,
-                             const string &resourceIdentifier,
-                             uint64_t settlementTime,
-                             const Hash &authorizationSignatureHash,
-                             const Hash &transactionHash,
-                             const std::string &fromIpAddress,
-                             const std::string &jsonInfo)
-    : organizationName_(organizationName),
-      chainId_(chainId),
-      fromAddress_(fromAddress),
-      toAddress_(toAddress),
-      assetAddress_(assetAddress),
-      value_(value),
-      nonce_(nonce),
-      resourceLocation_(resourceIdentifier),
-      settlementTime_(settlementTime),
-      authorizationSignatureHash_(authorizationSignatureHash),
-      transactionHash_(transactionHash),
-      fromIpAddress_(fromIpAddress),
-      jsonInfo_(jsonInfo) {}
+PaymentRecord::PaymentRecord( const std::string& organizationName, const u256 chainId,
+    const EthAddress& fromAddress,
+    const EthAddress& toAddress, const EthAddress& assetAddress,
+    const EIP3009Value& value,
+    const EIP3009Nonce& nonce,
+    const string& resourceIdentifier,
+    uint64_t settlementTime,
+    const Hash& authorizationSignatureHash,
+    const Hash& transactionHash,
+    const std::string& fromIpAddress,
+    const std::string& jsonInfo )
+    : organizationName_( organizationName ),
+      chainId_( chainId ),
+      fromAddress_( fromAddress ),
+      toAddress_( toAddress ),
+      assetAddress_( assetAddress ),
+      value_( value ),
+      nonce_( nonce ),
+      resourceLocation_( resourceIdentifier ),
+      settlementTime_( settlementTime ),
+      authorizationSignatureHash_( authorizationSignatureHash ),
+      transactionHash_( transactionHash ),
+      fromIpAddress_( fromIpAddress ),
+      jsonInfo_( jsonInfo ) {
+}
 
-ptr<PaymentRecord> PaymentRecord::createPaymentRecord(
-    const PaymentPayload& paymentPayload, const EIP712Domain &domain,  const ResourceConfig& resource,
-    const OrganizationConfig& organization, const Hash& transactionHash, const string& fromIpAddress) {
+ptr< PaymentRecord > PaymentRecord::createPaymentRecord(
+    const PaymentPayload& paymentPayload, const EIP712Domain& domain,
+    const ResourceConfig& resource,
+    const OrganizationConfig& organization, const Hash& transactionHash,
+    const string& fromIpAddress ) {
     auto payload = paymentPayload.payload();
-    CHECK_STATE(payload);
+    CHECK_STATE( payload );
     auto auth = payload->authorization();
-    CHECK_STATE(auth);
+    CHECK_STATE( auth );
 
     const EthAddress from = auth->from();
     const EthAddress to = auth->to();
@@ -117,13 +122,13 @@ ptr<PaymentRecord> PaymentRecord::createPaymentRecord(
     const std::string resourceLocation = resource.getLocation();
     Hash authorizationSignatureHash = payload->signature().computeSignatureHash();
 
-    uint64_t settlementTime = static_cast<uint64_t>(
-        std::chrono::duration_cast<std::chrono::seconds>(
-            std::chrono::system_clock::now().time_since_epoch()).count());
+    uint64_t settlementTime = static_cast< uint64_t >(
+        std::chrono::duration_cast< std::chrono::seconds >(
+            std::chrono::system_clock::now().time_since_epoch() ).count() );
 
     const std::string jsonInfo = paymentPayload.toJson().dump();
 
-    return std::make_shared<PaymentRecord>(
+    return std::make_shared< PaymentRecord >(
         organizationName,
         chainId,
         from,
@@ -137,5 +142,5 @@ ptr<PaymentRecord> PaymentRecord::createPaymentRecord(
         transactionHash,
         fromIpAddress,
         jsonInfo
-    );
+        );
 }

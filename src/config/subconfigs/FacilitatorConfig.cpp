@@ -9,70 +9,76 @@
 #include <spdlog/spdlog.h>
 
 
-FacilitatorConfig::FacilitatorConfig(FacilitatorType type,
-                                     std::string baseUrl,
-                                     std::optional<CanonicalPath> apiKeyFile)
-    : type_(type), baseUrl_(std::move(baseUrl)), apiKeyFile_(std::move(apiKeyFile)) {
+FacilitatorConfig::FacilitatorConfig( FacilitatorType type,
+    std::string baseUrl,
+    std::optional< CanonicalPath > apiKeyFile )
+    : type_( type ),
+      baseUrl_( std::move( baseUrl ) ),
+      apiKeyFile_( std::move( apiKeyFile ) ) {
 }
 
 FacilitatorType FacilitatorConfig::type() const { return type_; }
-const std::string &FacilitatorConfig::baseUrl() const { return baseUrl_; }
-const std::optional<CanonicalPath> &FacilitatorConfig::apiKeyFile() const { return apiKeyFile_; }
+const std::string& FacilitatorConfig::baseUrl() const { return baseUrl_; }
+const std::optional< CanonicalPath >& FacilitatorConfig::apiKeyFile() const { return apiKeyFile_; }
 
-variant<SettlementResponse, HttpError> FacilitatorConfig::settlePayment(const shared_ptr<PaymentPayload> &) {
+variant< SettlementResponse, HttpError > FacilitatorConfig::settlePayment(
+    const shared_ptr< PaymentPayload >& ) {
     try {
-
         auto response = string(
-            PaymentExamples::EXACT_UCDC_SETTLEMENT_RESPONSE_CB_SEPOLIA);
+            PaymentExamples::EXACT_UCDC_SETTLEMENT_RESPONSE_CB_SEPOLIA );
 
         auto settlementResponse = SettlementResponse::fromJsonString(
-            response);
+            response );
         if (settlementResponse.success()) {
             return settlementResponse;
         }
-        return HttpError(ERR_BAD_REQUEST, settlementResponse.errorReason().value_or("Payment settlement failed"));
-    } catch (const std::exception &ex) {
-        spdlog::error("FacilitatorConfig::settlePayment exception: {}", ex.what());
-        return HttpError(ERR_BAD_GATEWAY, std::string("Error during payment settlement: ") + ex.what());
+        return HttpError( ERR_BAD_REQUEST,
+            settlementResponse.errorReason().value_or( "Payment settlement failed" ) );
+    } catch (const std::exception& ex) {
+        spdlog::error( "FacilitatorConfig::settlePayment exception: {}", ex.what() );
+        return HttpError( ERR_BAD_GATEWAY,
+            std::string( "Error during payment settlement: " ) + ex.what() );
     }
 }
 
 
-ptr<FacilitatorConfig> FacilitatorConfig::createFomJson(const nlohmann::json &j, ptr<FileManager> fileManager) {
+ptr< FacilitatorConfig > FacilitatorConfig::createFomJson( const nlohmann::json& j,
+    ptr< FileManager > fileManager ) {
     try {
-        CHECK_STATE(fileManager);
-        CHECK_STATE(j.is_object());
-        auto type = mustContainType(j);
+        CHECK_STATE( fileManager );
+        CHECK_STATE( j.is_object() );
+        auto type = mustContainType( j );
         if (type == FacilitatorType::cdp) {
             // For cdp type, api_key_file is required
-            auto base_url = JsonUtils::mustContainString(j, "base_url");
-            auto userProvidedApiKeyFile = JsonUtils::mustContainString(j, "api_key_file");
+            auto base_url = JsonUtils::mustContainString( j, "base_url" );
+            auto userProvidedApiKeyFile = JsonUtils::mustContainString( j, "api_key_file" );
 
 
-            auto resolved = fileManager->checkFileExistsAndReadableAndResolve(userProvidedApiKeyFile);
-            CanonicalPath apiKeyFile(resolved);
+            auto resolved = fileManager->checkFileExistsAndReadableAndResolve(
+                userProvidedApiKeyFile );
+            CanonicalPath apiKeyFile( resolved );
 
-            return ptr<FacilitatorConfig>(new FacilitatorConfig(
+            return ptr< FacilitatorConfig >( new FacilitatorConfig(
                 type,
                 base_url,
                 apiKeyFile
-            ));
+                ) );
         } else {
-            throw JsonValidationException("Unsupported facilitator type", j);
+            throw JsonValidationException( "Unsupported facilitator type", j );
         }
-    } catch (const std::exception &ex) {
+    } catch (const std::exception& ex) {
         RETHROW_NESTED;
     }
 }
 
 
-FacilitatorType FacilitatorConfig::mustContainType(const nlohmann::json &j) {
-    auto typeString = JsonUtils::mustContainString(j, "type");
+FacilitatorType FacilitatorConfig::mustContainType( const nlohmann::json& j ) {
+    auto typeString = JsonUtils::mustContainString( j, "type" );
     if (typeString == "cdp") {
         return FacilitatorType::cdp;
     }
     if (typeString == "base") {
         return FacilitatorType::base;
     }
-    throw JsonValidationException("Invalid facilitator type: " + typeString, j);
+    throw JsonValidationException( "Invalid facilitator type: " + typeString, j );
 }

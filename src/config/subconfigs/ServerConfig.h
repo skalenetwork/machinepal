@@ -6,7 +6,8 @@
 
 class FileManager;
 
-class ServerConfig {
+class ServerConfig
+{
     std::string hostName_;
     std::string bindIp_;
     ptr<HTTPConfig> http_;
@@ -17,13 +18,15 @@ private:
     ServerConfig(const std::string& hostName, const std::string& bindIp,
                  ptr<HTTPConfig> http,
                  ptr<HTTPSConfig> https);
+
 public:
     const std::string& bindIp() const;
     const ptr<HTTPConfig> http() const;
     const ptr<HTTPSConfig> https() const;
     static ptr<ServerConfig> createFromJson(const nlohmann::json& j, ptr<FileManager> fileManager);
 
-    [[nodiscard]] std::string hostName() const {
+    [[nodiscard]] std::string hostName() const
+    {
         return hostName_;
     }
 };

@@ -1,6 +1,7 @@
 #include "Supported.h"
 
-Supported Supported::getDefault() {
+Supported Supported::getDefault()
+{
     Supported s;
     s.kinds = {
         {1, "exact", "base-sepolia"},

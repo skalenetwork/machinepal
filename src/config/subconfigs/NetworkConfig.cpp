@@ -3,12 +3,15 @@
 #include "FacilitatorConfig.h"
 
 
-std::shared_ptr<NetworkConfig> NetworkConfig::createFromJson(const nlohmann::json& j, ptr<FileManager> fileManager) {
-    try {
+std::shared_ptr<NetworkConfig> NetworkConfig::createFromJson(const nlohmann::json& j, ptr<FileManager> fileManager)
+{
+    try
+    {
         CHECK_STATE(fileManager);
         CHECK_STATE(fileManager);
 
-        if (!j.contains("network")) {
+        if (!j.contains("network"))
+        {
             return nullptr;
         }
 
@@ -33,25 +36,32 @@ std::shared_ptr<NetworkConfig> NetworkConfig::createFromJson(const nlohmann::jso
         // Select domain
         auto domain = supportedNetworks.at(name);
         std::shared_ptr<FacilitatorConfig> facilitator = nullptr;
-        if (networkJson.contains("facilitator") && networkJson["facilitator"].is_object()) {
+        if (networkJson.contains("facilitator") && networkJson["facilitator"].is_object())
+        {
             facilitator = FacilitatorConfig::createFomJson(networkJson["facilitator"], fileManager);
         }
         return ptr<NetworkConfig>(new NetworkConfig(name, walletAddress, facilitator, domain));
-    } catch (const std::exception& ex) {
+    }
+    catch (const std::exception& ex)
+    {
         RETHROW_NESTED;
     }
 }
 
 
-string NetworkConfig::getTokenVersion(const string& tokenName)  {
-    if (tokenName == "USDC") {
+string NetworkConfig::getTokenVersion(const string& tokenName)
+{
+    if (tokenName == "USDC")
+    {
         return "2";
     }
     return "";
 }
 
-string NetworkConfig::getTokenAddress(const string& tokenName)  {
-    if (tokenName == "USDC") {
+string NetworkConfig::getTokenAddress(const string& tokenName)
+{
+    if (tokenName == "USDC")
+    {
         return "0x036CbD53842c5426634e7929541eC2318f3dCF7e";
     }
     return "";

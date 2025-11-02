@@ -25,7 +25,8 @@
 #include <openssl/bn.h>
 #include <string>
 
-[[maybe_unused]] static std::string trimCopy(const std::string &in) {
+[[maybe_unused]] static std::string trimCopy(const std::string& in)
+{
     size_t start = 0;
     while (start < in.size() && std::isspace(static_cast<unsigned char>(in[start]))) ++start;
     size_t end = in.size();
@@ -34,7 +35,8 @@
 }
 
 
-static std::vector<uint8_t> hexToBytesFlexible(const std::string &hex) {
+static std::vector<uint8_t> hexToBytesFlexible(const std::string& hex)
+{
     std::string s = hex;
 
     // Strip optional 0x or 0X prefix
@@ -52,9 +54,12 @@ static std::vector<uint8_t> hexToBytesFlexible(const std::string &hex) {
     std::vector<uint8_t> bytes;
     bytes.reserve(s.size() / 2);
 
-    try {
+    try
+    {
         boost::algorithm::unhex(s.begin(), s.end(), std::back_inserter(bytes));
-    } catch (const boost::algorithm::hex_decode_error &e) {
+    }
+    catch (const boost::algorithm::hex_decode_error& e)
+    {
         throw std::invalid_argument(std::string("Invalid hex input: ") + e.what());
     }
 
@@ -62,38 +67,46 @@ static std::vector<uint8_t> hexToBytesFlexible(const std::string &hex) {
 }
 
 
-EthPrivateKey::EthPrivateKey() : bytes_{} {
+EthPrivateKey::EthPrivateKey() : bytes_{}
+{
 }
 
-EthPrivateKey::EthPrivateKey(const std::array<uint8_t, 32> &bytes) : bytes_(bytes) {
+EthPrivateKey::EthPrivateKey(const std::array<uint8_t, 32>& bytes) : bytes_(bytes)
+{
 }
 
-EthPrivateKey::EthPrivateKey(std::span<const uint8_t, 32> bytes) {
+EthPrivateKey::EthPrivateKey(std::span<const uint8_t, 32> bytes)
+{
     std::copy(bytes.begin(), bytes.end(), bytes_.begin());
 }
 
-EthPrivateKey::EthPrivateKey(const uint8_t *data, std::size_t len) {
-    if (len != 32) {
+EthPrivateKey::EthPrivateKey(const uint8_t* data, std::size_t len)
+{
+    if (len != 32)
+    {
         throw std::invalid_argument("EthPrivateKey must be 32 bytes");
     }
     std::copy(data, data + len, bytes_.begin());
 }
 
-EthPrivateKey::EthPrivateKey(const std::string &hex) {
+EthPrivateKey::EthPrivateKey(const std::string& hex)
+{
     auto v = hexToBytesFlexible(hex);
     std::copy(v.begin(), v.end(), bytes_.begin());
     if (!isValidRange(bytes_)) throw std::invalid_argument("Private key out of range for secp256k1");
 }
 
-EthPrivateKey::~EthPrivateKey() {
-    volatile uint8_t *p = reinterpret_cast<volatile uint8_t *>(bytes_.data());
+EthPrivateKey::~EthPrivateKey()
+{
+    volatile uint8_t* p = reinterpret_cast<volatile uint8_t*>(bytes_.data());
     for (size_t i = 0; i < bytes_.size(); ++i) p[i] = 0;
 }
 
-bool EthPrivateKey::isValidRange(const std::array<uint8_t, 32> &k) {
-    BIGNUM *bn = BN_bin2bn(k.data(), 32, nullptr);
+bool EthPrivateKey::isValidRange(const std::array<uint8_t, 32>& k)
+{
+    BIGNUM* bn = BN_bin2bn(k.data(), 32, nullptr);
     if (!bn) return false;
-    BIGNUM *n = nullptr;
+    BIGNUM* n = nullptr;
     BN_hex2bn(&n, "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141");
     bool ok = !BN_is_zero(bn) && BN_cmp(bn, n) < 0; // 0 < k < n
     BN_free(bn);
@@ -101,21 +114,24 @@ bool EthPrivateKey::isValidRange(const std::array<uint8_t, 32> &k) {
     return ok;
 }
 
-EthPrivateKey EthPrivateKey::parseFlexible(const std::string &hex) {
+EthPrivateKey EthPrivateKey::parseFlexible(const std::string& hex)
+{
     auto v = hexToBytesFlexible(hex);
     std::array<uint8_t, 32> arr{};
     std::copy(v.begin(), v.end(), arr.begin());
     // Check that private key is not zero
-    if (std::all_of(arr.begin(), arr.end(), [](uint8_t b) { return b == 0; })) {
+    if (std::all_of(arr.begin(), arr.end(), [](uint8_t b) { return b == 0; }))
+    {
         throw std::invalid_argument("Private key must not be zero");
     }
     if (!isValidRange(arr)) throw std::invalid_argument("Private key out of range for secp256k1");
     return EthPrivateKey(arr);
 }
 
-EthPrivateKey EthPrivateKey::parseHex(const std::string &hex) { return parseFlexible(hex); }
+EthPrivateKey EthPrivateKey::parseHex(const std::string& hex) { return parseFlexible(hex); }
 
-std::string EthPrivateKey::toHex() const {
+std::string EthPrivateKey::toHex() const
+{
     std::string out;
     out.reserve(66); // 2 for '0x' + 64 for 32 bytes
     out += "0x";
@@ -123,45 +139,52 @@ std::string EthPrivateKey::toHex() const {
     return out;
 }
 
-bool operator==(const EthPrivateKey &a, const EthPrivateKey &b) { return a.bytes_ == b.bytes_; }
-bool operator!=(const EthPrivateKey &a, const EthPrivateKey &b) { return !(a == b); }
+bool operator==(const EthPrivateKey& a, const EthPrivateKey& b) { return a.bytes_ == b.bytes_; }
+bool operator!=(const EthPrivateKey& a, const EthPrivateKey& b) { return !(a == b); }
 
 
-EthPrivateKey EthPrivateKey::generate() {
-    EC_KEY *ec = EC_KEY_new_by_curve_name(NID_secp256k1);
+EthPrivateKey EthPrivateKey::generate()
+{
+    EC_KEY* ec = EC_KEY_new_by_curve_name(NID_secp256k1);
     if (!ec) throw std::runtime_error("EC_KEY_new_by_curve_name failed");
-    if (EC_KEY_generate_key(ec) != 1) {
+    if (EC_KEY_generate_key(ec) != 1)
+    {
         EC_KEY_free(ec);
         throw std::runtime_error("EC_KEY_generate_key failed");
     }
-    const BIGNUM *privBn = EC_KEY_get0_private_key(ec);
-    if (!privBn) {
+    const BIGNUM* privBn = EC_KEY_get0_private_key(ec);
+    if (!privBn)
+    {
         EC_KEY_free(ec);
         throw std::runtime_error("Failed to get private key BIGNUM");
     }
 
     std::array<uint8_t, 32> privBytes{};
-    if (BN_bn2binpad(privBn, privBytes.data(), 32) != 32) {
+    if (BN_bn2binpad(privBn, privBytes.data(), 32) != 32)
+    {
         EC_KEY_free(ec);
         throw std::runtime_error("BN_bn2binpad private failed");
     }
 
-    const EC_GROUP *group = EC_KEY_get0_group(ec);
-    const EC_POINT *pubPoint = EC_KEY_get0_public_key(ec);
-    if (!group || !pubPoint) {
+    const EC_GROUP* group = EC_KEY_get0_group(ec);
+    const EC_POINT* pubPoint = EC_KEY_get0_public_key(ec);
+    if (!group || !pubPoint)
+    {
         EC_KEY_free(ec);
         throw std::runtime_error("Failed to get public key point");
     }
 
-    BIGNUM *x = BN_new();
-    BIGNUM *y = BN_new();
-    if (!x || !y) {
+    BIGNUM* x = BN_new();
+    BIGNUM* y = BN_new();
+    if (!x || !y)
+    {
         if (x) BN_free(x);
         if (y) BN_free(y);
         EC_KEY_free(ec);
         throw std::runtime_error("BN_new failed");
     }
-    if (EC_POINT_get_affine_coordinates(group, pubPoint, x, y, nullptr) != 1) {
+    if (EC_POINT_get_affine_coordinates(group, pubPoint, x, y, nullptr) != 1)
+    {
         BN_free(x);
         BN_free(y);
         EC_KEY_free(ec);
@@ -176,28 +199,33 @@ EthPrivateKey EthPrivateKey::generate() {
     return privateKey;
 }
 
-EthPublicKey EthPrivateKey::computePublicKey() {
-    EC_GROUP *group = EC_GROUP_new_by_curve_name(NID_secp256k1);
+EthPublicKey EthPrivateKey::computePublicKey()
+{
+    EC_GROUP* group = EC_GROUP_new_by_curve_name(NID_secp256k1);
     if (!group) throw std::runtime_error("Failed to create EC_GROUP");
-    BN_CTX *bnCtx = BN_CTX_new();
-    if (!bnCtx) {
+    BN_CTX* bnCtx = BN_CTX_new();
+    if (!bnCtx)
+    {
         EC_GROUP_free(group);
         throw std::runtime_error("Failed to create BN_CTX");
     }
-    BIGNUM *priv = BN_bin2bn(bytes().data(), 32, nullptr);
-    if (!priv) {
+    BIGNUM* priv = BN_bin2bn(bytes().data(), 32, nullptr);
+    if (!priv)
+    {
         BN_CTX_free(bnCtx);
         EC_GROUP_free(group);
         throw std::runtime_error("Failed to create BIGNUM for private key");
     }
-    EC_POINT *pub = EC_POINT_new(group);
-    if (!pub) {
+    EC_POINT* pub = EC_POINT_new(group);
+    if (!pub)
+    {
         BN_free(priv);
         BN_CTX_free(bnCtx);
         EC_GROUP_free(group);
         throw std::runtime_error("Failed to create EC_POINT");
     }
-    if (EC_POINT_mul(group, pub, priv, nullptr, nullptr, bnCtx) != 1) {
+    if (EC_POINT_mul(group, pub, priv, nullptr, nullptr, bnCtx) != 1)
+    {
         EC_POINT_free(pub);
         BN_free(priv);
         BN_CTX_free(bnCtx);
@@ -205,9 +233,10 @@ EthPublicKey EthPrivateKey::computePublicKey() {
         throw std::runtime_error("EC_POINT_mul failed");
     }
 
-    BIGNUM *x = BN_new();
-    BIGNUM *y = BN_new();
-    if (!x || !y) {
+    BIGNUM* x = BN_new();
+    BIGNUM* y = BN_new();
+    if (!x || !y)
+    {
         if (x) BN_free(x);
         if (y) BN_free(y);
         EC_POINT_free(pub);
@@ -216,7 +245,8 @@ EthPublicKey EthPrivateKey::computePublicKey() {
         EC_GROUP_free(group);
         throw std::runtime_error("BN_new failed");
     }
-    if (EC_POINT_get_affine_coordinates(group, pub, x, y, bnCtx) != 1) {
+    if (EC_POINT_get_affine_coordinates(group, pub, x, y, bnCtx) != 1)
+    {
         BN_free(x);
         BN_free(y);
         EC_POINT_free(pub);
@@ -241,12 +271,14 @@ EthPublicKey EthPrivateKey::computePublicKey() {
 
 
 // msg32 must be the 32-byte EIP-712 digest of the authorization
-EIP712Signature sign_auth(const uint8_t msg32[32], const uint8_t priv32[32]) {
-    static secp256k1_context *ctx =
-            secp256k1_context_create(SECP256K1_CONTEXT_SIGN);
+EIP712Signature sign_auth(const uint8_t msg32[32], const uint8_t priv32[32])
+{
+    static secp256k1_context* ctx =
+        secp256k1_context_create(SECP256K1_CONTEXT_SIGN);
 
     secp256k1_ecdsa_recoverable_signature rsig;
-    if (!secp256k1_ecdsa_sign_recoverable(ctx, &rsig, msg32, priv32, nullptr, nullptr)) {
+    if (!secp256k1_ecdsa_sign_recoverable(ctx, &rsig, msg32, priv32, nullptr, nullptr))
+    {
         throw std::runtime_error("sign failed");
     }
 
@@ -264,17 +296,19 @@ EIP712Signature sign_auth(const uint8_t msg32[32], const uint8_t priv32[32]) {
 }
 
 
-struct CtxGuard {
-    secp256k1_context *ctx;
+struct CtxGuard
+{
+    secp256k1_context* ctx;
 
-    explicit CtxGuard(secp256k1_context *c) : ctx(c) {
+    explicit CtxGuard(secp256k1_context* c) : ctx(c)
+    {
     }
 
     ~CtxGuard() { if (ctx) secp256k1_context_destroy(ctx); }
 
-    CtxGuard(const CtxGuard &) = delete;
+    CtxGuard(const CtxGuard&) = delete;
 
-    CtxGuard &operator=(const CtxGuard &) = delete;
+    CtxGuard& operator=(const CtxGuard&) = delete;
 };
 
 
@@ -283,30 +317,34 @@ struct CtxGuard {
 
 EIP712Signature EthPrivateKey::signAuthRaw(const uint8_t msg32[32],
                                            const uint8_t priv32[32],
-                                           VEncoding vEnc) {
+                                           VEncoding vEnc)
+{
     if (!msg32 || !priv32) throw std::invalid_argument("null pointer");
 
     // 1) fresh signing context (no reuse)
-    secp256k1_context *ctx = secp256k1_context_create(SECP256K1_CONTEXT_SIGN);
+    secp256k1_context* ctx = secp256k1_context_create(SECP256K1_CONTEXT_SIGN);
     if (!ctx) throw std::runtime_error("context_create failed");
     CtxGuard guard{ctx};
 
 
     // 3) validate private key
-    if (!secp256k1_ec_seckey_verify(ctx, priv32)) {
+    if (!secp256k1_ec_seckey_verify(ctx, priv32))
+    {
         throw std::invalid_argument("invalid secp256k1 private key");
     }
 
     // 4) sign (RFC6979 + low-s enforced by libsecp256k1)
     secp256k1_ecdsa_recoverable_signature rsig;
-    if (!secp256k1_ecdsa_sign_recoverable(ctx, &rsig, msg32, priv32, nullptr, nullptr)) {
+    if (!secp256k1_ecdsa_sign_recoverable(ctx, &rsig, msg32, priv32, nullptr, nullptr))
+    {
         throw std::runtime_error("sign_recoverable failed");
     }
 
     // 5) serialize r||s and recovery id
     unsigned char out64[64];
     int recid = 0;
-    if (!secp256k1_ecdsa_recoverable_signature_serialize_compact(ctx, out64, &recid, &rsig)) {
+    if (!secp256k1_ecdsa_recoverable_signature_serialize_compact(ctx, out64, &recid, &rsig))
+    {
         throw std::runtime_error("serialize_compact failed");
     }
 
@@ -336,25 +374,30 @@ constexpr uint8_t N_HALF[32] = {
     0xDF, 0xE9, 0x2F, 0x46, 0x68, 0x1B, 0x20, 0xA0
 };
 
-inline int be_cmp32(const uint8_t *a, const uint8_t *b) {
+inline int be_cmp32(const uint8_t* a, const uint8_t* b)
+{
     return std::memcmp(a, b, 32);
 }
 
-inline bool be_is_zero32(const uint8_t *a) {
+inline bool be_is_zero32(const uint8_t* a)
+{
     static const uint8_t z[32] = {0};
     return std::memcmp(a, z, 32) == 0;
 }
 
-inline bool rs_low_s_and_in_range(const uint8_t *r, const uint8_t *s) {
+inline bool rs_low_s_and_in_range(const uint8_t* r, const uint8_t* s)
+{
     return !be_is_zero32(r)
-           && be_cmp32(r, N) < 0
-           && !be_is_zero32(s)
-           && be_cmp32(s, N_HALF) <= 0;
+        && be_cmp32(r, N) < 0
+        && !be_is_zero32(s)
+        && be_cmp32(s, N_HALF) <= 0;
 }
 
-inline bool normalize_v(uint8_t v, int &recid) {
+inline bool normalize_v(uint8_t v, int& recid)
+{
     // do not allow 0 or 1
-    if (v == 27 || v == 28) {
+    if (v == 27 || v == 28)
+    {
         recid = v - 27;
         return true;
     }
@@ -363,11 +406,12 @@ inline bool normalize_v(uint8_t v, int &recid) {
 }
 
 
-EthAddress recoverAddressFromSigRSV(const uint8_t msg32[32], const uint8_t sig65[65]) {
+EthAddress recoverAddressFromSigRSV(const uint8_t msg32[32], const uint8_t sig65[65])
+{
     if (!msg32 || !sig65) throw std::invalid_argument("null pointer");
 
-    const uint8_t *r = sig65;
-    const uint8_t *s = sig65 + 32;
+    const uint8_t* r = sig65;
+    const uint8_t* s = sig65 + 32;
     uint8_t v = sig65[64];
 
     if (!rs_low_s_and_in_range(r, s))
@@ -403,17 +447,22 @@ EthAddress recoverAddressFromSigRSV(const uint8_t msg32[32], const uint8_t sig65
 // -------------------- Verify against expected address --------------------
 std::optional<HttpError> EthPrivateKey::eip712VerifyRaw(const uint8_t msg32[32],
                                                         const uint8_t sig65[65],
-                                                        EthAddress expectedAddress) {
-    try {
+                                                        EthAddress expectedAddress)
+{
+    try
+    {
         EthAddress rec = recoverAddressFromSigRSV(msg32, sig65);
-        if (std::memcmp(rec.bytes().data(), expectedAddress.bytes().data(), 20) != 0) {
+        if (std::memcmp(rec.bytes().data(), expectedAddress.bytes().data(), 20) != 0)
+        {
             return HttpError(ErrorType::ERR_BAD_REQUEST, "Signature verification failed: recovered address mismatch:"
-                                                         + rec.toHex(PREFIX_0x) + " != expected " +
-                                                         expectedAddress.toHex(PREFIX_0x));
+                             + rec.toHex(PREFIX_0x) + " != expected " +
+                             expectedAddress.toHex(PREFIX_0x));
         }
-    } catch (std::exception &e) {
+    }
+    catch (std::exception& e)
+    {
         return HttpError(ERR_BAD_REQUEST, string("Signature verification failed:") +
-                                          e.what());
+                         e.what());
     }
     return std::nullopt;
 }

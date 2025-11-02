@@ -10,14 +10,18 @@ using json = nlohmann::json;
 
 
 auto SIGNATURE_SAMPLE =
-        "0x2d6a7588d6acca505cbf0d9a4a227e0c52c6c34008c8e8986a1283259764173608a2ce6496642e377d6da8dbbf5836e9bd15092f9ecab05ded3d6293af148b571c";
+    "0x2d6a7588d6acca505cbf0d9a4a227e0c52c6c34008c8e8986a1283259764173608a2ce6496642e377d6da8dbbf5836e9bd15092f9ecab05ded3d6293af148b571c";
 
-BOOST_AUTO_TEST_CASE(deserialize_payment_payload) {
+BOOST_AUTO_TEST_CASE (deserialize_payment_payload)
+{
     PaymentPayload paymentPayload;
-    try {
+    try
+    {
         json jData = json::parse(PaymentExamples::EXACT_UCDC_PAYMENT_PAYLOAD_CB_SEPOLIA);
         paymentPayload = *PaymentPayload::fromJson(jData);
-    } catch (std::exception &ex) {
+    }
+    catch (std::exception& ex)
+    {
         printNestedException(ex);
         BOOST_FAIL("Exception during PaymentPayload deserialization test");
     }
@@ -27,8 +31,11 @@ BOOST_AUTO_TEST_CASE(deserialize_payment_payload) {
     BOOST_TEST(paymentPayload.network() == "base-sepolia");
     BOOST_TEST(paymentPayload.payload()->signature().toHex(true) == SIGNATURE_SAMPLE);
     BOOST_TEST(
-        paymentPayload.payload()->authorization()->from().toChecksumHex() == "0x9410cE824d7D65Bf5Ce9B656040aD597bDC9bF30");
-    BOOST_TEST(paymentPayload.payload()->authorization()->to().toChecksumHex() == "0x209693Bc6afc0C5328bA36FaF03C514EF312287C");
+        paymentPayload.payload()->authorization()->from().toChecksumHex() ==
+        "0x9410cE824d7D65Bf5Ce9B656040aD597bDC9bF30");
+    BOOST_TEST(
+        paymentPayload.payload()->authorization()->to().toChecksumHex() ==
+        "0x209693Bc6afc0C5328bA36FaF03C514EF312287C");
     BOOST_TEST(paymentPayload.payload()->authorization()->value().toDecimal() == "12000000000000000000");
     BOOST_TEST(paymentPayload.payload()->authorization()->validAfter().toDecimal() == "1740672089");
     BOOST_TEST(paymentPayload.payload()->authorization()->validBefore().toDecimal() == "1740672154");
@@ -36,7 +43,8 @@ BOOST_AUTO_TEST_CASE(deserialize_payment_payload) {
         "0xf3746613c2d920b5fdabc0856f2aeb2d4f88ee6037b8cc5d04a71a4462f13480");
 }
 
-BOOST_AUTO_TEST_CASE(serialize_payment_payload) {
+BOOST_AUTO_TEST_CASE (serialize_payment_payload)
+{
     auto auth = std::make_shared<Authorization>(
         "0x857b06519E91e3A54538791bDbb0E22373e36b66",
         "0x209693Bc6afc0C5328bA36FaF03C514EF312287C",
@@ -48,7 +56,8 @@ BOOST_AUTO_TEST_CASE(serialize_payment_payload) {
 
     json jOutput;
 
-    try {
+    try
+    {
         auto payloadPtr = std::make_shared<Payload>(SIGNATURE_SAMPLE,
                                                     auth
         );
@@ -56,7 +65,9 @@ BOOST_AUTO_TEST_CASE(serialize_payment_payload) {
 
 
         jOutput["paymentPayload"] = newPayload.toJson();
-    } catch (std::exception &ex) {
+    }
+    catch (std::exception& ex)
+    {
         printNestedException(ex);
         BOOST_FAIL("Exception during PaymentPayload serialization test");
     }

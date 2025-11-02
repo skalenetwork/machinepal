@@ -13,31 +13,39 @@
 
 using namespace proxygen;
 
-bool isRedHat() {
+bool isRedHat()
+{
     return std::filesystem::exists("/etc/redhat-release");
 }
 
-bool isAlpine() {
+bool isAlpine()
+{
     std::ifstream f("/etc/os-release");
     std::string line;
-    while (std::getline(f, line)) {
-        if (line.find("ID=alpine") != std::string::npos) {
+    while (std::getline(f, line))
+    {
+        if (line.find("ID=alpine") != std::string::npos)
+        {
             return true;
         }
     }
     return std::filesystem::exists("/etc/alpine-release");
 }
 
-void ServerFactory::addHttpServerToIPConfigs(const ServerConfig &serverConfig, std::vector<HTTPServer::IPConfig>& ipConfigs) {
+void ServerFactory::addHttpServerToIPConfigs(const ServerConfig& serverConfig,
+                                             std::vector<HTTPServer::IPConfig>& ipConfigs)
+{
     auto http = serverConfig.http();
     CHECK_STATE(http);
     ipConfigs.emplace_back(
-        folly::SocketAddress(serverConfig.bindIp(),http->port(), true),
+        folly::SocketAddress(serverConfig.bindIp(), http->port(), true),
         HTTPServer::Protocol::HTTP
     );
 }
 
-void ServerFactory::addHTTPSServerToIpConfigs(const ServerConfig &serverConfig, std::vector<HTTPServer::IPConfig>& ipConfigs) {
+void ServerFactory::addHTTPSServerToIpConfigs(const ServerConfig& serverConfig,
+                                              std::vector<HTTPServer::IPConfig>& ipConfigs)
+{
     auto https = serverConfig.https();
     CHECK_STATE(https);
     auto sslCfg = CertManager::createAndValidateWangleSSLContext(https);
@@ -49,13 +57,10 @@ void ServerFactory::addHTTPSServerToIpConfigs(const ServerConfig &serverConfig, 
     ipConfigs.emplace_back(config);
 }
 
-std::shared_ptr<HTTPServer> ServerFactory::createServerInstance(const ServerConfig& serverConfig) {
-
-
-
-    try {
-
-
+std::shared_ptr<HTTPServer> ServerFactory::createServerInstance(const ServerConfig& serverConfig)
+{
+    try
+    {
         HTTPServerOptions options;
         spdlog::info("Creating server instance");
 
@@ -63,39 +68,45 @@ std::shared_ptr<HTTPServer> ServerFactory::createServerInstance(const ServerConf
 
         options.idleTimeout = std::chrono::milliseconds(60000);
         options.handlerFactories = RequestHandlerChain()
-                .addThen(std::move(factory))
-                .build();
+                                   .addThen(std::move(factory))
+                                   .build();
 
 
         std::vector<HTTPServer::IPConfig> ipConfigs;
 
-        if (serverConfig.http() && serverConfig.http()->isEnabled()) {
+        if (serverConfig.http() && serverConfig.http()->isEnabled())
+        {
             addHttpServerToIPConfigs(serverConfig, ipConfigs);
         }
 
-        if (serverConfig.https() && serverConfig.https()->isEnabled()) {
+        if (serverConfig.https() && serverConfig.https()->isEnabled())
+        {
             addHTTPSServerToIpConfigs(serverConfig, ipConfigs);
         }
 
-        if (ipConfigs.empty()) {
+        if (ipConfigs.empty())
+        {
             throw std::runtime_error("At least one of HTTP or HTTPS must"
-                                     " be enabled in the server configuration.");
+                " be enabled in the server configuration.");
         }
 
 
         auto server = std::make_shared<HTTPServer>(std::move(options));
 
-        for (const auto& config : ipConfigs) {
+        for (const auto& config : ipConfigs)
+        {
             spdlog::info("Binding to {}:{} [{}]",
-                config.address.getAddressStr(),
-                config.address.getPort(),
-                config.sslConfigs.empty() ? " HTTP" : "HTTPS");
+                         config.address.getAddressStr(),
+                         config.address.getPort(),
+                         config.sslConfigs.empty() ? " HTTP" : "HTTPS");
         }
 
         server->bind(ipConfigs);
         spdlog::info("Server instance created and bound successfully.");
         return server;
-    } catch (const std::exception &ex) {
+    }
+    catch (const std::exception& ex)
+    {
         RETHROW_NESTED;
     }
 }

@@ -1,7 +1,6 @@
 #pragma once
 
 
-
 class FileManager
 {
 public:
@@ -17,8 +16,9 @@ public:
         return canonicalConfigDirPath_;
     }
 
-    explicit FileManager(const filesystem::path &userProvidedConfigPath)
-        : userProvidedConfigPath_(userProvidedConfigPath) {
+    explicit FileManager(const filesystem::path& userProvidedConfigPath)
+        : userProvidedConfigPath_(userProvidedConfigPath)
+    {
         try
         {
             checkFileExistsAndReadableCwd(userProvidedConfigPath);
@@ -26,7 +26,9 @@ public:
             spdlog::info("Resolved machinepay config path: {}", canonicalConfigPath_.c_str());
             CHECK_STATE(!canonicalConfigPath_.empty());
             canonicalConfigDirPath_ = std::filesystem::path(canonicalConfigPath_).parent_path().string();
-        } catch (const std::exception &ex) {
+        }
+        catch (const std::exception& ex)
+        {
             RETHROW_NESTED;
         }
     }
@@ -45,5 +47,4 @@ private:
     std::string userProvidedConfigPath_;
     std::filesystem::path canonicalConfigPath_;
     std::filesystem::path canonicalConfigDirPath_;
-    
 };

@@ -12,25 +12,32 @@
 #include <span>
 #include <stdexcept>
 
-EthAddress EthAddress::parseHexAddress(const std::string& hex) {
+EthAddress EthAddress::parseHexAddress(const std::string& hex)
+{
     std::string s = hex;
-    if (s.rfind("0x", 0) == 0 || s.rfind("0X", 0) == 0) {
+    if (s.rfind("0x", 0) == 0 || s.rfind("0X", 0) == 0)
+    {
         s = s.substr(2);
     }
-    if (s.size() != 40) {
+    if (s.size() != 40)
+    {
         throw std::invalid_argument("Address hex must be 40 characters (20 bytes)");
     }
     EthAddress addr{};
-    try {
+    try
+    {
         // decode into addr; boost::algorithm::unhex throws hex_decode_error on invalid input
         boost::algorithm::unhex(s.begin(), s.end(), addr.bytes().begin());
-    } catch (const boost::algorithm::hex_decode_error& e) {
+    }
+    catch (const boost::algorithm::hex_decode_error& e)
+    {
         throw std::invalid_argument(std::string("Invalid hex character in address: ") + e.what());
     }
     return addr;
 }
 
-EthAddress EthAddress::parseFlexible(const std::string &hex, bool validateChecksum) {
+EthAddress EthAddress::parseFlexible(const std::string& hex, bool validateChecksum)
+{
     using namespace boost::algorithm;
 
     // Remove optional 0x prefix
@@ -46,8 +53,8 @@ EthAddress EthAddress::parseFlexible(const std::string &hex, bool validateChecks
         throw std::invalid_argument("Invalid hex character in address");
 
     // Detect case pattern
-    bool hasUpper = std::any_of(s.begin(), s.end(), [](char c){ return std::isupper(static_cast<unsigned char>(c)); });
-    bool hasLower = std::any_of(s.begin(), s.end(), [](char c){ return std::islower(static_cast<unsigned char>(c)); });
+    bool hasUpper = std::any_of(s.begin(), s.end(), [](char c) { return std::isupper(static_cast<unsigned char>(c)); });
+    bool hasLower = std::any_of(s.begin(), s.end(), [](char c) { return std::islower(static_cast<unsigned char>(c)); });
     bool mixed = hasUpper && hasLower;
 
     // Lowercase copy for decoding
@@ -56,7 +63,8 @@ EthAddress EthAddress::parseFlexible(const std::string &hex, bool validateChecks
     EthAddress addr = parseHexAddress(lower);
 
     // Checksum validation (EIP-55)
-    if (validateChecksum && mixed) {
+    if (validateChecksum && mixed)
+    {
         std::string expected = addr.toChecksumHex().substr(2); // remove "0x"
         if (expected != s)
             throw std::invalid_argument("Checksum mismatch for address");
@@ -65,21 +73,25 @@ EthAddress EthAddress::parseFlexible(const std::string &hex, bool validateChecks
     return addr;
 }
 
-std::string EthAddress::toDbString() const {
+std::string EthAddress::toDbString() const
+{
     return toHex(PREFIX_NONE);
 }
 
-std::string EthAddress::toHex(Prefix prefix) const {
+std::string EthAddress::toHex(Prefix prefix) const
+{
     std::string out;
     out.reserve(42);
-    if (prefix == Prefix::PREFIX_0x) {
+    if (prefix == Prefix::PREFIX_0x)
+    {
         out += "0x";
     }
     boost::algorithm::hex_lower(bytes().begin(), bytes().end(), std::back_inserter(out));
     return out;
 }
 
-std::string EthAddress::toBase64() const {
+std::string EthAddress::toBase64() const
+{
     constexpr std::size_t take = 32;
     std::string out(boost::beast::detail::base64::encoded_size(32), '\0');
     boost::beast::detail::base64::encode(out.data(), bytes().data(), take);
@@ -87,7 +99,8 @@ std::string EthAddress::toBase64() const {
 }
 
 
-std::string EthAddress::toChecksumHex() const {
+std::string EthAddress::toChecksumHex() const
+{
     // Pre-calculated hex character tables
     static constexpr char lower_hex[] = "0123456789abcdef";
     static constexpr char upper_hex[] = "0123456789ABCDEF";
@@ -103,7 +116,8 @@ std::string EthAddress::toChecksumHex() const {
     // 3) Build the checksummed address
     std::string out = "0x";
     out.reserve(42);
-    for (std::size_t i = 0; i < bytes_.size(); ++i) {
+    for (std::size_t i = 0; i < bytes_.size(); ++i)
+    {
         // Get the two nibbles for the current byte of the address
         const uint8_t addr_nibble_1 = bytes_[i] >> 4;
         const uint8_t addr_nibble_2 = bytes_[i] & 0x0F;
@@ -120,19 +134,28 @@ std::string EthAddress::toChecksumHex() const {
 }
 
 
-
-
-
-
-
 // Constructors
 EthAddress::EthAddress() = default;
-EthAddress::EthAddress(const std::array<uint8_t, 20>& bytes) : bytes_(bytes) {}
+
+EthAddress::EthAddress(const std::array<uint8_t, 20>& bytes) : bytes_(bytes)
+{
+}
+
 EthAddress::EthAddress(std::span<const uint8_t, 20> bytes) { std::copy(bytes.begin(), bytes.end(), bytes_.begin()); }
-EthAddress::EthAddress(const uint8_t* data, std::size_t len) { if (len != 20) throw std::invalid_argument("Address length must be 20 bytes"); std::copy(data, data + 20, bytes_.begin()); }
+
+EthAddress::EthAddress(const uint8_t* data, std::size_t len)
+{
+    if (len != 20) throw std::invalid_argument("Address length must be 20 bytes");
+    std::copy(data, data + 20, bytes_.begin());
+}
+
 EthAddress::EthAddress(const std::string& hex) { *this = parseHexAddress(hex); }
 
 // Friend operators
 bool operator==(const EthAddress& a, const EthAddress& b) { return a.bytes_ == b.bytes_; }
 bool operator!=(const EthAddress& a, const EthAddress& b) { return !(a == b); }
-bool operator<(const EthAddress& a, const EthAddress& b) { return std::lexicographical_compare(a.bytes_.begin(), a.bytes_.end(), b.bytes_.begin(), b.bytes_.end()); }
+
+bool operator<(const EthAddress& a, const EthAddress& b)
+{
+    return std::lexicographical_compare(a.bytes_.begin(), a.bytes_.end(), b.bytes_.begin(), b.bytes_.end());
+}

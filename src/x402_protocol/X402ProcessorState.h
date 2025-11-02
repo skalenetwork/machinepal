@@ -1,7 +1,9 @@
 #pragma once
 
-namespace x402 {
-    enum class State {
+namespace x402
+{
+    enum class State
+    {
         START,
         ERROR_SENT,
         SUCCESS_PAYMENT_REQUIRED_SENT,
@@ -9,4 +11,3 @@ namespace x402 {
         SUCCESS_RESOURCE_SENT
     };
 }
-

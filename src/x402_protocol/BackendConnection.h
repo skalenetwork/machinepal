@@ -4,11 +4,7 @@
 class X402Processor;
 class IResponseSender;
 
-class BackendConnection
-{
-
-
+class BackendConnection {
 public:
-    static bool proxyToBackEnd(std::string& backendResponseBody, std::string& errorMessage);
-
+    static bool proxyToBackEnd( std::string& backendResponseBody, std::string& errorMessage );
 };

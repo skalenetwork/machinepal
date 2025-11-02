@@ -17,7 +17,8 @@ class EthAddress;
 /**
  * @brief Represents a payment record.
  */
-class PaymentRecord {
+class PaymentRecord
+{
     std::string organizationName_;
     u256 chainId_;
     EthAddress fromAddress_;
@@ -33,7 +34,6 @@ class PaymentRecord {
     std::string jsonInfo_;
 
 public:
-
     [[nodiscard]] std::string organizationName() const;
 
     [[nodiscard]] u256 chainId() const;
@@ -61,18 +61,17 @@ public:
     [[nodiscard]] std::string jsonInfo() const;
 
     static ptr<PaymentRecord> createPaymentRecord(
-        const PaymentPayload& payload, const EIP712Domain &domain, const ResourceConfig& resource,
+        const PaymentPayload& payload, const EIP712Domain& domain, const ResourceConfig& resource,
         const OrganizationConfig& organization, const Hash& transactionHash, const string& ipAddress);
 
 
     PaymentRecord(const std::string& organizationName, const u256 chainId,
-                  const EthAddress &fromAddress, const EthAddress &toAddress, const EthAddress &assetAddress,
-                  const EIP3009Value &value,
-                  const EIP3009Nonce &nonce, const string &resourceIdentifier, uint64_t settlementTime,
-                  const Hash &authorizationSignatureHash, const Hash &transactionHash,
+                  const EthAddress& fromAddress, const EthAddress& toAddress, const EthAddress& assetAddress,
+                  const EIP3009Value& value,
+                  const EIP3009Nonce& nonce, const string& resourceIdentifier, uint64_t settlementTime,
+                  const Hash& authorizationSignatureHash, const Hash& transactionHash,
                   const std::string& fromIpAddress,
-                  const std::string &jsonInfo);
+                  const std::string& jsonInfo);
 
-    static ptr<PaymentRecord> deserializeFromDbRow(const soci::row &row);
-
+    static ptr<PaymentRecord> deserializeFromDbRow(const soci::row& row);
 };

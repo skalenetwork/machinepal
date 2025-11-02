@@ -2,8 +2,10 @@
 #include <array>
 #include <string>
 
-class EIP3009Nonce {
+class EIP3009Nonce
+{
     std::array<uint8_t, 32> bytes_;
+
 public:
     // Construct from vector
     explicit EIP3009Nonce() = default;
@@ -18,5 +20,4 @@ public:
     std::string toBase64() const;
 
     friend auto operator<=>(const EIP3009Nonce&, const EIP3009Nonce&) = default;
-
 };

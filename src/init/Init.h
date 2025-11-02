@@ -9,7 +9,8 @@
 
 class ConfigManager;
 
-class Init {
+class Init
+{
 public:
     static void initAllLibs(int _argc, char* _argv[]);
     static bool isInited();
@@ -23,6 +24,5 @@ private:
     static std::atomic<bool> inited_;
 
     static bool fetchInternetTime(const char* url,
-        std::string& utc_datetime, std::string& responseOut, std::string& errorOut);
-
+                                  std::string& utc_datetime, std::string& responseOut, std::string& errorOut);
 };

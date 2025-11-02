@@ -9,9 +9,10 @@
 
 using json = nlohmann::json;
 
-PaymentRequiredResponse PaymentRequiredResponse::fromJson(const json &j) {
-
-    try {
+PaymentRequiredResponse PaymentRequiredResponse::fromJson(const json& j)
+{
+    try
+    {
         CHECK_STATE_JSON(
             j.contains("x402Version") && j["x402Version"].is_number_integer(),
             "PaymentRequiredResponse must contain integer x402Version",
@@ -29,14 +30,15 @@ PaymentRequiredResponse PaymentRequiredResponse::fromJson(const json &j) {
 
         string error;
 
-        CHECK_STATE_JSON(j.contains("error"),"PaymentRequiredResponse must contain error field", j);
+        CHECK_STATE_JSON(j.contains("error"), "PaymentRequiredResponse must contain error field", j);
 
         CHECK_STATE_JSON(j["error"].is_string(), "PaymentRequiredResponse error must be string", j);
 
         error = j.at("error").get<std::string>();
 
         std::vector<PaymentRequirements> paymentRequirementsList;
-        for (const auto &elem: j["accepts"]) {
+        for (const auto& elem : j["accepts"])
+        {
             // PaymentRequirements::fromJson returns shared_ptr
             auto pr = PaymentRequirements::fromJson(elem);
             if (pr) paymentRequirementsList.push_back(*pr);
@@ -46,16 +48,20 @@ PaymentRequiredResponse PaymentRequiredResponse::fromJson(const json &j) {
         CHECK_STATE_JSON(!paymentRequirementsList.empty(), "Accepts array must not be empty", j);
 
         return PaymentRequiredResponse(paymentRequirementsList, error);
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception& e)
+    {
         RETHROW_NESTED;
     }
 }
 
-json PaymentRequiredResponse::toJson() const {
+json PaymentRequiredResponse::toJson() const
+{
     json j;
     j["x402Version"] = x402Version_;
     j["accepts"] = json::array();
-    for (const auto &p: accepts_) {
+    for (const auto& p : accepts_)
+    {
         j["accepts"].push_back(p.toJson());
     }
 
@@ -65,9 +71,10 @@ json PaymentRequiredResponse::toJson() const {
 }
 
 std::string PaymentRequiredResponse::getPaymentRequiredResponseAsString(ptr<OrganizationConfig> organization,
-                                                                    ptr<ResourceConfig> resource,
-                                                                    ptr<MachinePayConfig> config,
-                                                                    const std::optional<string>& errorMessage) {
+                                                                        ptr<ResourceConfig> resource,
+                                                                        ptr<MachinePayConfig> config,
+                                                                        const std::optional<string>& errorMessage)
+{
     CHECK_STATE(organization);
     CHECK_STATE(resource);
     CHECK_STATE(config);
@@ -85,7 +92,8 @@ std::string PaymentRequiredResponse::getPaymentRequiredResponseAsString(ptr<Orga
     //auto path = resource_->machinePayPath();
     nlohmann::json extra;
     extra["name"] = tokenName;
-    if (!extraVersion.empty()) {
+    if (!extraVersion.empty())
+    {
         extra["version"] = extraVersion;
     }
     PaymentRequirements req(

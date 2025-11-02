@@ -4,7 +4,8 @@
 
 class FileManager;
 
-class HTTPConfig {
+class HTTPConfig
+{
 public:
     bool isEnabled() const;
     uint16_t port() const;
@@ -13,5 +14,5 @@ public:
 protected:
     HTTPConfig(bool isEnabled, uint16_t port);
     bool isEnabled_;
-    uint16_t  port_;
+    uint16_t port_;
 };

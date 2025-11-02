@@ -6,9 +6,8 @@
 
 using json = nlohmann::json;
 
-BOOST_AUTO_TEST_CASE(deserialize_payment_requirements) {
-
-
+BOOST_AUTO_TEST_CASE (deserialize_payment_requirements)
+{
     json j_data = json::parse(PaymentExamples::EXACT_UCDC_PAYMENT_REQ_CB_SEPOLIA);
     auto requirements = PaymentRequirements::fromJson(j_data);
 
@@ -25,7 +24,8 @@ BOOST_AUTO_TEST_CASE(deserialize_payment_requirements) {
     BOOST_TEST(!requirements->extra().is_null());
 }
 
-BOOST_AUTO_TEST_CASE(serialize_payment_requirements) {
+BOOST_AUTO_TEST_CASE (serialize_payment_requirements)
+{
     PaymentRequirements new_req(
         "streaming",
         "base",
@@ -49,7 +49,8 @@ BOOST_AUTO_TEST_CASE(serialize_payment_requirements) {
     BOOST_TEST(j_output["paymentRequirements"]["resource"] == "https://api.prod.com/stream/video");
     BOOST_TEST(j_output["paymentRequirements"]["description"] == "Production Video Stream");
     BOOST_TEST(j_output["paymentRequirements"]["mimeType"] == "video/mp4");
-    if (!j_output["paymentRequirements"].contains("outputSchema")) {
+    if (!j_output["paymentRequirements"].contains("outputSchema"))
+    {
         BOOST_TEST(true); // outputSchema is not present, which is valid
     }
     BOOST_TEST(j_output["paymentRequirements"]["payTo"] == "0x2222222222222222222222222222222222222222");

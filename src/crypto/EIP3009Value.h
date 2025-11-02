@@ -2,11 +2,13 @@
 #include <string>
 
 
-class EIP3009Value {
+class EIP3009Value
+{
     u256 value_{};
 
 public:
-    [[nodiscard]] u256 value() const {
+    [[nodiscard]] u256 value() const
+    {
         return value_;
     }
 
@@ -17,4 +19,3 @@ public:
     static EIP3009Value fromHexOrDecimal(const std::string& decStr);
     friend auto operator<=>(const EIP3009Value&, const EIP3009Value&) = default;
 };
-

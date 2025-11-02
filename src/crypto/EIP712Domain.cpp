@@ -10,15 +10,17 @@
 #include <boost/algorithm/string.hpp>
 
 
-EIP712Domain::EIP712Domain(const std::string &name, const std::string &version, const u256 &chainId,
-                           const EthAddress &verifyingContract, const std::optional<std::string> domainSeparator)
+EIP712Domain::EIP712Domain(const std::string& name, const std::string& version, const u256& chainId,
+                           const EthAddress& verifyingContract, const std::optional<std::string> domainSeparator)
     : name_(name),
       version_(version),
       chainId_(chainId),
-      assetAddress_(verifyingContract) {
+      assetAddress_(verifyingContract)
+{
     auto computedDomainSeparator = hashDomain();
     domainSeparator_ = Encoding::toHex(computedDomainSeparator, true);
-    if (domainSeparator) {
+    if (domainSeparator)
+    {
         cerr << domainSeparator_ << endl;
         cerr << domainSeparator.value() << endl;
         CHECK_STATE(domainSeparator_ == domainSeparator.value());
@@ -27,7 +29,8 @@ EIP712Domain::EIP712Domain(const std::string &name, const std::string &version, 
 
 
 // https://github.com/0xsequence/ethers-eip712/blob/master/tests/typed-data.test.ts
-std::array<uint8_t, 32> EIP712Domain::getDomainTypeHash() {
+std::array<uint8_t, 32> EIP712Domain::getDomainTypeHash()
+{
     // EIP-712 Domain Type Hash
     //  public constant EIP712_DOMAIN_TYPEHASH = 0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f;
     static std::array<uint8_t, 32> EIP712_DOMAIN_TYPEHASH = KeccakHash::keccak256(
@@ -37,14 +40,15 @@ std::array<uint8_t, 32> EIP712Domain::getDomainTypeHash() {
     boost::algorithm::hex(EIP712_DOMAIN_TYPEHASH.begin(), EIP712_DOMAIN_TYPEHASH.end(), std::back_inserter(hex));
     boost::algorithm::to_lower(hex);
 
-    CHECK_STATE(hex== "8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f");
+    CHECK_STATE(hex == "8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f");
 
     return EIP712_DOMAIN_TYPEHASH;
 }
 
 
 // https://github.com/0xsequence/ethers-eip712/blob/master/tests/typed-data.test.ts
-std::array<uint8_t, 32> EIP712Domain::hashDomain() const {
+std::array<uint8_t, 32> EIP712Domain::hashDomain() const
+{
     std::vector<uint8_t> encodedData;
 
     auto domainTypeHash = getDomainTypeHash();
@@ -82,10 +86,10 @@ std::array<uint8_t, 32> EIP712Domain::hashDomain() const {
     CHECK_STATE(encodedData.size() == 160);
 
     return KeccakHash::keccak256(encodedData);
-
 }
 
-std::array<uint8_t, 32> EIP712Domain::hashWithDomain(const std::array<uint8_t, 32>& structHash) const {
+std::array<uint8_t, 32> EIP712Domain::hashWithDomain(const std::array<uint8_t, 32>& structHash) const
+{
     std::vector<uint8_t> dataToHash;
     dataToHash.push_back(0x19);
     dataToHash.push_back(0x01);
@@ -96,18 +100,19 @@ std::array<uint8_t, 32> EIP712Domain::hashWithDomain(const std::array<uint8_t, 3
 }
 
 
-EIP712Signature EIP712Domain::signWithDomain(const std::array<uint8_t, 32> &structHash,
-                                                   const EthPrivateKey &privateKey) const {
+EIP712Signature EIP712Domain::signWithDomain(const std::array<uint8_t, 32>& structHash,
+                                             const EthPrivateKey& privateKey) const
+{
     std::vector<uint8_t> dataToHash;
     auto hash = hashWithDomain(structHash);
     return EthPrivateKey::signAuthRaw(hash.data(), privateKey.bytes().data());
 }
 
 
-
-std::optional<HttpError> EIP712Domain::verifyWithDomain(const std::array<uint8_t, 32> &structHash,
-                                                    const EIP712Signature& signature,
-                                                   const EthAddress& expectedAddress) const {
+std::optional<HttpError> EIP712Domain::verifyWithDomain(const std::array<uint8_t, 32>& structHash,
+                                                        const EIP712Signature& signature,
+                                                        const EthAddress& expectedAddress) const
+{
     auto hash = hashWithDomain(structHash);
     return EthPrivateKey::eip712VerifyRaw(hash.data(), signature.bytes().data(), expectedAddress);
 }
