@@ -14,5 +14,5 @@ public:
 
     // POST /settle — performs the on-chain transfer (gas sponsored by facilitator)
     virtual nlohmann::json settle(
-        const nlohmann::json& paymentInstruction, const nlohmann::json& paymentPayload ) const = 0;
+        const nlohmann::json& settlementRequestJson) const = 0;
 };

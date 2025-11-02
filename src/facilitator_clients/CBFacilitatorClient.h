@@ -30,7 +30,14 @@ public:
 
     // POST /settle — performs the on-chain transfer (gas sponsored by facilitator)
     nlohmann::json settle( const nlohmann::json& _paymentInstruction,
-        const nlohmann::json& _paymentPayload ) const override;
+        const nlohmann::json& _paymentPayload ) const ;
+
+    // POST /settle — performs the on-chain transfer (gas sponsored by facilitator)
+    nlohmann::json settle(
+        const nlohmann::json& ) const override {
+        throw std::runtime_error( "Not implemented: settle with single argument" );
+    };
+
 
     std::string extractCBInvalidReason( std::string& _responseData ) const;
 

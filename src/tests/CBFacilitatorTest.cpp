@@ -63,7 +63,7 @@ BOOST_AUTO_TEST_CASE( settle_call_real_server_stub ) {
     auto payload = makePayload();
 
     try {
-        auto res = client.settle( instruction, payload );
+        auto res = client.settle( payload);
         // On success, facilitator returns txHash; on failure it may return error JSON or HTTP
         // non-2xx. We accept any valid JSON object but assert that the response is parsed.
         BOOST_TEST( res.is_object() );

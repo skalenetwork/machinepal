@@ -73,14 +73,13 @@ nlohmann::json EasyNetFacilitatorClient::verify(const nlohmann::json& verifyRequ
     }
 }
 
-nlohmann::json EasyNetFacilitatorClient::settle( const nlohmann::json& paymentRequirementsJson,
-    const nlohmann::json& paymentPayloadJson ) const {
+nlohmann::json EasyNetFacilitatorClient::settle( const nlohmann::json& settlementRequestJson) const {
     std::unique_lock< std::shared_mutex > lock( mutex_ );
     try {
         EthAddress fromWalletAddress;
         optional< string > error;
         auto [paymentPayload, paymentReqs] =
-            verifyUnsafe( paymentPayloadJson, error);
+            verifyUnsafe( settlementRequestJson, error);
 
         if ( error ) {
             // Constructor order: success, errorReason, transaction, network, payer, originalJson
@@ -92,7 +91,7 @@ nlohmann::json EasyNetFacilitatorClient::settle( const nlohmann::json& paymentRe
 
         EthAddress toWalletAddress = paymentPayload->payload()->authorization()->to();
         EthAddress assetWalletAddress = EthAddress::parseFlexible(
-            PaymentRequirements::fromJson( paymentRequirementsJson )->asset() );
+            paymentReqs->asset() );
         EIP3009Value transferValue = paymentPayload->payload()->authorization()->value();
         EIP3009Nonce nonce = paymentPayload->payload()->authorization()->nonce();
         const string& resource = paymentReqs->resource();

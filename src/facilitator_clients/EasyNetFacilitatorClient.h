@@ -21,8 +21,8 @@ public:
     nlohmann::json verify(
         const nlohmann::json& verifyRequestJson) const override;
 
-    nlohmann::json settle( const nlohmann::json& paymentInstruction,
-        const nlohmann::json& paymentPayload ) const override;
+    nlohmann::json settle(
+        const nlohmann::json& settlementRequestJson) const override;
 
 private:
     EasyNetDb& db_;
