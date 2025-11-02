@@ -13,9 +13,11 @@
 // settle(): performs the balance transfer via EasyNetDb::transferValue.
 class EasyNetFacilitatorClient : public FacilitatorClient {
 public:
-    explicit EasyNetFacilitatorClient(EasyNetDb &db, EthAddress defaultAssetAddress = EthAddress{});
+    explicit EasyNetFacilitatorClient(EasyNetDb &db, EthAddress &assetAddress,
+        u256 &chainId);
 
-    nlohmann::json verify(const nlohmann::json &paymentInstruction,
+    ptr<PaymentPayload> verifyCore(const nlohmann::json &paymentPayloadJson, EthAddress &fromAddress, optional<string> &error) const;
+    nlohmann::json verify(const nlohmann::json &paymentReqs,
                           const nlohmann::json &paymentPayload) const override;
 
     nlohmann::json settle(const nlohmann::json &paymentInstruction,
@@ -23,7 +25,8 @@ public:
 
 private:
     EasyNetDb &db_;
-    EthAddress defaultAssetAddress_;
+    EthAddress assetAddress_;
+    u256 chainId_;
 
     // Extract required fields or throw with nested context.
     EthAddress parseAddressFromJson(const nlohmann::json &j, const std::string &key) const;

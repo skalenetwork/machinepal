@@ -2,13 +2,16 @@
 #include "MachinePayCommon.h"
 #include "crypto/Encoding.h"
 #include "payment/datastructures/PaymentRequirements.h"
+#include "payment/datastructures/SettlementResponse.h"
 
 #include <limits> // for numeric_limits<u256>::max()
 
-EasyNetFacilitatorClient::EasyNetFacilitatorClient(EasyNetDb &db, EthAddress defaultAssetAddress)
-    : db_(db), defaultAssetAddress_(std::move(defaultAssetAddress)) {}
-
-
+EasyNetFacilitatorClient::EasyNetFacilitatorClient(EasyNetDb &db, EthAddress assetAddress,
+                                                   u256 chainId)
+    : db_(db),
+      asetAddress_(std::move(assetAddress)),
+      chainId_(chainId_) {
+}
 
 
 EthAddress EasyNetFacilitatorClient::getAssetAddress(const nlohmann::json &paymentReqs) const {
@@ -16,102 +19,81 @@ EthAddress EasyNetFacilitatorClient::getAssetAddress(const nlohmann::json &payme
     return EthAddress::parseFlexible(paymentRequirements->asset());
 }
 
-nlohmann::json EasyNetFacilitatorClient::verify(const nlohmann::json &paymentInstruction,
-                                                const nlohmann::json &paymentPayload) const {
-    try {
-        // Extract addresses
-        EthAddress fromAddress = parseAddressFromJson(paymentPayload, "from");
-        EthAddress toAddress = parseAddressFromJson(paymentPayload, "to");
-        EthAddress assetAddress = getAssetAddress(paymentInstruction, paymentPayload);
+ptr<PaymentPayload>  EasyNetFacilitatorClient::verifyCore(const nlohmann::json &paymentPayloadJson, EthAddress &fromAddress, optional<string> &error) const
+{
+    auto paymentPayload = PaymentPayload::fromJson(paymentPayloadJson);
+    auto paymentsRequirements = PaymentRequirements::fromJson(paymentReqs);
 
-        // Extract amount (prefer payload.amount then instruction.amount)
-        EIP3009Value amountValue;
-        if (paymentPayload.contains("amount") && paymentPayload["amount"].is_string()) {
-            amountValue = EIP3009Value::fromHexOrDecimal(paymentPayload["amount"].get<std::string>());
-        } else if (paymentInstruction.contains("amount") && paymentInstruction["amount"].is_string()) {
-            amountValue = EIP3009Value::fromHexOrDecimal(paymentInstruction["amount"].get<std::string>());
-        } else {
-            RETHROW_NESTED2("Missing amount field in paymentPayload or paymentInstruction");
+    fromAddress = paymentPayload->payload()->authorization()->from();
+    EthAddress toAddress = paymentPayload->payload()->authorization()->to();
+    EthAddress assetAddress = paymentsRequirements.assetAddress();
+    EIP3009Value amountValue = paymentPayload->payload()->authorization()->value();
+
+    SettlementResponse response = SettlementResponse::createValidResponse(
+        fromAddress, toAddress, assetAddress, amountValue);
+
+    u256 currentBalance = 1000000000 * u256(1000000000000000000ULL); // 1e27 initial funding for new wallets
+    auto balanceOpt = db_.getBalance(fromAddress, assetAddress);
+    if (balanceOpt.has_value()) {
+        currentBalance = balanceOpt.value();
+    }
+    // Overflow check on receiver side (if we can read it) purely informational
+
+    auto receiverBalanceOpt = db_.getBalance(toAddress, assetAddress);
+    if (receiverBalanceOpt.has_value()) {
+        const u256 maxVal = (std::numeric_limits<u256>::max)();
+        u256 receiverBal = receiverBalanceOpt.value();
+        if (requested > maxVal - receiverBal) {
+            error = "Overflow:Receiver balance would overflow 256-bit limit";
+            return paymentPayload;
         }
+    }
 
-        // Fast-path no-op checks
-        if (fromAddress.toDbString() == toAddress.toDbString() || amountValue.value() == 0) {
+    if (requested > currentBalance) {
+        error = "InsufficientFunds : Balance lower than requested transfer amount";
+        return paymentPayload;
+    }
+
+    return paymentPayload;
+}
+
+nlohmann::json EasyNetFacilitatorClient::verify(const nlohmann::json &paymentRequirementsJson,
+                                                const nlohmann::json &paymentPayloadJson) const {
+    try {
+        EthAddress fromAddress;
+        optional<string> error;
+        verifyCore(paymentPayloadJson, fromAddress, error);
+        if (error) {
+            return nlohmann::json{{"valid", false},
+                                  {"invalidReason", error.value()},
+                                  {"payer", fromAddress.toDbString()}};
+        } else {
             return nlohmann::json{
                 {"valid", true},
-                {"noOp", true},
-                {"reason", "Source and destination identical or zero amount"},
-                {"amount", amountValue.toDbString()}
-            };
+                {"from", fromAddress.toDbString()}};
         }
-
-        // Read balance
-        auto balanceOpt = db_.getBalance(fromAddress, assetAddress);
-        if (!balanceOpt.has_value()) {
-            return nlohmann::json{
-                {"valid", false},
-                {"error", "SenderWalletNotFound"},
-                {"reason", "No state row for sender wallet & asset"}
-            };
-        }
-        u256 currentBalance = balanceOpt.value();
-        u256 requested = amountValue.value();
-
-        // Overflow check on receiver side (if we can read it) purely informational
-        auto receiverBalanceOpt = db_.getBalance(toAddress, assetAddress);
-        bool wouldOverflow = false;
-        if (receiverBalanceOpt.has_value()) {
-            const u256 maxVal = (std::numeric_limits<u256>::max)();
-            u256 receiverBal = receiverBalanceOpt.value();
-            if (requested > maxVal - receiverBal) {
-                wouldOverflow = true;
-            }
-        }
-
-        if (requested > currentBalance) {
-            return nlohmann::json{
-                {"valid", false},
-                {"error", "InsufficientFunds"},
-                {"reason", "Balance lower than requested transfer amount"},
-                {"have", Encoding::u256ToDecimal(currentBalance)},
-                {"need", Encoding::u256ToDecimal(requested)}
-            };
-        }
-        if (wouldOverflow) {
-            return nlohmann::json{
-                {"valid", false},
-                {"error", "Overflow"},
-                {"reason", "Receiver balance would overflow 256-bit limit"}
-            };
-        }
-
-        return nlohmann::json{
-            {"valid", true},
-            {"from", fromAddress.toDbString()},
-            {"to", toAddress.toDbString()},
-            {"asset", assetAddress.toDbString()},
-            {"amount", amountValue.toDbString()},
-            {"balanceBefore", Encoding::u256ToDecimal(currentBalance)}
-        };
-    } catch (const std::exception &e) {
-        return nlohmann::json{{"valid", false}, {"error", "Exception"}, {"message", e.what()}};
+    } catch ( const std::exception & e) {
+        return nlohmann::json{{"valid", false}, {"invalidReason", e.what()}};
     }
 }
 
 nlohmann::json EasyNetFacilitatorClient::settle(const nlohmann::json &paymentInstruction,
                                                 const nlohmann::json &paymentPayload) const {
+
     try {
+
+        EthAddress fromAddress;
+        optional<string> error;
+        verifyCore(paymentPayloadJson, fromAddress, error);
+
+
         EthAddress fromAddress = parseAddressFromJson(paymentPayload, "from");
         EthAddress toAddress = parseAddressFromJson(paymentPayload, "to");
         EthAddress assetAddress = getAssetAddress(paymentInstruction, paymentPayload);
 
         EIP3009Value amountValue;
-        if (paymentPayload.contains("amount") && paymentPayload["amount"].is_string()) {
-            amountValue = EIP3009Value::fromHexOrDecimal(paymentPayload["amount"].get<std::string>());
-        } else if (paymentInstruction.contains("amount") && paymentInstruction["amount"].is_string()) {
-            amountValue = EIP3009Value::fromHexOrDecimal(paymentInstruction["amount"].get<std::string>());
-        } else {
-            RETHROW_NESTED2("Missing amount field for settlement");
-        }
+
+        amountValue = EIP3009Value::fromHexOrDecimal(paymentPayload["amount"].get<std::string>());
 
         // Optionally auto-fund sender if new (development convenience)
         db_.fundUserWalletWithFundsIfNewWallet(fromAddress, assetAddress);
