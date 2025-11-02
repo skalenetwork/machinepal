@@ -3,6 +3,9 @@
 #include "crypto/Encoding.h"  // added for u256 conversions
 #include <soci/soci.h>
 #include <limits>  // for overflow check
+#include <chrono>   // added for settlementTime
+#include <random>   // added for nonce
+#include <sstream>  // added for nonce hex formatting
 
 EasyNetDb::EasyNetDb(
     MachinePayApp& app, DbType type, const std::optional< std::string >& connectionInfo )
@@ -277,6 +280,47 @@ EasyNetDb::TransferResult EasyNetDb::transferValueUnsafe( const EthAddress& from
             assetContractAddressDatabaseString, Encoding::u256ToDecimal( transferAmountValue ),
             senderUpdatedBalanceDecimalString, receiverUpdatedBalanceDecimalString );
 
+        // --- New: insert transaction record ---
+        // TODO: Replace placeholder context fields with real values from your application.
+        const std::string organizationName = "defaultOrg";
+        const std::string chainId = "testChain";
+        const std::string resourceLocation = "";
+        const std::string fromIpAddress = "0.0.0.0";
+        const std::string jsonInfo = "{}";
+        auto transferAmountValueStr = Encoding::u256ToDecimal( transferAmountValue );
+
+        // Generate a simple random hex nonce
+        std::stringstream nonceStream;
+        nonceStream << std::hex << std::random_device{}() << std::random_device{}();
+        const std::string nonce = nonceStream.str();
+
+        // For now reuse nonce as a pseudo transaction hash (replace with real hash if available)
+        const std::string transactionHash = nonce;
+
+        // Settlement time = current unix epoch seconds
+        auto now = std::chrono::system_clock::now();
+        long long settlementTime =
+            std::chrono::duration_cast<std::chrono::seconds>( now.time_since_epoch() ).count();
+
+        databaseSession << "INSERT INTO transactions (organizationName, chainId, fromAddress, "
+                           "toAddress, assetAddress, value, nonce, resourceLocation, "
+                           "settlementTime, transactionHash, fromIpAddress, jsonInfo) "
+                           "VALUES (:organizationName, :chainId, :fromAddress, :toAddress, "
+                           ":assetAddress, :value, :nonce, :resourceLocation, :settlementTime, "
+                           ":transactionHash, :fromIpAddress, :jsonInfo)",
+            soci::use( organizationName, "organizationName" ),
+            soci::use( chainId, "chainId" ),
+            soci::use( fromWalletAddressDatabaseString, "fromAddress" ),
+            soci::use( toWalletAddressDatabaseString, "toAddress" ),
+            soci::use( assetContractAddressDatabaseString, "assetAddress" ),
+            soci::use( transferAmountValueStr, "value" ),
+            soci::use( nonce, "nonce" ),
+            soci::use( resourceLocation, "resourceLocation" ),
+            soci::use( settlementTime, "settlementTime" ),
+            soci::use( transactionHash, "transactionHash" ),
+            soci::use( fromIpAddress, "fromIpAddress" ),
+            soci::use( jsonInfo, "jsonInfo" );
+
         databaseTransactionScope.commit();
         return TransferResult::TransferSuccess;
     } catch ( std::exception& e ) {
@@ -297,7 +341,8 @@ void EasyNetDb::fundUserWalletWithFundsIfNewWalletUnsafe(
         // Check if the wallet+asset state row already exists.
         std::string existingValueStringFromDatabase;
         soci::indicator existingValueIndicator = soci::i_ok;
-        databaseSession << "SELECT value FROM state WHERE walletAddress = :walletAddress AND assetAddress = :assetAddress",
+        databaseSession << "SELECT value FROM state WHERE walletAddress = :walletAddress AND"
+                           " assetAddress = :assetAddress",
             soci::into( existingValueStringFromDatabase, existingValueIndicator ),
             soci::use( walletAddressDatabaseString, "walletAddress" ),
             soci::use( assetContractAddressDatabaseString, "assetAddress" );
