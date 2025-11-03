@@ -9,28 +9,25 @@ class FacilitatorConfig;
 class FileManager;
 
 class NetworkConfig {
+private:
     std::string name_;
     EthAddress walletAddress_;
     std::shared_ptr< FacilitatorConfig > facilitator_;
     ptr< EIP712Domain > eip712Domain_;
-    ptr<FacilitatorClient>  facilitatorClient_;
+    ptr< EasyNetFacilitatorClient > facilitatorClient_;
 
     NetworkConfig( const std::string& name, const EthAddress& walletAddress,
-        std::shared_ptr< FacilitatorConfig >& facilitator, ptr< EIP712Domain >& domain )
-        : name_( name ),
-          walletAddress_( walletAddress ),
-          facilitator_( facilitator ),
-          eip712Domain_( domain ) {
-        auto assetAddress = domain->assetAddress();
-        auto chainId = domain->chainId();
-        facilitatorClient_  =
-            make_shared<EasyNetFacilitatorClient>(assetAddress, chainId );
-        CHECK_STATE( eip712Domain_ );
-        CHECK_STATE( facilitator_ );
-    }
+        std::shared_ptr< FacilitatorConfig >& facilitator, ptr< EIP712Domain >& domain ); // moved implementation to cpp
+
 
 public:
-    const std::string& name() const { return name_; }
+
+
+    ptr<EasyNetFacilitatorClient> facilitatorClient() const;
+
+
+    // Accessor for facilitator client
+    [[nodiscard]] std::string name() const;
 
     const std::shared_ptr< FacilitatorConfig >& facilitator() const {
         CHECK_STATE( facilitator_ );
@@ -47,7 +44,7 @@ public:
     static std::shared_ptr< NetworkConfig > createFromJson(
         const nlohmann::json& j, ptr< FileManager > fileManager );
 
-    string getTokenVersion( const string& tokenName );
+    string getTokenVersion( const string& tokenName ) const;
 
-    string getTokenAddress( const string& tokenName );
+    string getTokenAddress( const string& tokenName ) const ;
 };

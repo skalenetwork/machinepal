@@ -13,14 +13,30 @@ server:
 
 
 network:
-  name: machinepay-easytest
+  name: base-sepolia
   wallet_address: 0x209693Bc6afc0C5328bA36FaF03C514EF312287C
+  facilitator:
+    # Facilitator type. Override: FACILITATOR_TYPE
+    # Facilitator types:
+    # cdp - Coinbase Developer Platform. You need to set base_url and api_key_file.
+    # x402 - generic x402-compatible API. You need to set base_url
+    type: cdp
+    # Facilitator base URL. Override: FACILITATOR_BASE_URL
+    base_url: https://api.coinbase.com/v2
+    # Facilitator API key file. Override: FACILITATOR_API_KEY_FILE
+    api_key_file: secrets/coinbase_api_key.txt
+
+  payment_tokens:
+    - name: USDC
+      address: 0x036CbD53842c5426634e7929541eC2318f3dCF7e
 
 
 log:
   # Optional Log verbosity level — one of: trace, debug, info, warn, error, fatal
   # Default: info
   level: trace
+  # Json format for logs. Override: LOG_JSON Default: plain
+  type: plain
 
 
 resources:

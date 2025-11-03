@@ -55,3 +55,32 @@ json PaymentRequirements::toJson() const {
     }
     return j;
 }
+
+
+ptr< PaymentRequirements > PaymentRequirements::makePaymentRequirements(
+    const OrganizationConfig& organization, const ResourceConfig& resource,
+    const NetworkConfig& networkConfig ) {
+
+    auto priceStr = resource.priceStr();
+    auto scheme = resource.paymentScheme();
+    auto mimeType = resource.mimeType();
+    auto network = networkConfig.name();
+    auto payTo = organization.payToAddressAsString();
+    auto maxTimeoutSeconds = 600;
+    auto description = resource.description();
+    auto tokenName = resource.token();
+    auto asset = networkConfig.getTokenAddress( tokenName );
+    auto extraVersion = networkConfig.getTokenVersion( tokenName );
+    ;
+    // auto path = resource_->machinePayPath();
+    nlohmann::json extra;
+    extra["name"] = tokenName;
+    if ( !extraVersion.empty() ) {
+        extra["version"] = extraVersion;
+    }
+    return make_shared< PaymentRequirements >( scheme, network, priceStr,
+        resource.location(),
+        description, mimeType,
+        std::nullopt,  // outputSchema
+        payTo, maxTimeoutSeconds, asset, extra );
+}

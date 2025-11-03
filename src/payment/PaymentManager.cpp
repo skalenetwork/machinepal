@@ -6,9 +6,12 @@
 #include "config/subconfigs/ResourceConfig.h"
 #include "crypto/Keccak.h"
 #include "datastructures/PaymentPayload.h"
+#include "datastructures/PaymentRequirements.h"
+#include "datastructures/SettlementRequest.h"
 #include "datastructures/SettlementResponse.h"
 #include "db/MachinePayDb.h"
 #include "db/PaymentRecord.h"
+#include "db/EasyNetDb.h" // added include for EasyNetDb
 #include "url/URLUtils.h"
 
 PaymentManager::PaymentManager( MachinePayApp& app ) : app_( app ) {}
@@ -110,25 +113,39 @@ variant< SettlementResponse, HttpError > PaymentManager::checkPaymentIsNewAndSet
     std::optional< HttpError > error = std::nullopt;
 
     error = checkAgainstAlreadySettledPayments( paymentPayload, networkConfig.eip712Domain() );
+    auto paymentRequirements =
+        PaymentRequirements::makePaymentRequirements( organization, resource,  networkConfig);
+
+    auto settlementRequest = SettlementRequest(paymentPayload, paymentRequirements);
+
 
     if ( error ) {
         return error.value();
     }
 
-    auto facilitator = networkConfig.facilitator();
+    auto const facilitator = networkConfig.facilitator();
 
-    auto settleResult = facilitator->settlePayment( paymentPayload );
-    if ( holds_alternative< HttpError >( settleResult ) ) {
-        return std::get< HttpError >( settleResult );
+    std::optional< SettlementResponse > settlementResponse;
+    if (networkConfig.name() == "machinepay-easynet") {
+        auto baseDb = app_.machinePayDB();
+        auto db = std::dynamic_pointer_cast<EasyNetDb>( baseDb );
+        CHECK_STATE( db );
+        auto jsonResponse = networkConfig.facilitatorClient()->settle( settlementRequest.toJson(), *db );
+        settlementResponse = SettlementResponse::fromJsonString( jsonResponse.dump(  ) );
+    } else {
+        auto result = facilitator->settlePayment( paymentPayload );
+        if ( holds_alternative< HttpError >( result ) ) {
+            return std::get< HttpError >( result );
+        }
+        settlementResponse = std::get< SettlementResponse >( result );
     }
-    const auto settlementResponse = std::get< SettlementResponse >( settleResult );
 
-    auto transactionHash = Encoding::fromHexToHash( settlementResponse.transaction() );
+    auto transactionHash = Encoding::fromHexToHash( settlementResponse.value().transaction() );
 
     recordSuccessfulSettlement( *paymentPayload, *networkConfig.eip712Domain(), resource,
         organization, transactionHash, ipAddress );
 
-    return settlementResponse;
+    return settlementResponse.value();
 }
 
 variant< SettlementResponse, HttpError > PaymentManager::checkPaymentIsNewAndSettleIt(

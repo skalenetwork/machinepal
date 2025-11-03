@@ -61,35 +61,15 @@ json PaymentRequiredResponse::toJson() const {
     return j;
 }
 
+
 std::string PaymentRequiredResponse::getPaymentRequiredResponseAsString(
     ptr< OrganizationConfig > organization, ptr< ResourceConfig > resource,
     ptr< MachinePayConfig > config, const std::optional< string >& errorMessage ) {
-    CHECK_STATE( organization );
-    CHECK_STATE( resource );
-    CHECK_STATE( config );
+    auto req = PaymentRequirements::makePaymentRequirements( *organization,
+        *resource,
+        *config->network() );
 
-    auto priceStr = resource->priceStr();
-    auto scheme = resource->paymentScheme();
-    auto mimeType = resource->mimeType();
-    auto network = config->network()->name();
-    auto payTo = organization->payToAddressAsString();
-    auto maxTimeoutSeconds = 600;
-    auto description = resource->description();
-    auto tokenName = resource->token();
-    auto asset = config->network()->getTokenAddress( tokenName );
-    auto extraVersion = config->network()->getTokenVersion( tokenName );
-    ;
-    // auto path = resource_->machinePayPath();
-    nlohmann::json extra;
-    extra["name"] = tokenName;
-    if ( !extraVersion.empty() ) {
-        extra["version"] = extraVersion;
-    }
-    PaymentRequirements req( scheme, network, priceStr, resource->location(), description, mimeType,
-        std::nullopt,  // outputSchema
-        payTo, maxTimeoutSeconds, asset, extra );
-
-    std::vector< PaymentRequirements > reqs( { req } );
+    std::vector< PaymentRequirements > reqs( { *req } );
 
     auto response = PaymentRequiredResponse( reqs, errorMessage );
     return response.toJson().dump();

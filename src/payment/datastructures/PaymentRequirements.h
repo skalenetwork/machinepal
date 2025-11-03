@@ -1,4 +1,5 @@
 #pragma once
+#include "config/subconfigs/NetworkConfig.h"
 
 
 /**
@@ -97,6 +98,9 @@ public:
     static std::shared_ptr< PaymentRequirements > fromJson( const json& j );
 
     json toJson() const;
+    static ptr<PaymentRequirements> makePaymentRequirements( const OrganizationConfig& organization,
+        const  ResourceConfig& resource,
+        const NetworkConfig& networkConfig );
 
 private:
     static std::shared_ptr< std::string > toString( const PaymentRequirements& p );

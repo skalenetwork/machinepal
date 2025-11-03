@@ -101,4 +101,6 @@ protected:
      * @brief Thread-safe connection pool.
      */
     std::unique_ptr< soci::connection_pool > pool_;
+public:
+    virtual ~MachinePayDb() = default; // added virtual destructor for polymorphic base
 };

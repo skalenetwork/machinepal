@@ -41,15 +41,18 @@ public:
      */
     TransferResult processTransferRequest( const EthAddress& fromAddress,
         const EthAddress& toAddress, const EthAddress& assetAddress, const EIP3009Value& value,
-        EIP3009Nonce nonce, const string& resourceLocation, const string& fromIpAddress,
-        const string& jsonInfo, const string& transactionHash );
+        EIP3009Nonce nonce, const std::string& resourceLocation, const std::string& fromIpAddress,
+        const std::string& jsonInfo, const std::string& transactionHash,
+        const std::string& organizationName, const u256& chainId,
+        const std::string& authorizationSignatureHash );
     void insertTransaction( soci::session& databaseSession,
         const std::string& fromWalletAddressDatabaseString,
         const std::string& toWalletAddressDatabaseString,
-        const std::string& assetContractAddressDatabaseString, const string& nonceString,
-        const string& transactionHash, const std::string& resourceLocation,
+        const std::string& assetContractAddressDatabaseString, const std::string& nonceString,
+        const std::string& transactionHash, const std::string& resourceLocation,
         const std::string& fromIpAddress, const std::string& jsonInfo,
-        std::string& transferAmountValueStr );
+        std::string& transferAmountValueStr, const std::string& organizationName,
+        const std::string& chainIdStr, const std::string& authorizationSignatureHash );
     void insertIntoState( soci::session& databaseSession,
         std::string& toWalletAddressDatabaseString, std::string& assetContractAddressDatabaseString,
         std::string& receiverUpdatedBalanceDecimalString );
@@ -78,8 +81,10 @@ private:
 
     TransferResult transferValueUnsafe( const EthAddress& fromAddress, const EthAddress& toAddress,
         const EthAddress& assetAddress, const EIP3009Value& value, EIP3009Nonce& nonce,
-        const string& resourceLocation, const string& fromIpAddress, const string& jsonInfo,
-        const string& transactionHash );
+        const std::string& resourceLocation, const std::string& fromIpAddress,
+        const std::string& jsonInfo, const std::string& transactionHash,
+        const std::string& organizationName, const u256& chainId,
+        const std::string& authorizationSignatureHash );
     // Funds a wallet with initial tokens if it does not yet exist for the given asset.
     // Initial amount: 1,000,000,000 * 10^18 (1e27) token units.
     void fundUserWalletWithFundsIfNewWalletUnsafe(

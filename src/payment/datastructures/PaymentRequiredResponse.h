@@ -45,7 +45,6 @@ public:
     static PaymentRequiredResponse fromJson( const json& j );
     json toJson() const;
 
-
     static std::string getPaymentRequiredResponseAsString( ptr< OrganizationConfig > organization,
         ptr< ResourceConfig > resource, ptr< MachinePayConfig > config,
         const std::optional< string >& errorMessage = std::nullopt );

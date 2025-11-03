@@ -5,6 +5,7 @@
 #include "payment/datastructures/SettlementRequest.h"
 #include "payment/datastructures/SettlementResponse.h"
 #include "payment/datastructures/VerifyResponse.h"
+#include "crypto/EIP712Signature.h" // added for computeSignatureHash
 
 #include <limits>        // for numeric_limits<u256>::max()
 #include <shared_mutex>  // added for std::shared_mutex, std::shared_lock, std::unique_lock
@@ -77,13 +78,14 @@ nlohmann::json EasyNetFacilitatorClient::settle( const nlohmann::json& settlemen
     EasyNetDb& db) {
     std::unique_lock< std::shared_mutex > lock( mutex_ );
     try {
-        EthAddress fromWalletAddress;
         optional< string > error;
         auto [paymentPayload, paymentReqs] =
             verifyUnsafe( settlementRequestJson, error, db);
 
+        // Obtain from address after verification (available even if error)
+        EthAddress fromWalletAddress = paymentPayload->payload()->authorization()->from();
+
         if ( error ) {
-            // Constructor order: success, errorReason, transaction, network, payer, originalJson
             SettlementResponse response( false, error.value(), "",
                 "",  // transaction, network (none here)
                 fromWalletAddress.toHex( PREFIX_0x ), std::nullopt );
@@ -91,15 +93,21 @@ nlohmann::json EasyNetFacilitatorClient::settle( const nlohmann::json& settlemen
         }
 
         EthAddress toWalletAddress = paymentPayload->payload()->authorization()->to();
-        EthAddress assetWalletAddress = EthAddress::parseFlexible(
-            paymentReqs->asset() );
+        EthAddress assetWalletAddress = EthAddress::parseFlexible( paymentReqs->asset() );
         EIP3009Value transferValue = paymentPayload->payload()->authorization()->value();
         EIP3009Nonce nonce = paymentPayload->payload()->authorization()->nonce();
         const string& resource = paymentReqs->resource();
 
+        // Prepare extra parameters for updated EasyNetDb API
+        std::string jsonInfo = paymentPayload->toJson().dump();
+        std::string transactionHash = paymentPayload->payload()->signature().toHex( PREFIX_0x );
+        std::string authorizationSignatureHash = Encoding::hashToHex(
+            paymentPayload->payload()->signature().computeSignatureHash() );
+        std::string organizationName = "easynet"; // placeholder (no organization config available here)
+
         auto result = db.processTransferRequest( fromWalletAddress, toWalletAddress,
-            assetWalletAddress, transferValue, nonce, resource, "0.0.0.0", paymentPayload->toJson(),
-            paymentPayload->payload()->signature().toHex( PREFIX_0x ) );
+            assetWalletAddress, transferValue, nonce, resource, "0.0.0.0", jsonInfo,
+            transactionHash, organizationName, chainId_, authorizationSignatureHash );
 
         if ( result == EasyNetDb::TransferResult::TransferSuccess ) {
             SettlementResponse response( true, std::nullopt, "",
@@ -107,7 +115,6 @@ nlohmann::json EasyNetFacilitatorClient::settle( const nlohmann::json& settlemen
                 fromWalletAddress.toHex( PREFIX_0x ), std::nullopt );
             return response.toJson();
         } else {
-            // Insufficient funds explicit error message
             SettlementResponse response( false, std::string( "InsufficientFunds" ), "",
                 "",  // transaction, network
                 fromWalletAddress.toHex( PREFIX_0x ), std::nullopt );

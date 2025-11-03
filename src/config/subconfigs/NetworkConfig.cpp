@@ -2,11 +2,32 @@
 #include "FacilitatorConfig.h"
 #include "MachinePayCommon.h"
 
+// Constructor moved from header
+NetworkConfig::NetworkConfig( const std::string& name, const EthAddress& walletAddress,
+    std::shared_ptr< FacilitatorConfig >& facilitator, ptr< EIP712Domain >& domain )
+    : name_( name ),
+      walletAddress_( walletAddress ),
+      facilitator_( facilitator ),
+      eip712Domain_( domain ) {
+    auto assetAddress = domain->assetAddress();
+    auto chainId = domain->chainId();
+    facilitatorClient_ = make_shared< EasyNetFacilitatorClient >( assetAddress, chainId );
+    CHECK_STATE( eip712Domain_ );
+    CHECK_STATE( facilitatorClient_ );
+}
+
+ptr< EasyNetFacilitatorClient > NetworkConfig::facilitatorClient() const {
+    CHECK_STATE( facilitatorClient_ );
+    return facilitatorClient_;
+}
+
+std::string NetworkConfig::name() const {
+    return name_;
+}
 
 std::shared_ptr< NetworkConfig > NetworkConfig::createFromJson(
     const nlohmann::json& j, ptr< FileManager > fileManager ) {
     try {
-        CHECK_STATE( fileManager );
         CHECK_STATE( fileManager );
 
         if ( !j.contains( "network" ) ) {
@@ -24,9 +45,9 @@ std::shared_ptr< NetworkConfig > NetworkConfig::createFromJson(
 
         auto walletAddress = EthAddress::parseHexAddress( walletAddressStr );
 
-        std::string name = networkJson.value( "name", "machinepay-easy-test" );
+        std::string name = networkJson.value( "name", "machinepay-easytest" );
         std::map< std::string, ptr< EIP712Domain > > supportedNetworks{
-            { "machinepay-easy-testnet", EIP712Domain::machinePayEasyTestNet() },
+            { "machinepay-easytest", EIP712Domain::machinePayEasyTestNet() },
             { "base-sepolia", EIP712Domain::baseSepolia() }, { "base", EIP712Domain::baseMainnet() }
         };
         CHECK_STATE2(
@@ -46,14 +67,14 @@ std::shared_ptr< NetworkConfig > NetworkConfig::createFromJson(
 }
 
 
-string NetworkConfig::getTokenVersion( const string& tokenName ) {
+string NetworkConfig::getTokenVersion( const string& tokenName ) const {
     if ( tokenName == "USDC" ) {
         return "2";
     }
     return "";
 }
 
-string NetworkConfig::getTokenAddress( const string& tokenName ) {
+string NetworkConfig::getTokenAddress( const string& tokenName ) const {
     if ( tokenName == "USDC" ) {
         return "0x036CbD53842c5426634e7929541eC2318f3dCF7e";
     }
