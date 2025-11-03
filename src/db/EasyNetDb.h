@@ -18,7 +18,8 @@ public:
      * Initializes the database connection and prepares internal state for payment operations.
      */
     EasyNetDb(
-        MachinePayApp& app, DbType type, const std::optional< std::string >& connectionInfo );
+        MachinePayApp& app, DbType type, const std::optional< std::string >&
+                                                connectionInfo = std::nullopt);
 
 
     /**

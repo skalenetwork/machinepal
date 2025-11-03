@@ -14,7 +14,8 @@ MachinePayApp::MachinePayApp(const std::map<std::string, std::string>& configVal
         configPath_ = configManager_->fileManager()->canonicalConfigDirPath();
         Init::initLogLevelFromConfig(configManager());
         paymentManager_ = std::make_shared<PaymentManager>(*this);
-        machinePayDB_ = std::make_shared<MachinePayDb>(*this, DbType::SQLite);
+        //machinePayDB_ = std::make_shared<MachinePayDb>(*this, DbType::SQLite);
+        machinePayDB_ = std::make_shared<EasyNetDb>(*this, DbType::SQLite);
     }
     catch (...)
     {
