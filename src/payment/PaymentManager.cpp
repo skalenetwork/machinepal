@@ -123,8 +123,6 @@ variant< SettlementResponse, HttpError > PaymentManager::checkPaymentIsNewAndSet
         return error.value();
     }
 
-    auto const facilitator = networkConfig.facilitator();
-
     std::optional< SettlementResponse > settlementResponse;
     if (networkConfig.name() == "machinepay-easynet") {
         auto baseDb = app_.machinePayDB();
@@ -133,7 +131,9 @@ variant< SettlementResponse, HttpError > PaymentManager::checkPaymentIsNewAndSet
         auto jsonResponse = networkConfig.facilitatorClient()->settle( settlementRequest.toJson(), *db );
         settlementResponse = SettlementResponse::fromJsonString( jsonResponse.dump(  ) );
     } else {
-        auto result = facilitator->settlePayment( paymentPayload );
+        auto facilitator = networkConfig.facilitator();
+        CHECK_STATE( facilitator );
+        auto result = facilitator.value()->settlePayment( paymentPayload );
         if ( holds_alternative< HttpError >( result ) ) {
             return std::get< HttpError >( result );
         }

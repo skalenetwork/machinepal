@@ -141,7 +141,7 @@ ptr< PaymentPayload > PaymentPayload::createDefaultPaymentPayload( EthPrivateKey
 
     // Sign authorization
     EIP712Signature signature = EIP3009Authorization::signAuthorization(
-        *EIP712Domain::baseSepolia(), from, to, value, validAfter, validBefore, nonce, privKey );
+        *EIP712Domain::machinePayEasyNet(), from, to, value, validAfter, validBefore, nonce, privKey );
 
 
     auto payload = std::make_shared< Payload >( signature, auth );

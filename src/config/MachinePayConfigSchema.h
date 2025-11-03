@@ -55,7 +55,7 @@ constexpr const char* MachinePayConfigSchemaJson = R"(
           }
         }
       },
-      "required": ["name", "facilitator", "payment_tokens"]
+      "required": ["name"]
     },
     "log": {
       "type": "object",
@@ -66,7 +66,7 @@ constexpr const char* MachinePayConfigSchemaJson = R"(
         },
         "type": { "type": "string", "enum": ["plain", "json"] }
       },
-      "required": ["level", "type"]
+      "required": ["level"]
     },
     "resources": {
       "type": "array",
@@ -83,6 +83,6 @@ constexpr const char* MachinePayConfigSchemaJson = R"(
       }
     }
   },
-  "required": ["server", "network", "log", "resources"]
+  "required": ["server", "network",  "resources"]
 }
 )";

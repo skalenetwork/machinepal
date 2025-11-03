@@ -32,13 +32,13 @@ BOOST_AUTO_TEST_CASE( EIP3009_SignAndVerify_ReferenceValues ) {
 
         // Sign authorization
         EIP712Signature signature =
-            EIP3009Authorization::signAuthorization( *EIP712Domain::machinePayEasyTestNet(), from,
+            EIP3009Authorization::signAuthorization( *EIP712Domain::machinePayEasyNet(), from,
                 to, value, validAfter, validBefore, nonce, privKey );
         BOOST_TEST( !signature.toHex().empty() );
 
         // Verify authorization
         auto error = EIP3009Authorization::verifyAuthorizationSignature(
-            *EIP712Domain::machinePayEasyTestNet(), from, to, value, validAfter, validBefore, nonce,
+            *EIP712Domain::machinePayEasyNet(), from, to, value, validAfter, validBefore, nonce,
             signature );
         BOOST_TEST( !error );
     } catch ( exception& ex ) {

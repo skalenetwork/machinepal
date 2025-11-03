@@ -4,11 +4,14 @@
 
 // Constructor moved from header
 NetworkConfig::NetworkConfig( const std::string& name, const EthAddress& walletAddress,
-    std::shared_ptr< FacilitatorConfig >& facilitator, ptr< EIP712Domain >& domain )
+    optional<ptr< FacilitatorConfig >>& facilitator, ptr< EIP712Domain >& domain )
     : name_( name ),
       walletAddress_( walletAddress ),
       facilitator_( facilitator ),
       eip712Domain_( domain ) {
+    if (facilitator_.has_value()) {
+        CHECK_STATE( facilitator_.value() );
+    }
     auto assetAddress = domain->assetAddress();
     auto chainId = domain->chainId();
     facilitatorClient_ = make_shared< EasyNetFacilitatorClient >( assetAddress, chainId );
@@ -45,19 +48,24 @@ std::shared_ptr< NetworkConfig > NetworkConfig::createFromJson(
 
         auto walletAddress = EthAddress::parseHexAddress( walletAddressStr );
 
-        std::string name = networkJson.value( "name", "machinepay-easytest" );
+        std::string name = networkJson.value( "name", "machinepay-easynet" );
         std::map< std::string, ptr< EIP712Domain > > supportedNetworks{
-            { "machinepay-easytest", EIP712Domain::machinePayEasyTestNet() },
+            { "machinepay-easynet", EIP712Domain::machinePayEasyNet() },
             { "base-sepolia", EIP712Domain::baseSepolia() }, { "base", EIP712Domain::baseMainnet() }
         };
         CHECK_STATE2(
             supportedNetworks.contains( name ), "Unsupported network name in config:" + name );
         // Select domain
         auto domain = supportedNetworks.at( name );
-        std::shared_ptr< FacilitatorConfig > facilitator = nullptr;
+        optional<ptr<FacilitatorConfig >> facilitator = nullopt;
         if ( networkJson.contains( "facilitator" ) && networkJson["facilitator"].is_object() ) {
             facilitator =
                 FacilitatorConfig::createFomJson( networkJson["facilitator"], fileManager );
+        }
+
+        if (name != "machinepay-easynet") {
+            CHECK_STATE_JSON( facilitator, "Facilitator config is required",
+                json);
         }
         return ptr< NetworkConfig >(
             new NetworkConfig( name, walletAddress, facilitator, domain ) );

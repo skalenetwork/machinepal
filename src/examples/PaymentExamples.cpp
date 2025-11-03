@@ -20,6 +20,25 @@ const string PaymentExamples::EXACT_UCDC_PAYMENT_REQ_CB_SEPOLIA = R"({
 })";
 
 
+const string PaymentExamples::EXACT_UCDC_PAYMENT_REQ_EASYNET = R"({
+    "scheme": "exact",
+    "network": "machinepay-easynet",
+    "maxAmountRequired": "12000000000000000000",
+    "resource": "https://jsonplaceholder.typicode.com/posts/1",
+    "description": "",
+    "mimeType": "application/json",
+    "outputSchema": null,
+    "payTo": "0x2222222222222222222222222222222222222222",
+    "maxTimeoutSeconds": 600,
+    "asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+    "extra": {
+        "name": "USDC",
+        "version": "2"
+    }
+})";
+
+
+
 const string PaymentExamples::EXACT_UCDC_PAYMENT_PAYLOAD_CB_SEPOLIA_FROM_SPEC = R"({
     "x402Version": 1,
     "scheme": "exact",

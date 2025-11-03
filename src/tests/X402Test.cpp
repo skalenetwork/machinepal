@@ -123,22 +123,21 @@ BOOST_AUTO_TEST_CASE( Returns402WhenNoPaymentHeader ) {
     BOOST_CHECK( accepts.size() == 1 );
     auto req = accepts.front();
     auto expected = PaymentRequirements::fromJson(
-        nlohmann::json::parse( PaymentExamples::EXACT_UCDC_PAYMENT_REQ_CB_SEPOLIA ) );
+        nlohmann::json::parse( PaymentExamples::EXACT_UCDC_PAYMENT_REQ_EASYNET ) );
     BOOST_TEST( req == *expected );
 }
 
 BOOST_AUTO_TEST_CASE( Returns200WhenPaymentHeaderPresent ) {
     EthAddress to( "0x209693bc6afc0c5328ba36faf03c514ef312287c" );
     EIP3009Value value( 12000000000000000000ULL );
-
-
     EIP3009Nonce nonce = EIP3009Nonce::generateRandomNonce();
     std::string privKeyHex = "4c0883a69102937d6231471b5dbb6204fe5129617082796e8a7a7e7a7a7a7a7a";
     EthPrivateKey privKey( privKeyHex );
 
 
     auto paymentPayload =
-        PaymentPayload().createDefaultPaymentPayload( privKey, to, value, nonce, "base-sepolia" );
+        PaymentPayload().createDefaultPaymentPayload( privKey, to,
+            value, nonce, "machinepay-easynet" );
 
     auto [headersMap, statusLine, resp] =
         client->sendRequestWithPayloadAndParseResult( "/posts/1", paymentPayload, true );
