@@ -162,7 +162,8 @@ void EasyNetDb::insertTransaction( soci::session& databaseSession,
     databaseSession << "INSERT INTO transactions (organizationName, chainId, fromAddress, "
                        "toAddress, assetAddress, value, nonce, resourceLocation, "
                        "settlementTime, authorizationSignatureHash, transactionHash, fromIpAddress, jsonInfo) "
-                       "VALUES (:organizationName, :chainId, :fromAddress, :toAddress, :assetAddress, :value, :nonce, :resourceLocation, :settlementTime, :authorizationSignatureHash, :transactionHash, :fromIpAddress, :jsonInfo)",
+                       "VALUES (:organizationName, :chainId, :fromAddress, :toAddress, :assetAddress, :value, :nonce,"
+                       " :resourceLocation, :settlementTime, :authorizationSignatureHash, :transactionHash, :fromIpAddress, :jsonInfo)",
         soci::use( organizationName, "organizationName" ), soci::use( chainIdStr, "chainId" ),
         soci::use( fromWalletAddressDatabaseString, "fromAddress" ),
         soci::use( toWalletAddressDatabaseString, "toAddress" ),
