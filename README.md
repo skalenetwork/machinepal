@@ -54,8 +54,8 @@ Instead of reaching a website directly, requests first pass through the proxy:
 
 ```bash
 # Clone with dependencies
-git clone --recursive https://github.com/skalenetwork/x402proxy.git
-cd x402proxy
+git clone --recursive https://github.com/skalenetwork/machinepay.git
+cd machinepay
 
 # Bootstrap vcpkg
 ./external/vcpkg/bootstrap-vcpkg.sh
