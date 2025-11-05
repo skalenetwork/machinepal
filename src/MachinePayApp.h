@@ -37,6 +37,12 @@ public:
     }
 
 
+    std::shared_ptr<X402Processor> makeEasyNetProcessor(ptr<IResponseSender>& _responseSender)
+    {
+        return std::make_shared<X402Processor>(*this, _responseSender);;
+    }
+
+
     std::shared_ptr<X402Processor> makeX402Processor(ptr<IResponseSender>& _responseSender)
     {
         return std::make_shared<X402Processor>(*this, _responseSender);;

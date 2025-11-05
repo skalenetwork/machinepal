@@ -6,6 +6,8 @@
     <mapping directory="$PROJECT_DIR$/build/_deps/nlohmann_json-src" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external/json-schema-validator" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external/secp256k1" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/soci" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/soci/3rdparty/sqlite3" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external/vcpkg" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external/x402" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external/yaml-cpp" vcs="Git" />
