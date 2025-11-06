@@ -4,7 +4,7 @@
 
 #include "HttpError.h"
 #include "IResponseSender.h"
-#include "FacilitatorProcessorState.h"
+#include "X402ProcessorState.h"
 
 
 class SettlementResponse;

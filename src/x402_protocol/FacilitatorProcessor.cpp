@@ -46,14 +46,9 @@ void FacilitatorProcessor::reply200Success( const std::string& settlementInfo, s
 
 
 std::string FacilitatorProcessor::getErrorBody( const std::string& message ) {
-    if ( organization_ && resource_ && config_ ) {
-        return PaymentRequiredResponse::getPaymentRequiredResponseAsString(
-            organization(), resource(), config(), message );
-    } else {
         nlohmann::json j;
         j["error"] = message;
         return j.dump();
-    }
 }
 
 void FacilitatorProcessor::reply500InternalError( const std::string& message ) {
@@ -89,13 +84,6 @@ void FacilitatorProcessor::sendResponse( const std::pair< uint16_t, std::string 
     }
 }
 
-                          "(like localhost or xyz.com) to access this service." );
-        return false;
-    }
-
-    return true;
-}
-
 
 
 void FacilitatorProcessor::onRequestStart(
@@ -115,7 +103,7 @@ void FacilitatorProcessor::replyToClientWithError( const HttpError& httpError ) 
     auto httpErrorMessage = httpError.message();
     switch ( httpError.type() ) {
     case ErrorType::ERR_BAD_REQUEST:
-        reply400InvalidPayment( httpErrorMessage );
+        reply500InternalError( httpErrorMessage );
         break;
     case ErrorType::ERR_INTERNAL_SERVER_ERROR:
         reply500InternalError( httpErrorMessage );
@@ -135,18 +123,6 @@ void FacilitatorProcessor::onRequestFullyReceived(
         if ( state_ == State::ERROR_SENT )
             return;
 
-        CHECK_STATE( organization_ );
-        resource_ = organization_->getResourceByPath( decodedPath_, method_, body );
-
-
-        string responseBody;
-        if ( !proxyResponseToBackEnd( responseBody ) ) {
-            return;
-        }
-
-        auto settlementResponse = std::get< SettlementResponse >( result );
-
-        reply200Success( settlementResponse.originalJsonToBase64(), responseBody );
     } catch ( std::exception& e ) {
         spdlog::critical( "onRequestCompletion exception" );
         printNestedException( e );
@@ -159,7 +135,7 @@ void FacilitatorProcessor::onBodySizeIncrease( size_t newSize ) {
     constexpr size_t MAX_BODY_SIZE = 1024 * 1024;  // 128 KB
     spdlog::info( "[onBodySizeIncrease] Request body size increased to {} bytes", newSize );
     if ( newSize > MAX_BODY_SIZE ) {
-        reply400InvalidPayment(
+        reply500InternalError(
             "Request body too large. Maximum allowed is 1MByte. You can increase this limit in "
             "machinepay config if needed." );
     }
