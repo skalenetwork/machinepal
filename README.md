@@ -64,7 +64,7 @@ end
     %% Corporate Network 1
     subgraph Corporate_Network["Corporate Network 1"]
         direction TB
-        MP["MachinePay x402 edge gateway"]
+        MP["MachinePay x402 payment gateway"]
         AI1["AI Services"]
         AI2["Products"]
         AI3["Data"]
@@ -75,7 +75,7 @@ end
     %% Corporate Network 2
     subgraph Corporate_Network_2["Corporate Network 2"]
         direction TB
-        MP2["MachinePay x402 edge gateway"]
+        MP2["MachinePay x402 payment gateway"]
         AI1B["AI Services"]
         AI2B["Products"]
         AI3B["Data"]
