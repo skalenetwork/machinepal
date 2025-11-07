@@ -83,8 +83,8 @@ end
         direction TB
         MP["MachinePay x402 edge gateway"]
         AI1["AI Services"]
-        AI2["Documents / Corp Knowledge"]
-        AI3["Data Streams"]
+        AI2["Products"]
+        AI3["Data"]
         HU1["Human Users"]
         HA1["AI Agents"]
     end
@@ -94,8 +94,8 @@ end
         direction TB
         MP2["MachinePay x402 edge gateway"]
         AI1B["AI Services"]
-        AI2B["Documents / Corp Knowledge"]
-        AI3B["Data Streams"]
+        AI2B["Products"]
+        AI3B["Data"]
         HU2["Human Users"]
         HA2["AI Agents"]
     end
