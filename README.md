@@ -70,3 +70,28 @@ cmake -S . -B build \
 cmake --build build -j
 ```
 
+
+```mermaid
+flowchart LR
+subgraph External_World["External Users & AI Agents"]
+U1["Human Users"]
+A1["AI Agents"]
+end
+
+    subgraph Corporate_Network["Corporate Network"]
+        direction TB
+        MP["MachinePay Server (x402)\n(edge gateway)"]
+        AI1["AI Services"]
+        AI2["Documents / Corp Knowledge"]
+        AI3["Data Streams"]
+    end
+
+    U1 -->|Requests / Payments\nvia x402| MP
+    A1 -->|Autonomous Access\nvia x402| MP
+
+    MP -->|Authorized Access| AI1
+    MP -->|Authorized Access| AI2
+    MP -->|Authorized Access| AI3
+
+```
+
