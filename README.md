@@ -78,14 +78,29 @@ U1["Human Users"]
 A1["AI Agents"]
 end
 
-    subgraph Corporate_Network["Corporate Network"]
+    %% Corporate Network 1
+    subgraph Corporate_Network["Corporate Network 1"]
         direction TB
         MP["MachinePay Server (x402)\n(edge gateway)"]
         AI1["AI Services"]
         AI2["Documents / Corp Knowledge"]
         AI3["Data Streams"]
+        HU1["Human Users"]
+        HA1["AI Agents"]
     end
 
+    %% Corporate Network 2 (added)
+    subgraph Corporate_Network_2["Corporate Network 2"]
+        direction TB
+        MP2["MachinePay Server (x402)\n(edge gateway) 2"]
+        AI1B["AI Services"]
+        AI2B["Documents / Corp Knowledge"]
+        AI3B["Data Streams"]
+        HU2["Human Users"]
+        HA2["AI Agents"]
+    end
+
+    %% External access to Network 1 (original flows)
     U1 -->|Requests / Payments\nvia x402| MP
     A1 -->|Autonomous Access\nvia x402| MP
 
@@ -93,7 +108,27 @@ end
     MP -->|Authorized Access| AI2
     MP -->|Authorized Access| AI3
 
-    %% Added color styling without changing content
+    %% Internal users buying resources inside their own networks
+    HU1 -->|Internal Requests / Payments\nvia x402| MP
+    HA1 -->|Internal Autonomous Access\nvia x402| MP
+    HU2 -->|Internal Requests / Payments\nvia x402| MP2
+    HA2 -->|Internal Autonomous Access\nvia x402| MP2
+
+    MP2 -->|Authorized Access| AI1B
+    MP2 -->|Authorized Access| AI2B
+    MP2 -->|Authorized Access| AI3B
+
+    %% Cross-network paid resource access through gateways
+    MP -->|Cross-Network Paid Resource Access| MP2
+    MP2 -->|Cross-Network Paid Resource Access| MP
+
+    %% Users & agents purchasing resources across networks (illustrative)
+    HU1 -->|Paid Access (via MP→MP2)| AI1B
+    HA1 -->|Paid Access (via MP→MP2)| AI1B
+    HU2 -->|Paid Access (via MP2→MP)| AI1
+    HA2 -->|Paid Access (via MP2→MP)| AI1
+
+    %% Styling
     classDef users fill:#4caf50,stroke:#1b5e20,color:#ffffff,font-weight:600;
     classDef agents fill:#1976d2,stroke:#0d47a1,color:#ffffff,font-weight:600;
     classDef gateway fill:#ff9800,stroke:#e65100,color:#000000,font-weight:600;
@@ -103,18 +138,26 @@ end
 
     U1:::users
     A1:::agents
+    HU1:::users
+    HA1:::agents
+    HU2:::users
+    HA2:::agents
     MP:::gateway
+    MP2:::gateway
     AI1:::services
     AI2:::docs
     AI3:::streams
+    AI1B:::services
+    AI2B:::docs
+    AI3B:::streams
 
-    style External_World fill:#f1f8e9,stroke:#c5e1a5,color:#2e7d32;
     style Corporate_Network fill:#e3f2fd,stroke:#90caf9,color:#0d47a1;
+    style Corporate_Network_2 fill:#fce4ec,stroke:#f06292,color:#880e4f;
+    style External_World fill:#f1f8e9,stroke:#c5e1a5,color:#2e7d32;
 
-    %% Link styling (edge order matches declaration order above)
+    %% Simplified link styling for primary external & cross-network edges
     linkStyle 0 stroke:#4caf50,color:#4caf50,stroke-width:2px;
     linkStyle 1 stroke:#1976d2,color:#1976d2,stroke-width:2px;
-    linkStyle 2 stroke:#9c27b0,color:#9c27b0,stroke-width:2px;
-    linkStyle 3 stroke:#3f51b5,color:#3f51b5,stroke-width:2px;
-    linkStyle 4 stroke:#009688,color:#009688,stroke-width:2px;
+    linkStyle 8 stroke:#ff9800,color:#ff9800,stroke-width:2px,stroke-dasharray:4 2;
+    linkStyle 9 stroke:#ff9800,color:#ff9800,stroke-width:2px,stroke-dasharray:4 2;
 ```
