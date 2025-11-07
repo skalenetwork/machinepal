@@ -93,5 +93,27 @@ end
     MP -->|Authorized Access| AI2
     MP -->|Authorized Access| AI3
 
-```
+    %% Added color styling without changing content
+    classDef users fill:#4caf50,stroke:#1b5e20,color:#ffffff,font-weight:600;
+    classDef agents fill:#1976d2,stroke:#0d47a1,color:#ffffff,font-weight:600;
+    classDef gateway fill:#ff9800,stroke:#e65100,color:#000000,font-weight:600;
+    classDef services fill:#9c27b0,stroke:#4a148c,color:#ffffff,font-weight:600;
+    classDef docs fill:#3f51b5,stroke:#1a237e,color:#ffffff,font-weight:600;
+    classDef streams fill:#009688,stroke:#004d40,color:#ffffff,font-weight:600;
 
+    U1:::users
+    A1:::agents
+    MP:::gateway
+    AI1:::services
+    AI2:::docs
+    AI3:::streams
+
+    style External_World fill:#f1f8e9,stroke:#c5e1a5,color:#2e7d32;
+    style Corporate_Network fill:#e3f2fd,stroke:#90caf9,color:#0d47a1;
+
+    linkStyle 0 stroke:#4caf50,color:#4caf50;
+    linkStyle 1 stroke:#1976d2,color:#1976d2;
+    linkStyle 2 stroke:#9c27b0,color:#9c27b0;
+    linkStyle 3 stroke:#3f51b5,color:#3f51b5;
+    linkStyle 4 stroke:#009688,color:#009688;
+```
