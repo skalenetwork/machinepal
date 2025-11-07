@@ -89,7 +89,7 @@ end
         HA1["AI Agents"]
     end
 
-    %% Corporate Network 2 (added)
+    %% Corporate Network 2
     subgraph Corporate_Network_2["Corporate Network 2"]
         direction TB
         MP2["MachinePay Server (x402)\n(edge gateway) 2"]
@@ -100,33 +100,30 @@ end
         HA2["AI Agents"]
     end
 
-    %% External access to Network 1 (original flows)
+    %% External access to Network 1
     U1 -->|Requests / Payments\nvia x402| MP
     A1 -->|Autonomous Access\nvia x402| MP
 
+    %% Authorized access (Network 1)
     MP -->|Authorized Access| AI1
     MP -->|Authorized Access| AI2
     MP -->|Authorized Access| AI3
 
-    %% Internal users buying resources inside their own networks
+    %% Internal users (Network 1)
     HU1 -->|Internal Requests / Payments\nvia x402| MP
     HA1 -->|Internal Autonomous Access\nvia x402| MP
+
+    %% Internal users (Network 2)
     HU2 -->|Internal Requests / Payments\nvia x402| MP2
     HA2 -->|Internal Autonomous Access\nvia x402| MP2
 
+    %% Authorized access (Network 2)
     MP2 -->|Authorized Access| AI1B
     MP2 -->|Authorized Access| AI2B
     MP2 -->|Authorized Access| AI3B
 
-    %% Cross-network paid resource access through gateways
-    MP -->|Cross-Network Paid Resource Access| MP2
-    MP2 -->|Cross-Network Paid Resource Access| MP
-
-    %% Users & agents purchasing resources across networks (illustrative)
-    HU1 -->|Paid Access (via MP→MP2)| AI1B
-    HA1 -->|Paid Access (via MP→MP2)| AI1B
-    HU2 -->|Paid Access (via MP2→MP)| AI1
-    HA2 -->|Paid Access (via MP2→MP)| AI1
+    %% Aggregated cross-network paid resource exchange (bidirectional)
+    MP <-->|Cross-Network Paid Resource Access| MP2
 
     %% Styling
     classDef users fill:#4caf50,stroke:#1b5e20,color:#ffffff,font-weight:600;
@@ -155,9 +152,9 @@ end
     style Corporate_Network_2 fill:#fce4ec,stroke:#f06292,color:#880e4f;
     style External_World fill:#f1f8e9,stroke:#c5e1a5,color:#2e7d32;
 
-    %% Simplified link styling for primary external & cross-network edges
+    %% Link styling (external + aggregated cross-network)
     linkStyle 0 stroke:#4caf50,color:#4caf50,stroke-width:2px;
     linkStyle 1 stroke:#1976d2,color:#1976d2,stroke-width:2px;
-    linkStyle 8 stroke:#ff9800,color:#ff9800,stroke-width:2px,stroke-dasharray:4 2;
-    linkStyle 9 stroke:#ff9800,color:#ff9800,stroke-width:2px,stroke-dasharray:4 2;
+    %% Cross-network edge index (after preceding edges) is 12
+    linkStyle 12 stroke:#ff9800,color:#ff9800,stroke-width:3px,stroke-dasharray:4 2;
 ```
