@@ -61,10 +61,13 @@ U1["Consumers"]
 A1["AI Agents"]
 end
 
-    %% Corporate Network 1
+    %% Gateways at boundary (moved outside corporate subgraphs)
+    MP["MachinePay x402 edge gateway"]
+    MP2["MachinePay x402 edge gateway"]
+
+    %% Corporate Network 1 (internal resources & users only)
     subgraph Corporate_Network["Corporate Network 1"]
         direction TB
-        MP["MachinePay x402 edge gateway"]
         AI1["AI Services"]
         AI2["Products"]
         AI3["Data"]
@@ -72,10 +75,9 @@ end
         HA1["AI Agents"]
     end
 
-    %% Corporate Network 2
+    %% Corporate Network 2 (internal resources & users only)
     subgraph Corporate_Network_2["Corporate Network 2"]
         direction TB
-        MP2["MachinePay x402 edge gateway"]
         AI1B["AI Services"]
         AI2B["Products"]
         AI3B["Data"]
@@ -135,11 +137,9 @@ end
     style Corporate_Network_2 fill:#fce4ec,stroke:#f06292,color:#880e4f;
     style External_World fill:#f1f8e9,stroke:#c5e1a5,color:#2e7d32;
 
-    %% Link styling (external + aggregated cross-network)
+    %% Link styling (external edges only for simplicity)
     linkStyle 0 stroke:#4caf50,color:#4caf50,stroke-width:2px;
     linkStyle 1 stroke:#1976d2,color:#1976d2,stroke-width:2px;
-    %% Cross-network edge index (after preceding edges) is 12
-    linkStyle 12 stroke:#ff9800,color:#ff9800,stroke-width:3px,stroke-dasharray:4 2;
 ```
 
 
@@ -165,5 +165,3 @@ cmake -S . -B build \
 
 cmake --build build -j
 ```
-
-
