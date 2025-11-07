@@ -81,7 +81,7 @@ end
     %% Corporate Network 1
     subgraph Corporate_Network["Corporate Network 1"]
         direction TB
-        MP["MachinePay Server (x402)\n(edge gateway)"]
+        MP["MachinePay x402 edge gateway"]
         AI1["AI Services"]
         AI2["Documents / Corp Knowledge"]
         AI3["Data Streams"]
@@ -92,7 +92,7 @@ end
     %% Corporate Network 2
     subgraph Corporate_Network_2["Corporate Network 2"]
         direction TB
-        MP2["MachinePay Server (x402)\n(edge gateway) 2"]
+        MP2["MachinePay x402 edge gateway"]
         AI1B["AI Services"]
         AI2B["Documents / Corp Knowledge"]
         AI3B["Data Streams"]
@@ -101,8 +101,8 @@ end
     end
 
     %% External access to Network 1
-    U1 -->|Requests / Payments\nvia x402| MP
-    A1 -->|Autonomous Access\nvia x402| MP
+    U1 -->|Requests / Payments via x402| MP
+    A1 -->|Autonomous Access via x402| MP
 
     %% Authorized access (Network 1)
     MP -->|Authorized Access| AI1
@@ -110,12 +110,12 @@ end
     MP -->|Authorized Access| AI3
 
     %% Internal users (Network 1)
-    HU1 -->|Internal Requests / Payments\nvia x402| MP
-    HA1 -->|Internal Autonomous Access\nvia x402| MP
+    HU1 -->|Internal Requests / Payments via x402| MP
+    HA1 -->|Internal Autonomous Access via x402| MP
 
     %% Internal users (Network 2)
-    HU2 -->|Internal Requests / Payments\nvia x402| MP2
-    HA2 -->|Internal Autonomous Access\nvia x402| MP2
+    HU2 -->|Internal Requests / Payments via x402| MP2
+    HA2 -->|Internal Autonomous Access via x402| MP2
 
     %% Authorized access (Network 2)
     MP2 -->|Authorized Access| AI1B
