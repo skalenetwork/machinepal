@@ -51,7 +51,7 @@ Instead of reaching a website directly, requests first pass through the proxy:
 ---
 
 
-## Architecture diagram
+## MachinePay Architecture diagram
 
 
 ```mermaid
