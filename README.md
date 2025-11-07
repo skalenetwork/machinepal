@@ -111,9 +111,10 @@ end
     style External_World fill:#f1f8e9,stroke:#c5e1a5,color:#2e7d32;
     style Corporate_Network fill:#e3f2fd,stroke:#90caf9,color:#0d47a1;
 
-    linkStyle 0 stroke:#4caf50,color:#4caf50;
-    linkStyle 1 stroke:#1976d2,color:#1976d2;
-    linkStyle 2 stroke:#9c27b0,color:#9c27b0;
-    linkStyle 3 stroke:#3f51b5,color:#3f51b5;
-    linkStyle 4 stroke:#009688,color:#009688;
+    %% Link styling (edge order matches declaration order above)
+    linkStyle 0 stroke:#4caf50,color:#4caf50,stroke-width:2px;
+    linkStyle 1 stroke:#1976d2,color:#1976d2,stroke-width:2px;
+    linkStyle 2 stroke:#9c27b0,color:#9c27b0,stroke-width:2px;
+    linkStyle 3 stroke:#3f51b5,color:#3f51b5,stroke-width:2px;
+    linkStyle 4 stroke:#009688,color:#009688,stroke-width:2px;
 ```
