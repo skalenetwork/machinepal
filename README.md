@@ -50,25 +50,8 @@ Instead of reaching a website directly, requests first pass through the proxy:
 
 ---
 
-## ⚡ Build Instructions
 
-```bash
-# Clone with dependencies
-git clone --recursive https://github.com/skalenetwork/machinepay.git
-cd machinepay
-
-# Bootstrap vcpkg
-./external/vcpkg/bootstrap-vcpkg.sh
-./external/vcpkg/vcpkg install
-
-# Build
-cmake -S . -B build \
-  -DCMAKE_BUILD_TYPE=Release \
-  -DCMAKE_TOOLCHAIN_FILE=external/vcpkg/scripts/buildsystems/vcpkg.cmake \
-  -DVCPKG_FEATURE_FLAGS=manifests   -DVCPKG_TARGET_TRIPLET=x64-linux 
-
-cmake --build build -j
-```
+## Architecture diagram
 
 
 ```mermaid
@@ -158,3 +141,29 @@ end
     %% Cross-network edge index (after preceding edges) is 12
     linkStyle 12 stroke:#ff9800,color:#ff9800,stroke-width:3px,stroke-dasharray:4 2;
 ```
+
+
+
+
+
+## ⚡ Build Instructions
+
+```bash
+# Clone with dependencies
+git clone --recursive https://github.com/skalenetwork/machinepay.git
+cd machinepay
+
+# Bootstrap vcpkg
+./external/vcpkg/bootstrap-vcpkg.sh
+./external/vcpkg/vcpkg install
+
+# Build
+cmake -S . -B build \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_TOOLCHAIN_FILE=external/vcpkg/scripts/buildsystems/vcpkg.cmake \
+  -DVCPKG_FEATURE_FLAGS=manifests   -DVCPKG_TARGET_TRIPLET=x64-linux 
+
+cmake --build build -j
+```
+
+
