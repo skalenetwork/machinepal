@@ -74,7 +74,7 @@ cmake --build build -j
 ```mermaid
 flowchart LR
 subgraph External_World["External Users & AI Agents"]
-U1["Human Users"]
+U1["Consumers"]
 A1["AI Agents"]
 end
 
@@ -85,7 +85,7 @@ end
         AI1["AI Services"]
         AI2["Products"]
         AI3["Data"]
-        HU1["Human Users"]
+        HU1["Employees"]
         HA1["AI Agents"]
     end
 
@@ -96,7 +96,7 @@ end
         AI1B["AI Services"]
         AI2B["Products"]
         AI3B["Data"]
-        HU2["Human Users"]
+        HU2["Employees"]
         HA2["AI Agents"]
     end
 
