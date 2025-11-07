@@ -70,9 +70,3 @@ cmake -S . -B build \
 cmake --build build -j
 ```
 
-
-## Project Effort Estimate
-
-If you’re planning to build a project like MachinePay from scratch, we’ve prepared a detailed effort and timeline estimate with assumptions, phase breakdowns, and risks:
-
-- See docs/ESTIMATE.md
