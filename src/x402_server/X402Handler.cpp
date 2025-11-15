@@ -16,10 +16,11 @@ void X402Handler::onRequest( std::unique_ptr< HTTPMessage > _headers ) noexcept 
         reqHeaders_ = std::move( _headers );
         std::shared_ptr< IResponseSender > responseSender =
             std::make_shared< ProxygenResponseSender >( downstream_ );
-        if (_headers->getPath() == "/machinepay-api-easynet") {
+        if ( reqHeaders_->getPath() == "/machinepay-api-easynet" ) {
             processor_ = app_.makeEasyNetProcessor( responseSender );
-        } {
-        processor_ = app_.makeX402Processor( responseSender );
+        }
+        {
+            processor_ = app_.makeX402Processor( responseSender );
         }
 
         processor_->onRequestStart( reqHeaders_ );
