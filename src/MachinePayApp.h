@@ -1,12 +1,12 @@
 #pragma once
-#include <spdlog/spdlog.h>
 #include "config/ConfigManager.h"
 #include "init/Init.h"
-#include "x402_server/ServerFactory.h"
-#include "x402_protocol/X402Processor.h"
 #include "payment/PaymentManager.h"
+#include "x402_protocol/X402Processor.h"
+#include "x402_server/ServerFactory.h"
 
 
+class FacilitatorManager;
 class MachinePayDb;
 
 class MachinePayApp
@@ -29,6 +29,10 @@ public:
         CHECK_STATE(paymentManager_);
         return paymentManager_;
     }
+
+
+    [[nodiscard]] ptr< FacilitatorManager > facilitatorManager() const;
+
 
     [[nodiscard]] ptr<MachinePayDb> machinePayDB() const
     {
@@ -146,7 +150,11 @@ private:
     ptr<ConfigManager> configManager_;
     ptr<ServerFactory> serverFactory_;
     ptr<proxygen::HTTPServer> proxygenServer_;
+
+
+private:
     ptr<PaymentManager> paymentManager_;
+    ptr<FacilitatorManager> facilitatorManager_;
     std::atomic<bool> isStarted_{false};
     std::atomic<bool> serverStopCalled_{false};
 

@@ -1,10 +1,5 @@
 #pragma once
 #include "../payment/datastructures/PaymentRequirements.h"
-#include "nlohmann/json.hpp"
-#include <optional>
-#include <ostream>
-#include <string>
-#include <vector>
 using json = nlohmann::json;
 
 struct DiscoveredPagination {

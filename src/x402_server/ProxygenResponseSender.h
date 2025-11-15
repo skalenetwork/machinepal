@@ -2,8 +2,6 @@
 #include "../x402_protocol/IResponseSender.h"
 #include <folly/io/async/EventBaseManager.h>
 #include <proxygen/httpserver/ResponseBuilder.h>
-#include <string>
-#include <vector>
 
 class ProxygenResponseSender : public IResponseSender {
 public:

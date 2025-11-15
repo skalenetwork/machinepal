@@ -1,6 +1,5 @@
 #pragma once
 
-#include <nlohmann/json.hpp>
 
 // Abstract interface for facilitator clients capable of verifying and settling payments.
 // This allows different concrete facilitator backends (e.g., Coinbase, mock, etc.).

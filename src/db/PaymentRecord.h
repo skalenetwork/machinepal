@@ -5,7 +5,6 @@
 #include "crypto/Encoding.h"
 #include "crypto/EthAddress.h"
 #include <soci/row.h>
-#include <string>
 
 class OrganizationConfig;
 class EIP712Domain;

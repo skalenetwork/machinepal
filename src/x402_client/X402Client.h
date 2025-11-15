@@ -2,7 +2,6 @@
 
 #include "MachinePayCommon.h"
 #include "x402_server/ServerFactory.h"
-#include <curl/curl.h>
 #include <folly/SocketAddress.h>
 #include <folly/init/Init.h>
 #include <proxygen/httpserver/HTTPServer.h>

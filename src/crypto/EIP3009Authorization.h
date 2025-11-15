@@ -5,8 +5,6 @@
 #include "EthAddress.h"
 #include "EthPrivateKey.h"
 #include "EthPublicKey.h"
-#include <boost/multiprecision/cpp_int.hpp>
-#include <string>
 
 class HttpError;
 class EIP3009ValidityTime;

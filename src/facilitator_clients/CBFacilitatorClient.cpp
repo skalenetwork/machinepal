@@ -1,9 +1,6 @@
 #include "CBFacilitatorClient.h"
 #include "MachinePayCommon.h"
 
-#include <curl/curl.h>
-#include <mutex>
-#include <stdexcept>
 
 
 #include "exceptions/BadGatewayException.h"

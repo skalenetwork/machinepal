@@ -12,7 +12,6 @@
 #include "url/URLUtils.h"
 
 #include <folly/json.h>
-#include <boost/beast/core/detail/base64.hpp>
 
 
 FacilitatorProcessor::FacilitatorProcessor( MachinePayApp& app, ptr< IResponseSender >& responseSender )

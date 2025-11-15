@@ -1,10 +1,6 @@
 #pragma once
 #include "MachinePayCommon.h"  // added for Hash typedef
-#include <array>
-#include <cstdint>
-#include <span>
-#include <string>
-#include <vector>
+
 
 class EIP712Signature {
 public:

@@ -10,8 +10,6 @@
 #include "payment/datastructures/PaymentRequirements.h"
 #include "url/URLUtils.h"
 
-#include <folly/json.h>
-#include <boost/beast/core/detail/base64.hpp>
 
 
 X402Processor::X402Processor( MachinePayApp& app, ptr< IResponseSender >& responseSender )

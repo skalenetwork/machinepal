@@ -1,5 +1,4 @@
 #pragma once
-#include "MachinePayCommon.h"
 class FileManager;
 class ServerConfig;
 class LogConfig;

@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include <wangle/ssl/SSLContextConfig.h>
 
 class HTTPSConfig;

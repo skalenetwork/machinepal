@@ -3,7 +3,6 @@
 #include <nlohmann/json.hpp>
 #include <string>
 #include <vector>
-
 /// Minimal client for Coinbase x402 facilitator (REST JSON API).
 /// Depends on: libcurl, nlohmann::json
 ///

@@ -1,6 +1,5 @@
 #pragma once
 #include <proxygen/lib/http/HTTPMethod.h>
-#include <optional>
 
 #include "HttpError.h"
 #include "IResponseSender.h"

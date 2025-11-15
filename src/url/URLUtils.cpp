@@ -1,14 +1,6 @@
 #include "URLUtils.h"
 #include "MachinePayCommon.h"
 
-#include <boost/beast/core/detail/base64.hpp>
-#include <boost/locale/encoding.hpp>
-#include <boost/url/decode_view.hpp>
-#include <boost/url/error.hpp>
-#include <boost/url/parse.hpp>
-#include <boost/url/url.hpp>
-#include <cstring>
-
 using namespace boost::urls;
 
 std::string URLUtils::getLocationFromUrl( const std::string& urlStr ) {

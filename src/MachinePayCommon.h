@@ -19,6 +19,10 @@
 #include <boost/multiprecision/cpp_int.hpp>
 #include <boost/regex.hpp>
 #include <boost/url/decode_view.hpp>
+#include <boost/locale/encoding.hpp>
+#include <boost/url/error.hpp>
+#include <boost/url/parse.hpp>
+#include <boost/url/url.hpp>
 
 // Standard library headers
 #include <algorithm>
@@ -45,21 +49,18 @@
 #include <vector>
 #include <span>
 #include <set>
-#include <memory>
-#include <optional>
 #include <variant>
-#include <filesystem>
-#include <string>
-#include <chrono>
+#include <csignal>
+#include <curl/curl.h>
+#include <folly/json.h>
+#include <limits>   // for overflow check
+#include <random>   // added for nonce
+#include <fstream>
+#include <mutex>
+#include <cstddef>
+#include <utility>
 
 
-#if defined(__cpp_exceptions) || defined(__EXCEPTIONS) || defined(_CPPUNWIND)
-constexpr bool exceptions_enabled = true;
-#else
-constexpr bool exceptions_enabled = false;
-#endif
-
-static_assert(exceptions_enabled, "Exceptions must be enabled!");
 
 
 #define CHECK_STATE(_EXPRESSION_) \

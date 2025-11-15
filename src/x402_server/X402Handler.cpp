@@ -1,7 +1,5 @@
 #include "X402Handler.h"
 #include "MachinePayCommon.h"
-#include <curl/curl.h>
-#include <folly/json.h>
 
 #include "ProxygenResponseSender.h"
 #include "examples/PaymentExamples.h"

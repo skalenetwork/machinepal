@@ -6,8 +6,6 @@
 
 #include <soci/connection-pool.h>
 #include <soci/soci.h>
-#include <memory>
-#include <string>
 
 class EIP712Domain;
 class HttpError;

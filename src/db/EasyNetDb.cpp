@@ -2,10 +2,6 @@
 #include "MachinePayCommon.h"
 #include "crypto/Encoding.h"  // added for u256 conversions
 #include <soci/soci.h>
-#include <chrono>   // added for settlementTime
-#include <limits>   // for overflow check
-#include <random>   // added for nonce
-#include <sstream>  // added for nonce hex formatting
 
 EasyNetDb::EasyNetDb( MachinePayApp& app, DbType type, const optional< string >& connectionInfo )
     : MachinePayDb( app, type, connectionInfo ) {

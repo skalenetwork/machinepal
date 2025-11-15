@@ -4,8 +4,6 @@
 #include "MachinePayDb.h"
 #include "crypto/EIP3009Value.h"
 #include "crypto/EthAddress.h"
-#include <optional>
-#include <shared_mutex>  // added for read/write locking
 
 class EasyNetDb : public MachinePayDb {
 public:

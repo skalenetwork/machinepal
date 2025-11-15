@@ -1,8 +1,6 @@
 #pragma once
 
 #include "config/subconfigs/NetworkConfig.h"
-
-
 #include "datastructures/PaymentPayload.h"
 #include "datastructures/SettlementRequest.h"
 #include "datastructures/SettlementResponse.h"

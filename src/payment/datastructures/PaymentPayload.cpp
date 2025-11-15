@@ -1,5 +1,5 @@
+#include "MachinePayCommon.h"
 #include "PaymentPayload.h"
-#include <stdexcept>
 
 #include "config/JsonUtils.h"
 #include "config/subconfigs/NetworkConfig.h"

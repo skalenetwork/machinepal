@@ -4,7 +4,6 @@
 #include "crypto/EIP3009Value.h"
 #include "crypto/EthAddress.h"
 #include "db/EasyNetDb.h"
-#include <optional>
 
 class PaymentRequirements;
 // A local in-process facilitator implementation that uses EasyNetDb instead of

@@ -2,11 +2,6 @@
 #include "Keccak.h"  // added for hashing
 #include <openssl/bn.h>
 #include <openssl/ecdsa.h>
-#include <boost/algorithm/hex.hpp>
-#include <algorithm>
-#include <iomanip>
-#include <sstream>
-#include <stdexcept>
 
 EIP712Signature::EIP712Signature() = default;
 

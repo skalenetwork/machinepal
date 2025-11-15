@@ -2,11 +2,9 @@
 #include "MachinePayCommon.h"
 #include "X402HandlerFactory.h"
 #include "crypto/CertManager.h"
-#include <curl/curl.h>
+
 #include <proxygen/httpserver/HTTPServer.h>
 #include <proxygen/httpserver/HTTPServerOptions.h>
-#include <filesystem>
-#include <fstream>
 
 #include "config/subconfigs/ServerConfig.h"
 
