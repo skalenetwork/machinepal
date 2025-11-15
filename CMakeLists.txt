@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 3.18)
 
 
+# Ensure vcpkg toolchain is applied even when CLion overrides command-line args
+if(NOT DEFINED CMAKE_TOOLCHAIN_FILE AND EXISTS "${CMAKE_SOURCE_DIR}/external/vcpkg/scripts/buildsystems/vcpkg.cmake")
+    set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/external/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE STRING "" FORCE)
+endif()
+
 if (DEFINED CMAKE_C_COMPILER_LAUNCHER)
     message(STATUS "Using C compiler launcher: ${CMAKE_C_COMPILER_LAUNCHER}")
 endif()
