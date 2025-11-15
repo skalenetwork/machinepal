@@ -2,13 +2,14 @@ cmake_minimum_required(VERSION 3.18)
 
 # Configurre Precompiled headers
 # --- Make PCH cache-friendly ---
-set(CMAKE_PCH_INSTANTIATE_TEMPLATES OFF)
-set(CMAKE_PCH_WARN_INVALID OFF)
-set(CMAKE_INCLUDE_DIRECTORIES_PROJECT_BEFORE ON)
-set(CCACHE_ENV "CCACHE_SLOPPINESS=pch_defines,include_file_mtime")
-set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE
-        "${CCACHE_ENV} ccache"
-)
+# --- Make PCH cache-friendly ---
+set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
+
+# Required for PCH cacheability
+set(ENV{CCACHE_SLOPPINESS} "pch_defines,include_file_mtime,time_macros")
+set(ENV{CCACHE_COMPILERCHECK} "content")
+set(ENV{CCACHE_IGNORE_HEADERS} "/usr/include/*")
+
 
 
 
