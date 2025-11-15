@@ -18,7 +18,7 @@ public:
 
     nlohmann::json verify(const nlohmann::json& verifyRequestJson, EasyNetDb& db);
 
-    nlohmann::json settle( const nlohmann::json& settlementRequestJson, EasyNetDb& db);
+    nlohmann::json settleLocal( const nlohmann::json& settlementRequestJson, EasyNetDb& db);
 
 private:
     EthAddress assetAddress_;

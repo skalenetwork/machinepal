@@ -43,8 +43,6 @@ public:
     void unlockPaymentAsBeingSettled(
         ptr< Authorization > _authorization, ptr< EIP712Domain > _domain );
 
-    variant< SettlementResponse, HttpError > routeToFacilitatorAndSettle( const NetworkConfig& networkConfig,
-        SettlementRequest& settlementRequest);
 
     variant< SettlementResponse, HttpError > checkPaymentIsNewAndSettleItUnsafe(
         const NetworkConfig& networkConfig, const ResourceConfig& resource,

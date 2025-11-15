@@ -14,13 +14,10 @@ using std::shared_ptr;
 class FacilitatorManager {
 public:
     explicit FacilitatorManager(MachinePayApp& app);
+    variant< SettlementResponse, HttpError > routeToFacilitatorAndSettle(
+        const NetworkConfig& networkConfig, SettlementRequest& settlementRequest );
 
-    variant<SettlementResponse, HttpError> routeToFacilitator(
-        const NetworkConfig& networkConfig,
-        SettlementRequest& settlementRequest);
 
-    void recordFacilitatorAction(const SettlementRequest& request,
-        const SettlementResponse& response);
 
 private:
     MachinePayApp& app_;

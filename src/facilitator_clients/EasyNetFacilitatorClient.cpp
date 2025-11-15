@@ -74,7 +74,7 @@ nlohmann::json EasyNetFacilitatorClient::verify(const nlohmann::json& verifyRequ
     }
 }
 
-nlohmann::json EasyNetFacilitatorClient::settle( const nlohmann::json& settlementRequestJson,
+nlohmann::json EasyNetFacilitatorClient::settleLocal( const nlohmann::json& settlementRequestJson,
     EasyNetDb& db) {
     std::unique_lock< std::shared_mutex > lock( mutex_ );
     try {
