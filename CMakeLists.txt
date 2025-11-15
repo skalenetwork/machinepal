@@ -1,22 +1,15 @@
 cmake_minimum_required(VERSION 3.18)
 
+# Configurre Precompiled headers
+# --- Make PCH cache-friendly ---
+set(CMAKE_PCH_INSTANTIATE_TEMPLATES OFF)
+set(CMAKE_PCH_WARN_INVALID OFF)
+set(CMAKE_INCLUDE_DIRECTORIES_PROJECT_BEFORE ON)
+set(CCACHE_ENV "CCACHE_SLOPPINESS=pch_defines,include_file_mtime")
+set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE
+        "${CCACHE_ENV} ccache"
+)
 
-# Ensure vcpkg toolchain is applied even when CLion overrides command-line args
-if(NOT DEFINED CMAKE_TOOLCHAIN_FILE AND EXISTS "${CMAKE_SOURCE_DIR}/external/vcpkg/scripts/buildsystems/vcpkg.cmake")
-    set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/external/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE STRING "" FORCE)
-endif()
-
-if (DEFINED CMAKE_C_COMPILER_LAUNCHER)
-    message(STATUS "Using C compiler launcher: ${CMAKE_C_COMPILER_LAUNCHER}")
-endif()
-
-if (DEFINED CMAKE_CXX_COMPILER_LAUNCHER)
-    message(STATUS "Using CXX compiler launcher: ${CMAKE_CXX_COMPILER_LAUNCHER}")
-endif()
-
-# Force re-apply launcher after toolchain initialization
-set(CMAKE_C_COMPILER_LAUNCHER "${CMAKE_C_COMPILER_LAUNCHER}" CACHE STRING "" FORCE)
-set(CMAKE_CXX_COMPILER_LAUNCHER "${CMAKE_CXX_COMPILER_LAUNCHER}" CACHE STRING "" FORCE)
 
 
 project(machinepay LANGUAGES CXX)
@@ -191,3 +184,15 @@ set(CPACK_DEBIAN_PACKAGE_DEPENDS "libstdc++6 (>= 11.2)")
 set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
 install(TARGETS machinepay mptest DESTINATION usr/bin)
 include(CPack)
+
+
+# --- Print ccache statistics after build ---
+find_program(CCACHE_PROGRAM ccache)
+
+if(CCACHE_PROGRAM)
+    add_custom_target(ccache_stats ALL
+            COMMAND ${CCACHE_PROGRAM} --show-stats
+            COMMENT "---- CCACHE STATS ----"
+            VERBATIM
+    )
+endif()
