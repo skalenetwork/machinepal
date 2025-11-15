@@ -9,9 +9,9 @@
 #include "datastructures/PaymentRequirements.h"
 #include "datastructures/SettlementRequest.h"
 #include "datastructures/SettlementResponse.h"
+#include "db/EasyNetDb.h"  // added include for EasyNetDb
 #include "db/MachinePayDb.h"
 #include "db/PaymentRecord.h"
-#include "db/EasyNetDb.h" // added include for EasyNetDb
 #include "url/URLUtils.h"
 
 PaymentManager::PaymentManager( MachinePayApp& app ) : app_( app ) {}
@@ -105,6 +105,26 @@ void PaymentManager::unlockPaymentAsBeingSettled(
 }
 
 
+variant< SettlementResponse, HttpError > PaymentManager::routeToFacilitatorAndSettle(
+    const NetworkConfig& networkConfig, SettlementRequest& settlementRequest ) {
+    if ( networkConfig.name() == "machinepay-easynet" ) {
+        auto baseDb = app_.machinePayDB();
+        auto db = std::dynamic_pointer_cast< EasyNetDb >( baseDb );
+        CHECK_STATE( db );
+        auto jsonResponse =
+            networkConfig.facilitatorClient()->settle( settlementRequest.toJson(), *db );
+        return SettlementResponse::fromJsonString( jsonResponse.dump() );
+    } else {
+        auto facilitator = networkConfig.facilitator();
+        CHECK_STATE( facilitator );
+        auto paymentPayload = settlementRequest.paymentPayload();
+        auto result = facilitator.value()->settlePayment( paymentPayload );
+        if ( holds_alternative< HttpError >( result ) ) {
+            return result;
+        }
+        return std::get< SettlementResponse >( result );
+    }
+}
 // this function assumes the payment has been locked for settlement already
 variant< SettlementResponse, HttpError > PaymentManager::checkPaymentIsNewAndSettleItUnsafe(
     const NetworkConfig& networkConfig, const ResourceConfig& resource,
@@ -114,38 +134,30 @@ variant< SettlementResponse, HttpError > PaymentManager::checkPaymentIsNewAndSet
 
     error = checkAgainstAlreadySettledPayments( paymentPayload, networkConfig.eip712Domain() );
     auto paymentRequirements =
-        PaymentRequirements::makePaymentRequirements( organization, resource,  networkConfig);
+        PaymentRequirements::makePaymentRequirements( organization, resource, networkConfig );
 
-    auto settlementRequest = SettlementRequest(paymentPayload, paymentRequirements);
+    auto settlementRequest = SettlementRequest( paymentPayload, paymentRequirements );
 
 
     if ( error ) {
         return error.value();
     }
 
-    std::optional< SettlementResponse > settlementResponse;
-    if (networkConfig.name() == "machinepay-easynet") {
-        auto baseDb = app_.machinePayDB();
-        auto db = std::dynamic_pointer_cast<EasyNetDb>( baseDb );
-        CHECK_STATE( db );
-        auto jsonResponse = networkConfig.facilitatorClient()->settle( settlementRequest.toJson(), *db );
-        settlementResponse = SettlementResponse::fromJsonString( jsonResponse.dump(  ) );
-    } else {
-        auto facilitator = networkConfig.facilitator();
-        CHECK_STATE( facilitator );
-        auto result = facilitator.value()->settlePayment( paymentPayload );
-        if ( holds_alternative< HttpError >( result ) ) {
-            return std::get< HttpError >( result );
-        }
-        settlementResponse = std::get< SettlementResponse >( result );
+
+    auto result = routeToFacilitatorAndSettle( networkConfig,
+        settlementRequest );
+    if ( holds_alternative< HttpError >( result ) ) {
+        return result;
     }
 
-    auto transactionHash = Encoding::fromHexToHash( settlementResponse.value().transaction() );
+    const auto& transactionHashHex =
+        std::get<SettlementResponse>(result).transaction();
+    auto transactionHash = Encoding::fromHexToHash(transactionHashHex);
 
     recordSuccessfulSettlement( *paymentPayload, *networkConfig.eip712Domain(), resource,
         organization, transactionHash, ipAddress );
 
-    return settlementResponse.value();
+    return result;;
 }
 
 variant< SettlementResponse, HttpError > PaymentManager::checkPaymentIsNewAndSettleIt(
