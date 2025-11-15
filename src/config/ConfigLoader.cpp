@@ -1,6 +1,6 @@
+#include "MachinePayCommon.h"
 #include "ConfigLoader.h"
 #include "JsonUtils.h"
-#include "MachinePayCommon.h"
 #include "MachinePayConfig.h"
 #include "config/MachinePayConfigSchema.h"
 #include "init/Init.h"
