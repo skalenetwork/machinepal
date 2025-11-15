@@ -57,7 +57,6 @@ EasyNetDb::EasyNetDb( MachinePayApp& app, DbType type, const optional< string >&
         if ( dbType_ == DbType::SQLite ) {
             sql << "CREATE TABLE IF NOT EXISTS transactions ("
                    "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                   "organizationName TEXT NOT NULL,"
                    "chainId TEXT NOT NULL,"
                    "fromAddress TEXT NOT NULL,"
                    "toAddress TEXT NOT NULL,"
@@ -74,7 +73,6 @@ EasyNetDb::EasyNetDb( MachinePayApp& app, DbType type, const optional< string >&
         } else if ( dbType_ == DbType::PostgreSQL ) {
             sql << "CREATE TABLE IF NOT EXISTS transactions ("
                    "id SERIAL PRIMARY KEY,"
-                   "organizationName TEXT NOT NULL,"
                    "chainId TEXT NOT NULL,"
                    "fromAddress TEXT NOT NULL,"
                    "toAddress TEXT NOT NULL,"
@@ -138,29 +136,29 @@ void EasyNetDb::newWalletUnsafe( const EthAddress& walletAddress, const EthAddre
 EasyNetDb::TransferResult EasyNetDb::processTransferRequest( const EthAddress& fromAddress,
     const EthAddress& toAddress, const EthAddress& assetAddress, const EIP3009Value& value,
     EIP3009Nonce nonce, const string& resourceLocation, const string& fromIpAddress,
-    const string& jsonInfo, const string& transactionHash, const string& organizationName,
+    const string& jsonInfo, const string& transactionHash,
     const u256& chainId, const string& authorizationSignatureHash ) {
     unique_lock< shared_mutex > lock( stateMutex_ );
     fundUserWalletWithFundsIfNewWalletUnsafe( fromAddress, assetAddress );
     return transferValueUnsafe( fromAddress, toAddress, assetAddress, value, nonce, resourceLocation,
-        fromIpAddress, jsonInfo, transactionHash, organizationName, chainId, authorizationSignatureHash );
+        fromIpAddress, jsonInfo, transactionHash, chainId, authorizationSignatureHash );
 }
 
 void EasyNetDb::insertTransaction( soci::session& databaseSession,
     const string& fromWalletAddressDatabaseString, const string& toWalletAddressDatabaseString,
     const string& assetContractAddressDatabaseString, const string& nonceString,
     const string& transactionHash, const string& resourceLocation, const string& fromIpAddress,
-    const string& jsonInfo, string& transferAmountValueStr, const string& organizationName,
+    const string& jsonInfo, string& transferAmountValueStr,
     const string& chainIdStr, const string& authorizationSignatureHash ) {
     auto now = chrono::system_clock::now();
     long long settlementTime = chrono::duration_cast< chrono::seconds >( now.time_since_epoch() ).count();
 
-    databaseSession << "INSERT INTO transactions (organizationName, chainId, fromAddress, "
+    databaseSession << "INSERT INTO transactions (chainId, fromAddress, "
                        "toAddress, assetAddress, value, nonce, resourceLocation, "
                        "settlementTime, authorizationSignatureHash, transactionHash, fromIpAddress, jsonInfo) "
-                       "VALUES (:organizationName, :chainId, :fromAddress, :toAddress, :assetAddress, :value, :nonce,"
+                       "VALUES (:chainId, :fromAddress, :toAddress, :assetAddress, :value, :nonce,"
                        " :resourceLocation, :settlementTime, :authorizationSignatureHash, :transactionHash, :fromIpAddress, :jsonInfo)",
-        soci::use( organizationName, "organizationName" ), soci::use( chainIdStr, "chainId" ),
+        soci::use( chainIdStr, "chainId" ),
         soci::use( fromWalletAddressDatabaseString, "fromAddress" ),
         soci::use( toWalletAddressDatabaseString, "toAddress" ),
         soci::use( assetContractAddressDatabaseString, "assetAddress" ),
@@ -193,7 +191,7 @@ void EasyNetDb::updateState( soci::session& databaseSession, string& walletAddre
 EasyNetDb::TransferResult EasyNetDb::transferValueUnsafe( const EthAddress& fromAddress,
     const EthAddress& toAddress, const EthAddress& assetAddress, const EIP3009Value& value,
     EIP3009Nonce& nonce, const string& resourceLocation, const string& fromIpAddress,
-    const string& jsonInfo, const string& transactionHash, const string& organizationName,
+    const string& jsonInfo, const string& transactionHash,
     const u256& chainId, const string& authorizationSignatureHash ) {
     if ( fromAddress.toDbString() == toAddress.toDbString() ) {
         logger_->trace( "transferValue: fromAddress == toAddress, no-op success" );
@@ -285,7 +283,7 @@ EasyNetDb::TransferResult EasyNetDb::transferValueUnsafe( const EthAddress& from
         string chainIdStr = Encoding::u256ToDecimal( chainId );
         insertTransaction( databaseSession, fromWalletAddressDatabaseString, toWalletAddressDatabaseString,
             assetContractAddressDatabaseString, nonce.toDbString(), transactionHash, resourceLocation,
-            fromIpAddress, jsonInfo, transferAmountValueStr, organizationName, chainIdStr, authorizationSignatureHash );
+            fromIpAddress, jsonInfo, transferAmountValueStr, chainIdStr, authorizationSignatureHash );
 
         databaseTransactionScope.commit();
         return TransferResult::TransferSuccess;

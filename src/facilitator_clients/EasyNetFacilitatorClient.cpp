@@ -1,21 +1,20 @@
 #include "EasyNetFacilitatorClient.h"
 #include "MachinePayCommon.h"
+#include "crypto/EIP712Signature.h"  // added for computeSignatureHash
 #include "crypto/Encoding.h"
 #include "payment/datastructures/PaymentRequirements.h"
 #include "payment/datastructures/SettlementRequest.h"
 #include "payment/datastructures/SettlementResponse.h"
 #include "payment/datastructures/VerifyResponse.h"
-#include "crypto/EIP712Signature.h" // added for computeSignatureHash
 
 #include <limits>        // for numeric_limits<u256>::max()
 #include <shared_mutex>  // added for std::shared_mutex, std::shared_lock, std::unique_lock
 
-EasyNetFacilitatorClient::EasyNetFacilitatorClient(EthAddress& assetAddress, u256& chainId )
-    :  assetAddress_( assetAddress ), chainId_( chainId ) {}
+EasyNetFacilitatorClient::EasyNetFacilitatorClient( EthAddress& assetAddress, u256& chainId )
+    : assetAddress_( assetAddress ), chainId_( chainId ) {}
 
 pair< ptr< PaymentPayload >, ptr< PaymentRequirements > > EasyNetFacilitatorClient::verifyUnsafe(
-    const nlohmann::json& verifyRequestJson,
-    optional< string >& error, EasyNetDb& db) const {
+    const nlohmann::json& verifyRequestJson, optional< string >& error, EasyNetDb& db ) const {
     auto verifyRequest = SettlementRequest::fromJson( verifyRequestJson );
     auto paymentPayload = verifyRequest.paymentPayload();
     auto paymentRequirements = verifyRequest.paymentRequirements();
@@ -50,13 +49,12 @@ pair< ptr< PaymentPayload >, ptr< PaymentRequirements > > EasyNetFacilitatorClie
     return { paymentPayload, paymentRequirements };
 }
 
-nlohmann::json EasyNetFacilitatorClient::verify(const nlohmann::json& verifyRequestJson,
-    EasyNetDb& db)  {
+nlohmann::json EasyNetFacilitatorClient::verify(
+    const nlohmann::json& verifyRequestJson, EasyNetDb& db ) {
     std::shared_lock< std::shared_mutex > lock( mutex_ );
     try {
         optional< string > error;
-        auto [payload, paymentReqs] =
-            verifyUnsafe( verifyRequestJson, error, db );
+        auto [payload, paymentReqs] = verifyUnsafe( verifyRequestJson, error, db );
         auto fromWalletAddress = payload->payload()->authorization()->from();
         if ( error ) {
             VerifyResponse errorResponse(
@@ -74,13 +72,12 @@ nlohmann::json EasyNetFacilitatorClient::verify(const nlohmann::json& verifyRequ
     }
 }
 
-nlohmann::json EasyNetFacilitatorClient::settleLocal( const nlohmann::json& settlementRequestJson,
-    EasyNetDb& db) {
+nlohmann::json EasyNetFacilitatorClient::settleLocal(
+    const nlohmann::json& settlementRequestJson, EasyNetDb& db ) {
     std::unique_lock< std::shared_mutex > lock( mutex_ );
     try {
         optional< string > error;
-        auto [paymentPayload, paymentReqs] =
-            verifyUnsafe( settlementRequestJson, error, db);
+        auto [paymentPayload, paymentReqs] = verifyUnsafe( settlementRequestJson, error, db );
 
         // Obtain from address after verification (available even if error)
         EthAddress fromWalletAddress = paymentPayload->payload()->authorization()->from();
@@ -101,13 +98,12 @@ nlohmann::json EasyNetFacilitatorClient::settleLocal( const nlohmann::json& sett
         // Prepare extra parameters for updated EasyNetDb API
         std::string jsonInfo = paymentPayload->toJson().dump();
         std::string transactionHash = paymentPayload->payload()->signature().toHex( PREFIX_0x );
-        std::string authorizationSignatureHash = Encoding::hashToHex(
-            paymentPayload->payload()->signature().computeSignatureHash() );
-        std::string organizationName = "easynet"; // placeholder (no organization config available here)
+        std::string authorizationSignatureHash =
+            Encoding::hashToHex( paymentPayload->payload()->signature().computeSignatureHash() );
 
         auto result = db.processTransferRequest( fromWalletAddress, toWalletAddress,
             assetWalletAddress, transferValue, nonce, resource, "0.0.0.0", jsonInfo,
-            transactionHash, organizationName, chainId_, authorizationSignatureHash );
+            transactionHash, chainId_, authorizationSignatureHash );
 
         if ( result == EasyNetDb::TransferResult::TransferSuccess ) {
             SettlementResponse response( true, std::nullopt, "",

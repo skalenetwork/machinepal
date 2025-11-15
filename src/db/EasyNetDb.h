@@ -42,7 +42,7 @@ public:
         const EthAddress& toAddress, const EthAddress& assetAddress, const EIP3009Value& value,
         EIP3009Nonce nonce, const std::string& resourceLocation, const std::string& fromIpAddress,
         const std::string& jsonInfo, const std::string& transactionHash,
-        const std::string& organizationName, const u256& chainId,
+        const u256& chainId,
         const std::string& authorizationSignatureHash );
     void insertTransaction( soci::session& databaseSession,
         const std::string& fromWalletAddressDatabaseString,
@@ -50,7 +50,7 @@ public:
         const std::string& assetContractAddressDatabaseString, const std::string& nonceString,
         const std::string& transactionHash, const std::string& resourceLocation,
         const std::string& fromIpAddress, const std::string& jsonInfo,
-        std::string& transferAmountValueStr, const std::string& organizationName,
+        std::string& transferAmountValueStr,
         const std::string& chainIdStr, const std::string& authorizationSignatureHash );
     void insertIntoState( soci::session& databaseSession,
         std::string& toWalletAddressDatabaseString, std::string& assetContractAddressDatabaseString,
@@ -82,7 +82,7 @@ private:
         const EthAddress& assetAddress, const EIP3009Value& value, EIP3009Nonce& nonce,
         const std::string& resourceLocation, const std::string& fromIpAddress,
         const std::string& jsonInfo, const std::string& transactionHash,
-        const std::string& organizationName, const u256& chainId,
+        const u256& chainId,
         const std::string& authorizationSignatureHash );
     // Funds a wallet with initial tokens if it does not yet exist for the given asset.
     // Initial amount: 1,000,000,000 * 10^18 (1e27) token units.

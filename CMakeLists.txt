@@ -1,4 +1,19 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.18)
+
+
+if (DEFINED CMAKE_C_COMPILER_LAUNCHER)
+    message(STATUS "Using C compiler launcher: ${CMAKE_C_COMPILER_LAUNCHER}")
+endif()
+
+if (DEFINED CMAKE_CXX_COMPILER_LAUNCHER)
+    message(STATUS "Using CXX compiler launcher: ${CMAKE_CXX_COMPILER_LAUNCHER}")
+endif()
+
+# Force re-apply launcher after toolchain initialization
+set(CMAKE_C_COMPILER_LAUNCHER "${CMAKE_C_COMPILER_LAUNCHER}" CACHE STRING "" FORCE)
+set(CMAKE_CXX_COMPILER_LAUNCHER "${CMAKE_CXX_COMPILER_LAUNCHER}" CACHE STRING "" FORCE)
+
+
 project(machinepay LANGUAGES CXX)
 
 # Enable thread safety globally
@@ -9,32 +24,12 @@ add_compile_definitions(
 )
 
 
-# Use 'nice' to lower priority of compilation processes
-# vs desktop UI processes
-# Detect desktop environment (X11 or Wayland)
-if(DEFINED ENV{DISPLAY} OR DEFINED ENV{WAYLAND_DISPLAY} OR DEFINED ENV{XDG_CURRENT_DESKTOP})
-    find_program(NICE_EXE nice)
-    if (NICE_EXE)
-        message(STATUS "Detected desktop session — running compilers with lower priority (nice -n 10)")
-        set(CMAKE_C_COMPILER_LAUNCHER "${NICE_EXE};-n;10")
-        set(CMAKE_CXX_COMPILER_LAUNCHER "${NICE_EXE};-n;10")
-    endif()
-else()
-    message(STATUS "Headless or CI environment detected — building at normal priority")
-endif()
-
-
-
 set(WITH_SQLITE3 ON CACHE BOOL "Build SOCI SQLite3 backend" FORCE)
 option(ENABLE_POSTGRESQL "Enable PostgreSQL backend via SOCI" OFF)
 if(ENABLE_POSTGRESQL)
     set(WITH_POSTGRESQL ON CACHE BOOL "Build SOCI PostgreSQL backend" FORCE)
 endif()
 
-
-
-set(CMAKE_C_COMPILER_LAUNCHER ccache)
-set(CMAKE_CXX_COMPILER_LAUNCHER ccache)
 
 SET(SECP256K1_ENABLE_MODULE_RECOVERY ON)
 foreach(submod json-schema-validator yaml-cpp secp256k1 soci)
