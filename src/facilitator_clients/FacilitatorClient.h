@@ -23,6 +23,10 @@ public:
         const nlohmann::json& settlementRequestJson) const = 0;
         */
 
+
+    virtual nlohmann::json verify( const nlohmann::json& request ) const ;
+    virtual nlohmann::json settle( const nlohmann::json& ) const;
+
 protected:
 
     std::string baseUrl_;
@@ -38,6 +42,4 @@ protected:
     static std::string joinUrl( const std::string& _base, const std::string& _path );
     nlohmann::json doRequestResponse(
         const std::string& _path, const nlohmann::json& _body ) const;
-    nlohmann::json verify( const nlohmann::json& request ) const;
-    nlohmann::json settle( const nlohmann::json& ) const;
 };

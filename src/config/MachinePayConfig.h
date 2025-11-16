@@ -1,4 +1,6 @@
 #pragma once
+
+class FacilitatorClient;
 class FileManager;
 class ServerConfig;
 class LogConfig;
@@ -8,10 +10,15 @@ class OrganizationConfig;
 
 class MachinePayConfig {
     ptr< ServerConfig > server_;
+
+
+
+private:
     ptr< LogConfig > log_;
     ptr< std::map< string, ptr< OrganizationConfig > > > organizationsByName_;
     ptr< std::map< string, ptr< OrganizationConfig > > > organizationsBySubdomain_;
     std::shared_ptr< NetworkConfig > network_;
+    ptr<FacilitatorClient> facilitatorClient_;
     MachinePayConfig( const ptr< ServerConfig >& server, const ptr< LogConfig >& log,
         const ptr< std::vector< ptr< OrganizationConfig > > >& organizations,
         std::shared_ptr< NetworkConfig > network );
@@ -54,5 +61,10 @@ public:
             return it->second;
         }
         return nullptr;
+    }
+
+    [[nodiscard]] ptr< FacilitatorClient > facilitatorClient() const {
+        CHECK_STATE( facilitatorClient_ );
+        return facilitatorClient_;
     }
 };

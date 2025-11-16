@@ -109,14 +109,16 @@ void PaymentManager::unlockPaymentAsBeingSettled(
 
 // this function assumes the payment has been locked for settlement already
 variant< SettlementResponse, HttpError > PaymentManager::checkPaymentIsNewAndSettleItUnsafe(
-    const NetworkConfig& networkConfig, const ResourceConfig& resource,
+    const MachinePayConfig& machinePayConfig, const ResourceConfig& resource,
     const OrganizationConfig& organization, shared_ptr< PaymentPayload > paymentPayload,
     const string& ipAddress ) {
     std::optional< HttpError > error = std::nullopt;
 
-    error = checkAgainstAlreadySettledPayments( paymentPayload, networkConfig.eip712Domain() );
+    auto networkConfig = machinePayConfig.network();
+
+    error = checkAgainstAlreadySettledPayments( paymentPayload, networkConfig->eip712Domain() );
     auto paymentRequirements =
-        PaymentRequirements::makePaymentRequirements( organization, resource, networkConfig );
+        PaymentRequirements::makePaymentRequirements( organization, resource, *networkConfig );
 
     auto settlementRequest = SettlementRequest( paymentPayload, paymentRequirements );
 
@@ -127,7 +129,7 @@ variant< SettlementResponse, HttpError > PaymentManager::checkPaymentIsNewAndSet
 
 
     auto result =
-        app_.facilitatorClientManager()->routeToFacilitatorAndSettle( networkConfig, settlementRequest );
+        app_.facilitatorClientManager()->routeToFacilitatorAndSettle( machinePayConfig, settlementRequest );
     if ( holds_alternative< HttpError >( result ) ) {
         return result;
     }
@@ -135,7 +137,7 @@ variant< SettlementResponse, HttpError > PaymentManager::checkPaymentIsNewAndSet
     const auto& transactionHashHex = std::get< SettlementResponse >( result ).transaction();
     auto transactionHash = Encoding::fromHexToHash( transactionHashHex );
 
-    recordSuccessfulSettlement( *paymentPayload, *networkConfig.eip712Domain(), resource,
+    recordSuccessfulSettlement( *paymentPayload, *networkConfig->eip712Domain(), resource,
         organization, transactionHash, ipAddress );
 
     return result;
@@ -143,12 +145,13 @@ variant< SettlementResponse, HttpError > PaymentManager::checkPaymentIsNewAndSet
 }
 
 variant< SettlementResponse, HttpError > PaymentManager::checkPaymentIsNewAndSettleIt(
-    const NetworkConfig& networkConfig, const ResourceConfig& resource,
+    const MachinePayConfig& machinePayConfig, const ResourceConfig& resource,
     const OrganizationConfig& organization, shared_ptr< PaymentPayload > paymentPayload,
     const string& ipAddress ) {
     CHECK_STATE( paymentPayload );
     auto authorization = paymentPayload->payload()->authorization();
-    auto domain = networkConfig.eip712Domain();
+    auto networkConfig = machinePayConfig.network();
+    auto domain = networkConfig->eip712Domain();
 
     // we need to make sure that the user can not submit the same payment multiple times in parallel
     // submitting the same payment twice should result in one successful settlement and one error
@@ -170,7 +173,7 @@ variant< SettlementResponse, HttpError > PaymentManager::checkPaymentIsNewAndSet
     try {
         // Now that we hold the lock, proceed with the actual settlement.
         return checkPaymentIsNewAndSettleItUnsafe(
-            networkConfig, resource, organization, paymentPayload, ipAddress );
+            machinePayConfig, resource, organization, paymentPayload, ipAddress );
     } catch ( const std::exception& e ) {
         spdlog::error( "Error during payment settlement: {}", e.what() );
         return HttpError( ERR_INTERNAL_SERVER_ERROR,
@@ -204,7 +207,7 @@ variant< SettlementResponse, HttpError > PaymentManager::decodeValidateAndSettle
         auto ipAddress = req->getClientAddress().getAddressStr();
 
         return checkPaymentIsNewAndSettleIt(
-            *config.network(), resource, organization, paymentPayload, ipAddress );
+            config, resource, organization, paymentPayload, ipAddress );
     } catch ( std::exception& e ) {
         spdlog::error( "decodeValidateAndSettlePayment had exception  {}", e.what() );
         return HttpError( ERR_INTERNAL_SERVER_ERROR,

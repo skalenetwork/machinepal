@@ -15,7 +15,7 @@ class FacilitatorClientManager {
 public:
     explicit FacilitatorClientManager(MachinePayApp& app);
     variant< SettlementResponse, HttpError > routeToFacilitatorAndSettle(
-        const NetworkConfig& networkConfig, SettlementRequest& settlementRequest );
+        const MachinePayConfig& networkConfig, SettlementRequest& settlementRequest );
 
 
 

@@ -12,15 +12,9 @@ NetworkConfig::NetworkConfig( const std::string& name, const EthAddress& walletA
     if (facilitator_.has_value()) {
         CHECK_STATE( facilitator_.value() );
     }
-    facilitatorClient_ = make_shared< EasyNetFacilitatorClient >("https://localhost");
     CHECK_STATE( eip712Domain_ );
-    CHECK_STATE( facilitatorClient_ );
 }
 
-ptr< EasyNetFacilitatorClient > NetworkConfig::facilitatorClient() const {
-    CHECK_STATE( facilitatorClient_ );
-    return facilitatorClient_;
-}
 
 std::string NetworkConfig::name() const {
     return name_;

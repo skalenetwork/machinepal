@@ -14,16 +14,12 @@ private:
     EthAddress walletAddress_;
     std::optional<std::shared_ptr< FacilitatorConfig >> facilitator_;
     ptr< EIP712Domain > eip712Domain_;
-    ptr< EasyNetFacilitatorClient > facilitatorClient_;
 
     NetworkConfig( const std::string& name, const EthAddress& walletAddress,
         optional<ptr<FacilitatorConfig >>& facilitator, ptr< EIP712Domain >& domain ); // moved implementation to cpp
 
 
 public:
-
-
-    ptr<EasyNetFacilitatorClient> facilitatorClient() const;
 
 
     // Accessor for facilitator client

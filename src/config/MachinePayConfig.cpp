@@ -17,6 +17,7 @@
 #include <nlohmann/json.hpp>
 
 #include "JsonUtils.h"
+#include "x402_server/X402Handler.h"
 
 
 ptr< MachinePayConfig > MachinePayConfig::createFromJson(
@@ -69,6 +70,25 @@ MachinePayConfig::MachinePayConfig( const ptr< ServerConfig >& server, const ptr
         organizationsBySubdomain_->emplace( subdomain, org );
     }
     CHECK_STATE( organizationsByName_->contains( "" ) );  // Default organization must be present
+
+    string protocol;
+    uint64_t port;
+
+    if (server_->https()) {
+        protocol = "https://";
+        port = server_->https()->port();
+    } else if (server_->http()) {
+        protocol = "http://";
+        port = server_->http()->port();
+    } else {
+        CHECK_STATE2(false, "Neither HTTP nor HTTPS is enabled in server config");
+    }
+
+    facilitatorClient_ = make_shared< EasyNetFacilitatorClient >(
+        protocol + "localhost:" +
+        to_string( port ) + EASYNET_FACILITATOR_PREFIX);
+
+
 }
 
 const std::shared_ptr< NetworkConfig >& MachinePayConfig::network() const {

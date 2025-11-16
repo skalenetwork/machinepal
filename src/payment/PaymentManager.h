@@ -45,12 +45,12 @@ public:
 
 
     variant< SettlementResponse, HttpError > checkPaymentIsNewAndSettleItUnsafe(
-        const NetworkConfig& networkConfig, const ResourceConfig& resource,
+        const MachinePayConfig& machinePayConfig, const ResourceConfig& resource,
         const OrganizationConfig& organization, shared_ptr< PaymentPayload > paymentPayload,
         const string& ipAddress );
 
     variant< SettlementResponse, HttpError > checkPaymentIsNewAndSettleIt(
-        const NetworkConfig& networkConfig, const ResourceConfig& resource,
+        const MachinePayConfig& machinePayConfig, const ResourceConfig& resource,
         const OrganizationConfig& organization, shared_ptr< PaymentPayload > paymentPayload,
         const string& ipAddress );
 
