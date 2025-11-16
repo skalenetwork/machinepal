@@ -6,6 +6,8 @@
 class FacilitatorClient {
 public:
     virtual ~FacilitatorClient();
+    FacilitatorClient( std::string _base_url, std::string _auth, long _connect_timeout_ms,
+        long _total_timeout_ms );
 
     /*
     // POST /verify — validates the payment payload (no chain call)
@@ -16,4 +18,12 @@ public:
     virtual nlohmann::json settle(
         const nlohmann::json& settlementRequestJson) const = 0;
         */
+
+    std::string base_url;
+    std::string authHeaderValue;
+    long connect_timeout_ms;
+    long total_timeout_ms;
+    std::string proxyUrl;
+    std::vector< std::string > extraHeaders;
+
 };

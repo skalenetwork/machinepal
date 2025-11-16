@@ -41,10 +41,4 @@ private:
 
     nlohmann::json postJson( const std::string& _path, const nlohmann::json& _body ) const;
 
-    std::string base_url;
-    std::string authHeaderValue;
-    long connect_timeout_ms;
-    long total_timeout_ms;
-    std::string proxyUrl;
-    std::vector< std::string > extraHeaders;
 };
