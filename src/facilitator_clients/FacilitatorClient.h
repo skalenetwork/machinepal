@@ -6,8 +6,9 @@
 class FacilitatorClient {
 public:
     virtual ~FacilitatorClient();
-    FacilitatorClient( std::string _base_url, std::string _auth, long _connect_timeout_ms,
-        long _total_timeout_ms );
+    FacilitatorClient( std::string _base_url,
+        std::string _auth = "", long _connect_timeout_ms = 5000, long _total_timeout_ms = 15000
+    );
     std::string extractCBInvalidReason( std::string& _responseData ) const;
     void checkForGenericHttpError( std::string url, std::string payload,
         std::string responseData, long httpCode ) const;
