@@ -13,16 +13,40 @@ FacilitatorProcessor::FacilitatorProcessor( MachinePayApp& app, ptr< IResponseSe
 }
 
 
-
-
-void FacilitatorProcessor::reply502BadGateway( const std::string& message ) {
-    sendResponse( { 502, "Bad Gateway" }, STANDARD_HEADERS, message );
-
+void FacilitatorProcessor::reply400BadRequest( const std::string& message ) {
     string body = getErrorBody( message );
-
-    sendResponse( { 502, "Bad Gateway" }, STANDARD_HEADERS, body );
+    sendResponse( { 400, "Bad request" }, STANDARD_HEADERS, body );
     state_ = State::ERROR_SENT;
 }
+
+void FacilitatorProcessor::reply500InternalError( const std::string& message ) {
+    string body = getErrorBody( message );
+    sendResponse( { 500, "Server Error" }, STANDARD_HEADERS, body );
+    state_ = State::ERROR_SENT;
+}
+
+void FacilitatorProcessor::reply405MethodNotAllowed( const std::string& message ) {
+    string body = getErrorBody( message );
+    auto headers = STANDARD_HEADERS;
+    headers.push_back( {"Allow", "POST"} );
+    sendResponse( { 405, "Method Not Allowed" }, headers, body );
+    state_ = State::ERROR_SENT;
+}
+
+void FacilitatorProcessor::reply413PayloadTooLarge( const std::string& message ) {
+    string body = getErrorBody( message );
+    sendResponse( { 413, "Payload Too Large" }, STANDARD_HEADERS, body );
+    state_ = State::ERROR_SENT;
+}
+
+void FacilitatorProcessor::reply415UnsupportedMediaType( const std::string& message ) {
+    string body = getErrorBody( message );
+    auto headers = STANDARD_HEADERS;
+    headers.push_back( {"Accept-Post", "application/json"} );
+    sendResponse( { 415, "Unsupported Media Type" }, headers, body );
+    state_ = State::ERROR_SENT;
+}
+
 
 void FacilitatorProcessor::reply200Success( const std::string& settlementInfo, std::string& proxiedBody ) {
     std::vector< std::pair< std::string, std::string > > headers = {
@@ -34,20 +58,12 @@ void FacilitatorProcessor::reply200Success( const std::string& settlementInfo, s
 
 
 
-
-
-
 std::string FacilitatorProcessor::getErrorBody( const std::string& message ) {
         nlohmann::json j;
         j["error"] = message;
         return j.dump();
 }
 
-void FacilitatorProcessor::reply500InternalError( const std::string& message ) {
-    string body = getErrorBody( message );
-    sendResponse( { 500, "Server Error" }, STANDARD_HEADERS, body );
-    state_ = State::ERROR_SENT;
-}
 
 
 void FacilitatorProcessor::sendResponse( const std::pair< uint16_t, std::string >& statusAndMessage,
@@ -82,12 +98,31 @@ void FacilitatorProcessor::onRequestStart(
     const std::unique_ptr< proxygen::HTTPMessage >& reqHeaders ) noexcept {
     try {
         CHECK_STATE( reqHeaders );
+        if (reqHeaders->getMethod() != proxygen::HTTPMethod::POST) {
+            reply405MethodNotAllowed("Only POST method is allowed.");
+            return;
+        }
 
+
+
+        auto contentType = reqHeaders->getHeaders().getSingleOrEmpty("Content-Type");
+
+        // Trim leading whitespace to be more robust
+        contentType.erase(0, contentType.find_first_not_of(" \t"));
+        if (!contentType.starts_with("application/json")) {
+            reply415UnsupportedMediaType("Content-Type must be application/json.");
+            return;
+        }
+
+        if (!contentType.starts_with("application/json")) {
+            reply415UnsupportedMediaType("Content-Type must be application/json.");
+            return;
+        }
     } catch ( std::exception& e ) {
         spdlog::critical( "onRequestStart exception" );
         printNestedException( e );
         reply500InternalError( "Could not process x402 request start." );
-    };
+    }
 }
 
 
@@ -95,13 +130,14 @@ void FacilitatorProcessor::replyToClientWithError( const HttpError& httpError ) 
     auto httpErrorMessage = httpError.message();
     switch ( httpError.type() ) {
     case ErrorType::ERR_BAD_REQUEST:
-        reply500InternalError( httpErrorMessage );
+        reply400BadRequest( httpErrorMessage );
         break;
     case ErrorType::ERR_INTERNAL_SERVER_ERROR:
         reply500InternalError( httpErrorMessage );
         break;
     case ErrorType::ERR_BAD_GATEWAY:
-        reply502BadGateway( httpErrorMessage );
+        // cant happen for facilitator
+        reply500InternalError( httpErrorMessage );
         break;
     default:
         // cant happen
@@ -110,7 +146,7 @@ void FacilitatorProcessor::replyToClientWithError( const HttpError& httpError ) 
 }
 
 void FacilitatorProcessor::onRequestFullyReceived(
-    const std::unique_ptr< proxygen::HTTPMessage >& /*reqHeaders*/, const string& /*body*/ ) noexcept {
+    const std::unique_ptr< proxygen::HTTPMessage >& , const string& /*body*/ ) noexcept {
     try {
         if ( state_ == State::ERROR_SENT )
             return;
@@ -124,15 +160,16 @@ void FacilitatorProcessor::onRequestFullyReceived(
 
 
 void FacilitatorProcessor::onBodySizeIncrease( size_t newSize ) {
-    constexpr size_t MAX_BODY_SIZE = 1024 * 1024;  // 128 KB
-    spdlog::info( "[onBodySizeIncrease] Request body size increased to {} bytes", newSize );
+    if ( state_ == State::ERROR_SENT )
+        return;
+    constexpr size_t MAX_BODY_SIZE = 1024 * 1024;
     if ( newSize > MAX_BODY_SIZE ) {
-        reply500InternalError(
+        reply413PayloadTooLarge(
             "Request body too large. Maximum allowed is 1MByte. You can increase this limit in "
             "machinepay config if needed." );
     }
 }
 
-std::vector< std::pair< std::string, std::string > > FacilitatorProcessor::STANDARD_HEADERS = {
+const std::vector< std::pair< std::string, std::string > > FacilitatorProcessor::STANDARD_HEADERS = {
     { "Content-Type", "application/json" }
 };

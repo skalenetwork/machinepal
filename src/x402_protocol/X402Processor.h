@@ -35,7 +35,7 @@ public:
     void onRequestFullyReceived(
         const std::unique_ptr< proxygen::HTTPMessage >& reqHeaders, const string& body ) noexcept;
     void onBodySizeIncrease( size_t newSize );
-    static std::vector< std::pair< std::string, std::string > > STANDARD_HEADERS;
+    static const std::vector< std::pair< std::string, std::string > > STANDARD_HEADERS;
 
 private:
     void reply402PaymentRequired( std::optional< SettlementResponse > errorResponse );

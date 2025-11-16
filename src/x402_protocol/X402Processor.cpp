@@ -361,8 +361,9 @@ void X402Processor::onRequestFullyReceived(
 
 
 void X402Processor::onBodySizeIncrease( size_t newSize ) {
-    constexpr size_t MAX_BODY_SIZE = 1024 * 1024;  // 128 KB
-    spdlog::info( "[onBodySizeIncrease] Request body size increased to {} bytes", newSize );
+    if ( state_ == State::ERROR_SENT )
+        return;
+    constexpr size_t MAX_BODY_SIZE = 1024 * 1024;
     if ( newSize > MAX_BODY_SIZE ) {
         reply400InvalidPayment(
             "Request body too large. Maximum allowed is 1MByte. You can increase this limit in "
@@ -370,6 +371,6 @@ void X402Processor::onBodySizeIncrease( size_t newSize ) {
     }
 }
 
-std::vector< std::pair< std::string, std::string > > X402Processor::STANDARD_HEADERS = {
+const std::vector< std::pair< std::string, std::string > > X402Processor::STANDARD_HEADERS = {
     { "Content-Type", "application/json" }
 };
