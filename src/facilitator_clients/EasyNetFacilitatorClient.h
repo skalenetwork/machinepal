@@ -16,7 +16,7 @@ public:
     explicit EasyNetFacilitatorClient( EthAddress& assetAddress, u256& chainId );
 
 
-    nlohmann::json settle( const nlohmann::json& settlementRequestJson);
+    nlohmann::json settle( const nlohmann::json& settlementRequestJson, MachinePayApp& _app );
 
 
 private:

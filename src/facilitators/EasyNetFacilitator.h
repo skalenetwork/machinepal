@@ -8,7 +8,7 @@ class MachinePayApp;
 class EasyNetFacilitator {
 public:
     explicit EasyNetFacilitator(MachinePayApp& app);
-    nlohmann::json settleLocal( const nlohmann::json& settlementRequestJson, EasyNetDb& db );
+    nlohmann::json settleLocal( const nlohmann::json& settlementRequestJson);
     pair< ptr< PaymentPayload >, ptr< PaymentRequirements > > verifyUnsafe(
         const nlohmann::json& verifyRequestJson, optional< string >& error, EasyNetDb& db ) const;
     nlohmann::json verifyLocal( const nlohmann::json& verifyRequestJson, EasyNetDb& db );

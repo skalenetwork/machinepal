@@ -117,7 +117,7 @@ target_link_libraries(machinepay
         ${MACHINEPAY_COMMON_LIBS}
 )
 
-target_compile_options(machinepay PRIVATE -Wno-deprecated-declarations)
+target_compile_options(machinepay PRIVATE -Wno-deprecated-declarations -Werror)
 
 option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
 if(ENABLE_ASAN)
@@ -133,7 +133,7 @@ if(BUILD_TESTING)
     add_executable(mptest
             ${TEST_ALL_SRC_FILES}
     )
-    target_compile_features(mptest PRIVATE cxx_std_17)
+    target_compile_features(mptest PRIVATE cxx_std_20)
     target_include_directories(mptest
             PRIVATE
             ${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -164,6 +164,7 @@ function(enable_warnings target)
             -Wextra
             -Wconversion-null
             -Wnull-dereference
+            -Werror
     )
 endfunction()
 

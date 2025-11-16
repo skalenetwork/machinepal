@@ -1,17 +1,10 @@
 
 #include "FacilitatorProcessor.h"
-#include "BackendConnection.h"
 #include "IResponseSender.h"
 #include "MachinePayApp.h"
 #include "MachinePayCommon.h"
 #include "config/subconfigs/OrganizationConfig.h"
 #include "config/subconfigs/ServerConfig.h"
-#include "payment/datastructures/PaymentPayload.h"
-#include "payment/datastructures/PaymentRequiredResponse.h"
-#include "payment/datastructures/PaymentRequirements.h"
-#include "url/URLUtils.h"
-
-#include <folly/json.h>
 
 
 FacilitatorProcessor::FacilitatorProcessor( MachinePayApp& app, ptr< IResponseSender >& responseSender )
@@ -117,7 +110,7 @@ void FacilitatorProcessor::replyToClientWithError( const HttpError& httpError ) 
 }
 
 void FacilitatorProcessor::onRequestFullyReceived(
-    const std::unique_ptr< proxygen::HTTPMessage >& reqHeaders, const string& body ) noexcept {
+    const std::unique_ptr< proxygen::HTTPMessage >& /*reqHeaders*/, const string& /*body*/ ) noexcept {
     try {
         if ( state_ == State::ERROR_SENT )
             return;

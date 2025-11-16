@@ -1,7 +1,10 @@
 #include "EasyNetFacilitatorClient.h"
+
+#include "MachinePayApp.h"
 #include "MachinePayCommon.h"
 #include "crypto/EIP712Signature.h"  // added for computeSignatureHash
 #include "crypto/Encoding.h"
+#include "facilitators/EasyNetFacilitator.h"
 #include "payment/datastructures/PaymentRequirements.h"
 #include "payment/datastructures/SettlementRequest.h"
 #include "payment/datastructures/SettlementResponse.h"
@@ -12,6 +15,7 @@
 
 EasyNetFacilitatorClient::EasyNetFacilitatorClient( EthAddress& assetAddress, u256& chainId )
     : assetAddress_( assetAddress ), chainId_( chainId ) {}
-nlohmann::json EasyNetFacilitatorClient::settle( const nlohmann::json& settlementRequestJson ) {
-
+nlohmann::json EasyNetFacilitatorClient::settle( const nlohmann::json& settlementRequestJson,
+    MachinePayApp& _app) {
+    return _app.easyNetFacilitator()->settleLocal( settlementRequestJson );
 }

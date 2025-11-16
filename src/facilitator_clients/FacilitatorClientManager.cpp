@@ -12,7 +12,8 @@ variant< SettlementResponse, HttpError > FacilitatorClientManager::routeToFacili
         auto db = std::dynamic_pointer_cast< EasyNetDb >( baseDb );
         CHECK_STATE( db );
         auto jsonResponse =
-            networkConfig.facilitatorClient()->settle( settlementRequest.toJson());
+            networkConfig.facilitatorClient()->settle( settlementRequest.toJson(),
+                app_);
         return SettlementResponse::fromJsonString( jsonResponse.dump() );
     } else {
         auto facilitator = networkConfig.facilitator();

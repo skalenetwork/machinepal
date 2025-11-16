@@ -9,12 +9,14 @@ EasyNetFacilitator::EasyNetFacilitator( MachinePayApp& app ) : app_( app ) {
     chainId_ = EIP712Domain::machinePayEasyNet()->chainId();
 };
 
-nlohmann::json EasyNetFacilitator::settleLocal(
-    const nlohmann::json& settlementRequestJson, EasyNetDb& db ) {
+nlohmann::json EasyNetFacilitator::settleLocal( const nlohmann::json& settlementRequestJson ) {
     std::unique_lock< std::shared_mutex > lock( mutex_ );
+    auto db = dynamic_pointer_cast< EasyNetDb >( app_.machinePayDB() );
+    CHECK_STATE( db );
     try {
         optional< string > error;
-        auto [paymentPayload, paymentReqs] = verifyUnsafe( settlementRequestJson, error, db );
+        auto [paymentPayload, paymentReqs] =
+            verifyUnsafe( settlementRequestJson, error, *db );
 
         // Obtain from address after verification (available even if error)
         EthAddress fromWalletAddress = paymentPayload->payload()->authorization()->from();
@@ -38,7 +40,7 @@ nlohmann::json EasyNetFacilitator::settleLocal(
         std::string authorizationSignatureHash =
             Encoding::hashToHex( paymentPayload->payload()->signature().computeSignatureHash() );
 
-        auto result = db.processTransferRequest( fromWalletAddress, toWalletAddress,
+        auto result = db->processTransferRequest( fromWalletAddress, toWalletAddress,
             assetWalletAddress, transferValue, nonce, resource, "0.0.0.0", jsonInfo,
             transactionHash, chainId_, authorizationSignatureHash );
 

@@ -1,6 +1,4 @@
 #include "MachinePayApp.h"
-#include "x402_protocol/X402Processor.h"
-
 #include "db/MachinePayDb.h"
 #include "facilitator_clients/FacilitatorClientManager.h"
 #include "facilitators/EasyNetFacilitator.h"
@@ -29,7 +27,7 @@ ptr< FacilitatorClientManager > MachinePayApp::facilitatorClientManager() const 
     return facilitatorClientManager_;
 }
 ptr< EasyNetFacilitator > MachinePayApp::easyNetFacilitator() const {
-    CHECK_STATE( easyNetFacilitator());
+    CHECK_STATE( easyNetFacilitator_);
     return easyNetFacilitator_;
 }
 
