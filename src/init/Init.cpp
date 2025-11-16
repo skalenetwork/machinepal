@@ -3,25 +3,12 @@
 //
 #include "MachinePayCommon.h"
 
-
-#include <execinfo.h>
 #include <glog/logging.h>
-#include <iostream>
-#include <stdexcept>
-
 #include "Init.h"
-#include <spdlog/sinks/stdout_sinks.h>
-#include <spdlog/spdlog.h>
-#include <sys/utsname.h>
-#include <boost/algorithm/string/predicate.hpp>
 
 #include "config/ConfigManager.h"
 #include "config/subconfigs/LogConfig.h"
 
-#include <curl/curl.h>
-#include <ctime>
-#include <iomanip>
-#include <sstream>
 
 // New: header callback to collect raw headers
 static size_t HeaderCallback( char* buffer, size_t size, size_t nitems, void* userdata ) {

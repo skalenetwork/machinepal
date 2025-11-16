@@ -60,6 +60,17 @@
 #include <cstddef>
 #include <utility>
 
+#include <execinfo.h>
+#include <iostream>
+#include <stdexcept>
+#include <spdlog/sinks/stdout_sinks.h>
+#include <spdlog/spdlog.h>
+#include <sys/utsname.h>
+#include <boost/algorithm/string/predicate.hpp>
+#include <curl/curl.h>
+#include <ctime>
+#include <iomanip>
+#include <sstream>
 
 
 
