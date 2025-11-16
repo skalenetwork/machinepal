@@ -21,6 +21,8 @@ public:
         const ServerConfig& serverConfig );
 
 private:
+    static bool isRedHat();
+    static bool isAlpine();
     static void addHttpServerToIPConfigs( const ServerConfig& serverConfig,
         std::vector< proxygen::HTTPServer::IPConfig >& ipConfigs );
 

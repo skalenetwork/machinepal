@@ -48,7 +48,7 @@ public:
     static std::string getPaymentRequiredResponseAsString( ptr< OrganizationConfig > organization,
         ptr< ResourceConfig > resource, ptr< MachinePayConfig > config,
         const std::optional< string >& errorMessage = std::nullopt );
-    ;
+
 
 private:
     uint32_t x402Version_{ 1 };

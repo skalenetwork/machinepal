@@ -258,7 +258,7 @@ EthPublicKey EthPrivateKey::computePublicKey() {
 
 
 // msg32 must be the 32-byte EIP-712 digest of the authorization
-EIP712Signature sign_auth( const uint8_t msg32[32], const uint8_t priv32[32] ) {
+EIP712Signature EthPrivateKey::signAuth( const uint8_t msg32[32], const uint8_t priv32[32] ) {
     static secp256k1_context* ctx = secp256k1_context_create( SECP256K1_CONTEXT_SIGN );
 
     secp256k1_ecdsa_recoverable_signature rsig;
@@ -375,7 +375,7 @@ inline bool normalize_v( uint8_t v, int& recid ) {
 }
 
 
-EthAddress recoverAddressFromSigRSV( const uint8_t msg32[32], const uint8_t sig65[65] ) {
+EthAddress EthPrivateKey::recoverAddressFromSigRSV( const uint8_t msg32[32], const uint8_t sig65[65] ) {
     if ( !msg32 || !sig65 )
         throw std::invalid_argument( "null pointer" );
 

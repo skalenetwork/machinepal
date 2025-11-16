@@ -64,4 +64,8 @@ private:
     std::array< uint8_t, 32 > bytes_{};
 
     static bool isValidRange( const std::array< uint8_t, 32 >& k );
+
+    static EIP712Signature signAuth( const uint8_t msg32[32], const uint8_t priv32[32] );
+
+    static EthAddress recoverAddressFromSigRSV( const uint8_t msg32[32], const uint8_t sig65[65] );
 };

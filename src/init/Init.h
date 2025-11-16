@@ -25,3 +25,5 @@ private:
     static bool fetchInternetTime( const char* url, std::string& utc_datetime,
         std::string& responseOut, std::string& errorOut );
 };
+
+void ThrowOnFailure();

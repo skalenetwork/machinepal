@@ -36,7 +36,7 @@ std::string CryptoManager::computeBlakeHash( const std::string& filePath ) {
             throw std::runtime_error( "Error reading file during hashing: " + filePath );
         }
         if ( file.gcount() > 0 ) {
-            if ( EVP_DigestUpdate( ctx, buf, file.gcount() ) != 1 ) {
+            if ( EVP_DigestUpdate( ctx, buf, (size_t) file.gcount() ) != 1 ) {
                 EVP_MD_CTX_free( ctx );
                 throw std::runtime_error( "EVP_DigestUpdate failed" );
             }

@@ -124,7 +124,7 @@ public:
         CHECK_STATE_JSON( j.at( key ).is_number_float() || j.at( key ).is_number_integer(),
             key + " must be integer or float price", j );
         double value = j.at( key ).get< double >();
-        CHECK_STATE_JSON( value >= 0.0f, key + " must be non-negative", j );
+        CHECK_STATE_JSON( value >= 0.0, key + " must be non-negative", j );
         // Convert to 10^18 base (e.g., for Ethereum-like tokens)
         boost::multiprecision::uint256_t result =
             static_cast< boost::multiprecision::uint256_t >( value * 1e18 );

@@ -142,7 +142,7 @@ bool Init::fetchInternetTime(
             if ( line.size() >= 5 ) {
                 string prefix = line.substr( 0, 5 );
                 for ( auto& c : prefix )
-                    c = tolower( static_cast< unsigned char >( c ) );
+                    c = static_cast<char>(tolower(static_cast<unsigned char>(c)));
                 if ( prefix == "date:" ) {
                     string value = line.substr( 5 );
                     // trim leading spaces

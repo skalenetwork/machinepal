@@ -10,15 +10,7 @@
 #include "config/subconfigs/ServerConfig.h"
 #include "nlohmann/json.hpp"
 
-ptr< MachinePayApp > startApp( std::map< std::string, std::string >& configMap ) {
-    try {
-        return MachinePayApp::makeInstance( configMap );
-    } catch ( const std::exception& ex ) {
-        printNestedException( ex );
-        BOOST_FAIL( "Exception:" );
-    }
-    return nullptr;
-}
+ptr<MachinePayApp> startApp(std::map<std::string, std::string>& configMap );
 
 BOOST_AUTO_TEST_CASE( deserialize_basic_proxy_config ) {
     // Path to the test config file
@@ -56,4 +48,14 @@ BOOST_AUTO_TEST_CASE( deserialize_basic_proxy_config ) {
         );
     */
 
+}
+
+ptr< MachinePayApp > startApp( std::map< std::string, std::string >& configMap ) {
+    try {
+        return MachinePayApp::makeInstance( configMap );
+    } catch ( const std::exception& ex ) {
+        printNestedException( ex );
+        BOOST_FAIL( "Exception:" );
+    }
+    return nullptr;
 }

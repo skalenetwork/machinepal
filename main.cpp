@@ -21,6 +21,8 @@
 using namespace proxygen;
 
 
+void setIfNotEmpty(std::map<std::string, std::string>& envOverloads, const std::string& key, const std::string& value);
+
 void setIfNotEmpty(std::map<std::string, std::string>& envOverloads, const std::string& key, const std::string& value)
 {
     if (!value.empty()) {

@@ -11,11 +11,11 @@
 
 using namespace proxygen;
 
-bool isRedHat() {
+bool ServerFactory::isRedHat() {
     return std::filesystem::exists( "/etc/redhat-release" );
 }
 
-bool isAlpine() {
+bool ServerFactory::isAlpine() {
     std::ifstream f( "/etc/os-release" );
     std::string line;
     while ( std::getline( f, line ) ) {

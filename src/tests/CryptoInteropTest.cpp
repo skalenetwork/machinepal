@@ -76,7 +76,8 @@ BOOST_AUTO_TEST_CASE( range_checks ) {
     expectedLower.reserve( 2 + nMinus1.size() );
     expectedLower += "0x";
     for ( char c : nMinus1 )
-        expectedLower.push_back( std::tolower( static_cast< unsigned char >( c ) ) );
+        expectedLower.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(c))));
+
     BOOST_TEST( pk.toHex() == expectedLower );
 }
 
