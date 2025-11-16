@@ -10,19 +10,21 @@ using namespace proxygen;
 
 
 void X402Handler::onRequest( std::unique_ptr< HTTPMessage > _headers ) noexcept {
-    std::shared_ptr< IResponseSender > responseSender =
-        std::make_shared< ProxygenResponseSender >( downstream_ );
+    if ( internalErrorSent_ )
+        return;
+
     try {
         CHECK_STATE( self_ );
+        responseSender_ = std::make_shared< ProxygenResponseSender >( downstream_ );
         reqHeaders_ = std::move( _headers );
         if ( reqHeaders_->getPath().starts_with( "/machinepay-api-easynet/" ) ) {
-            processor_ = app_.makeEasyNetProcessor( responseSender );
+            processor_ = app_.makeEasyNetProcessor( responseSender_ );
         } else {
-            processor_ = app_.makeX402Processor( responseSender );
+            processor_ = app_.makeX402Processor( responseSender_ );
         }
 
         // processor_ is now of type std::shared_ptr<IProcessorInterface>
-        processor_->onRequestStart( reqHeaders_ );
+        processor()->onRequestStart( reqHeaders_ );
     } catch ( const std::exception& e ) {
         spdlog::critical( "Error in onRequest: {}", e.what() );
         sendInternalError();
@@ -33,13 +35,20 @@ void X402Handler::onRequest( std::unique_ptr< HTTPMessage > _headers ) noexcept 
 }
 
 void X402Handler::onBody( std::unique_ptr< folly::IOBuf > _body ) noexcept {
+    if ( internalErrorSent_ )
+        return;
+
     try {
         CHECK_STATE( self_ );
         if ( !_body )
             return;
+        if ( processor()->isReplySent() ) {
+            return;
+        }
+
         _body->coalesce();
         bodyBuffer_.append( reinterpret_cast< const char* >( _body->data() ), _body->length() );
-        processor_->onBodySizeIncrease( bodyBuffer_.size() );
+        processor()->onBodySizeIncrease( bodyBuffer_.size() );
     } catch ( const std::exception& e ) {
         spdlog::critical( "Error in onBody: {}", e.what() );
         sendInternalError();
@@ -51,19 +60,25 @@ void X402Handler::onBody( std::unique_ptr< folly::IOBuf > _body ) noexcept {
 
 
 void X402Handler::sendInternalError() {
-    std::shared_ptr< IResponseSender > responseSender =
-        std::make_shared< ProxygenResponseSender >( downstream_ );
-    responseSender->sendResponse(
-        { 500, "Server Error" }, { { "Content-Type", "text/plain" } }, "Internal server error." );
+    internalErrorSent_ = true;
+    if ( !responseSender_ ) {
+        spdlog::critical( "Response sender not available in sendInternalError" );
+        return;
+    }
+    responseSender_->sendResponse(
+        { 500, "Server Error" }, { { "Content-Type", "text/plain" } },
+        "Internal server error." );
 }
 void X402Handler::onEOM() noexcept {
+    if ( internalErrorSent_ )
+        return;
+
     try {
         CHECK_STATE( self_ );
-        if ( !processor_ ) {
-            spdlog::critical( "X402Handler::onEOM() called without processor_" );
+        if ( processor()->isReplySent() ) {
             return;
         }
-        processor_->onRequestFullyReceived( reqHeaders_, bodyBuffer_ );
+        processor()->onRequestFullyReceived( reqHeaders_, bodyBuffer_ );
     } catch ( const std::exception& e ) {
         spdlog::critical( "Error in onEOM: {}", e.what() );
         sendInternalError();

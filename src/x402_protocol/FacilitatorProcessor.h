@@ -37,6 +37,8 @@ public:
     void onBodySizeIncrease( size_t newSize ) override;
     static const std::vector< std::pair< std::string, std::string > > STANDARD_HEADERS;
 
+
+
 private:
 
     void sendResponse( const std::pair< uint16_t, std::string >& statusAndMessage,
@@ -45,7 +47,6 @@ private:
 
     string getErrorBody( const std::string& message );
 
-    void reply500InternalError( const std::string& message );
 
     void reply405MethodNotAllowed( const std::string& message );
     void reply413PayloadTooLarge( const std::string& message );
@@ -58,6 +59,8 @@ private:
         return config_;
     }
 
+
+    void reply500InternalError( const std::string& message );
 
     MachinePayApp& app_;
     ptr< MachinePayConfig > config_;

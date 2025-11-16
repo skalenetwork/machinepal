@@ -46,7 +46,19 @@ private:
     std::unique_ptr< proxygen::HTTPMessage > reqHeaders_;
     std::string bodyBuffer_;
     ptr< IProcessor > processor_;
+    [[nodiscard]] ptr< IProcessor > processor() const {
+        CHECK_STATE( processor_ );
+        return processor_;
+    }
+    [[nodiscard]] std::shared_ptr< IResponseSender > responseSender()  {
+        CHECK_STATE( responseSender_ )
+        return responseSender_;
+    }
+
+    std::shared_ptr< IResponseSender > responseSender_;
+
     ptr< X402Handler > self_{ nullptr };
+    bool internalErrorSent_{ false };
 
     friend class X402HandlerFactory;
 };
