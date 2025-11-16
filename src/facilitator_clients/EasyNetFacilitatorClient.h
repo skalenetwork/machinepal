@@ -13,25 +13,9 @@ class PaymentRequirements;
 // settle(): performs the balance transfer via EasyNetDb::transferValue.
 class EasyNetFacilitatorClient : public FacilitatorClient {
 public:
-    explicit EasyNetFacilitatorClient( EthAddress& assetAddress, u256& chainId );
+    explicit EasyNetFacilitatorClient( const string baseUrl);
 
 
     nlohmann::json settle( const nlohmann::json& settlementRequestJson, MachinePayApp& _app );
-
-
-private:
-    EthAddress assetAddress_;
-    u256 chainId_;
-    mutable std::shared_mutex mutex_;
-
-    pair<ptr< PaymentPayload >, ptr<PaymentRequirements>> verifyUnsafe(const nlohmann::json& verifyRequestJson,
-        optional< string >& error, EasyNetDb& db) const;
-
-    // Extract required fields or throw with nested context.
-    EthAddress parseAddressFromJson( const nlohmann::json& j, const std::string& key ) const;
-    EthAddress getAssetAddress(
-        const nlohmann::json& instruction, const nlohmann::json& payload ) const;
-
-
 
 };

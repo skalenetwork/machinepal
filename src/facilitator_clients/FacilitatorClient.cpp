@@ -1,5 +1,5 @@
-#include "MachinePayCommon.h"
 #include "FacilitatorClient.h"
+#include "MachinePayCommon.h"
 
 
 #include "exceptions/BadGatewayException.h"
@@ -16,16 +16,16 @@
 FacilitatorClient::~FacilitatorClient() = default;
 
 
-FacilitatorClient::FacilitatorClient(
-    std::string _base_url, std::string _auth, long _connect_timeout_ms, long _total_timeout_ms )
-    : baseUrl_(  _base_url  ),
-      authHeaderValue_(  _auth  ),
-      connectTimeoutMs_( _connect_timeout_ms ),
-      totalTimeoutMs_( _total_timeout_ms ) {
-}
+FacilitatorClient::FacilitatorClient( std::string baseUrl, std::string auth,
+    long _connectTimeoutMs, long totalTimeoutMs )
+    : baseUrl_( baseUrl ),
+      authHeaderValue_( auth ),
+      connectTimeoutMs_( _connectTimeoutMs ),
+      totalTimeoutMs_( totalTimeoutMs ) {}
 
 
-std::string FacilitatorClient::extractCBInvalidReason( std::string& _responseData ) const {
+std::string FacilitatorClient::extractCBInvalidReason(
+    std::string& _responseData ) const {
     try {
         auto errJson = nlohmann::json::parse( _responseData );
         if ( errJson.contains( "reason" ) && errJson["reason"].is_string() ) {
@@ -37,8 +37,8 @@ std::string FacilitatorClient::extractCBInvalidReason( std::string& _responseDat
     return {};
 }
 
-void FacilitatorClient::checkForGenericHttpError(
-    const std::string url, std::string payload, std::string responseData, long httpCode ) const {
+void FacilitatorClient::checkForGenericHttpError( const std::string url,
+    std::string payload, std::string responseData, long httpCode ) const {
     if ( httpCode < 200 || httpCode >= 300 ) {
         std::string errorExplanationForUser;
         switch ( httpCode ) {
@@ -114,7 +114,8 @@ size_t FacilitatorClient::writeCallback(
     return real_size;
 }
 
-std::string FacilitatorClient::joinUrl( const std::string& _base, const std::string& _path ) {
+std::string FacilitatorClient::joinUrl(
+    const std::string& _base, const std::string& _path ) {
     if ( _base.empty() )
         return _path;
     if ( _path.empty() )
@@ -181,7 +182,8 @@ nlohmann::json FacilitatorClient::doRequestResponse(
 
 
     if ( res != CURLE_OK ) {
-        throw std::runtime_error( std::string( "CURL error: " ) + curl_easy_strerror( res ) );
+        throw std::runtime_error(
+            std::string( "CURL error: " ) + curl_easy_strerror( res ) );
     }
 
     if ( httpCode == 400 ) {
@@ -194,7 +196,8 @@ nlohmann::json FacilitatorClient::doRequestResponse(
     checkForGenericHttpError( url, payload, responseData, httpCode );
 
     if ( responseData.empty() ) {
-        throw std::runtime_error( "HTTP server at " + url + " returned empty response (HTTP " +
+        throw std::runtime_error( "HTTP server at " + url +
+                                  " returned empty response (HTTP " +
                                   std::to_string( httpCode ) + ")" );
     }
 
@@ -203,11 +206,19 @@ nlohmann::json FacilitatorClient::doRequestResponse(
     try {
         j = nlohmann::json::parse( responseData );
     } catch ( const std::exception& e ) {
-        throw std::runtime_error( "Failed to parse JSON (HTTP " + std::to_string( httpCode ) +
-                                  ") from " + url + ": " + std::string( e.what() ) +
-                                  " | Raw: " + responseData );
+        throw std::runtime_error( "Failed to parse JSON (HTTP " +
+                                  std::to_string( httpCode ) + ") from " + url + ": " +
+                                  std::string( e.what() ) + " | Raw: " + responseData );
     }
 
 
     return j;
+}
+
+nlohmann::json FacilitatorClient::verify( const nlohmann::json& request ) const {
+    return doRequestResponse( "/verify", request );
+}
+
+nlohmann::json FacilitatorClient::settle( const nlohmann::json& request ) const {
+    return doRequestResponse( "/settle", request );
 }

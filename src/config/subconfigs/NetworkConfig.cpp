@@ -12,9 +12,7 @@ NetworkConfig::NetworkConfig( const std::string& name, const EthAddress& walletA
     if (facilitator_.has_value()) {
         CHECK_STATE( facilitator_.value() );
     }
-    auto assetAddress = domain->assetAddress();
-    auto chainId = domain->chainId();
-    facilitatorClient_ = make_shared< EasyNetFacilitatorClient >( assetAddress, chainId );
+    facilitatorClient_ = make_shared< EasyNetFacilitatorClient >("https://localhost");
     CHECK_STATE( eip712Domain_ );
     CHECK_STATE( facilitatorClient_ );
 }

@@ -6,8 +6,8 @@
 class FacilitatorClient {
 public:
     virtual ~FacilitatorClient();
-    FacilitatorClient( std::string _base_url,
-        std::string _auth = "", long _connect_timeout_ms = 5000, long _total_timeout_ms = 15000
+    FacilitatorClient( std::string baseUrl,
+        std::string auth = "", long _connectTimeoutMs = 5000, long totalTimeoutMs = 15000
     );
     std::string extractCBInvalidReason( std::string& _responseData ) const;
     void checkForGenericHttpError( std::string url, std::string payload,
@@ -38,4 +38,6 @@ protected:
     static std::string joinUrl( const std::string& _base, const std::string& _path );
     nlohmann::json doRequestResponse(
         const std::string& _path, const nlohmann::json& _body ) const;
+    nlohmann::json verify( const nlohmann::json& request ) const;
+    nlohmann::json settle( const nlohmann::json& ) const;
 };

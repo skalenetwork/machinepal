@@ -55,15 +55,18 @@ const std::string VERIFY_PAYLOAD_EXAMPLE = R"JSON(
 
 
 nlohmann::json CBFacilitatorClient::verify(
-    const nlohmann::json&  verifyRequest) const {
-    return postJson( "/verify", verifyRequest );
+    const nlohmann::json& ) const {
+    auto example = json::parse( VERIFY_PAYLOAD_EXAMPLE );
+    return doRequestResponse( "/verify", example );
 }
 
 nlohmann::json CBFacilitatorClient::settle(
-        const nlohmann::json&  settleRequest
+        const nlohmann::json&
     ) const {
 
-    return postJson( "/settle", settleRequest);
+
+    auto example = json::parse( VERIFY_PAYLOAD_EXAMPLE );
+    return doRequestResponse( "/settle", example );
 }
 
 

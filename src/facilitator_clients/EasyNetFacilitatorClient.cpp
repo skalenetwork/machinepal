@@ -13,12 +13,8 @@
 #include <limits>        // for numeric_limits<u256>::max()
 #include <shared_mutex>  // added for std::shared_mutex, std::shared_lock, std::unique_lock
 
-EasyNetFacilitatorClient::EasyNetFacilitatorClient(
-    EthAddress& assetAddress, u256& chainId )
-    : FacilitatorClient( "", "", 0, 0 ),
-      assetAddress_( assetAddress ),
-      chainId_( chainId ) {}
-
+EasyNetFacilitatorClient::EasyNetFacilitatorClient(string baseUrl)
+    : FacilitatorClient(baseUrl) {}
 
 nlohmann::json EasyNetFacilitatorClient::settle(
     const nlohmann::json& settlementRequestJson, MachinePayApp& _app ) {
