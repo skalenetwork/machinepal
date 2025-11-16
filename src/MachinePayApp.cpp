@@ -99,6 +99,9 @@ uint32_t MachinePayApp::runUntilExit()
             }
         });
 
+        usleep(100 * 1000);
+        this->configManager()->latestConfig()->facilitatorClient()->selfTest();
+
         while (!isExited() && !sigReceived)
         {
             usleep(100 * 1000);

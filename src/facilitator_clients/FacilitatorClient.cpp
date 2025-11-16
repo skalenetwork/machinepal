@@ -22,7 +22,6 @@ FacilitatorClient::FacilitatorClient( std::string baseUrl, std::string auth,
       authHeaderValue_( auth ),
       connectTimeoutMs_( _connectTimeoutMs ),
       totalTimeoutMs_( totalTimeoutMs ) {
-    selfTest();
 }
 
 
@@ -226,7 +225,9 @@ nlohmann::json FacilitatorClient::settle( const nlohmann::json& request ) const 
 }
 
 void FacilitatorClient::selfTest() const {
-    spdlog::info("Performing test connection to facilitator " + baseUrl_);
+    auto testUrl = baseUrl_ + "/settle";
+    spdlog::info("Performing test connection to facilitator edpoint "
+        + testUrl);
 
     CURL* curl = curl_easy_init();
     if ( !curl ) {
@@ -234,7 +235,7 @@ void FacilitatorClient::selfTest() const {
     }
 
     // Set options for a connection-only test
-    curl_easy_setopt( curl, CURLOPT_URL, baseUrl_.c_str() );
+    curl_easy_setopt( curl, CURLOPT_URL, testUrl.c_str() );
 
     // This option tells curl to only perform the TCP connection (and SSL handshake)
     // and not send any application-level (HTTP) request.
@@ -253,7 +254,12 @@ void FacilitatorClient::selfTest() const {
     // Check for CURL-level errors (DNS, TCP, SSL, timeout)
     if ( res != CURLE_OK ) {
         spdlog::critical(
-            std::string( "FacilitatorClient selfTest failed (TCP connect): " ) +
-            curl_easy_strerror( res ) );
+            "Facilitator Connection Test FAILED"
+            "  URL: {}"
+            "  CURL Error [{}]: {}",
+            testUrl, static_cast<int>(res), curl_easy_strerror(res)
+        );
+    } else {
+        spdlog::info("Facilitator Connection Test SUCCESS");
     }
 }
