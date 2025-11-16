@@ -3,7 +3,7 @@
 
 #include "HttpError.h"
 #include "IResponseSender.h"
-#include "X402ProcessorState.h"
+#include "FacilitatorProcessorState.h"
 
 
 class SettlementResponse;
@@ -21,7 +21,7 @@ class OrganizationConfig;
 
 class FacilitatorProcessor {
 public:
-    using State = x402::State;
+
     explicit FacilitatorProcessor( MachinePayApp& app, ptr< IResponseSender >& responseSender );
     void reply400BadRequest( const std::string& message );
 
@@ -29,6 +29,7 @@ public:
     bool settle( std::string& responseBody );
 
     void replyToClientWithError( const HttpError& httpError );
+    bool isReplySent() const;
 
     void onRequestFullyReceived(
         const std::unique_ptr< proxygen::HTTPMessage >& reqHeaders, const string& body ) noexcept;
@@ -50,7 +51,6 @@ private:
 
     void reply415UnsupportedMediaType( const std::string& message );
 
-    void reply200Success( const std::string& settlementInfo, std::string& proxyBody );
 
     [[nodiscard]] ptr< MachinePayConfig > config() const {
         CHECK_STATE( config_ );
@@ -62,7 +62,7 @@ private:
     ptr< MachinePayConfig > config_;
     std::string decodedPath_;
     ptr< IResponseSender > responseSender_;
-    State state_ = State::START;
+    FacilitatorProcessorState state_ = FacilitatorProcessorState::START;
     // initially set to non-supported value
     proxygen::HTTPMethod method_ = proxygen::HTTPMethod::TRACE;
 };

@@ -5,6 +5,7 @@
 #include "MachinePayCommon.h"
 #include "config/subconfigs/OrganizationConfig.h"
 #include "config/subconfigs/ServerConfig.h"
+#include "facilitators/EasyNetFacilitator.h"
 
 
 FacilitatorProcessor::FacilitatorProcessor( MachinePayApp& app, ptr< IResponseSender >& responseSender )
@@ -16,13 +17,13 @@ FacilitatorProcessor::FacilitatorProcessor( MachinePayApp& app, ptr< IResponseSe
 void FacilitatorProcessor::reply400BadRequest( const std::string& message ) {
     string body = getErrorBody( message );
     sendResponse( { 400, "Bad request" }, STANDARD_HEADERS, body );
-    state_ = State::ERROR_SENT;
+    state_ = FacilitatorProcessorState::ERROR_SENT;
 }
 
 void FacilitatorProcessor::reply500InternalError( const std::string& message ) {
     string body = getErrorBody( message );
     sendResponse( { 500, "Server Error" }, STANDARD_HEADERS, body );
-    state_ = State::ERROR_SENT;
+    state_ = FacilitatorProcessorState::ERROR_SENT;
 }
 
 void FacilitatorProcessor::reply405MethodNotAllowed( const std::string& message ) {
@@ -30,13 +31,13 @@ void FacilitatorProcessor::reply405MethodNotAllowed( const std::string& message 
     auto headers = STANDARD_HEADERS;
     headers.push_back( {"Allow", "POST"} );
     sendResponse( { 405, "Method Not Allowed" }, headers, body );
-    state_ = State::ERROR_SENT;
+    state_ = FacilitatorProcessorState::ERROR_SENT;
 }
 
 void FacilitatorProcessor::reply413PayloadTooLarge( const std::string& message ) {
     string body = getErrorBody( message );
     sendResponse( { 413, "Payload Too Large" }, STANDARD_HEADERS, body );
-    state_ = State::ERROR_SENT;
+    state_ = FacilitatorProcessorState::ERROR_SENT;
 }
 
 void FacilitatorProcessor::reply415UnsupportedMediaType( const std::string& message ) {
@@ -44,17 +45,9 @@ void FacilitatorProcessor::reply415UnsupportedMediaType( const std::string& mess
     auto headers = STANDARD_HEADERS;
     headers.push_back( {"Accept-Post", "application/json"} );
     sendResponse( { 415, "Unsupported Media Type" }, headers, body );
-    state_ = State::ERROR_SENT;
+    state_ = FacilitatorProcessorState::ERROR_SENT;
 }
 
-
-void FacilitatorProcessor::reply200Success( const std::string& settlementInfo, std::string& proxiedBody ) {
-    std::vector< std::pair< std::string, std::string > > headers = {
-        { "Content-Type", "text/plain" }, { "X-PAYMENT-RESPONSE", settlementInfo }
-    };
-    sendResponse( { 200, "OK" }, headers, proxiedBody );
-    state_ = State::SUCCESS_RESOURCE_SENT;
-}
 
 
 
@@ -68,18 +61,13 @@ std::string FacilitatorProcessor::getErrorBody( const std::string& message ) {
 
 void FacilitatorProcessor::sendResponse( const std::pair< uint16_t, std::string >& statusAndMessage,
     const std::vector< std::pair< std::string, std::string > >& headers, const std::string& body ) {
-    if ( state_ == State::ERROR_SENT ) {
-        spdlog::info( "Attempted to send response after error response already sent." );
+    if ( state_ == FacilitatorProcessorState::ERROR_SENT) {
+        spdlog::error( "Attempted to send response after error response already sent." );
         return;
     }
 
-    if ( state_ == State::SUCCESS_RESOURCE_SENT ) {
-        spdlog::info( "Attempted to send response after resource already sent." );
-        return;
-    }
-
-    if ( state_ == State::SUCCESS_PAYMENT_REQUIRED_SENT ) {
-        spdlog::info( "Attempted to send response after payment required already sent." );
+    if ( state_ == FacilitatorProcessorState::SUCCESS_REPLY_SENT ) {
+        spdlog::error( "Attempted to send response after resource already sent." );
         return;
     }
 
@@ -103,8 +91,6 @@ void FacilitatorProcessor::onRequestStart(
             return;
         }
 
-
-
         auto contentType = reqHeaders->getHeaders().getSingleOrEmpty("Content-Type");
 
         // Trim leading whitespace to be more robust
@@ -114,15 +100,14 @@ void FacilitatorProcessor::onRequestStart(
             return;
         }
 
-        if (!contentType.starts_with("application/json")) {
-            reply415UnsupportedMediaType("Content-Type must be application/json.");
-            return;
-        }
     } catch ( std::exception& e ) {
         spdlog::critical( "onRequestStart exception" );
         printNestedException( e );
         reply500InternalError( "Could not process x402 request start." );
-    }
+    } catch (...) {
+        spdlog::critical( "onRequestStart unknown exception" );
+        reply500InternalError( "Could not process x402 request start." );
+    };
 }
 
 
@@ -145,22 +130,46 @@ void FacilitatorProcessor::replyToClientWithError( const HttpError& httpError ) 
     }
 }
 
+
+bool FacilitatorProcessor::isReplySent() const {
+    return state_ == FacilitatorProcessorState::ERROR_SENT ||
+           state_ == FacilitatorProcessorState::SUCCESS_REPLY_SENT;
+}
+
 void FacilitatorProcessor::onRequestFullyReceived(
-    const std::unique_ptr< proxygen::HTTPMessage >& , const string& /*body*/ ) noexcept {
+    const std::unique_ptr< proxygen::HTTPMessage >& , const string& body ) noexcept {
     try {
-        if ( state_ == State::ERROR_SENT )
+
+        if (isReplySent())
             return;
 
+        nlohmann::json jsonBody;
+
+        try {
+            jsonBody = nlohmann::json::parse( body );
+        } catch ( nlohmann::json::parse_error& e ) {
+            reply400BadRequest( "Invalid JSON in request body." );
+            return;
+        }
+
+        auto result = app_.easyNetFacilitator()->settleLocal( jsonBody );
+        std::string responseBody = result.dump(); // assuming result is nlohmann::json
+
+        sendResponse({200, "OK"}, STANDARD_HEADERS, responseBody);
+        state_ = FacilitatorProcessorState::SUCCESS_REPLY_SENT;
+
     } catch ( std::exception& e ) {
-        spdlog::critical( "onRequestCompletion exception" );
+        spdlog::critical( "onRequestFullyReceived exception" );
         printNestedException( e );
-        reply500InternalError( "Could not process x402 request." );
+        reply500InternalError( "Could not process settlement request." );
+    } catch (...) {
+        spdlog::critical( "onRequestFullyReceived unknown exception" );
+        reply500InternalError( "Could not process settlement request." );
     }
 }
 
-
 void FacilitatorProcessor::onBodySizeIncrease( size_t newSize ) {
-    if ( state_ == State::ERROR_SENT )
+    if (isReplySent())
         return;
     constexpr size_t MAX_BODY_SIZE = 1024 * 1024;
     if ( newSize > MAX_BODY_SIZE ) {
