@@ -8,6 +8,9 @@ public:
     virtual ~FacilitatorClient();
     FacilitatorClient( std::string _base_url, std::string _auth, long _connect_timeout_ms,
         long _total_timeout_ms );
+    std::string extractCBInvalidReason( std::string& _responseData ) const;
+    void checkForGenericHttpError( std::string url, std::string payload,
+        std::string responseData, long httpCode ) const;
 
     /*
     // POST /verify — validates the payment payload (no chain call)
@@ -19,11 +22,18 @@ public:
         const nlohmann::json& settlementRequestJson) const = 0;
         */
 
+protected:
+
     std::string baseUrl_;
     std::string authHeaderValue_;
     long connectTimeoutMs_;
     long totalTimeoutMs_;
     std::string proxyUrl_;
     std::vector< std::string > extraHeaders_;
+
+
+
+    static size_t writeCallback( char* _ptr, size_t _size, size_t _nmemb, void* _userdata );
+    static std::string joinUrl( const std::string& _base, const std::string& _path );
 
 };

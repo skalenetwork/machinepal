@@ -19,27 +19,7 @@ CBFacilitatorClient::CBFacilitatorClient(
 }
 
 
-size_t CBFacilitatorClient::writeCallback(
-    char* _ptr, size_t _size, size_t _nmemb, void* _userdata ) {
-    const size_t real_size = _size * _nmemb;
-    auto* buf = static_cast< std::string* >( _userdata );
-    buf->append( _ptr, real_size );
-    return real_size;
-}
 
-std::string CBFacilitatorClient::joinUrl( const std::string& _base, const std::string& _path ) {
-    if ( _base.empty() )
-        return _path;
-    if ( _path.empty() )
-        return _base;
-    const bool b = _base.back() == '/';
-    const bool p = _path.front() == '/';
-    if ( b && p )
-        return _base + _path.substr( 1 );
-    if ( !b && !p )
-        return _base + "/" + _path;
-    return _base + _path;
-}
 
 const std::string USDC_SEPOLIA_ADDRESS = "0x036CbD53842c5426634e7929541eC2318f3dCF7e";
 
@@ -89,86 +69,6 @@ nlohmann::json CBFacilitatorClient::settle(
     return postJson( "/settle", settleRequest);
 }
 
-std::string CBFacilitatorClient::extractCBInvalidReason( std::string& _responseData ) const {
-    try {
-        auto errJson = nlohmann::json::parse( _responseData );
-        if ( errJson.contains( "reason" ) && errJson["reason"].is_string() ) {
-            return errJson["reason"].get< std::string >();
-        }
-    } catch ( ... ) {
-        // Ignore JSON parse errors here
-    }
-    return {};
-}
-
-void CBFacilitatorClient::checkForGenericHttpError(
-    const std::string url, std::string payload, std::string responseData, long httpCode ) const {
-    if ( httpCode < 200 || httpCode >= 300 ) {
-        std::string errorExplanationForUser;
-        switch ( httpCode ) {
-        case 400: {
-            errorExplanationForUser = "Bad Request";
-            std::string invalidReason = extractCBInvalidReason( responseData );
-            errorExplanationForUser += ":" + invalidReason;
-            break;
-        }
-        case 401:
-            errorExplanationForUser = "Unauthorized";
-            break;
-        case 403:
-            errorExplanationForUser = "Forbidden";
-            break;
-        case 404:
-            errorExplanationForUser = "Not Found";
-            break;
-        case 429:
-            errorExplanationForUser = "Too Many Requests";
-            break;
-        case 500:
-            errorExplanationForUser = "Internal Server Error";
-            break;
-        case 502:
-            errorExplanationForUser = "Bad Gateway";
-            break;
-        case 503:
-            errorExplanationForUser = "Service Unavailable";
-            break;
-        case 504:
-            errorExplanationForUser = "Gateway Timeout";
-            break;
-        default:
-            errorExplanationForUser = "Unknown Error";
-            break;
-        }
-
-        std::string errorString =
-            ( "HTTP " + std::to_string( httpCode ) + " (" + errorExplanationForUser +
-                ") error at " + url + ": " + responseData + "\n | Payload: " + payload );
-
-        LOG( ERROR ) << errorString;
-
-        switch ( httpCode ) {
-        case 401:
-            throw UnauthorizedException( errorExplanationForUser );
-        case 403:
-            throw ForbiddenException( errorExplanationForUser );
-        case 404:
-            throw NotFoundException( errorExplanationForUser );
-        case 429:
-            throw TooManyRequestsException( errorExplanationForUser );
-        case 500:
-            throw UnknownServerErrorException( errorExplanationForUser );
-        case 502:
-            throw BadGatewayException( errorExplanationForUser );
-        case 503:
-            throw ServiceUnavailableException( errorExplanationForUser );
-        case 504:
-            throw GatewayTimeoutException( errorExplanationForUser );
-        default:
-            throw UnknownServerErrorException( errorExplanationForUser );
-        }
-    }
-}
 
 nlohmann::json CBFacilitatorClient::postJson(
     const std::string& _path, const nlohmann::json& _body ) const {

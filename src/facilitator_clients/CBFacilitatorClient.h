@@ -30,14 +30,6 @@ public:
 private:
 
 
-    std::string extractCBInvalidReason( std::string& _responseData ) const;
-
-    void checkForGenericHttpError(
-        std::string url, std::string payload, std::string responseData, long httpCode ) const;
-
-
-    static size_t writeCallback( char* _ptr, size_t _size, size_t _nmemb, void* _userdata );
-    static std::string joinUrl( const std::string& _base, const std::string& _path );
 
     nlohmann::json postJson( const std::string& _path, const nlohmann::json& _body ) const;
 
