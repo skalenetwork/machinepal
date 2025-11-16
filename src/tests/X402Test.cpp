@@ -139,6 +139,8 @@ BOOST_AUTO_TEST_CASE( Returns200WhenPaymentHeaderPresent ) {
         PaymentPayload().createDefaultPaymentPayload( privKey, to,
             value, nonce, "machinepay-easynet" );
 
+    sleep(1);
+
     auto [headersMap, statusLine, resp] =
         client->sendRequestWithPayloadAndParseResult( "/posts/1", paymentPayload, true );
 

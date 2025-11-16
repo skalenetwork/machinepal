@@ -99,11 +99,21 @@ uint32_t MachinePayApp::runUntilExit()
             }
         });
 
-        usleep(100 * 1000);
-        this->configManager()->latestConfig()->facilitatorClient()->selfTest();
+        uint64_t counter = 0;
 
         while (!isExited() && !sigReceived)
         {
+            counter++;
+            if (counter == 10) {
+                // do a self test of the facilitator one second after start
+                try {
+                    this->configManager()->latestConfig()->facilitatorClient()->selfTest();
+                } catch (const std::exception& ex) {
+                    spdlog::error("Facilitator self test failed: {}", ex.what());
+                } catch (...) {
+                    spdlog::error("Facilitator self test failed: unknown error");
+                }
+            }
             usleep(100 * 1000);
         }
         if (sigReceived)

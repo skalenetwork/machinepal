@@ -253,6 +253,10 @@ void FacilitatorClient::selfTest() const {
     // Use the same connection and total timeouts as regular requests
     curl_easy_setopt( curl, CURLOPT_CONNECTTIMEOUT_MS, connectTimeoutMs_ );
     curl_easy_setopt( curl, CURLOPT_TIMEOUT_MS, totalTimeoutMs_ );
+    // Disables certificate verification
+    curl_easy_setopt( curl, CURLOPT_SSL_VERIFYPEER, 0L );
+    // Disables hostname verification
+    curl_easy_setopt( curl, CURLOPT_SSL_VERIFYHOST, 0L );
 
     // Perform the connection attempt
     CURLcode res = curl_easy_perform( curl );
