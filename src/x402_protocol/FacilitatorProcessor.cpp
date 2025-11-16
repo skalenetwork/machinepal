@@ -1,11 +1,16 @@
 
 #include "FacilitatorProcessor.h"
+#include  "x402_server/X402Handler.h"
 #include "IResponseSender.h"
 #include "MachinePayApp.h"
 #include "MachinePayCommon.h"
 #include "config/subconfigs/OrganizationConfig.h"
 #include "config/subconfigs/ServerConfig.h"
 #include "facilitators/EasyNetFacilitator.h"
+
+
+auto SETTLE_PATH = EASYNET_FACILITATOR_PREFIX + string("/settle");
+auto VERIFY_PATH = EASYNET_FACILITATOR_PREFIX + string("/verify");
 
 
 FacilitatorProcessor::FacilitatorProcessor( MachinePayApp& app, ptr< IResponseSender >& responseSender )
@@ -100,6 +105,16 @@ void FacilitatorProcessor::onRequestStart(
             return;
         }
 
+        auto path = reqHeaders->getPath();
+
+        if (path != SETTLE_PATH && path != VERIFY_PATH) {
+            reply400BadRequest("Invalid endpoint. Use settle or verify.");
+            return;
+        }
+
+        path_ = path;
+
+
     } catch ( std::exception& e ) {
         spdlog::critical( "onRequestStart exception" );
         printNestedException( e );
@@ -139,7 +154,6 @@ bool FacilitatorProcessor::isReplySent() const {
 void FacilitatorProcessor::onRequestFullyReceived(
     const std::unique_ptr< proxygen::HTTPMessage >& , const string& body ) noexcept {
     try {
-
         if (isReplySent())
             return;
 
@@ -152,7 +166,17 @@ void FacilitatorProcessor::onRequestFullyReceived(
             return;
         }
 
-        auto result = app_.easyNetFacilitator()->settleLocal( jsonBody );
+
+        nlohmann::json result;
+
+        if (path_ == SETTLE_PATH)
+            result = app_.easyNetFacilitator()->settleLocal( jsonBody );
+        else  {
+            CHECK_STATE( path_ == VERIFY_PATH );
+            result = app_.easyNetFacilitator()->verifyLocal( jsonBody );
+        }
+
+
         std::string responseBody = result.dump(); // assuming result is nlohmann::json
 
         sendResponse({200, "OK"}, STANDARD_HEADERS, responseBody);

@@ -10,6 +10,9 @@
 
 class MachinePayApp;
 
+
+constexpr const char* EASYNET_FACILITATOR_PREFIX = "/machinepay-facilitator-easynet";
+
 class X402Handler : public proxygen::RequestHandler {
 public:
     void onRequest( std::unique_ptr< proxygen::HTTPMessage > _headers ) noexcept override;

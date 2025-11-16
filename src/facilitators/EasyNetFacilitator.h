@@ -11,7 +11,7 @@ public:
     nlohmann::json settleLocal( const nlohmann::json& settlementRequestJson);
     pair< ptr< PaymentPayload >, ptr< PaymentRequirements > > verifyUnsafe(
         const nlohmann::json& verifyRequestJson, optional< string >& error, EasyNetDb& db ) const;
-    nlohmann::json verifyLocal( const nlohmann::json& verifyRequestJson, EasyNetDb& db );
+    nlohmann::json verifyLocal( const nlohmann::json& verifyRequestJson);
 
 private:
     MachinePayApp& app_;

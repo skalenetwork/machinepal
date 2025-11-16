@@ -69,4 +69,6 @@ private:
     FacilitatorProcessorState state_ = FacilitatorProcessorState::START;
     // initially set to non-supported value
     proxygen::HTTPMethod method_ = proxygen::HTTPMethod::TRACE;
+
+    string path_;
 };

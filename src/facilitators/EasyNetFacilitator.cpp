@@ -100,12 +100,13 @@ pair< ptr< PaymentPayload >, ptr< PaymentRequirements > > EasyNetFacilitator::ve
     return { paymentPayload, paymentRequirements };
 }
 
-nlohmann::json EasyNetFacilitator::verifyLocal(
-    const nlohmann::json& verifyRequestJson, EasyNetDb& db ) {
+nlohmann::json EasyNetFacilitator::verifyLocal( const nlohmann::json& verifyRequestJson) {
+    auto db = dynamic_pointer_cast< EasyNetDb >( app_.machinePayDB() );
+    CHECK_STATE( db );
     std::shared_lock< std::shared_mutex > lock( mutex_ );
     try {
         optional< string > error;
-        auto [payload, paymentReqs] = verifyUnsafe( verifyRequestJson, error, db );
+        auto [payload, paymentReqs] = verifyUnsafe( verifyRequestJson, error, *db );
         auto fromWalletAddress = payload->payload()->authorization()->from();
         if ( error ) {
             VerifyResponse errorResponse(

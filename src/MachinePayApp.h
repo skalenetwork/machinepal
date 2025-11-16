@@ -2,6 +2,7 @@
 #include "config/ConfigManager.h"
 #include "init/Init.h"
 #include "payment/PaymentManager.h"
+#include "x402_protocol/FacilitatorProcessor.h"
 #include "x402_protocol/X402Processor.h"
 #include "x402_server/ServerFactory.h"
 
@@ -44,13 +45,13 @@ public:
     }
 
 
-    std::shared_ptr<X402Processor> makeEasyNetProcessor(ptr<IResponseSender>& _responseSender)
+    std::shared_ptr<IProcessor> makeFacilitatorProcessor(ptr<IResponseSender>& _responseSender)
     {
-        return std::make_shared<X402Processor>(*this, _responseSender);;
+        return std::make_shared<FacilitatorProcessor>(*this, _responseSender);;
     }
 
 
-    std::shared_ptr<X402Processor> makeX402Processor(ptr<IResponseSender>& _responseSender)
+    std::shared_ptr<IProcessor> makeX402Processor(ptr<IResponseSender>& _responseSender)
     {
         return std::make_shared<X402Processor>(*this, _responseSender);;
     }
