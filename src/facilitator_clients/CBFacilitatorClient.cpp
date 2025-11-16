@@ -70,5 +70,5 @@ nlohmann::json CBFacilitatorClient::settle(
 nlohmann::json CBFacilitatorClient::postJson(
     const std::string& _path, const nlohmann::json& ) const {
     auto example = json::parse( VERIFY_PAYLOAD_EXAMPLE );
-    return FacilitatorClient::postJson( _path, example );
+    return doRequestResponse( _path, example );
 }

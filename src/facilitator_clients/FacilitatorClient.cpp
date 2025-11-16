@@ -129,7 +129,7 @@ std::string FacilitatorClient::joinUrl( const std::string& _base, const std::str
 }
 
 
-nlohmann::json FacilitatorClient::postJson(
+nlohmann::json FacilitatorClient::doRequestResponse(
     const std::string& _path, const nlohmann::json& _body ) const {
     const std::string url = joinUrl( baseUrl_, _path );
     std::string payload = _body.dump();
