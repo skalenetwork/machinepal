@@ -19,11 +19,11 @@ public:
         const nlohmann::json& settlementRequestJson) const = 0;
         */
 
-    std::string base_url;
-    std::string authHeaderValue;
-    long connect_timeout_ms;
-    long total_timeout_ms;
-    std::string proxyUrl;
-    std::vector< std::string > extraHeaders;
+    std::string baseUrl_;
+    std::string authHeaderValue_;
+    long connectTimeoutMs_;
+    long totalTimeoutMs_;
+    std::string proxyUrl_;
+    std::vector< std::string > extraHeaders_;
 
 };

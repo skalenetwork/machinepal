@@ -172,7 +172,7 @@ void CBFacilitatorClient::checkForGenericHttpError(
 
 nlohmann::json CBFacilitatorClient::postJson(
     const std::string& _path, const nlohmann::json& _body ) const {
-    const std::string url = joinUrl( base_url, _path );
+    const std::string url = joinUrl( baseUrl_, _path );
     std::string payload = _body.dump();
 
     payload = VERIFY_PAYLOAD_EXAMPLE;
@@ -187,11 +187,11 @@ nlohmann::json CBFacilitatorClient::postJson(
     // Build headers
     struct curl_slist* headers = nullptr;
     headers = curl_slist_append( headers, "Content-Type: application/json" );
-    if ( !authHeaderValue.empty() ) {
-        std::string auth = "Authorization: " + authHeaderValue;
+    if ( !authHeaderValue_.empty() ) {
+        std::string auth = "Authorization: " + authHeaderValue_;
         headers = curl_slist_append( headers, auth.c_str() );
     }
-    for ( const auto& h : extraHeaders ) {
+    for ( const auto& h : extraHeaders_ ) {
         headers = curl_slist_append( headers, h.c_str() );
     }
 
@@ -204,11 +204,11 @@ nlohmann::json CBFacilitatorClient::postJson(
     curl_easy_setopt( curl, CURLOPT_USERAGENT, "CBFacilitatorClient/1.0" );
     curl_easy_setopt( curl, CURLOPT_WRITEFUNCTION, &CBFacilitatorClient::writeCallback );
     curl_easy_setopt( curl, CURLOPT_WRITEDATA, &responseData );
-    curl_easy_setopt( curl, CURLOPT_CONNECTTIMEOUT_MS, connect_timeout_ms );
-    curl_easy_setopt( curl, CURLOPT_TIMEOUT_MS, total_timeout_ms );
+    curl_easy_setopt( curl, CURLOPT_CONNECTTIMEOUT_MS, connectTimeoutMs_ );
+    curl_easy_setopt( curl, CURLOPT_TIMEOUT_MS, totalTimeoutMs_ );
     curl_easy_setopt( curl, CURLOPT_FOLLOWLOCATION, 1L );
-    if ( !proxyUrl.empty() ) {
-        curl_easy_setopt( curl, CURLOPT_PROXY, proxyUrl.c_str() );
+    if ( !proxyUrl_.empty() ) {
+        curl_easy_setopt( curl, CURLOPT_PROXY, proxyUrl_.c_str() );
     }
 
     // Perform
