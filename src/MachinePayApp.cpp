@@ -2,7 +2,7 @@
 #include "x402_protocol/X402Processor.h"
 
 #include "db/MachinePayDb.h"
-#include "payment/FacilitatorManager.h"
+#include "facilitator_clients/FacilitatorManager.h"
 
 MachinePayApp::MachinePayApp(const std::map<std::string, std::string>& configValuesFromCliAndEnv)
 {

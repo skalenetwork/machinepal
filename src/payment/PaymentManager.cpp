@@ -1,6 +1,6 @@
 #include "PaymentManager.h"
 
-#include "FacilitatorManager.h"
+#include "../facilitator_clients/FacilitatorManager.h"
 #include "MachinePayApp.h"
 #include "MachinePayCommon.h"
 #include "config/subconfigs/FacilitatorConfig.h"

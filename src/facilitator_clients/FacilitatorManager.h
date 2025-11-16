@@ -1,12 +1,12 @@
 #pragma once
+#include "../payment/datastructures/SettlementRequest.h"
+#include "../payment/datastructures/SettlementResponse.h"
 #include "MachinePayApp.h"
 #include "config/subconfigs/FacilitatorConfig.h"
 #include "config/subconfigs/NetworkConfig.h"
-#include "datastructures/SettlementRequest.h"
-#include "datastructures/SettlementResponse.h"
 #include "db/MachinePayDb.h"
-#include <variant>
 #include <memory>
+#include <variant>
 
 using std::variant;
 using std::shared_ptr;
