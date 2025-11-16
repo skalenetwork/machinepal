@@ -37,9 +37,10 @@ nlohmann::json EasyNetFacilitator::processSettleRequest(
 
         // Prepare extra parameters for updated EasyNetDb API
         std::string jsonInfo = paymentPayload->toJson().dump();
-        std::string transactionHash = paymentPayload->payload()->signature().toHex( PREFIX_0x );
-        std::string authorizationSignatureHash =
-            Encoding::hashToHex( paymentPayload->payload()->signature().computeSignatureHash() );
+        std::string transactionHash =
+            paymentPayload->payload()->signature().toHex( PREFIX_0x );
+        std::string authorizationSignatureHash = Encoding::hashToHex(
+            paymentPayload->payload()->signature().computeSignatureHash() );
 
         auto result = db->processTransferRequest( fromWalletAddress, toWalletAddress,
             assetWalletAddress, transferValue, nonce, resource, "0.0.0.0", jsonInfo,
@@ -66,8 +67,8 @@ nlohmann::json EasyNetFacilitator::processSettleRequest(
 
 
 pair< ptr< PaymentPayload >, ptr< PaymentRequirements > >
-EasyNetFacilitator::processVerifyRequestUnsafe(
-    const nlohmann::json& verifyRequestJson, optional< string >& error, EasyNetDb& db ) const {
+EasyNetFacilitator::processVerifyRequestUnsafe( const nlohmann::json& verifyRequestJson,
+    optional< string >& error, EasyNetDb& db ) const {
     auto verifyRequest = SettlementRequest::fromJson( verifyRequestJson );
     auto paymentPayload = verifyRequest.paymentPayload();
     auto paymentRequirements = verifyRequest.paymentRequirements();
@@ -102,13 +103,15 @@ EasyNetFacilitator::processVerifyRequestUnsafe(
     return { paymentPayload, paymentRequirements };
 }
 
-nlohmann::json EasyNetFacilitator::processVerifyRequest( const nlohmann::json& verifyRequestJson ) {
+nlohmann::json EasyNetFacilitator::processVerifyRequest(
+    const nlohmann::json& verifyRequestJson ) {
     auto db = dynamic_pointer_cast< EasyNetDb >( app_.machinePayDB() );
     CHECK_STATE( db );
     std::shared_lock< std::shared_mutex > lock( mutex_ );
     try {
         optional< string > error;
-        auto [payload, paymentReqs] = processVerifyRequestUnsafe( verifyRequestJson, error, *db );
+        auto [payload, paymentReqs] =
+            processVerifyRequestUnsafe( verifyRequestJson, error, *db );
         auto fromWalletAddress = payload->payload()->authorization()->from();
         if ( error ) {
             VerifyResponse errorResponse(
