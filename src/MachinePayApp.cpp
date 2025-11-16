@@ -2,7 +2,7 @@
 #include "x402_protocol/X402Processor.h"
 
 #include "db/MachinePayDb.h"
-#include "facilitator_clients/FacilitatorManager.h"
+#include "facilitator_clients/FacilitatorClientManager.h"
 
 MachinePayApp::MachinePayApp(const std::map<std::string, std::string>& configValuesFromCliAndEnv)
 {
@@ -13,7 +13,7 @@ MachinePayApp::MachinePayApp(const std::map<std::string, std::string>& configVal
         configPath_ = configManager_->fileManager()->canonicalConfigDirPath();
         Init::initLogLevelFromConfig(configManager());
         paymentManager_ = std::make_shared<PaymentManager>(*this);
-        facilitatorManager_ = std::make_shared<FacilitatorManager>(*this);
+        FacilitatorClientManager_ = std::make_shared<FacilitatorClientManager>(*this);
         //machinePayDB_ = std::make_shared<MachinePayDb>(*this, DbType::SQLite);
         machinePayDB_ = std::make_shared<EasyNetDb>(*this, DbType::SQLite);
     }
@@ -22,9 +22,9 @@ MachinePayApp::MachinePayApp(const std::map<std::string, std::string>& configVal
         RETHROW_NESTED2("Failed to initialize MachinePayApp");
     }
 }
-ptr< FacilitatorManager > MachinePayApp::facilitatorManager() const {
-    CHECK_STATE( facilitatorManager_ );
-    return facilitatorManager_;
+ptr< FacilitatorClientManager > MachinePayApp::facilitatorClientManager() const {
+    CHECK_STATE( FacilitatorClientManager_ );
+    return FacilitatorClientManager_;
 }
 
 

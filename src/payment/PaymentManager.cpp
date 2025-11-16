@@ -1,6 +1,6 @@
 #include "PaymentManager.h"
 
-#include "../facilitator_clients/FacilitatorManager.h"
+#include "../facilitator_clients/FacilitatorClientManager.h"
 #include "MachinePayApp.h"
 #include "MachinePayCommon.h"
 #include "config/subconfigs/FacilitatorConfig.h"
@@ -127,7 +127,7 @@ variant< SettlementResponse, HttpError > PaymentManager::checkPaymentIsNewAndSet
 
 
     auto result =
-        app_.facilitatorManager()->routeToFacilitatorAndSettle( networkConfig, settlementRequest );
+        app_.facilitatorClientManager()->routeToFacilitatorAndSettle( networkConfig, settlementRequest );
     if ( holds_alternative< HttpError >( result ) ) {
         return result;
     }

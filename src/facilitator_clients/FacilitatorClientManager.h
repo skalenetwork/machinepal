@@ -11,9 +11,9 @@
 using std::variant;
 using std::shared_ptr;
 
-class FacilitatorManager {
+class FacilitatorClientManager {
 public:
-    explicit FacilitatorManager(MachinePayApp& app);
+    explicit FacilitatorClientManager(MachinePayApp& app);
     variant< SettlementResponse, HttpError > routeToFacilitatorAndSettle(
         const NetworkConfig& networkConfig, SettlementRequest& settlementRequest );
 

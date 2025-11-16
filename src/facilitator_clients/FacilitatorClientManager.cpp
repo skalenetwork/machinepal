@@ -1,11 +1,11 @@
-#include "FacilitatorManager.h"
+#include "FacilitatorClientManager.h"
 #include "MachinePayApp.h"
 #include "db/MachinePayDb.h"
 #include "spdlog/spdlog.h"
 
-FacilitatorManager::FacilitatorManager(MachinePayApp& app) : app_(app) {}
+FacilitatorClientManager::FacilitatorClientManager(MachinePayApp& app) : app_(app) {}
 
-variant< SettlementResponse, HttpError > FacilitatorManager::routeToFacilitatorAndSettle(
+variant< SettlementResponse, HttpError > FacilitatorClientManager::routeToFacilitatorAndSettle(
     const NetworkConfig& networkConfig, SettlementRequest& settlementRequest ) {
     if ( networkConfig.name() == "machinepay-easynet" ) {
         auto baseDb = app_.machinePayDB();
