@@ -9,14 +9,15 @@ EasyNetFacilitator::EasyNetFacilitator( MachinePayApp& app ) : app_( app ) {
     chainId_ = EIP712Domain::machinePayEasyNet()->chainId();
 };
 
-nlohmann::json EasyNetFacilitator::settleLocal( const nlohmann::json& settlementRequestJson ) {
+nlohmann::json EasyNetFacilitator::processSettleRequest(
+    const nlohmann::json& settlementRequestJson ) {
     std::unique_lock< std::shared_mutex > lock( mutex_ );
     auto db = dynamic_pointer_cast< EasyNetDb >( app_.machinePayDB() );
     CHECK_STATE( db );
     try {
         optional< string > error;
         auto [paymentPayload, paymentReqs] =
-            verifyUnsafe( settlementRequestJson, error, *db );
+            processVerifyRequestUnsafe( settlementRequestJson, error, *db );
 
         // Obtain from address after verification (available even if error)
         EthAddress fromWalletAddress = paymentPayload->payload()->authorization()->from();
@@ -64,7 +65,8 @@ nlohmann::json EasyNetFacilitator::settleLocal( const nlohmann::json& settlement
 }
 
 
-pair< ptr< PaymentPayload >, ptr< PaymentRequirements > > EasyNetFacilitator::verifyUnsafe(
+pair< ptr< PaymentPayload >, ptr< PaymentRequirements > >
+EasyNetFacilitator::processVerifyRequestUnsafe(
     const nlohmann::json& verifyRequestJson, optional< string >& error, EasyNetDb& db ) const {
     auto verifyRequest = SettlementRequest::fromJson( verifyRequestJson );
     auto paymentPayload = verifyRequest.paymentPayload();
@@ -100,13 +102,14 @@ pair< ptr< PaymentPayload >, ptr< PaymentRequirements > > EasyNetFacilitator::ve
     return { paymentPayload, paymentRequirements };
 }
 
-nlohmann::json EasyNetFacilitator::verifyLocal( const nlohmann::json& verifyRequestJson) {
+nlohmann::json EasyNetFacilitator::processVerifyRequest( const nlohmann::json& verifyRequestJson ) {
     auto db = dynamic_pointer_cast< EasyNetDb >( app_.machinePayDB() );
     CHECK_STATE( db );
     std::shared_lock< std::shared_mutex > lock( mutex_ );
     try {
         optional< string > error;
-        auto [payload, paymentReqs] = verifyUnsafe( verifyRequestJson, error, *db );
+        auto [payload, paymentReqs] =
+            processVerifyRequestUnsafe( verifyRequestJson, error, *db );
         auto fromWalletAddress = payload->payload()->authorization()->from();
         if ( error ) {
             VerifyResponse errorResponse(

@@ -8,10 +8,10 @@ class MachinePayApp;
 class EasyNetFacilitator {
 public:
     explicit EasyNetFacilitator(MachinePayApp& app);
-    nlohmann::json settleLocal( const nlohmann::json& settlementRequestJson);
-    pair< ptr< PaymentPayload >, ptr< PaymentRequirements > > verifyUnsafe(
+    nlohmann::json processSettleRequest( const nlohmann::json& settlementRequestJson);
+    pair< ptr< PaymentPayload >, ptr< PaymentRequirements > > processVerifyRequestUnsafe(
         const nlohmann::json& verifyRequestJson, optional< string >& error, EasyNetDb& db ) const;
-    nlohmann::json verifyLocal( const nlohmann::json& verifyRequestJson);
+    nlohmann::json processVerifyRequest( const nlohmann::json& verifyRequestJson);
 
 private:
     MachinePayApp& app_;

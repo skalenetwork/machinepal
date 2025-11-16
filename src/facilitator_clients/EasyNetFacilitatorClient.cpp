@@ -17,5 +17,5 @@ EasyNetFacilitatorClient::EasyNetFacilitatorClient( EthAddress& assetAddress, u2
     : assetAddress_( assetAddress ), chainId_( chainId ) {}
 nlohmann::json EasyNetFacilitatorClient::settle( const nlohmann::json& settlementRequestJson,
     MachinePayApp& _app) {
-    return _app.easyNetFacilitator()->settleLocal( settlementRequestJson );
+    return _app.easyNetFacilitator()->processSettleRequest( settlementRequestJson );
 }

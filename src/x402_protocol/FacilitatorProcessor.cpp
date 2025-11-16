@@ -170,10 +170,10 @@ void FacilitatorProcessor::onRequestFullyReceived(
         nlohmann::json result;
 
         if (path_ == SETTLE_PATH)
-            result = app_.easyNetFacilitator()->settleLocal( jsonBody );
+            result = app_.easyNetFacilitator()->processSettleRequest( jsonBody );
         else  {
             CHECK_STATE( path_ == VERIFY_PATH );
-            result = app_.easyNetFacilitator()->verifyLocal( jsonBody );
+            result = app_.easyNetFacilitator()->processVerifyRequest( jsonBody );
         }
 
 
