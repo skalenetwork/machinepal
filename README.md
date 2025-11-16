@@ -5,7 +5,7 @@
 
 # 🚀 MachinePay: The  x402 Payment Agent for the Web
 
-Instantly add **crypto payments** to any website or API using the [x402 protocol](https://docs.cdp.coinbase.com/x402/docs/welcome).
+Instantly add **crypto payments** to any website or API using this AI Payment Agent that implements [x402 protocol](https://docs.cdp.coinbase.com/x402/docs/welcome). Sell anything: APIs, resources and products.
 
 [![Love this project? Give it a heart!](https://img.shields.io/badge/%E2%9D%A4%EF%B8%8F%20Love%20this%20project%3F%20Give%20it%20a%20heart!-ff69b4?style=flat-square)](https://github.com/skalenetwork/machinepay/stargazers)
 [![GitHub stars](https://img.shields.io/github/stars/skalenetwork/machinepay?style=social)](https://github.com/skalenetwork/machinepay/stargazers)
