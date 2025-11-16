@@ -11,7 +11,7 @@
 // The signature/address values are dummy values — the real facilitator will reject them,
 // but the purpose here is to exercise the request/response path against the real API.
 
-static nlohmann::json makeInstruction() {
+static nlohmann::json makeRequirements() {
     return nlohmann::json{
         { "network", "base-sepolia" }, { "asset", "usdc" },
         { "amount", "1000000" },  // 1.000000 USDC (6 decimals)
@@ -33,11 +33,16 @@ static nlohmann::json makePayload() {
 BOOST_AUTO_TEST_CASE( verify_call_real_server_invalid_sig ) {
     CBFacilitatorClient client;  // defaults to https://x402.org/facilitator
 
-    auto instruction = makeInstruction();
+    auto instruction = makeRequirements();
     auto payload = makePayload();
 
+    json request;
+
+    request["paymentPayload"] = payload;
+    request["paymentRequirements"] = instruction;
+
     try {
-        auto res = client.verify( instruction, payload );
+        auto res = client.verify( request);
         // We expect the facilitator to either return a JSON object describing invalid signature
         // or another error object. Accept either.
         BOOST_TEST( res.is_object() );
@@ -59,7 +64,7 @@ BOOST_AUTO_TEST_CASE( verify_call_real_server_invalid_sig ) {
 BOOST_AUTO_TEST_CASE( settle_call_real_server_stub ) {
     CBFacilitatorClient client;
 
-    auto instruction = makeInstruction();
+    auto instruction = makeRequirements();
     auto payload = makePayload();
 
     try {

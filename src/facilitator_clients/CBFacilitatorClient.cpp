@@ -86,24 +86,15 @@ const std::string VERIFY_PAYLOAD_EXAMPLE = R"JSON(
 
 
 nlohmann::json CBFacilitatorClient::verify(
-    const nlohmann::json& ) const {
-    throw std::runtime_error( "Not implemented: verify with single argument" );
-}
-
-nlohmann::json CBFacilitatorClient::verify(
-    const nlohmann::json& _paymentInstruction, const nlohmann::json& _paymentPayload ) const {
-    nlohmann::json body;
-    body["paymentInstruction"] = _paymentInstruction;
-    body["paymentPayload"] = _paymentPayload;
-    return postJson( "/verify", body );
+    const nlohmann::json&  verifyRequest) const {
+    return postJson( "/verify", verifyRequest );
 }
 
 nlohmann::json CBFacilitatorClient::settle(
-    const nlohmann::json& _paymentInstruction, const nlohmann::json& _paymentPayload ) const {
-    nlohmann::json body;
-    body["paymentInstruction"] = _paymentInstruction;
-    body["paymentPayload"] = _paymentPayload;
-    return postJson( "/settle", body );
+        const nlohmann::json&  settleRequest
+    ) const {
+
+    return postJson( "/settle", settleRequest);
 }
 
 std::string CBFacilitatorClient::extractCBInvalidReason( std::string& _responseData ) const {

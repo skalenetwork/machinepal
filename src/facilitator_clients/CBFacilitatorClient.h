@@ -23,19 +23,11 @@ public:
     nlohmann::json verify( const nlohmann::json& _settlementRequest) const;
 
 
-    // POST /verify — validates the payment payload (no chain call)
-    nlohmann::json verify( const nlohmann::json& _paymentInstruction,
-        const nlohmann::json& _paymentPayload ) const;
-
     // POST /settle — performs the on-chain transfer (gas sponsored by facilitator)
-    nlohmann::json settle( const nlohmann::json& _paymentInstruction,
-        const nlohmann::json& _paymentPayload ) const ;
+    nlohmann::json settle( const nlohmann::json& settleRequest ) const ;
 
-    // POST /settle — performs the on-chain transfer (gas sponsored by facilitator)
-    nlohmann::json settle(
-        const nlohmann::json& ) const {
-        throw std::runtime_error( "Not implemented: settle with single argument" );
-    };
+
+private:
 
 
     std::string extractCBInvalidReason( std::string& _responseData ) const;
@@ -43,7 +35,6 @@ public:
     void checkForGenericHttpError(
         std::string url, std::string payload, std::string responseData, long httpCode ) const;
 
-private:
     static void ensureCurlGlobalInit();
     static size_t writeCallback( char* _ptr, size_t _size, size_t _nmemb, void* _userdata );
     static std::string joinUrl( const std::string& _base, const std::string& _path );
