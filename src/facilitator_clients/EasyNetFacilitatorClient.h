@@ -16,9 +16,8 @@ public:
     explicit EasyNetFacilitatorClient( EthAddress& assetAddress, u256& chainId );
 
 
-    nlohmann::json verify(const nlohmann::json& verifyRequestJson, EasyNetDb& db);
+    nlohmann::json settle( const nlohmann::json& settlementRequestJson);
 
-    nlohmann::json settleLocal( const nlohmann::json& settlementRequestJson, EasyNetDb& db);
 
 private:
     EthAddress assetAddress_;

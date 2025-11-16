@@ -6,6 +6,7 @@
 #include "x402_server/ServerFactory.h"
 
 
+class EasyNetFacilitator;
 class FacilitatorClientManager;
 class MachinePayDb;
 
@@ -32,6 +33,8 @@ public:
 
 
     [[nodiscard]] ptr< FacilitatorClientManager > facilitatorClientManager() const;
+
+    [[nodiscard]] ptr< EasyNetFacilitator > easyNetFacilitator() const;
 
 
     [[nodiscard]] ptr<MachinePayDb> machinePayDB() const
@@ -154,7 +157,8 @@ private:
 
 private:
     ptr<PaymentManager> paymentManager_;
-    ptr<FacilitatorClientManager> FacilitatorClientManager_;
+    ptr<FacilitatorClientManager> facilitatorClientManager_;
+    ptr<EasyNetFacilitator> easyNetFacilitator_;
     std::atomic<bool> isStarted_{false};
     std::atomic<bool> serverStopCalled_{false};
 
