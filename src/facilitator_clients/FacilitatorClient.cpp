@@ -169,9 +169,18 @@ nlohmann::json FacilitatorClient::doRequestResponse(
     curl_easy_setopt( curl, CURLOPT_CONNECTTIMEOUT_MS, connectTimeoutMs_ );
     curl_easy_setopt( curl, CURLOPT_TIMEOUT_MS, totalTimeoutMs_ );
     curl_easy_setopt( curl, CURLOPT_FOLLOWLOCATION, 1L );
+
     if ( !proxyUrl_.empty() ) {
         curl_easy_setopt( curl, CURLOPT_PROXY, proxyUrl_.c_str() );
     }
+
+    if (!verifyTLSCerts()) {
+        // Disables certificate verification
+        curl_easy_setopt( curl, CURLOPT_SSL_VERIFYPEER, 0L );
+        // Disables hostname verification
+        curl_easy_setopt( curl, CURLOPT_SSL_VERIFYHOST, 0L );
+    }
+
 
     // Perform
     CURLcode res = curl_easy_perform( curl );
@@ -253,10 +262,13 @@ void FacilitatorClient::selfTest() const {
     // Use the same connection and total timeouts as regular requests
     curl_easy_setopt( curl, CURLOPT_CONNECTTIMEOUT_MS, connectTimeoutMs_ );
     curl_easy_setopt( curl, CURLOPT_TIMEOUT_MS, totalTimeoutMs_ );
-    // Disables certificate verification
-    curl_easy_setopt( curl, CURLOPT_SSL_VERIFYPEER, 0L );
-    // Disables hostname verification
-    curl_easy_setopt( curl, CURLOPT_SSL_VERIFYHOST, 0L );
+
+    if (!verifyTLSCerts()) {
+        // Disables certificate verification
+        curl_easy_setopt( curl, CURLOPT_SSL_VERIFYPEER, 0L );
+        // Disables hostname verification
+        curl_easy_setopt( curl, CURLOPT_SSL_VERIFYHOST, 0L );
+    }
 
     // Perform the connection attempt
     CURLcode res = curl_easy_perform( curl );

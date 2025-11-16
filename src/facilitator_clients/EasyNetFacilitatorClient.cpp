@@ -16,7 +16,3 @@
 EasyNetFacilitatorClient::EasyNetFacilitatorClient(string baseUrl)
     : FacilitatorClient(baseUrl) {}
 
-nlohmann::json EasyNetFacilitatorClient::settle(
-    const nlohmann::json& settlementRequestJson, MachinePayApp& _app ) {
-    return _app.easyNetFacilitator()->processSettleRequest( settlementRequestJson );
-}

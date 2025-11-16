@@ -28,6 +28,10 @@ public:
     virtual nlohmann::json settle( const nlohmann::json& ) const;
     void selfTest() const;
 
+    virtual bool verifyTLSCerts() const {
+        return true;
+    }
+
 protected:
 
     std::string baseUrl_;

@@ -15,7 +15,9 @@ class EasyNetFacilitatorClient : public FacilitatorClient {
 public:
     explicit EasyNetFacilitatorClient( const string baseUrl);
 
+    bool verifyTLSCerts()  const override {
+        return false;
+    }
 
-    nlohmann::json settle( const nlohmann::json& settlementRequestJson, MachinePayApp& _app );
 
 };

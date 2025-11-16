@@ -175,9 +175,10 @@ variant< SettlementResponse, HttpError > PaymentManager::checkPaymentIsNewAndSet
         return checkPaymentIsNewAndSettleItUnsafe(
             machinePayConfig, resource, organization, paymentPayload, ipAddress );
     } catch ( const std::exception& e ) {
-        spdlog::error( "Error during payment settlement: {}", e.what() );
+        spdlog::error( "Error during payment settlement request to"
+                       " facilitator: {}", e.what() );
         return HttpError( ERR_INTERNAL_SERVER_ERROR,
-            std::string( "Error during payment settlement: " ) + e.what() );
+            std::string( "Error during payment settlement request to facilitator: " ));
     }
 }
 
