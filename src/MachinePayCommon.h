@@ -130,3 +130,5 @@ enum Prefix
     PREFIX_NONE,
     PREFIX_0x
 };
+
+using namespace std;

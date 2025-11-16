@@ -23,18 +23,20 @@
 #include <iomanip>
 #include <sstream>
 
-// Helper function for libcurl write callback
-static size_t WriteCallback( void* contents, size_t size, size_t nmemb, void* userp ) {
-    ( ( std::string* ) userp )->append( ( char* ) contents, size * nmemb );
-    return size * nmemb;
+// New: header callback to collect raw headers
+static size_t HeaderCallback( char* buffer, size_t size, size_t nitems, void* userdata ) {
+    size_t total = size * nitems;
+    auto* headers = static_cast< string* >( userdata );
+    headers->append( buffer, total );
+    return total;
 }
 
 atomic< bool > Init::inited_{ false };
 
 
 void ThrowOnFailure() {
-    std::cerr << "Fatal log or CHECK failed in proxygen" << std::endl;
-    throw std::runtime_error( "Fatal log or CHECK failed" );
+    cerr << "Fatal log or CHECK failed in proxygen" << endl;
+    throw runtime_error( "Fatal log or CHECK failed" );
 }
 
 void Init::initAllLibs( int _argc, char* _argv[] ) {
@@ -82,7 +84,7 @@ map< string, string > Init::getMachinePayEnvironmentOverloads() {
         }
 
         if ( envOverloads.contains( strippedKey ) > 0 ) {
-            throw std::runtime_error( "Duplicate environment variable: " + string( key ) );
+            throw runtime_error( "Duplicate environment variable: " + string( key ) );
         }
         envOverloads[strippedKey] = environmentVariable.substr( pos + 1 );
     }
@@ -117,99 +119,186 @@ void Init::initLogLevelFromConfig( ptr< ConfigManager > manager ) {
 }
 
 bool Init::fetchInternetTime(
-    const char* url, std::string& utcDatetime, std::string& responseOut, std::string& errorOut ) {
+    const char* url, string& utcDatetime, string& responseOut, string& errorOut ) {
     CURL* curl = curl_easy_init();
     if ( !curl ) {
         errorOut = "Failed to initialize curl for time check";
         return false;
     }
-    std::string readBuffer;
+
+    // RAII for curl handle
+    auto curl_cleanup = [&]() {
+        if ( curl ) {
+            curl_easy_cleanup( curl );
+            curl = nullptr;
+        }
+    };
+    shared_ptr< void > guard( nullptr, [&]( void* ) { curl_cleanup(); } );
+
+
+    string headerBuffer;
+    // First try: HEAD request to extract Date header
     curl_easy_setopt( curl, CURLOPT_URL, url );
-    curl_easy_setopt( curl, CURLOPT_WRITEFUNCTION, WriteCallback );
-    curl_easy_setopt( curl, CURLOPT_WRITEDATA, &readBuffer );
+    curl_easy_setopt( curl, CURLOPT_NOBODY, 1L );
+    curl_easy_setopt( curl, CURLOPT_HEADERFUNCTION, HeaderCallback );
+    curl_easy_setopt( curl, CURLOPT_HEADERDATA, &headerBuffer );
     curl_easy_setopt( curl, CURLOPT_TIMEOUT, 5L );
     CURLcode res = curl_easy_perform( curl );
-    curl_easy_cleanup( curl );
-    if ( res != CURLE_OK ) {
-        errorOut = std::string( "Failed to fetch internet time from " ) + url + ": " +
-                   curl_easy_strerror( res );
+
+    auto parseDateHeader = [&]( const string& headers ) -> bool {
+        istringstream iss( headers );
+        string line;
+        while ( getline( iss, line ) ) {
+            if ( line.ends_with( "\r" ) )
+                line.pop_back();
+            // Case-insensitive starts_with "date:"
+            if ( line.size() >= 5 ) {
+                string prefix = line.substr( 0, 5 );
+                for ( auto& c : prefix )
+                    c = tolower( static_cast< unsigned char >( c ) );
+                if ( prefix == "date:" ) {
+                    string value = line.substr( 5 );
+                    // trim leading spaces
+                    while (
+                        !value.empty() && isspace( static_cast< unsigned char >( value.front() ) ) )
+                        value.erase( value.begin() );
+                    // Expected: Sun, 16 Nov 2025 12:19:42 GMT
+                    // Remove trailing GMT if present for parsing
+                    if ( value.size() > 4 && value.substr( value.size() - 4 ) == " GMT" ) {
+                        value = value.substr( 0, value.size() - 4 );
+                    }
+                    tm tm{};
+                    istringstream parse( value );
+                    parse >> get_time( &tm, "%a, %d %b %Y %H:%M:%S" );
+                    if ( !parse.fail() ) {
+                        time_t t = timegm( &tm );
+                        if ( t != -1 ) {
+                            auto gmt = gmtime( &t );
+                            if ( gmt ) {
+                                ostringstream out;
+                                out << put_time( gmt, "%Y-%m-%dT%H:%M:%SZ" );
+                                utcDatetime = out.str();
+                                return true;
+                            }
+                        }
+                    }
+                    return false;
+                }
+            }
+        }
+        return false;
+    };
+
+    if ( res == CURLE_OK && parseDateHeader( headerBuffer ) ) {
+        responseOut = headerBuffer;
+        return true;
+    } else {
         return false;
     }
-    responseOut = readBuffer;
-    // Try to find utc_datetime (worldtimeapi.org)
-    auto pos = readBuffer.find( "\"utc_datetime\":" );
-    if ( pos != std::string::npos ) {
-        pos = readBuffer.find( '"', pos + 15 );
-        if ( pos != std::string::npos ) {
-            auto end = readBuffer.find( '"', pos + 1 );
-            if ( end != std::string::npos ) {
-                utcDatetime = readBuffer.substr( pos + 1, end - pos - 1 );
-                return true;
-            }
-        }
-    }
-    // Try to find dateTime (timeapi.io)
-    pos = readBuffer.find( "\"dateTime\":" );
-    if ( pos != std::string::npos ) {
-        pos = readBuffer.find( '"', pos + 10 );
-        if ( pos != std::string::npos ) {
-            auto end = readBuffer.find( '"', pos + 1 );
-            if ( end != std::string::npos ) {
-                utcDatetime = readBuffer.substr( pos + 1, end - pos - 1 );
-                return true;
-            }
-        }
-    }
-    errorOut = std::string( "Could not find UTC datetime in response from " ) + url;
-    return false;
 }
 
 void Init::checkSystemTime() {
-    std::string utcDatetime, response, error;
-    bool ok = fetchInternetTime(
-        "http://worldtimeapi.org/api/timezone/Etc/UTC", utcDatetime, response, error );
+    string utcDatetime, response, error;
+    bool ok = fetchInternetTime( "https://google.com", utcDatetime, response, error );
     if ( !ok ) {
-        spdlog::warn( "{}", error );
-        // Try fallback
-        ok = fetchInternetTime(
-            "https://timeapi.io/api/Time/current/zone?timeZone=UTC", utcDatetime, response, error );
-        if ( !ok ) {
-            spdlog::warn( "{}", error );
-            return;
-        }
+        spdlog::warn( "fetchInternetTime failed: {}", error );
+        return;
     }
-    // Example: "2025-10-23T12:34:56.123456+00:00" or "2025-10-23T12:34:56"
-    // Parse the datetime string (ignore fractional seconds and timezone)
-    std::string datetime = utcDatetime.substr( 0, 19 );
-    std::tm tm = {};
-    std::istringstream ss( datetime );
-    ss >> std::get_time( &tm, "%Y-%m-%dT%H:%M:%S" );
-    if ( ss.fail() ) {
-        spdlog::warn( "Failed to parse utcDatetime: {}", utcDatetime );
+    if ( utcDatetime.empty() ) {
+        spdlog::warn( "Empty utcDatetime received. Response: {}", response );
+        return;
+    }
+
+    // Expect formats like:
+    // 1) YYYY-MM-DDTHH:MM:SSZ
+    // 2) YYYY-MM-DDTHH:MM:SS.ffffffZ
+    // 3) YYYY-MM-DDTHH:MM:SS+00:00
+    // 4) YYYY-MM-DDTHH:MM:SS.ffffff+00:00
+    // 5) YYYY-MM-DDTHH:MM:SS(.fraction)+00:00
+    if ( utcDatetime.size() < 19 ) {
+        spdlog::warn( "utcDatetime too short: {}", utcDatetime );
         spdlog::warn( "Full response: {}", response );
         return;
     }
-    time_t internetTime = timegm( &tm );
+
+    string base = utcDatetime.substr( 0, 19 );  // YYYY-MM-DDTHH:MM:SS
+    tm tm{};
+    istringstream ss( base );
+    ss >> get_time( &tm, "%Y-%m-%dT%H:%M:%S" );
+    if ( ss.fail() ) {
+        spdlog::warn( "Failed to parse base datetime: {}", base );
+        spdlog::warn( "Full utcDatetime: {}", utcDatetime );
+        return;
+    }
+
+    // Parse remainder for fractional seconds and timezone
+    int offsetSeconds = 0;
+    size_t idx = 19;
+    // Skip fractional seconds if present
+    if ( idx < utcDatetime.size() && utcDatetime[idx] == '.' ) {
+        ++idx;
+        while ( idx < utcDatetime.size() &&
+                isdigit( static_cast< unsigned char >( utcDatetime[idx] ) ) )
+            ++idx;
+    }
+
+    if ( idx < utcDatetime.size() ) {
+        char tzChar = utcDatetime[idx];
+        if ( tzChar == 'Z' ) {
+            // UTC, no offset
+        } else if ( tzChar == '+' || tzChar == '-' ) {
+            int sign = ( tzChar == '+' ) ? 1 : -1;
+            ++idx;
+            if ( idx + 4 < utcDatetime.size() ) {  // HH:MM (5 chars)
+                string hhStr = utcDatetime.substr( idx, 2 );
+                string mmStr = utcDatetime.substr( idx + 3, 2 );  // skip colon
+                if ( utcDatetime[idx + 2] == ':' && isdigit( hhStr[0] ) && isdigit( hhStr[1] ) &&
+                     isdigit( mmStr[0] ) && isdigit( mmStr[1] ) ) {
+                    int hh = stoi( hhStr );
+                    int mm = stoi( mmStr );
+                    offsetSeconds = sign * ( hh * 3600 + mm * 60 );
+                } else {
+                    spdlog::warn( "Malformed timezone segment in utcDatetime: {}", utcDatetime );
+                    return;
+                }
+            } else {
+                spdlog::warn( "Incomplete timezone segment in utcDatetime: {}", utcDatetime );
+                return;
+            }
+        } else {
+            spdlog::warn(
+                "Unexpected character after datetime '{}' in '{}'", utcDatetime[idx], utcDatetime );
+            return;
+        }
+    }
+
+    time_t baseUtc = timegm( &tm );
+    if ( baseUtc == -1 ) {
+        spdlog::warn( "timegm failed for '{}'", base );
+        return;
+    }
+    // If offset is +HH:MM, local time ahead of UTC, so UTC = local - offset.
+    time_t internetTime = baseUtc - offsetSeconds;
     time_t systemTime = time( nullptr );
-    long diff = std::labs( systemTime - internetTime );
+    long diff = labs( systemTime - internetTime );
+
     spdlog::info(
         "System time: {} | Internet time: {} | Diff: {} seconds", systemTime, internetTime, diff );
     if ( diff > 60 ) {
-        throw std::runtime_error(
-            "System time differs from internet time by more than 60 seconds. Its too much for "
-            "machinepay to operate correctly. Please synchronize system time and then start "
-            "machinepay." );
+        throw runtime_error(
+            "System time differs from internet time by more than 60 seconds. Synchronize system "
+            "time before starting machinepay." );
     }
 }
 
 void Init::checkOperatingSystemConfiguration() {
     utsname buffer{};
     if ( uname( &buffer ) != 0 ) {
-        throw std::runtime_error( "Failed to get OS information" );
+        throw runtime_error( "Failed to get OS information" );
     }
-    if ( std::string( buffer.sysname ) != "Linux" ) {
-        throw std::runtime_error(
-            "Unsupported OS: " + std::string( buffer.sysname ) + ". Only Linux is supported." );
+    if ( string( buffer.sysname ) != "Linux" ) {
+        throw runtime_error(
+            "Unsupported OS: " + string( buffer.sysname ) + ". Only Linux is supported." );
     }
     spdlog::info( "Operating system: {}", buffer.sysname );
 
