@@ -21,7 +21,9 @@ FacilitatorClient::FacilitatorClient( std::string baseUrl, std::string auth,
     : baseUrl_( baseUrl ),
       authHeaderValue_( auth ),
       connectTimeoutMs_( _connectTimeoutMs ),
-      totalTimeoutMs_( totalTimeoutMs ) {}
+      totalTimeoutMs_( totalTimeoutMs ) {
+    selfTest();
+}
 
 
 std::string FacilitatorClient::extractCBInvalidReason(
@@ -221,4 +223,37 @@ nlohmann::json FacilitatorClient::verify( const nlohmann::json& request ) const 
 
 nlohmann::json FacilitatorClient::settle( const nlohmann::json& request ) const {
     return doRequestResponse( "/settle", request );
+}
+
+void FacilitatorClient::selfTest() const {
+    spdlog::info("Performing test connection to facilitator " + baseUrl_);
+
+    CURL* curl = curl_easy_init();
+    if ( !curl ) {
+        throw std::runtime_error( "selfTest: Failed to init CURL easy handle" );
+    }
+
+    // Set options for a connection-only test
+    curl_easy_setopt( curl, CURLOPT_URL, baseUrl_.c_str() );
+
+    // This option tells curl to only perform the TCP connection (and SSL handshake)
+    // and not send any application-level (HTTP) request.
+    curl_easy_setopt( curl, CURLOPT_CONNECT_ONLY, 1L );
+
+    // Use the same connection and total timeouts as regular requests
+    curl_easy_setopt( curl, CURLOPT_CONNECTTIMEOUT_MS, connectTimeoutMs_ );
+    curl_easy_setopt( curl, CURLOPT_TIMEOUT_MS, totalTimeoutMs_ );
+
+    // Perform the connection attempt
+    CURLcode res = curl_easy_perform( curl );
+
+    // Cleanup
+    curl_easy_cleanup( curl );
+
+    // Check for CURL-level errors (DNS, TCP, SSL, timeout)
+    if ( res != CURLE_OK ) {
+        spdlog::critical(
+            std::string( "FacilitatorClient selfTest failed (TCP connect): " ) +
+            curl_easy_strerror( res ) );
+    }
 }

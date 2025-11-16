@@ -26,6 +26,7 @@ public:
 
     virtual nlohmann::json verify( const nlohmann::json& request ) const ;
     virtual nlohmann::json settle( const nlohmann::json& ) const;
+    void selfTest() const;
 
 protected:
 
