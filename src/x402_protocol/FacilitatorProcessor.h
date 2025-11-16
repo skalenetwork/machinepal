@@ -1,9 +1,10 @@
 #pragma once
 #include <proxygen/lib/http/HTTPMethod.h>
 
-#include "HttpError.h"
-#include "IResponseSender.h"
 #include "FacilitatorProcessorState.h"
+#include "HttpError.h"
+#include "IProcessor.h"
+#include "IResponseSender.h"
 
 
 class SettlementResponse;
@@ -19,21 +20,21 @@ class MachinePayApp;  // Forward declaration
 class MachinePayConfig;
 class OrganizationConfig;
 
-class FacilitatorProcessor {
+class FacilitatorProcessor : public IProcessor {
 public:
 
     explicit FacilitatorProcessor( MachinePayApp& app, ptr< IResponseSender >& responseSender );
     void reply400BadRequest( const std::string& message );
 
-    void onRequestStart( const std::unique_ptr< proxygen::HTTPMessage >& headers ) noexcept;
+    void onRequestStart( const std::unique_ptr< proxygen::HTTPMessage >& headers ) noexcept override;
     bool settle( std::string& responseBody );
 
-    void replyToClientWithError( const HttpError& httpError );
-    bool isReplySent() const;
+    void replyToClientWithError( const HttpError& httpError ) override;
+    bool isReplySent() const override;
 
     void onRequestFullyReceived(
-        const std::unique_ptr< proxygen::HTTPMessage >& reqHeaders, const string& body ) noexcept;
-    void onBodySizeIncrease( size_t newSize );
+        const std::unique_ptr< proxygen::HTTPMessage >& reqHeaders, const string& body ) noexcept override;
+    void onBodySizeIncrease( size_t newSize ) override;
     static const std::vector< std::pair< std::string, std::string > > STANDARD_HEADERS;
 
 private:

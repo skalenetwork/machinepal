@@ -3,6 +3,7 @@
 #include <optional>
 
 #include "HttpError.h"
+#include "IProcessor.h"
 #include "IResponseSender.h"
 #include "X402ProcessorState.h"
 
@@ -20,23 +21,23 @@ class MachinePayApp;  // Forward declaration
 class MachinePayConfig;
 class OrganizationConfig;
 
-class X402Processor {
+class X402Processor : public IProcessor {
 public:
     using State = x402::State;
     explicit X402Processor( MachinePayApp& app, ptr< IResponseSender >& responseSender );
 
-    bool isReplySent() const;
+    bool isReplySent() const override;
 
     bool reply402IfNoPaymentHeader( const std::unique_ptr< proxygen::HTTPMessage >& req );
 
-    void onRequestStart( const std::unique_ptr< proxygen::HTTPMessage >& headers ) noexcept;
+    void onRequestStart( const std::unique_ptr< proxygen::HTTPMessage >& headers ) noexcept override;
     bool proxyResponseToBackEnd( std::string& responseBody );
 
-    void replyToClientWithError( const HttpError& httpError );
+    void replyToClientWithError( const HttpError& httpError ) override;
 
     void onRequestFullyReceived(
-        const std::unique_ptr< proxygen::HTTPMessage >& reqHeaders, const string& body ) noexcept;
-    void onBodySizeIncrease( size_t newSize );
+        const std::unique_ptr< proxygen::HTTPMessage >& reqHeaders, const string& body ) noexcept override;
+    void onBodySizeIncrease( size_t newSize ) override;
     static const std::vector< std::pair< std::string, std::string > > STANDARD_HEADERS;
 
 private:

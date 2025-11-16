@@ -4,6 +4,7 @@
 #include "ProxygenResponseSender.h"
 #include "examples/PaymentExamples.h"
 #include "x402_protocol/BackendConnection.h"
+#include "x402_protocol/IProcessor.h"
 
 using namespace proxygen;
 
@@ -20,6 +21,7 @@ void X402Handler::onRequest( std::unique_ptr< HTTPMessage > _headers ) noexcept 
             processor_ = app_.makeX402Processor( responseSender );
         }
 
+        // processor_ is now of type std::shared_ptr<IProcessorInterface>
         processor_->onRequestStart( reqHeaders_ );
     } catch ( const std::exception& e ) {
         spdlog::critical( "Error in onRequest: {}", e.what() );
