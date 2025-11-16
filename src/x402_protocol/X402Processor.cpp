@@ -16,6 +16,10 @@ X402Processor::X402Processor( MachinePayApp& app, ptr< IResponseSender >& respon
     : app_( app ), responseSender_( responseSender ) {
     config_ = app_.configManager()->latestConfig();
 }
+bool X402Processor::isReplySent() const {
+    return state_ == State::ERROR_SENT || state_ == State::SUCCESS_RESOURCE_SENT ||
+           state_ == State::SUCCESS_PAYMENT_REQUIRED_SENT;
+}
 
 
 /**
@@ -266,6 +270,9 @@ void X402Processor::onRequestStart(
         spdlog::critical( "onRequestStart exception" );
         printNestedException( e );
         reply500InternalError( "Could not process x402 request start." );
+    } catch ( ... ) {
+        spdlog::critical( "onRequestStart unknown exception" );
+        reply500InternalError( "Could not process x402 request start." );
     };
 }
 
@@ -356,7 +363,10 @@ void X402Processor::onRequestFullyReceived(
         spdlog::critical( "onRequestCompletion exception" );
         printNestedException( e );
         reply500InternalError( "Could not process x402 request." );
-    }
+    } catch ( ... ) {
+        spdlog::critical( "onRequestCompletion unknown exception" );
+        reply500InternalError( "Could not process x402 request." );
+    };
 }
 
 

@@ -25,6 +25,8 @@ public:
     using State = x402::State;
     explicit X402Processor( MachinePayApp& app, ptr< IResponseSender >& responseSender );
 
+    bool isReplySent() const;
+
     bool reply402IfNoPaymentHeader( const std::unique_ptr< proxygen::HTTPMessage >& req );
 
     void onRequestStart( const std::unique_ptr< proxygen::HTTPMessage >& headers ) noexcept;

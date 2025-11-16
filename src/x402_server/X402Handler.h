@@ -14,6 +14,7 @@ class X402Handler : public proxygen::RequestHandler {
 public:
     void onRequest( std::unique_ptr< proxygen::HTTPMessage > _headers ) noexcept override;
     void onBody( std::unique_ptr< folly::IOBuf > _body ) noexcept override;
+    void sendInternalError();
     void onEOM() noexcept override;
 
     void requestComplete() noexcept override {

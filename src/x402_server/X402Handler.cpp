@@ -9,21 +9,24 @@ using namespace proxygen;
 
 
 void X402Handler::onRequest( std::unique_ptr< HTTPMessage > _headers ) noexcept {
+    std::shared_ptr< IResponseSender > responseSender =
+        std::make_shared< ProxygenResponseSender >( downstream_ );
     try {
         CHECK_STATE( self_ );
         reqHeaders_ = std::move( _headers );
-        std::shared_ptr< IResponseSender > responseSender =
-            std::make_shared< ProxygenResponseSender >( downstream_ );
-        if ( reqHeaders_->getPath() == "/machinepay-api-easynet" ) {
+        if ( reqHeaders_->getPath().starts_with( "/machinepay-api-easynet/" ) ) {
             processor_ = app_.makeEasyNetProcessor( responseSender );
-        }
-        {
+        } else {
             processor_ = app_.makeX402Processor( responseSender );
         }
 
         processor_->onRequestStart( reqHeaders_ );
     } catch ( const std::exception& e ) {
         spdlog::critical( "Error in onRequest: {}", e.what() );
+        sendInternalError();
+    } catch ( ... ) {
+        spdlog::critical( "Unknown error in onRequest" );
+        sendInternalError();
     }
 }
 
@@ -37,14 +40,23 @@ void X402Handler::onBody( std::unique_ptr< folly::IOBuf > _body ) noexcept {
         processor_->onBodySizeIncrease( bodyBuffer_.size() );
     } catch ( const std::exception& e ) {
         spdlog::critical( "Error in onBody: {}", e.what() );
+        sendInternalError();
+    } catch ( ... ) {
+        spdlog::critical( "Unknown error in onBody" );
+        sendInternalError();
     }
 }
 
 
+void X402Handler::sendInternalError() {
+    std::shared_ptr< IResponseSender > responseSender =
+        std::make_shared< ProxygenResponseSender >( downstream_ );
+    responseSender->sendResponse(
+        { 500, "Server Error" }, { { "Content-Type", "text/plain" } }, "Internal server error." );
+}
 void X402Handler::onEOM() noexcept {
     try {
         CHECK_STATE( self_ );
-        ProxygenResponseSender responseSender( downstream_ );
         if ( !processor_ ) {
             spdlog::critical( "X402Handler::onEOM() called without processor_" );
             return;
@@ -52,5 +64,9 @@ void X402Handler::onEOM() noexcept {
         processor_->onRequestFullyReceived( reqHeaders_, bodyBuffer_ );
     } catch ( const std::exception& e ) {
         spdlog::critical( "Error in onEOM: {}", e.what() );
+        sendInternalError();
+    } catch ( ... ) {
+        spdlog::critical( "Unknown errror in onEOM" );
+        sendInternalError();
     }
 }
