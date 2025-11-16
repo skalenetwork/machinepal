@@ -19,5 +19,7 @@ COPY build/mptest /usr/bin/mptest
 # Copy runit service script
 COPY --chmod=755 run_machinepay.sh /etc/service/machinepay/run
 
+COPY --chmod=755 first_run.sh /first_run.sh
+
 # Set entrypoint to runit
 ENTRYPOINT ["/usr/sbin/runsvdir", "/etc/service"]
