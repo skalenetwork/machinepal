@@ -30,9 +30,6 @@ public:
     [[nodiscard]] const std::string& baseUrl() const;
     [[nodiscard]] const std::optional< CanonicalPath >& apiKeyFile() const;
 
-    variant< SettlementResponse, HttpError > settlePayment(
-        const shared_ptr< PaymentPayload >& paymentPayload );
-
     static ptr< FacilitatorConfig > createFomJson(
         const nlohmann::json& j, ptr< FileManager > fileManager );
 
@@ -40,7 +37,7 @@ public:
     static FacilitatorType mustContainType( const nlohmann::json& j );
 };
 
-inline std::string to_string( FacilitatorType type ) {
+inline std::string toString( FacilitatorType type ) {
     switch ( type ) {
     case FacilitatorType::cdp:
         return "cdp";

@@ -23,23 +23,6 @@ const std::optional< CanonicalPath >& FacilitatorConfig::apiKeyFile() const {
     return apiKeyFile_;
 }
 
-variant< SettlementResponse, HttpError > FacilitatorConfig::settlePayment(
-    const shared_ptr< PaymentPayload >& ) {
-    try {
-        auto response = string( PaymentExamples::EXACT_UCDC_SETTLEMENT_RESPONSE_CB_SEPOLIA );
-
-        auto settlementResponse = SettlementResponse::fromJsonString( response );
-        if ( settlementResponse.success() ) {
-            return settlementResponse;
-        }
-        return HttpError( ERR_BAD_REQUEST,
-            settlementResponse.errorReason().value_or( "Payment settlement failed" ) );
-    } catch ( const std::exception& ex ) {
-        spdlog::error( "FacilitatorConfig::settlePayment exception: {}", ex.what() );
-        return HttpError(
-            ERR_BAD_GATEWAY, std::string( "Error during payment settlement: " ) + ex.what() );
-    }
-}
 
 
 ptr< FacilitatorConfig > FacilitatorConfig::createFomJson(
