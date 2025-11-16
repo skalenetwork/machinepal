@@ -16,13 +16,8 @@
 CBFacilitatorClient::CBFacilitatorClient(
     std::string _base_url, std::string _auth, long _connect_timeout_ms, long _total_timeout_ms )
     : FacilitatorClient(_base_url,  _auth, _connect_timeout_ms , _total_timeout_ms ) {
-    ensureCurlGlobalInit();
 }
 
-void CBFacilitatorClient::ensureCurlGlobalInit() {
-    static std::once_flag once;
-    std::call_once( once, []() { curl_global_init( CURL_GLOBAL_DEFAULT ); } );
-}
 
 size_t CBFacilitatorClient::writeCallback(
     char* _ptr, size_t _size, size_t _nmemb, void* _userdata ) {
