@@ -22,6 +22,9 @@ FacilitatorClient::FacilitatorClient( std::string baseUrl, std::string auth,
       authHeaderValue_( auth ),
       connectTimeoutMs_( _connectTimeoutMs ),
       totalTimeoutMs_( totalTimeoutMs ) {
+    CHECK_STATE( connectTimeoutMs_ > 0 );
+    CHECK_STATE( totalTimeoutMs > 0 );
+    CHECK_STATE( totalTimeoutMs_ >= connectTimeoutMs_ );
 }
 
 
@@ -229,10 +232,16 @@ void FacilitatorClient::selfTest() const {
     spdlog::info("Performing test connection to facilitator edpoint "
         + testUrl);
 
+    // Create a buffer to hold detailed error messages
+    char errbuf[CURL_ERROR_SIZE];
+
     CURL* curl = curl_easy_init();
+
     if ( !curl ) {
         throw std::runtime_error( "selfTest: Failed to init CURL easy handle" );
     }
+
+    curl_easy_setopt( curl, CURLOPT_ERRORBUFFER, errbuf );
 
     // Set options for a connection-only test
     curl_easy_setopt( curl, CURLOPT_URL, testUrl.c_str() );
@@ -254,11 +263,12 @@ void FacilitatorClient::selfTest() const {
     // Check for CURL-level errors (DNS, TCP, SSL, timeout)
     if ( res != CURLE_OK ) {
         spdlog::critical(
-            "Facilitator Connection Test FAILED"
-            "  URL: {}"
-            "  CURL Error [{}]: {}",
-            testUrl, static_cast<int>(res), curl_easy_strerror(res)
-        );
+                "Facilitator Connection Test FAILED"
+                "  URL: {}"
+                "  CURL Error [{}]: {}"
+                "  **Details: {}**", // Log the new, detailed messag
+                testUrl, static_cast<int>(res), curl_easy_strerror(res),
+                errbuf);
     } else {
         spdlog::info("Facilitator Connection Test SUCCESS");
     }

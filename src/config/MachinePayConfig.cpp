@@ -74,11 +74,10 @@ MachinePayConfig::MachinePayConfig( const ptr< ServerConfig >& server, const ptr
     string protocol;
     uint64_t port;
 
-    /*if (server_->https()) {
+    if (server_->https()) {
         protocol = "https://";
         port = server_->https()->port();
-    } else*/
-    if (server_->http()) {
+    } else if (server_->http()) {
         protocol = "http://";
         port = server_->http()->port();
     } else {
