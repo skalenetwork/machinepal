@@ -11,14 +11,13 @@
 #include "url/URLUtils.h"
 
 
-
 X402Processor::X402Processor( MachinePayApp& app, ptr< IResponseSender >& responseSender )
     : app_( app ), responseSender_( responseSender ) {
     config_ = app_.configManager()->latestConfig();
 }
 bool X402Processor::isReplySent() const {
-    return state_ == State::ERROR_SENT || state_ == State::SUCCESS_RESOURCE_SENT ||
-           state_ == State::SUCCESS_PAYMENT_REQUIRED_SENT;
+    return state_ == X402ProcessorState::ERROR_SENT ||
+           state_ == X402ProcessorState::SUCCESS_REPLY_SENT;
 }
 
 
@@ -41,8 +40,8 @@ bool X402Processor::reply402IfNoPaymentHeader(
 
         reply402PaymentRequired( std::nullopt );
     } catch ( std::exception& e ) {
-        spdlog::error(
-            "[hasPaymentHeader] Exception while checking X-PAYMENT header: {}", e.what() );
+        spdlog::error( "[hasPaymentHeader] Exception while checking X-PAYMENT header: {}",
+            e.what() );
     }
 
     return true;
@@ -55,19 +54,21 @@ void X402Processor::reply502BadGateway( const std::string& message ) {
     string body = getErrorBody( message );
 
     sendResponse( { 502, "Bad Gateway" }, STANDARD_HEADERS, body );
-    state_ = State::ERROR_SENT;
+    state_ = X402ProcessorState::ERROR_SENT;
 }
 
-void X402Processor::reply200Success( const std::string& settlementInfo, std::string& proxiedBody ) {
+void X402Processor::reply200Success(
+    const std::string& settlementInfo, std::string& proxiedBody ) {
     std::vector< std::pair< std::string, std::string > > headers = {
         { "Content-Type", "text/plain" }, { "X-PAYMENT-RESPONSE", settlementInfo }
     };
     sendResponse( { 200, "OK" }, headers, proxiedBody );
-    state_ = State::SUCCESS_RESOURCE_SENT;
+    state_ = X402ProcessorState::SUCCESS_REPLY_SENT;
 }
 
 
-void X402Processor::reply402PaymentRequired( std::optional< SettlementResponse > errorResponse ) {
+void X402Processor::reply402PaymentRequired(
+    std::optional< SettlementResponse > errorResponse ) {
     try {
         CHECK_STATE( resource_ );
 
@@ -76,8 +77,8 @@ void X402Processor::reply402PaymentRequired( std::optional< SettlementResponse >
         std::vector< std::pair< std::string, std::string > > headers;
 
         if ( errorResponse ) {
-            errorString =
-                errorResponse->errorReason().value_or( "Payment required to access resource" );
+            errorString = errorResponse->errorReason().value_or(
+                "Payment required to access resource" );
             auto settlementInfo = errorResponse->originalJsonToBase64();
             headers = { { "Content-Type", "application/json" },
                 { "X-PAYMENT-RESPONSE", settlementInfo } };
@@ -85,11 +86,12 @@ void X402Processor::reply402PaymentRequired( std::optional< SettlementResponse >
             headers = STANDARD_HEADERS;
         }
 
-        auto paymentRequirements = PaymentRequiredResponse::getPaymentRequiredResponseAsString(
-            organization(), resource(), config(), errorString );
+        auto paymentRequirements =
+            PaymentRequiredResponse::getPaymentRequiredResponseAsString(
+                organization(), resource(), config(), errorString );
 
         sendResponse( { 402, "Payment Required" }, headers, paymentRequirements );
-        state_ = State::SUCCESS_PAYMENT_REQUIRED_SENT;
+        state_ = X402ProcessorState::SUCCESS_REPLY_SENT;
     } catch ( std::exception& e ) {
         RETHROW_NESTED;
     }
@@ -97,11 +99,12 @@ void X402Processor::reply402PaymentRequired( std::optional< SettlementResponse >
 
 
 void X402Processor::reply400InvalidPayment( const std::string& message ) {
-    auto paymentRequirements = PaymentRequiredResponse::getPaymentRequiredResponseAsString(
-        organization(), resource(), config() );
+    auto paymentRequirements =
+        PaymentRequiredResponse::getPaymentRequiredResponseAsString(
+            organization(), resource(), config() );
 
     sendResponse( { 400, "Invalid Payment" }, STANDARD_HEADERS, message );
-    state_ = State::ERROR_SENT;
+    state_ = X402ProcessorState::ERROR_SENT;
 }
 
 
@@ -119,26 +122,24 @@ std::string X402Processor::getErrorBody( const std::string& message ) {
 void X402Processor::reply500InternalError( const std::string& message ) {
     string body = getErrorBody( message );
     sendResponse( { 500, "Server Error" }, STANDARD_HEADERS, body );
-    state_ = State::ERROR_SENT;
+    state_ = X402ProcessorState::ERROR_SENT;
 }
 
 
-void X402Processor::sendResponse( const std::pair< uint16_t, std::string >& statusAndMessage,
-    const std::vector< std::pair< std::string, std::string > >& headers, const std::string& body ) {
-    if ( state_ == State::ERROR_SENT ) {
+void X402Processor::sendResponse(
+    const std::pair< uint16_t, std::string >& statusAndMessage,
+    const std::vector< std::pair< std::string, std::string > >& headers,
+    const std::string& body ) {
+    if ( state_ == X402ProcessorState::ERROR_SENT ) {
         spdlog::info( "Attempted to send response after error response already sent." );
         return;
     }
 
-    if ( state_ == State::SUCCESS_RESOURCE_SENT ) {
+    if ( state_ == X402ProcessorState::SUCCESS_REPLY_SENT ) {
         spdlog::info( "Attempted to send response after resource already sent." );
         return;
     }
 
-    if ( state_ == State::SUCCESS_PAYMENT_REQUIRED_SENT ) {
-        spdlog::info( "Attempted to send response after payment required already sent." );
-        return;
-    }
 
     CHECK_STATE( responseSender_ );
     try {
@@ -185,10 +186,11 @@ bool X402Processor::validateAndExtractSubDomainName(
     }
 
     if ( !URLUtils::isDomainName( domainName ) ) {
-        reply400InvalidPayment( "Invalid host name: " + domainName +
-                                "."
-                                "Please use a valid hostname specified in machinepay config "
-                                "(like localhost or xyz.com) to access this service." );
+        reply400InvalidPayment(
+            "Invalid host name: " + domainName +
+            "."
+            "Please use a valid hostname specified in machinepay config "
+            "(like localhost or xyz.com) to access this service." );
         return false;
     }
 
@@ -199,10 +201,11 @@ bool X402Processor::validateAndExtractSubDomainName(
     } else if ( domainName.ends_with( "." + hostName ) ) {
         subDomainName_ = domainName.substr( 0, domainName.size() - hostName.size() - 1 );
     } else {
-        reply400InvalidPayment( "Unknown host: " + domainName +
-                                " "
-                                "Please use a valid hostname specified in machinepay config "
-                                "(like localhost or xyz.com) to access this service." );
+        reply400InvalidPayment(
+            "Unknown host: " + domainName +
+            " "
+            "Please use a valid hostname specified in machinepay config "
+            "(like localhost or xyz.com) to access this service." );
         return false;
     }
 
@@ -224,16 +227,17 @@ bool X402Processor::matchOrganization() {
     organization_ = config()->getOrganizationBySubdomainName( subDomainName_ );
 
     if ( !organization_ ) {
-        reply400InvalidPayment( "Unknown subdomain  " + subDomainName_ + "." +
-                                config_->server()->hostName() +
-                                " Please use a valid subdomain specified in machinepay config "
-                                "(like localhost or xyz.com) to access this service." );
+        reply400InvalidPayment(
+            "Unknown subdomain  " + subDomainName_ + "." + config_->server()->hostName() +
+            " Please use a valid subdomain specified in machinepay config "
+            "(like localhost or xyz.com) to access this service." );
         return false;
     }
     return true;
 }
 
-bool X402Processor::validateMethod( const std::unique_ptr< proxygen::HTTPMessage >& reqHeaders ) {
+bool X402Processor::validateMethod(
+    const std::unique_ptr< proxygen::HTTPMessage >& reqHeaders ) {
     auto method = reqHeaders->getMethod();
 
     if ( !method.has_value() ) {
@@ -243,8 +247,9 @@ bool X402Processor::validateMethod( const std::unique_ptr< proxygen::HTTPMessage
     method_ = method.value();
 
     if ( method_ != proxygen::HTTPMethod::GET && method_ != proxygen::HTTPMethod::POST ) {
-        reply400InvalidPayment( "Unsupported HTTP method. Only GET and POST are supported" +
-                                reqHeaders->getMethodString() );
+        reply400InvalidPayment(
+            "Unsupported HTTP method. Only GET and POST are supported" +
+            reqHeaders->getMethodString() );
         return false;
     }
     return true;
@@ -306,10 +311,28 @@ void X402Processor::replyToClientWithError( const HttpError& httpError ) {
     }
 }
 
+void X402Processor::sendSettlementErrorResponse(
+    ptr< Authorization > authorization, add_pointer_t< HttpError > const error ) {
+    if ( error->type() == ErrorType::ERR_INTERNAL_SERVER_ERROR ) {
+        reply500InternalError( error->message() );
+    } else {
+        string payer;
+        if ( authorization ) {
+            // extract payer address from authorization
+            // if we do not have authorization, we put empty payer
+            payer = authorization->from().toHex( PREFIX_0x );
+        }
+        auto errorSettlementResponse = SettlementResponse::getErrorSettlementResponse(
+            *error, config()->network()->name(), payer );
+        CHECK_STATE( errorSettlementResponse );
+        reply402PaymentRequired( *errorSettlementResponse );
+    }
+}
 void X402Processor::onRequestFullyReceived(
-    const std::unique_ptr< proxygen::HTTPMessage >& reqHeaders, const string& body ) noexcept {
+    const std::unique_ptr< proxygen::HTTPMessage >& reqHeaders,
+    const string& body ) noexcept {
     try {
-        if ( state_ == State::ERROR_SENT )
+        if ( state_ == X402ProcessorState::ERROR_SENT )
             return;
 
         CHECK_STATE( organization_ );
@@ -331,25 +354,9 @@ void X402Processor::onRequestFullyReceived(
 
         if ( holds_alternative< HttpError >( result ) ) {
             auto const error = std::get_if< HttpError >( &result );
-
-            if ( error->type() == ErrorType::ERR_INTERNAL_SERVER_ERROR ) {
-                reply500InternalError( error->message() );
-            } else {
-                string payer;
-                if ( authorization ) {
-                    // extract payer address from authorization
-                    // if we do not have authorization, we put empty payer
-                    payer = authorization->from().toHex( PREFIX_0x );
-                }
-                auto errorSettlementResponse = SettlementResponse::getErrorSettlementResponse(
-                    *error, config()->network()->name(), payer );
-                CHECK_STATE( errorSettlementResponse );
-                reply402PaymentRequired( *errorSettlementResponse );
-                return;
-            }
+            sendSettlementErrorResponse( authorization, error );
+            return;
         }
-
-        state_ = State::PAYMENT_HEADER_RECEIVED;
 
         string responseBody;
         if ( !proxyResponseToBackEnd( responseBody ) ) {
@@ -371,16 +378,16 @@ void X402Processor::onRequestFullyReceived(
 
 
 void X402Processor::onBodySizeIncrease( size_t newSize ) {
-    if ( state_ == State::ERROR_SENT )
+    if ( state_ == X402ProcessorState::ERROR_SENT )
         return;
     constexpr size_t MAX_BODY_SIZE = 1024 * 1024;
     if ( newSize > MAX_BODY_SIZE ) {
         reply400InvalidPayment(
-            "Request body too large. Maximum allowed is 1MByte. You can increase this limit in "
+            "Request body too large. Maximum allowed is 1MByte. You can increase this "
+            "limit in "
             "machinepay config if needed." );
     }
 }
 
-const std::vector< std::pair< std::string, std::string > > X402Processor::STANDARD_HEADERS = {
-    { "Content-Type", "application/json" }
-};
+const std::vector< std::pair< std::string, std::string > >
+    X402Processor::STANDARD_HEADERS = { { "Content-Type", "application/json" } };

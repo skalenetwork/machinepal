@@ -6,6 +6,7 @@
 #include "IProcessor.h"
 #include "IResponseSender.h"
 #include "X402ProcessorState.h"
+#include "payment/datastructures/Authorization.h"
 
 
 class SettlementResponse;
@@ -23,7 +24,7 @@ class OrganizationConfig;
 
 class X402Processor : public IProcessor {
 public:
-    using State = x402::State;
+
     explicit X402Processor( MachinePayApp& app, ptr< IResponseSender >& responseSender );
 
     bool isReplySent() const override;
@@ -34,6 +35,8 @@ public:
     bool proxyResponseToBackEnd( std::string& responseBody );
 
     void replyToClientWithError( const HttpError& httpError ) override;
+    void sendSettlementErrorResponse(
+        ptr< Authorization > authorization, add_pointer_t< HttpError > error );
 
     void onRequestFullyReceived(
         const std::unique_ptr< proxygen::HTTPMessage >& reqHeaders, const string& body ) noexcept override;
@@ -89,7 +92,7 @@ private:
     ptr< OrganizationConfig > organization_;
     ptr< ResourceConfig > resource_;
     ptr< IResponseSender > responseSender_;
-    State state_ = State::START;
+    X402ProcessorState state_ = X402ProcessorState::START;
     // initially set to non-supported value
     proxygen::HTTPMethod method_ = proxygen::HTTPMethod::TRACE;
 };
