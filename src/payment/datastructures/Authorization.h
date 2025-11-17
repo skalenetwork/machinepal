@@ -49,7 +49,7 @@ public:
 
 
     std::optional< HttpError > validate(
-        const MachinePayConfig& config, const ResourceConfig& resource );
+        const MachinePayConfig& config, const EIP3009Value& price );
 
 private:
     EthAddress from_{};

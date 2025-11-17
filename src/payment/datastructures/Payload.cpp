@@ -62,8 +62,8 @@ std::shared_ptr< Payload > Payload::fromJson( const json& j ) {
 }
 
 std::optional< HttpError > Payload::validate(
-    const MachinePayConfig& config, const ResourceConfig& resource ) {
-    return authorization()->validate( config, resource );
+    const MachinePayConfig& config, const EIP3009Value& price ) {
+    return authorization()->validate( config, price );
 }
 
 std::optional< HttpError > Payload::verifyEIP3009Signature(

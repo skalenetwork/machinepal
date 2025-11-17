@@ -128,3 +128,4 @@ std::optional<FacilitatorError> FacilitatorErrors::getErrorFromString(std::strin
     }
     return std::nullopt;
 }
+

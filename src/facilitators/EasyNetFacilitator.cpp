@@ -79,6 +79,20 @@ EasyNetFacilitator::processVerifyRequestUnsafe( const nlohmann::json& verifyRequ
     auto assetWalletAddress = EthAddress::parseFlexible( paymentRequirements->asset() );
     auto transferValue = paymentPayload->payload()->authorization()->value();
 
+
+
+    auto price = EIP3009Value::fromHexOrDecimal(paymentRequirements->maxAmountRequired());
+
+    auto httpError = paymentPayload->validateAndVerifySignature( *app_.configManager()->latestConfig(),
+        price, paymentRequirements->scheme());
+
+    if ( httpError ) {
+        spdlog::error("InvalidPayload: Payment payload validation or signature failed");
+        error = FacilitatorErrors::getErrorString(FacilitatorError::invalid_payload );
+        return { paymentPayload, paymentRequirements };
+    }
+
+
     u256 currentBalance = 1000000000 * u256( 1000000000000000000ULL );
     // 1e27 initial funding for new wallets
     auto senderBalanceOpt = db.getBalance( fromWalletAddress, assetWalletAddress );

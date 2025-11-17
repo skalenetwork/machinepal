@@ -109,7 +109,7 @@ std::optional< HttpError > Authorization::checkValidityTime() {
 }
 
 std::optional< HttpError > Authorization::validate(
-    const MachinePayConfig& config, const ResourceConfig& resource ) {
+    const MachinePayConfig& config, const EIP3009Value& price  ) {
     // Check validAfter is less than or equal to current time
     // Check validBefore is greater than current time
     try {
@@ -121,7 +121,6 @@ std::optional< HttpError > Authorization::validate(
                     ", configured.to=" + config.network()->walletAddress().toHex( PREFIX_0x ) );
         }
 
-        EIP3009Value price( resource.price() );
 
         if ( value() != price ) {
             return HttpError( ErrorType::ERR_BAD_REQUEST,

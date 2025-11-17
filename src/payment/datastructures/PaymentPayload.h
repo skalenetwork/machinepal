@@ -21,10 +21,11 @@ public:
     static std::shared_ptr< PaymentPayload > fromJson( const json& j );
     [[nodiscard]] json toJson() const;
     std::optional< HttpError > validateAndVerifySignature(
-        const MachinePayConfig& config, const ResourceConfig& resource ) const;
+        const MachinePayConfig& config, const EIP3009Value& price,
+        const string& paymentScheme) const;
 
     std::optional< HttpError > verifyEIP3009Signature(
-        const MachinePayConfig& config, const ResourceConfig& resource ) const;
+        ptr<EIP712Domain> domain) const;
 
     static ptr< PaymentPayload > createDefaultPaymentPayload( EthPrivateKey& privKey,
         EthAddress& to, EIP3009Value& value, EIP3009Nonce& nonce, std::string networkName );

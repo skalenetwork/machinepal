@@ -81,7 +81,7 @@ json PaymentPayload::toJson() const {
 }
 
 std::optional< HttpError > PaymentPayload::validateAndVerifySignature(
-    const MachinePayConfig& config, const ResourceConfig& resource ) const {
+    const MachinePayConfig& config, const EIP3009Value& price, const string& paymentScheme ) const {
     try {
         if ( x402Version_ != 1 ) {
             spdlog::error( "Unsupported x402Version in payment payload: {}", x402Version_ );
@@ -90,10 +90,10 @@ std::optional< HttpError > PaymentPayload::validateAndVerifySignature(
         if ( !config.isSchemeSupported( scheme_ ) ) {
             return HttpError( ERR_BAD_REQUEST, "Payment scheme is not supported" );
         }
-        if ( scheme_ != resource.paymentScheme() ) {
+        if ( scheme_ != paymentScheme ) {
             return HttpError( ERR_BAD_REQUEST,
                 std::string( "Payment scheme does not match resource's required scheme " ) +
-                    scheme_ + " != " + resource.paymentScheme() );
+                    scheme_ + " != " + paymentScheme );
         }
         if ( network_ != config.network()->name() ) {
             return HttpError( ERR_BAD_REQUEST,
@@ -101,13 +101,12 @@ std::optional< HttpError > PaymentPayload::validateAndVerifySignature(
                     " != " + config.network()->name() );
         }
 
-        auto error = payload()->validate( config, resource );
+        auto error = payload()->validate( config, price );
 
         if ( error ) {
             return error;
         }
-
-        return verifyEIP3009Signature( config, resource );
+        return verifyEIP3009Signature( config.network()->eip712Domain() );
     } catch ( const std::exception& e ) {
         spdlog::error( "Exception validating payment payload: {}", e.what() );
         return HttpError( ERR_INTERNAL_SERVER_ERROR, "Exception validating payment payload" );
@@ -115,9 +114,10 @@ std::optional< HttpError > PaymentPayload::validateAndVerifySignature(
 }
 
 std::optional< HttpError > PaymentPayload::verifyEIP3009Signature(
-    const MachinePayConfig& config, const ResourceConfig& /*resource*/ ) const {
+    ptr<EIP712Domain> eipDomain) const {
+
     try {
-        auto eipDomain = config.network()->eip712Domain();
+        CHECK_STATE( eipDomain );
         return payload()->verifyEIP3009Signature( eipDomain );
     } catch ( const std::exception& e ) {
         spdlog::error( "Exception : {}", e.what() );

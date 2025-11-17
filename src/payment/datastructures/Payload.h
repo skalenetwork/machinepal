@@ -25,7 +25,7 @@ public:
     [[nodiscard]] json toJson() const;
 
     std::optional< HttpError > validate(
-        const MachinePayConfig& config, const ResourceConfig& resource );
+        const MachinePayConfig& config, const EIP3009Value&  price);
     std::optional< HttpError > verifyEIP3009Signature(
         std::shared_ptr< EIP712Domain > domain ) const;
 
