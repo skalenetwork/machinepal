@@ -92,13 +92,15 @@ EasyNetFacilitator::processVerifyRequestUnsafe( const nlohmann::json& verifyRequ
         const u256 maxVal = ( std::numeric_limits< u256 >::max )();
         const u256 receiverBalance = receiverBalanceOpt.value();
         if ( transferValue.value() > maxVal - receiverBalance ) {
-            error = "Overflow: Receiver balance would overflow 256-bit limit";
+            spdlog::error("Overflow: Receiver balance would overflow 256-bit limit");
+            error = FacilitatorErrors::getErrorString(FacilitatorError::insufficient_funds );
             return { paymentPayload, paymentRequirements };
         }
     }
 
     if ( transferValue.value() > currentBalance ) {
-        error = "InsufficientFunds: Balance lower than requested transfer amount";
+        spdlog::error("InsufficientFunds: Balance lower than requested transfer amount");
+        error = FacilitatorErrors::getErrorString(FacilitatorError::insufficient_funds );
         return { paymentPayload, paymentRequirements };
     }
 
