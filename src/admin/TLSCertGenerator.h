@@ -1,10 +1,4 @@
-//
-// Created by kladko on 11/17/25.
-//
-
-#ifndef MACHINEPAY_TLSCERTGENERATOR_H
-#define MACHINEPAY_TLSCERTGENERATOR_H
-
+#pragma once
 #include <string>
 #include <utility>
 #include <boost/filesystem/path.hpp>
@@ -26,4 +20,3 @@ public:
 };
 
 
-#endif //MACHINEPAY_TLSCERTGENERATOR_H
