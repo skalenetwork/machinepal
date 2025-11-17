@@ -7,6 +7,6 @@ class EthPrivateKey;
 class MachinePayConfigGenerator {
 public:
     // Creates machinepay.yml inside dirPath (does not overwrite existing file).
-    void generateDefaultConfig(const std::filesystem::path &dirPath, EthPrivateKey& machinePayKey);
+    static void generateDefaultConfig(const std::filesystem::path &dirPath, EthPrivateKey& machinePayKey);
 };
 

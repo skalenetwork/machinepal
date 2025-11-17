@@ -7,12 +7,12 @@ static const char* kYamlTemplate = R"(# Machinepay server configuration. May be 
 server:
   hostname: localhost
   http:
-    enable: false
+    enable: true
     port: 8080
   https:
-    enable: false
+    enable: true
     port: 8443
-    cert_file: certs/machinepay_tls_certificate.tls
+    cert_file: certs/machinepay_tls_certificate.crt
     key_file: secrets/machinepay_tls_certificate.key
 
 network:
@@ -95,7 +95,6 @@ void MachinePayConfigGenerator::generateDefaultConfig(const std::filesystem::pat
                 "Successfully wrote config but failed to set secure permissions", filePath, permEc);
         }
     } catch (...) {
-        // This is already correct
         std::throw_with_nested(std::runtime_error("Failed to generate machinepay.yml in directory: " + dirPath.string()));
     }
 }
