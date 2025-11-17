@@ -5,19 +5,22 @@
 
 BOOST_AUTO_TEST_CASE(SelfSignedCertBasic) {
     TLSCertGenerator gen;
-    auto pem = gen.generateSelfSignedCert("localhost", "Localhost Dev", "US", 30);
+    auto pemPair = gen.generateSelfSignedCert("localhost", "Localhost Dev", "US", 30);
+    auto& cert = pemPair.first;
+    auto& key  = pemPair.second;
 
-    BOOST_TEST(!pem.empty());
+    BOOST_TEST(!cert.empty());
+    BOOST_TEST(!key.empty());
+    BOOST_TEST(cert.find("-----BEGIN CERTIFICATE-----") == 0);
+    BOOST_TEST(key.find("-----BEGIN PRIVATE KEY-----") == 0);
 
-    BOOST_TEST(pem.find("-----BEGIN CERTIFICATE-----") == 0);
-
-    BIO* bio = BIO_new_mem_buf(pem.data(), static_cast<int>(pem.size()));
+    BIO* bio = BIO_new_mem_buf(cert.data(), static_cast<int>(cert.size()));
     BOOST_TEST(bio != nullptr);
 
-    X509* cert = PEM_read_bio_X509(bio, nullptr, nullptr, nullptr);
-    BOOST_TEST(cert != nullptr);
+    X509* x509_cert = PEM_read_bio_X509(bio, nullptr, nullptr, nullptr);
+    BOOST_TEST(x509_cert != nullptr);
 
-    X509_NAME* subj = X509_get_subject_name(cert);
+    X509_NAME* subj = X509_get_subject_name(x509_cert);
     BOOST_TEST(subj != nullptr);
 
     int idx = X509_NAME_get_index_by_NID(subj, NID_commonName, -1);
@@ -33,6 +36,6 @@ BOOST_AUTO_TEST_CASE(SelfSignedCertBasic) {
                    ASN1_STRING_length(cnAsn1));
     BOOST_TEST(cn == "localhost");
 
-    X509_free(cert);
+    X509_free(x509_cert);
     BIO_free(bio);
 }

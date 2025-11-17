@@ -7,7 +7,7 @@
 #include <openssl/pem.h>
 #include <openssl/evp.h>
 
-std::string TLSCertGenerator::generateSelfSignedCert(
+std::pair<std::string, std::string> TLSCertGenerator::generateSelfSignedCert(
     const std::string& commonName,
     const std::string& organization,
     const std::string& country,
@@ -53,21 +53,36 @@ std::string TLSCertGenerator::generateSelfSignedCert(
         X509_free(x509); EVP_PKEY_free(pkey); return {};
     }
 
-    BIO* mem = BIO_new(BIO_s_mem());
-    if (!mem) { X509_free(x509); EVP_PKEY_free(pkey); return {}; }
-    if (PEM_write_bio_X509(mem, x509) != 1) {
-        BIO_free(mem); X509_free(x509); EVP_PKEY_free(pkey); return {};
+    // Write certificate to memory BIO
+    BIO* certBio = BIO_new(BIO_s_mem());
+    if (!certBio) { X509_free(x509); EVP_PKEY_free(pkey); return {}; }
+    if (PEM_write_bio_X509(certBio, x509) != 1) {
+        BIO_free(certBio); X509_free(x509); EVP_PKEY_free(pkey); return {};
     }
 
-    char* data = nullptr;
-    long len = BIO_get_mem_data(mem, &data);
-    std::string pem;
-    if (len > 0 && data) {
-        pem.assign(data, static_cast<size_t>(len));
+    // Write private key (PKCS#8) to memory BIO
+    BIO* keyBio = BIO_new(BIO_s_mem());
+    if (!keyBio) { BIO_free(certBio); X509_free(x509); EVP_PKEY_free(pkey); return {}; }
+    if (PEM_write_bio_PrivateKey(keyBio, pkey, nullptr, nullptr, 0, nullptr, nullptr) != 1) {
+        BIO_free(keyBio); BIO_free(certBio); X509_free(x509); EVP_PKEY_free(pkey); return {};
     }
 
-    BIO_free(mem);
+    // Extract certificate PEM
+    char* certData = nullptr;
+    long certLen = BIO_get_mem_data(certBio, &certData);
+    std::string certPem;
+    if (certLen > 0 && certData) certPem.assign(certData, static_cast<size_t>(certLen));
+
+    // Extract key PEM
+    char* keyData = nullptr;
+    long keyLen = BIO_get_mem_data(keyBio, &keyData);
+    std::string keyPem;
+    if (keyLen > 0 && keyData) keyPem.assign(keyData, static_cast<size_t>(keyLen));
+
+    BIO_free(certBio);
+    BIO_free(keyBio);
     X509_free(x509);
     EVP_PKEY_free(pkey);
-    return pem;
+
+    return {certPem, keyPem};
 }

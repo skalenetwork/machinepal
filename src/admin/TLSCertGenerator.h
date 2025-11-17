@@ -6,11 +6,12 @@
 #define MACHINEPAY_TLSCERTGENERATOR_H
 
 #include <string>
+#include <utility>
 
 
 class TLSCertGenerator {
 public:
-    std::string generateSelfSignedCert(
+    std::pair<std::string, std::string> generateSelfSignedCert(
         const std::string& commonName,
         const std::string& organization,
         const std::string& country,
