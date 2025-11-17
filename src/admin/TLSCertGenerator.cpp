@@ -186,20 +186,77 @@ std::pair<std::string, std::string> TLSCertGenerator::generateSelfSignedCert(
 
 void TLSCertGenerator::generateDefaultCertFiles(
     const boost::filesystem::path &certFilePath,
-    const boost::filesystem::path &keyFilePath) {
-    auto pemPair = generateSelfSignedCert(); // uses defaults (localhost, long validity)
-    if (pemPair.first.empty() || pemPair.second.empty()) {
-        return; // generation failed; optionally log
+    const boost::filesystem::path &keyFilePath)
+{
+    try {
+        // --- 1. Data Loss Prevention ---
+        // Refuse to overwrite existing files
+        if (boost::filesystem::exists(certFilePath)) {
+            throw std::runtime_error("Cert file already exists. Refusing to overwrite, delete it first: "
+                + certFilePath.string());
+        }
+        if (boost::filesystem::exists(keyFilePath)) {
+            throw std::runtime_error("Key file already exists. Refusing to overwrite, delete it first: "
+                + keyFilePath.string());
+        }
+
+        // --- 2. Robust Error Handling ---
+        // Throw on failure instead of returning silently
+        auto pemPair = generateSelfSignedCert();
+
+        // Create directories
+        if (certFilePath.has_parent_path())
+            boost::filesystem::create_directories(certFilePath.parent_path());
+        if (keyFilePath.has_parent_path() && keyFilePath.parent_path() != certFilePath.parent_path())
+            boost::filesystem::create_directories(keyFilePath.parent_path());
+
+        // --- 3. Write Cert File (with full diagnostics) ---
+        errno = 0; // Reset errno
+        std::ofstream certOut(certFilePath.string(), std::ios::out);
+        if (!certOut) {
+            std::string errorMsg = "Failed to open cert file for writing: " + certFilePath.string();
+            if (errno != 0) {
+                errorMsg += ". System error: " + std::string(strerror(errno));
+            }
+            throw std::runtime_error(errorMsg);
+        }
+
+        certOut << pemPair.first;
+        if (certOut.fail()) {
+            certOut.close();
+            boost::filesystem::remove(certFilePath); // Clean up partial file
+            throw std::runtime_error("Failed to write to cert file (e.g., disk full): " + certFilePath.string());
+        }
+        certOut.close();
+
+        // --- 4. Write Key File (with full diagnostics and cleanup) ---
+        errno = 0; // Reset errno
+        std::ofstream keyOut(keyFilePath.string(), std::ios::out);
+        if (!keyOut) {
+            std::string errorMsg = "Failed to open key file for writing: " + keyFilePath.string();
+            if (errno != 0) {
+                errorMsg += ". System error: " + std::string(strerror(errno));
+            }
+            boost::filesystem::remove(certFilePath); // Clean up the cert file
+            throw std::runtime_error(errorMsg);
+        }
+
+        keyOut << pemPair.second;
+        if (keyOut.fail()) {
+            keyOut.close();
+            boost::filesystem::remove(certFilePath); // Clean up both files
+            boost::filesystem::remove(keyFilePath);
+            throw std::runtime_error("Failed to write to key file (e.g., disk full): " + keyFilePath.string());
+        }
+        keyOut.close();
+
+        // --- 5. Critical Security Fix ---
+        // Set permissions on the private key file
+        boost::filesystem::permissions(keyFilePath, boost::filesystem::owner_read | boost::filesystem::owner_write);
+
+    } catch (const std::exception& e) {
+        RETHROW_NESTED2(std::string("Failed to generate TLS certificate files: ") + e.what());
+    } catch (...) {
+        RETHROW_NESTED2("Failed to generate TLS certificate files due to an unknown error");
     }
-
-    if (certFilePath.has_parent_path())
-        boost::filesystem::create_directories(certFilePath.parent_path());
-    if (keyFilePath.has_parent_path())
-        boost::filesystem::create_directories(keyFilePath.parent_path());
-
-    std::ofstream certOut(certFilePath.string(), std::ios::out | std::ios::trunc);
-    if (certOut) certOut << pemPair.first;
-
-    std::ofstream keyOut(keyFilePath.string(), std::ios::out | std::ios::trunc);
-    if (keyOut) keyOut << pemPair.second;
 }
