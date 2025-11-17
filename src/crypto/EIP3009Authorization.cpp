@@ -7,6 +7,7 @@
 #include "EthAddress.h"
 #include "MachinePayCommon.h"
 #include "crypto/Keccak.h"
+#include "facilitators/FacilitatorErrors.h"
 #include "x402_protocol/HttpError.h"
 
 using u256 = boost::multiprecision::uint256_t;
@@ -83,7 +84,7 @@ EIP712Signature EIP3009Authorization::signAuthorization( const EIP712Domain& dom
     return domain.signWithDomain( structHash, privateKey );
 }
 
-std::optional< HttpError > EIP3009Authorization::verifyAuthorizationSignature(
+std::optional< FacilitatorError > EIP3009Authorization::verifyAuthorizationSignature(
     const EIP712Domain& domain, const EthAddress& from, const EthAddress& to,
     const EIP3009Value& value, const EIP3009ValidityTime& validAfter,
     const EIP3009ValidityTime& validBefore, const EIP3009Nonce& nonce,
@@ -94,7 +95,6 @@ std::optional< HttpError > EIP3009Authorization::verifyAuthorizationSignature(
         return domain.verifyWithDomain( structHash, signature, from );
     } catch ( const std::exception& e ) {
         printNestedException( e );
-        return HttpError( ErrorType::ERR_INTERNAL_SERVER_ERROR,
-            std::string( "Could not verify EIP-3009 authorization signature: " ) + e.what() );
+        return FacilitatorError::unexpected_verify_error;
     }
 }

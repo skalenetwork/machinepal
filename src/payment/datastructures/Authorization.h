@@ -8,6 +8,7 @@
 #include "crypto/EthAddress.h"
 
 
+enum class FacilitatorError;
 class ResourceConfig;
 class HttpError;
 class MachinePayConfig;  // forward declaration added
@@ -45,11 +46,10 @@ public:
     static std::shared_ptr< Authorization > fromJson( const json& j );
     [[nodiscard]] json toJson() const;
 
-    std::optional< HttpError > checkValidityTime();
+    std::optional< FacilitatorError > checkValidityTime();
 
 
-    std::optional< HttpError > validate(
-        const MachinePayConfig& config, const EIP3009Value& price );
+    std::optional< FacilitatorError > validate(const EIP3009Value& price, EthAddress& destinationAddress );
 
 private:
     EthAddress from_{};

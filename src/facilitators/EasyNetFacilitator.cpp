@@ -79,12 +79,12 @@ EasyNetFacilitator::processVerifyRequestUnsafe( const nlohmann::json& verifyRequ
     auto assetWalletAddress = EthAddress::parseFlexible( paymentRequirements->asset() );
     auto transferValue = paymentPayload->payload()->authorization()->value();
 
-
+    auto payToAddress = EthAddress::parseFlexible(paymentRequirements->payTo());
 
     auto price = EIP3009Value::fromHexOrDecimal(paymentRequirements->maxAmountRequired());
 
     auto httpError = paymentPayload->validateAndVerifySignature( *app_.configManager()->latestConfig(),
-        price, paymentRequirements->scheme());
+        price, payToAddress, paymentRequirements->scheme());
 
     if ( httpError ) {
         spdlog::error("InvalidPayload: Payment payload validation or signature failed");

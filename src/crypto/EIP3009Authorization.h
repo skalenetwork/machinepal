@@ -6,6 +6,7 @@
 #include "EthPrivateKey.h"
 #include "EthPublicKey.h"
 
+enum class FacilitatorError;
 class HttpError;
 class EIP3009ValidityTime;
 class EIP3009Value;
@@ -20,7 +21,7 @@ public:
         const EIP3009Nonce& nonce, const EthPrivateKey& privateKey );
 
     // Verifies an EIP-3009 authorization signature
-    [[nodiscard]] static std::optional< HttpError > verifyAuthorizationSignature(
+    [[nodiscard]] static std::optional< FacilitatorError > verifyAuthorizationSignature(
         const EIP712Domain& domain, const EthAddress& from, const EthAddress& to,
         const EIP3009Value& value, const EIP3009ValidityTime& validAfter,
         const EIP3009ValidityTime& validBefore, const EIP3009Nonce& nonce,

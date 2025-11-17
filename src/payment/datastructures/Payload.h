@@ -3,6 +3,7 @@
 #include "Authorization.h"
 
 
+enum class FacilitatorError;
 class HttpError;
 class ResourceConfig;
 class EIP712Domain;
@@ -24,9 +25,8 @@ public:
     static std::shared_ptr< Payload > fromJson( const json& j );
     [[nodiscard]] json toJson() const;
 
-    std::optional< HttpError > validate(
-        const MachinePayConfig& config, const EIP3009Value&  price);
-    std::optional< HttpError > verifyEIP3009Signature(
+    std::optional< FacilitatorError > validate( const EIP3009Value&  price, EthAddress& destinationAddress );
+    std::optional< FacilitatorError > verifyEIP3009Signature(
         std::shared_ptr< EIP712Domain > domain ) const;
 
 private:

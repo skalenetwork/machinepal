@@ -104,7 +104,7 @@ EIP712Signature EIP712Domain::signWithDomain(
 }
 
 
-std::optional< HttpError > EIP712Domain::verifyWithDomain(
+std::optional< FacilitatorError > EIP712Domain::verifyWithDomain(
     const std::array< uint8_t, 32 >& structHash, const EIP712Signature& signature,
     const EthAddress& expectedAddress ) const {
     auto hash = hashWithDomain( structHash );

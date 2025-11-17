@@ -10,11 +10,12 @@
 
 #include "config/subconfigs/NetworkConfig.h"
 #include "config/subconfigs/ResourceConfig.h"
+#include "facilitators/FacilitatorErrors.h"
 
 
 Authorization::Authorization( const std::string& fromStr, const std::string& toStr,
-    const std::string& value, const std::string& validAfter, const std::string& validBefore,
-    const std::string& nonce ) {
+                              const std::string& value, const std::string& validAfter, const std::string& validBefore,
+                              const std::string& nonce ) {
     value_ = EIP3009Value::fromHexOrDecimal( value );
     validAfter_ = EIP3009ValidityTime::fromHexOrDecimal( validAfter );
     validBefore_ = EIP3009ValidityTime::fromHexOrDecimal( validBefore );
@@ -85,7 +86,7 @@ json Authorization::toJson() const {
     return j;
 }
 
-std::optional< HttpError > Authorization::checkValidityTime() {
+std::optional< FacilitatorError > Authorization::checkValidityTime() {
     // add disabling of valid time checks for testing so we can use fixed validAfter/validBefore
     // values in tests
     if ( std::getenv( "TEST_DISABLE_AUTHORIZATION_TIME_CHECK" ) ) {
@@ -96,44 +97,43 @@ std::optional< HttpError > Authorization::checkValidityTime() {
         std::chrono::system_clock::to_time_t( std::chrono::system_clock::now() ) );
 
     if ( validAfter() > now ) {
-        return HttpError( ErrorType::ERR_BAD_REQUEST,
-            "Authorization not yet valid: current time (" + now.toDecimal() +
-                ") is less than validAfter (" + validAfter().toDecimal() + ")" );
+        spdlog::error("Authorization not yet valid: current time ({}) is less than validAfter ({})",
+            now.toDecimal(), validAfter().toDecimal());
+        return FacilitatorError::invalid_exact_evm_payload_authorization_valid_after;
     }
     if ( validBefore() < now ) {
-        return HttpError( ErrorType::ERR_BAD_REQUEST,
-            "Authorization expired: current time (" + now.toDecimal() + ") is after validBefore (" +
-                validBefore().toDecimal() + ")" );
+        spdlog::error("Authorization expired: current time ({}) is after validBefore ({})",
+            now.toDecimal(), validBefore().toDecimal());
+        return FacilitatorError::invalid_exact_evm_payload_authorization_valid_before;
+
     }
     return std::nullopt;
 }
 
-std::optional< HttpError > Authorization::validate(
-    const MachinePayConfig& config, const EIP3009Value& price  ) {
+std::optional< FacilitatorError> Authorization::validate(const EIP3009Value& price, EthAddress& destinationAddress ) {
     // Check validAfter is less than or equal to current time
     // Check validBefore is greater than current time
     try {
-        if ( this->to() != config.network()->walletAddress() ) {
-            return HttpError( ErrorType::ERR_BAD_REQUEST,
-                std::string( "Authorization payment destination address does not match configured "
-                             "destination address: " ) +
-                    "authorization.to=" + to().toHex( PREFIX_0x ) +
-                    ", configured.to=" + config.network()->walletAddress().toHex( PREFIX_0x ) );
+        if ( this->to() != destinationAddress ) {
+            spdlog::error("Authorization payment destination address does not match configured "
+                          "destination address: authorization.to={}, configured.to={}",
+                to().toHex( PREFIX_0x ),
+                destinationAddress.toHex( PREFIX_0x ) );
+            return FacilitatorError::invalid_exact_evm_payload_recipient_mismatch;
         }
 
 
         if ( value() != price ) {
-            return HttpError( ErrorType::ERR_BAD_REQUEST,
-                std::string(
-                    "Payment value does not equal price of the resource (maxAmountRequired): " ) +
-                    "authorization.value=" + value().toDecimal() +
-                    ", resource.maxAmountRequired=" + price.toDecimal() );
+            spdlog::error("Authorization payment value does not equal required price: "
+                          "authorization.value={}, resource.maxAmountRequired={}",
+                value().toDecimal(), price.toDecimal() );
+            return FacilitatorError::invalid_exact_evm_payload_authorization_value;
         }
 
         return checkValidityTime();
     } catch ( const std::exception& e ) {
-        return HttpError( ErrorType::ERR_INTERNAL_SERVER_ERROR,
-            std::string( "Authorization failed to validate" ) + e.what() );
+        spdlog::error("Authorization validation failed: {}", e.what() );
+        return FacilitatorError::unexpected_verify_error;
     }
     return std::nullopt;  // no error
 }

@@ -6,6 +6,8 @@
 #include "x402_protocol/HttpError.h"
 
 
+enum class FacilitatorError;
+
 class PaymentPayload {
 public:
     PaymentPayload();
@@ -20,11 +22,11 @@ public:
     bool operator==( const PaymentPayload& other ) const;
     static std::shared_ptr< PaymentPayload > fromJson( const json& j );
     [[nodiscard]] json toJson() const;
-    std::optional< HttpError > validateAndVerifySignature(
-        const MachinePayConfig& config, const EIP3009Value& price,
+    std::optional< FacilitatorError > validateAndVerifySignature(
+        const MachinePayConfig& config, const EIP3009Value& price, EthAddress& destinationAddress,
         const string& paymentScheme) const;
 
-    std::optional< HttpError > verifyEIP3009Signature(
+    std::optional< FacilitatorError > verifyEIP3009Signature(
         ptr<EIP712Domain> domain) const;
 
     static ptr< PaymentPayload > createDefaultPaymentPayload( EthPrivateKey& privKey,

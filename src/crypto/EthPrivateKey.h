@@ -12,6 +12,8 @@
 
 #include "x402_protocol/HttpError.h"
 
+enum class FacilitatorError;
+
 enum class VEncoding : uint8_t { V27_28, V0_1 };
 
 class EthPrivateKey {
@@ -53,7 +55,7 @@ public:
 
 
     // -------------------- Verify against expected address --------------------
-    [[nodiscard]] static std::optional< HttpError > eip712VerifyRaw(
+    [[nodiscard]] static std::optional< FacilitatorError > eip712VerifyRaw(
         const uint8_t msg32[32], const uint8_t sig65[65], EthAddress address );
 
 

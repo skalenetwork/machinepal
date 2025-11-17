@@ -9,6 +9,7 @@
 
 // https://www.circle.com/multi-chain-usdc
 
+enum class FacilitatorError;
 class HttpError;
 
 
@@ -84,6 +85,6 @@ public:
         const std::array< uint8_t, 32 >& structHash, const EthPrivateKey& privateKey ) const;
 
 
-    std::optional< HttpError > verifyWithDomain( const std::array< uint8_t, 32 >& structHash,
+    std::optional< FacilitatorError > verifyWithDomain( const std::array< uint8_t, 32 >& structHash,
         const EIP712Signature& signature, const EthAddress& expectedAddress ) const;
 };

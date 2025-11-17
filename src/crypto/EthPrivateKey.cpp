@@ -25,6 +25,8 @@
 #include <string>
 #include <vector>
 
+#include "facilitators/FacilitatorErrors.h"
+
 [[maybe_unused]] static std::string trimCopy( const std::string& in ) {
     size_t start = 0;
     while ( start < in.size() && std::isspace( static_cast< unsigned char >( in[start] ) ) )
@@ -416,17 +418,18 @@ EthAddress EthPrivateKey::recoverAddressFromSigRSV( const uint8_t msg32[32], con
 }
 
 // -------------------- Verify against expected address --------------------
-std::optional< HttpError > EthPrivateKey::eip712VerifyRaw(
+std::optional< FacilitatorError > EthPrivateKey::eip712VerifyRaw(
     const uint8_t msg32[32], const uint8_t sig65[65], EthAddress expectedAddress ) {
     try {
         EthAddress rec = recoverAddressFromSigRSV( msg32, sig65 );
         if ( std::memcmp( rec.bytes().data(), expectedAddress.bytes().data(), 20 ) != 0 ) {
-            return HttpError( ErrorType::ERR_BAD_REQUEST,
-                "Signature verification failed: recovered address mismatch:" +
-                    rec.toHex( PREFIX_0x ) + " != expected " + expectedAddress.toHex( PREFIX_0x ) );
+            spdlog::warn("Recovered address: {}, Expected address: {}",
+                rec.toHex( PREFIX_0x ), expectedAddress.toHex( PREFIX_0x ));
+            return FacilitatorError::invalid_exact_evm_payload_signature;
         }
     } catch ( std::exception& e ) {
-        return HttpError( ERR_BAD_REQUEST, string( "Signature verification failed:" ) + e.what() );
+        spdlog::error("Signature verification failed: {}", e.what() );
+        return FacilitatorError::unexpected_verify_error;
     }
     return std::nullopt;
 }

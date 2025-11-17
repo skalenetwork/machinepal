@@ -4,6 +4,7 @@
 #include "config/JsonUtils.h"
 #include "crypto/EIP3009Authorization.h"
 #include "crypto/EIP712Domain.h"
+#include "facilitators/FacilitatorErrors.h"
 #include "x402_protocol/HttpError.h"
 
 class HttpError;
@@ -61,12 +62,12 @@ std::shared_ptr< Payload > Payload::fromJson( const json& j ) {
     return j;
 }
 
-std::optional< HttpError > Payload::validate(
-    const MachinePayConfig& config, const EIP3009Value& price ) {
-    return authorization()->validate( config, price );
+std::optional< FacilitatorError > Payload::validate(
+    const EIP3009Value& price, EthAddress& destinationAddress ) {
+    return authorization()->validate( price, destinationAddress );
 }
 
-std::optional< HttpError > Payload::verifyEIP3009Signature(
+std::optional< FacilitatorError > Payload::verifyEIP3009Signature(
     std::shared_ptr< EIP712Domain > domain ) const {
     try {
         return EIP3009Authorization::verifyAuthorizationSignature( *domain, authorization()->from(),
@@ -74,8 +75,7 @@ std::optional< HttpError > Payload::verifyEIP3009Signature(
             authorization()->validBefore(), authorization()->nonce(), signature() );
     } catch ( const std::exception& e ) {
         printNestedException( e );
-        return HttpError( ErrorType::ERR_INTERNAL_SERVER_ERROR,
-            std::string( "Could not validate EIP-3009 sig " ) + e.what() );
+        return FacilitatorError::unexpected_verify_error;
     }
     return std::nullopt;
 };

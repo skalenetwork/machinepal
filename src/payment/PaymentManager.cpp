@@ -14,6 +14,7 @@
 #include "db/EasyNetDb.h"  // added include for EasyNetDb
 #include "db/MachinePayDb.h"
 #include "db/PaymentRecord.h"
+#include "facilitators/FacilitatorErrors.h"
 #include "url/URLUtils.h"
 
 PaymentManager::PaymentManager(MachinePayApp &app) : app_(app) {
@@ -202,11 +203,15 @@ variant<SettlementResponse, HttpError> PaymentManager::decodePreValidateAndSettl
 
         EIP3009Value price(resource.price());
 
-        error = paymentPayload->validateAndVerifySignature(config, price,
-                                                           resource.paymentScheme());
+        auto walletAddress = config.network()->walletAddress();
 
-        if (error)
-            return error.value();
+        auto verificationError = paymentPayload->validateAndVerifySignature(config, price, walletAddress,
+                                                                            resource.paymentScheme());
+
+        if (verificationError) {
+            return HttpError(ERR_BAD_REQUEST,
+                             std::string(FacilitatorErrors::getErrorString(verificationError.value())));
+        }
 
         auto ipAddress = req->getClientAddress().getAddressStr();
 

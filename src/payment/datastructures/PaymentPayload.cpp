@@ -81,33 +81,30 @@ json PaymentPayload::toJson() const {
     return j;
 }
 
-std::optional< HttpError > PaymentPayload::validateAndVerifySignature(
-    const MachinePayConfig& config, const EIP3009Value& price, const string& paymentScheme ) const {
+std::optional< FacilitatorError > PaymentPayload::validateAndVerifySignature(
+    const MachinePayConfig& config, const EIP3009Value& price, EthAddress& destinationAddress,
+   const string& paymentScheme ) const {
     try {
         if ( x402Version_ != 1 ) {
             spdlog::error( "Unsupported x402Version in payment payload: {}", x402Version_ );
-            return HttpError( ERR_BAD_REQUEST, "Unsupported x402Version in payment payload" );
+            return FacilitatorError::invalid_x402_version;
         }
         if ( !config.isSchemeSupported( scheme_ ) ) {
             spdlog::error( "Payment scheme is not supported: {}", scheme_ );
-            return HttpError( ERR_BAD_REQUEST, "Payment scheme is not supported" );
+            return FacilitatorError::invalid_scheme;
         }
         if ( scheme_ != paymentScheme ) {
             spdlog::error(" Payment scheme does not match resource's required scheme: {} != {}",
                 scheme_, paymentScheme);
-            return HttpError( ERR_BAD_REQUEST,
-                std::string( "Payment scheme does not match resource's required scheme " ) +
-                    scheme_ + " != " + paymentScheme );
+            return FacilitatorError::invalid_scheme;
         }
         if ( network_ != config.network()->name() ) {
             spdlog::error(" Payment network does not match configured network: {} != {}",
                 network_, config.network()->name());
-            return HttpError( ERR_BAD_REQUEST,
-                std::string( "Payment network does not match configured network " ) + network_ +
-                    " != " + config.network()->name() );
+            return FacilitatorError::invalid_network;
         }
 
-        auto error = payload()->validate( config, price );
+        auto error = payload()->validate( price, destinationAddress );
 
         if ( error ) {
             return error;
@@ -115,11 +112,11 @@ std::optional< HttpError > PaymentPayload::validateAndVerifySignature(
         return verifyEIP3009Signature( config.network()->eip712Domain() );
     } catch ( const std::exception& e ) {
         spdlog::error( "Exception validating payment payload: {}", e.what() );
-        return HttpError( ERR_INTERNAL_SERVER_ERROR, "Exception validating payment payload" );
+        return FacilitatorError::unexpected_verify_error;
     }
 }
 
-std::optional< HttpError > PaymentPayload::verifyEIP3009Signature(
+std::optional< FacilitatorError > PaymentPayload::verifyEIP3009Signature(
     ptr<EIP712Domain> eipDomain) const {
 
     try {
@@ -127,8 +124,7 @@ std::optional< HttpError > PaymentPayload::verifyEIP3009Signature(
         return payload()->verifyEIP3009Signature( eipDomain );
     } catch ( const std::exception& e ) {
         spdlog::error( "Exception : {}", e.what() );
-        return HttpError(
-            ERR_INTERNAL_SERVER_ERROR, "Exception verifying EIP3009 signature of payment payload" );
+        return FacilitatorError::unexpected_verify_error;
     }
 }
 
