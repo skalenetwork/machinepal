@@ -1,4 +1,6 @@
 #include "EasyNetFacilitator.h"
+
+#include "FacilitatorErrors.h"
 #include "MachinePayApp.h"
 #include "MachinePayCommon.h"
 
@@ -114,6 +116,7 @@ nlohmann::json EasyNetFacilitator::processVerifyRequest(
             processVerifyRequestUnsafe( verifyRequestJson, error, *db );
         auto fromWalletAddress = payload->payload()->authorization()->from();
         if ( error ) {
+            spdlog::error("Error processing verify request: {}", error.value());
             VerifyResponse errorResponse(
                 false, error.value(), fromWalletAddress.toDbString(), std::nullopt );
 
@@ -124,7 +127,11 @@ nlohmann::json EasyNetFacilitator::processVerifyRequest(
             return verifyResponse.toJson();
         }
     } catch ( const std::exception& e ) {
-        VerifyResponse errorResponse( false, e.what(), "", std::nullopt );
+        spdlog::error("Exception processing verify request: {}", e.what());
+        optional<string> standardErrorString =
+            std::string(FacilitatorErrors::getErrorString(FacilitatorError::unexpected_verify_error));
+        VerifyResponse errorResponse( false,
+            standardErrorString, "", std::nullopt );
         return errorResponse.toJson();
     }
 }

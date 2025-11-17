@@ -11,7 +11,7 @@ public:
     VerifyResponse& operator=( const VerifyResponse& ) = default;
     // Getters
     bool success() const;
-    const std::optional< std::string >& errorReason() const;
+    const std::optional< std::string >& invalidReason() const;
     const std::string& transaction() const;
     const std::string& network() const;
     const std::string& payer() const;
@@ -31,7 +31,7 @@ public:
 
 private:
     bool success_;
-    std::optional< std::string > invalidReason;
+    std::optional< std::string > invalidReason_;
     std::string payer_;
     std::string originalJson_;
 };
