@@ -429,7 +429,7 @@ std::optional< FacilitatorError > EthPrivateKey::eip712VerifyRaw(
         }
     } catch ( std::exception& e ) {
         spdlog::error("Signature verification failed: {}", e.what() );
-        return FacilitatorError::unexpected_verify_error;
+        return FacilitatorError::invalid_exact_evm_payload_signature;
     }
     return std::nullopt;
 }
