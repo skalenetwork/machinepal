@@ -184,35 +184,44 @@ std::pair<std::string, std::string> TLSCertGenerator::generateSelfSignedCert(
     return {certPem, keyPem};
 }
 
+
 void TLSCertGenerator::generateDefaultCertFiles(
-    const boost::filesystem::path &certFilePath,
-    const boost::filesystem::path &keyFilePath)
-{
+    const std::filesystem::path &certFilePath,
+    const std::filesystem::path &keyFilePath) {
     try {
         // --- 1. Data Loss Prevention ---
-        // Refuse to overwrite existing files
-        if (boost::filesystem::exists(certFilePath)) {
-            throw std::runtime_error("Cert file already exists. Refusing to overwrite, delete it first: "
-                + certFilePath.string());
+        if (std::filesystem::exists(certFilePath)) {
+            throw std::runtime_error("Cert file already exists. Refusing to overwrite: "
+                                     + certFilePath.string());
         }
-        if (boost::filesystem::exists(keyFilePath)) {
-            throw std::runtime_error("Key file already exists. Refusing to overwrite, delete it first: "
-                + keyFilePath.string());
+        if (std::filesystem::exists(keyFilePath)) {
+            throw std::runtime_error("Key file already exists. Refusing to overwrite: "
+                                     + keyFilePath.string());
         }
 
-        // --- 2. Robust Error Handling ---
-        // Throw on failure instead of returning silently
+        // --- 2. Generate Cert ---
         auto pemPair = generateSelfSignedCert();
 
-        // Create directories
-        if (certFilePath.has_parent_path())
-            boost::filesystem::create_directories(certFilePath.parent_path());
-        if (keyFilePath.has_parent_path() && keyFilePath.parent_path() != certFilePath.parent_path())
-            boost::filesystem::create_directories(keyFilePath.parent_path());
+        // Create parent directories
+        std::error_code ec;
+        if (certFilePath.has_parent_path()) {
+            std::filesystem::create_directories(certFilePath.parent_path(), ec);
+            if (ec) {
+                throw std::filesystem::filesystem_error(
+                    "Failed to create parent directory for cert file", certFilePath.parent_path(), ec);
+            }
+        }
+        if (keyFilePath.has_parent_path() && keyFilePath.parent_path() != certFilePath.parent_path()) {
+            std::filesystem::create_directories(keyFilePath.parent_path(), ec);
+            if (ec) {
+                throw std::filesystem::filesystem_error(
+                    "Failed to create parent directory for key file", keyFilePath.parent_path(), ec);
+            }
+        }
 
-        // --- 3. Write Cert File (with full diagnostics) ---
-        errno = 0; // Reset errno
-        std::ofstream certOut(certFilePath.string(), std::ios::out);
+        // --- 3. Write Cert File ---
+        // Use the C++17 std::ofstream constructor that takes a path object
+        std::ofstream certOut(certFilePath);
         if (!certOut) {
             std::string errorMsg = "Failed to open cert file for writing: " + certFilePath.string();
             if (errno != 0) {
@@ -224,39 +233,51 @@ void TLSCertGenerator::generateDefaultCertFiles(
         certOut << pemPair.first;
         if (certOut.fail()) {
             certOut.close();
-            boost::filesystem::remove(certFilePath); // Clean up partial file
+            std::filesystem::remove(certFilePath, ec); // Clean up partial file
             throw std::runtime_error("Failed to write to cert file (e.g., disk full): " + certFilePath.string());
         }
         certOut.close();
 
-        // --- 4. Write Key File (with full diagnostics and cleanup) ---
-        errno = 0; // Reset errno
-        std::ofstream keyOut(keyFilePath.string(), std::ios::out);
+        // --- 4. Write Key File (with cleanup) ---
+        // Use the C++17 std::ofstream constructor
+        std::ofstream keyOut(keyFilePath);
         if (!keyOut) {
             std::string errorMsg = "Failed to open key file for writing: " + keyFilePath.string();
             if (errno != 0) {
                 errorMsg += ". System error: " + std::string(strerror(errno));
             }
-            boost::filesystem::remove(certFilePath); // Clean up the cert file
+            std::filesystem::remove(certFilePath, ec); // Clean up the cert file
             throw std::runtime_error(errorMsg);
         }
 
         keyOut << pemPair.second;
         if (keyOut.fail()) {
             keyOut.close();
-            boost::filesystem::remove(certFilePath); // Clean up both files
-            boost::filesystem::remove(keyFilePath);
+            std::filesystem::remove(certFilePath, ec); // Clean up both files
+            std::filesystem::remove(keyFilePath, ec);
             throw std::runtime_error("Failed to write to key file (e.g., disk full): " + keyFilePath.string());
         }
         keyOut.close();
 
         // --- 5. Critical Security Fix ---
-        // Set permissions on the private key file
-        boost::filesystem::permissions(keyFilePath, boost::filesystem::owner_read | boost::filesystem::owner_write);
+        // Set secure permissions on the private key file
+        std::filesystem::permissions(
+            keyFilePath,
+            // Use the 'perms' enum
+            std::filesystem::perms::owner_read | std::filesystem::perms::owner_write,
+            // CRITICAL: This *replaces* all permissions, ensuring only owner r/w
+            std::filesystem::perm_options::replace,
+            ec
+        );
 
-    } catch (const std::exception& e) {
-        RETHROW_NESTED2(std::string("Failed to generate TLS certificate files: ") + e.what());
+        if (ec) {
+            // If we can't set permissions, the key is insecure. Clean up.
+            std::filesystem::remove(certFilePath, ec);
+            std::filesystem::remove(keyFilePath, ec);
+            throw std::filesystem::filesystem_error(
+                "Successfully wrote key file but FAILED to set secure (owner-only) permissions", keyFilePath, ec);
+        }
     } catch (...) {
-        RETHROW_NESTED2("Failed to generate TLS certificate files due to an unknown error");
+        RETHROW_NESTED2("Failed to generate TLS certificate files.");
     }
 }

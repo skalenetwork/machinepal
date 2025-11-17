@@ -15,8 +15,8 @@ public:
         int validDays = 3650);
 
     void generateDefaultCertFiles(
-        const boost::filesystem::path& certFilePath,
-        const boost::filesystem::path& keyFilePath);
+        const std::filesystem::path& certFilePath,
+        const std::filesystem::path& keyFilePath);
 };
 
 
