@@ -3,8 +3,6 @@
 #include "EthereumWalletGenerator.h"
 #include <fstream>
 
-
-
 void EthereumWalletGenerator::generateWalletFile(const boost::filesystem::path& privKeyPath) {
     try {
         auto privateKey = EthPrivateKey::generate();
@@ -12,7 +10,7 @@ void EthereumWalletGenerator::generateWalletFile(const boost::filesystem::path& 
         if (boost::filesystem::exists(privKeyPath)) {
             throw std::runtime_error("File already exists. Refusing to overwrite, delete file first and retry: "
                 + privKeyPath.string());
-        }`
+        }
 
         if (privKeyPath.has_parent_path())
             boost::filesystem::create_directories(privKeyPath.parent_path());

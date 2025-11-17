@@ -24,7 +24,9 @@
 #include <boost/url/parse.hpp>
 #include <boost/url/url.hpp>
 
-// Standard library headers
+#include <boost/filesystem/directory.hpp>
+#include <boost/filesystem/operations.hpp>
+
 #include <algorithm>
 #include <array>
 #include <atomic>

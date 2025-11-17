@@ -11,6 +11,6 @@ struct EthereumWallet {
 
 class EthereumWalletGenerator {
 public:
-    void generateWalletFile(const boost::filesystem::path& privKeyPath;
+    void generateWalletFile(const boost::filesystem::path& privKeyPath);
 
 };
