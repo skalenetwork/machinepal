@@ -55,7 +55,7 @@ public:
         const string& ipAddress );
 
 
-    variant< SettlementResponse, HttpError > decodeValidateAndSettlePayment(
+    variant< SettlementResponse, HttpError > decodePreValidateAndSettleWithFacilitator(
         const std::unique_ptr< proxygen::HTTPMessage >& req, const MachinePayConfig& config,
         const ResourceConfig& resource, const OrganizationConfig& organization,
         ptr< Authorization >& outAuthorization );

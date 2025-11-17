@@ -349,7 +349,7 @@ void X402Processor::onRequestFullyReceived(
 
         ptr< Authorization > authorization;
 
-        auto result = app_.paymentManager()->decodeValidateAndSettlePayment(
+        auto result = app_.paymentManager()->decodePreValidateAndSettleWithFacilitator(
             reqHeaders, *config(), *resource(), *organization(), authorization );
 
         if ( holds_alternative< HttpError >( result ) ) {

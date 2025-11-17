@@ -3,6 +3,7 @@
 
 #include "config/JsonUtils.h"
 #include "config/subconfigs/NetworkConfig.h"
+#include "facilitators/FacilitatorErrors.h"
 #include "url/URLUtils.h"
 
 // PaymentPayload implementations
@@ -88,14 +89,19 @@ std::optional< HttpError > PaymentPayload::validateAndVerifySignature(
             return HttpError( ERR_BAD_REQUEST, "Unsupported x402Version in payment payload" );
         }
         if ( !config.isSchemeSupported( scheme_ ) ) {
+            spdlog::error( "Payment scheme is not supported: {}", scheme_ );
             return HttpError( ERR_BAD_REQUEST, "Payment scheme is not supported" );
         }
         if ( scheme_ != paymentScheme ) {
+            spdlog::error(" Payment scheme does not match resource's required scheme: {} != {}",
+                scheme_, paymentScheme);
             return HttpError( ERR_BAD_REQUEST,
                 std::string( "Payment scheme does not match resource's required scheme " ) +
                     scheme_ + " != " + paymentScheme );
         }
         if ( network_ != config.network()->name() ) {
+            spdlog::error(" Payment network does not match configured network: {} != {}",
+                network_, config.network()->name());
             return HttpError( ERR_BAD_REQUEST,
                 std::string( "Payment network does not match configured network " ) + network_ +
                     " != " + config.network()->name() );

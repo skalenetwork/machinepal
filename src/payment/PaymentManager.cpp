@@ -184,7 +184,7 @@ variant<SettlementResponse, HttpError> PaymentManager::checkPaymentIsNewAndSettl
 }
 
 
-variant<SettlementResponse, HttpError> PaymentManager::decodeValidateAndSettlePayment(
+variant<SettlementResponse, HttpError> PaymentManager::decodePreValidateAndSettleWithFacilitator(
     const std::unique_ptr<proxygen::HTTPMessage> &req, const MachinePayConfig &config,
     const ResourceConfig &resource, const OrganizationConfig &organization,
     ptr<Authorization> &authorization) {
