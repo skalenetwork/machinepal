@@ -38,7 +38,7 @@ resources:
     token: USDC
 )";
 
-void MachinePayConfigGenerator::generateDefaultConfig(const std::filesystem::path& dirPath,  EthPrivateKey& machinePayKey) {
+void MachinePayConfigGenerator::generateDefaultConfig(const std::filesystem::path& dirPath, EthPrivateKey& machinePayKey) {
     try {
         if (!dirPath.empty()) {
             std::error_code ec;

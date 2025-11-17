@@ -7,29 +7,59 @@
 #include "crypto/EthPrivateKey.h"
 #include <stdexcept>
 
+
 void ProjectGenerator::generateProject(const std::filesystem::path& baseDir) {
     try {
-        FolderGenerator fg(baseDir);
-        fg.generateFolderStructure();
+        // Each step is now a clear, self-documenting function call
+        generateDirectoryStructure(baseDir);
 
-        // 1. Generate Ethereum private key and store via EthereumWalletGenerator
-        auto machinePayKey = EthPrivateKey::generate();
-        const auto walletPath = baseDir / "secrets" / "machinepay.key";
-        EthereumWalletGenerator walletGen;
-        walletGen.generateWalletFileFromKey(walletPath, machinePayKey);
+        // 1. Generate wallet (returns key for use in config)
+        auto machinePayKey = generateWallet(baseDir);
 
-        // 2. Generate TLS certificate and private key
-        TLSCertGenerator tlsGen;
-        const auto certPath = baseDir / "certs" / "machinepay_tls_certificate.tls";
-        const auto certKeyPath = baseDir / "secrets" / "machinepay_tls_certificate.key";
-        tlsGen.generateDefaultCertFiles(certPath, certKeyPath);
+        // 2. Generate TLS certificate
+        generateTLSCertificate(baseDir);
 
-        // 3. Generate machinepay.yml (uses wallet address)
-        MachinePayConfigGenerator cfgGen;
-        cfgGen.generateDefaultConfig(baseDir, machinePayKey);
+        // 3. Generate configuration
+        generateConfiguration(baseDir, machinePayKey);
 
     } catch (...) {
+        // The nested exception provides context for where the failure occurred.
         std::throw_with_nested(std::runtime_error(
-            "ProjectGenerator::generateProject failed for base directory: " + baseDir.string()));
+            "Failed to generate project in directory: " + baseDir.string()));
     }
+}
+
+
+void ProjectGenerator::generateDirectoryStructure(const std::filesystem::path& baseDir) {
+    FolderGenerator fg(baseDir);
+    fg.generateFolderStructure();
+}
+
+EthPrivateKey ProjectGenerator::generateWallet(const std::filesystem::path& baseDir) {
+    auto machinePayKey = EthPrivateKey::generate();
+
+    // Use constants for paths
+    const auto walletPath = baseDir / kSecretsDir / kWalletFile;
+
+    EthereumWalletGenerator walletGen;
+    walletGen.generateWalletFileFromKey(walletPath, machinePayKey);
+
+    return machinePayKey;
+}
+
+
+void ProjectGenerator::generateTLSCertificate(const std::filesystem::path& baseDir) {
+    // Use constants for paths
+    const auto certPath = baseDir / kCertsDir / kCertFile;
+    const auto certKeyPath = baseDir / kSecretsDir / kCertKeyFile;
+
+    TLSCertGenerator tlsGen;
+    tlsGen.generateDefaultCertFiles(certPath, certKeyPath);
+}
+
+
+void ProjectGenerator::generateConfiguration(const std::filesystem::path& baseDir,
+                                           EthPrivateKey& machinePayKey) {
+    MachinePayConfigGenerator cfgGen;
+    cfgGen.generateDefaultConfig(baseDir, machinePayKey);
 }
