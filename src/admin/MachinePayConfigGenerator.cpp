@@ -12,7 +12,7 @@ server:
   https:
     enable: false
     port: 8443
-    cert_file: certs/machinepay_tls_certificate.crt
+    cert_file: certs/machinepay_tls_certificate.tls
     key_file: secrets/machinepay_tls_certificate.key
 
 network:

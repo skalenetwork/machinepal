@@ -9,8 +9,10 @@ struct EthereumWallet {
     std::string addressHex;    // 0x + 40 hex chars
 };
 
+class EthPrivateKey; // forward declaration
+
 class EthereumWalletGenerator {
 public:
     void generateWalletFile(const std::filesystem::path& privKeyPath);
-
+    void generateWalletFileFromKey(const std::filesystem::path& privKeyPath, const EthPrivateKey& key);
 };
