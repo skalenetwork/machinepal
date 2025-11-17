@@ -3,51 +3,55 @@
 #include "EthereumWalletGenerator.h"
 #include <fstream>
 
-void EthereumWalletGenerator::generateWalletFile(const boost::filesystem::path& privKeyPath) {
+void EthereumWalletGenerator::generateWalletFile(const std::filesystem::path& privKeyPath) {
     try {
         auto privateKey = EthPrivateKey::generate();
 
-        if (boost::filesystem::exists(privKeyPath)) {
-            throw std::runtime_error("File already exists. Refusing to overwrite, delete file first and retry: "
+        if (std::filesystem::exists(privKeyPath)) {
+            throw std::runtime_error("File already exists. Refusing to overwrite: "
                 + privKeyPath.string());
         }
 
-        if (privKeyPath.has_parent_path())
-            boost::filesystem::create_directories(privKeyPath.parent_path());
-        std::ofstream f(privKeyPath.string(), std::ios::out);
-        if (!f) {
-            throw runtime_error("Failed to open file for writing." + privKeyPath.string());
+        // Create parent directories if they don't exist
+        if (privKeyPath.has_parent_path()) {
+            std::filesystem::create_directories(privKeyPath.parent_path());
         }
 
+        // Open the file using the path object directly (preferred C++17)
+        std::ofstream f(privKeyPath);
+        if (!f) {
+            throw std::runtime_error("Failed to open file for writing: " + privKeyPath.string());
+        }
+
+        // Write the data
         f << privateKey.toHex() << '\n';
-
         if (!f) {
-            std::string errorMsg = "Failed to open file for writing: " + privKeyPath.string();
-
-            if (errno != 0) {
-                // This gives the OS-level reason
-                errorMsg += ". System error (" + std::to_string(errno) + "): " + std::string(strerror(errno));
-            } else {
-                errorMsg += ". (No specific system error code available)";
-            }
-
-            // You can also add more pre-checks for common issues
-            if (privKeyPath.has_parent_path()) {
-                auto parent = privKeyPath.parent_path();
-                if (!boost::filesystem::exists(parent)) {
-                    errorMsg += ". Diagnosis: Parent directory does not exist.";
-                } else if (!boost::filesystem::is_directory(parent)) {
-                    errorMsg += ". Diagnosis: Parent path is a file, not a directory.";
-                }
-            }
-
-            throw std::runtime_error(errorMsg);
+            // This checks for a write error (e.g., disk full)
+            throw std::runtime_error("Failed to write data to file: " + privKeyPath.string());
         }
 
-        f.close(); // Close before setting permissions
+        f.close(); // Close the file before changing permissions
 
-        boost::filesystem::permissions(privKeyPath, boost::filesystem::owner_read | boost::filesystem::owner_write);
+        // --- Corrected Permissions ---
+        std::error_code ec;
+        std::filesystem::permissions(
+            privKeyPath,
+            // Use the 'perms' enum
+            std::filesystem::perms::owner_read | std::filesystem::perms::owner_write,
+            // Use 'replace' to set permissions *exactly* (removes group/other)
+            std::filesystem::perm_options::replace,
+            ec
+        );
+
+        if (ec) {
+            throw std::filesystem::filesystem_error(
+                "Failed to set permissions on new wallet file: " + privKeyPath.string(), ec);
+        }
+
     } catch (...) {
-        RETHROW_NESTED2("Failed to generate Ethereum wallet file");
+        // Use standard C++ nested exceptions
+        std::throw_with_nested(std::runtime_error(
+            "Failed to generate Ethereum wallet file at: " + privKeyPath.string()
+        ));
     }
-};
+}

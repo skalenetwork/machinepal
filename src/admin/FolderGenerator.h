@@ -1,12 +1,11 @@
 #pragma once
-#include <boost/filesystem/path.hpp>
 
 class FolderGenerator {
 public:
-    explicit FolderGenerator(const boost::filesystem::path& baseDir);
-    void generateFolderStructure(); // create certs, data, resources, secrets with secure perms
-private:
-    boost::filesystem::path base_;
-    void createAndSecure(const boost::filesystem::path& p);
-};
+    FolderGenerator(const std::filesystem::path& baseDir);
+    void generateFolderStructure();
 
+private:
+    void createAndSecure(const std::filesystem::path& p);
+    std::filesystem::path base_;
+};
