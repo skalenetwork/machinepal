@@ -21,11 +21,6 @@ public:
 
 
     /**
-     * @brief Result codes for transfer operations.
-     */
-    enum class TransferResult { TransferSuccess, InsufficientFunds };
-
-    /**
      * @brief Processes a transfer request between two wallets for a specific asset.
      * @param fromAddress Sender's wallet address.
      * @param toAddress Recipient's wallet address.
@@ -38,7 +33,7 @@ public:
      * transfer is valid. It ensures thread-safe modification of wallet balances and prevents
      * overdrafts.
      */
-    TransferResult processTransferRequest( const EthAddress& fromAddress,
+    std::optional<FacilitatorError> processTransferRequest( const EthAddress& fromAddress,
         const EthAddress& toAddress, const EthAddress& assetAddress, const EIP3009Value& value,
         EIP3009Nonce nonce, const std::string& resourceLocation, const std::string& fromIpAddress,
         const std::string& jsonInfo, const std::string& transactionHash,
@@ -78,7 +73,7 @@ private:
         const EIP3009Value& value );
 
 
-    TransferResult transferValueUnsafe( const EthAddress& fromAddress, const EthAddress& toAddress,
+    std::optional<FacilitatorError> transferValueUnsafe( const EthAddress& fromAddress, const EthAddress& toAddress,
         const EthAddress& assetAddress, const EIP3009Value& value, EIP3009Nonce& nonce,
         const std::string& resourceLocation, const std::string& fromIpAddress,
         const std::string& jsonInfo, const std::string& transactionHash,

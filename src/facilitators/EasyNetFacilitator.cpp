@@ -44,23 +44,25 @@ nlohmann::json EasyNetFacilitator::processSettleRequest(
         std::string authorizationSignatureHash = Encoding::hashToHex(
             paymentPayload->payload()->signature().computeSignatureHash() );
 
-        auto result = db->processTransferRequest( fromWalletAddress, toWalletAddress,
+        auto facilitatorError = db->processTransferRequest( fromWalletAddress, toWalletAddress,
             assetWalletAddress, transferValue, nonce, resource, "0.0.0.0", jsonInfo,
             transactionHash, chainId_, authorizationSignatureHash );
 
-        if ( result == EasyNetDb::TransferResult::TransferSuccess ) {
+        if ( !facilitatorError.has_value() ) {
             SettlementResponse response( true, std::nullopt, "",
                 "",  // transaction, network (empty placeholders)
                 fromWalletAddress.toHex( PREFIX_0x ), std::nullopt );
             return response.toJson();
         } else {
-            SettlementResponse response( false, std::string( "InsufficientFunds" ), "",
+            SettlementResponse response( false, string(FacilitatorErrors::getErrorString(facilitatorError.value())) , "",
                 "",  // transaction, network
                 fromWalletAddress.toHex( PREFIX_0x ), std::nullopt );
             return response.toJson();
         }
     } catch ( const std::exception& e ) {
-        SettlementResponse response( false, std::string( e.what() ), "",
+        printNestedException(e);
+        SettlementResponse response( false, std::string(
+            FacilitatorErrors::getErrorString(FacilitatorError::unexpected_settle_error)), "",
             "",  // transaction, network
             "", std::nullopt );
         return response.toJson();

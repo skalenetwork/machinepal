@@ -3,6 +3,8 @@
 #include "crypto/Encoding.h"  // added for u256 conversions
 #include <soci/soci.h>
 
+#include "facilitators/FacilitatorErrors.h"
+
 EasyNetDb::EasyNetDb( MachinePayApp& app, DbType type, const optional< string >& connectionInfo )
     : MachinePayDb( app, type, connectionInfo ) {
     try {
@@ -133,7 +135,7 @@ void EasyNetDb::newWalletUnsafe( const EthAddress& walletAddress, const EthAddre
     }
 }
 
-EasyNetDb::TransferResult EasyNetDb::processTransferRequest( const EthAddress& fromAddress,
+std::optional<FacilitatorError> EasyNetDb::processTransferRequest( const EthAddress& fromAddress,
     const EthAddress& toAddress, const EthAddress& assetAddress, const EIP3009Value& value,
     EIP3009Nonce nonce, const string& resourceLocation, const string& fromIpAddress,
     const string& jsonInfo, const string& transactionHash,
@@ -188,19 +190,12 @@ void EasyNetDb::updateState( soci::session& databaseSession, string& walletAddre
         soci::use( assetContractAddressDatabaseString, "assetAddress" );
 }
 
-EasyNetDb::TransferResult EasyNetDb::transferValueUnsafe( const EthAddress& fromAddress,
+std::optional<FacilitatorError> EasyNetDb::transferValueUnsafe( const EthAddress& fromAddress,
     const EthAddress& toAddress, const EthAddress& assetAddress, const EIP3009Value& value,
     EIP3009Nonce& nonce, const string& resourceLocation, const string& fromIpAddress,
     const string& jsonInfo, const string& transactionHash,
     const u256& chainId, const string& authorizationSignatureHash ) {
-    if ( fromAddress.toDbString() == toAddress.toDbString() ) {
-        logger_->trace( "transferValue: fromAddress == toAddress, no-op success" );
-        return TransferResult::TransferSuccess;
-    }
-    if ( value.value() == 0 ) {
-        logger_->trace( "transferValue: amount == 0, no-op success" );
-        return TransferResult::TransferSuccess;
-    }
+
 
     try {
         soci::session databaseSession( *pool_ );
@@ -228,10 +223,10 @@ EasyNetDb::TransferResult EasyNetDb::transferValueUnsafe( const EthAddress& from
         u256 senderCurrentBalanceValue = Encoding::u256FromHexOrDecimal( senderBalanceValueStringFromDatabase );
 
         if ( transferAmountValue > senderCurrentBalanceValue ) {
-            logger_->trace( "transferValue: insufficient funds walletAddress={} assetAddress={} have={} need={}",
+            logger_->warn( "transferValue: insufficient funds walletAddress={} assetAddress={} have={} need={}",
                 fromWalletAddressDatabaseString, assetContractAddressDatabaseString,
                 Encoding::u256ToDecimal( senderCurrentBalanceValue ), Encoding::u256ToDecimal( transferAmountValue ) );
-            return TransferResult::InsufficientFunds;
+            return FacilitatorError::insufficient_funds;
         }
 
         // Fetch receiver balance (may be absent)
@@ -255,7 +250,7 @@ EasyNetDb::TransferResult EasyNetDb::transferValueUnsafe( const EthAddress& from
                 toWalletAddressDatabaseString, assetContractAddressDatabaseString,
                 Encoding::u256ToDecimal( receiverCurrentBalanceValue ), Encoding::u256ToDecimal( transferAmountValue ),
                 Encoding::u256ToDecimal( maxUint256Value ) );
-            return TransferResult::InsufficientFunds;
+            return FacilitatorError::insufficient_funds;
         }
 
         // Compute new balances
@@ -286,7 +281,7 @@ EasyNetDb::TransferResult EasyNetDb::transferValueUnsafe( const EthAddress& from
             fromIpAddress, jsonInfo, transferAmountValueStr, chainIdStr, authorizationSignatureHash );
 
         databaseTransactionScope.commit();
-        return TransferResult::TransferSuccess;
+        return std::nullopt;
     } catch ( exception& e ) {
         RETHROW_NESTED2( "Failed to transfer value: " + string( e.what() ) );
     }
