@@ -356,19 +356,16 @@ std::shared_ptr< MachinePayConfig > ConfigLoader::loadFromYamlFile(
     try {
         CHECK_STATE( fileManager );
         CHECK_STATE( yamlPath.is_absolute() );
-        spdlog::info( "Parsing config file" );
         json j = yamlToJson( yamlPath );
         applyEnvOverrides( j );
         resolveSecrets( j );
-        spdlog::info( "Validating config file against schema: {}", yamlPath.string() );
         validateJson( j );
-        spdlog::info( "Validated config file against schema" );
         auto result = MachinePayConfig::createFromJson( j, fileManager );
         ;
         // sanity check manual validation corresponds to the schema
         validateJson( j );
         return result;
     } catch ( const std::exception& ex ) {
-        RETHROW_NESTED;
+        RETHROW_NESTED2("Could not load MachinePayConfig from: " + yamlPath.string());
     }
 }

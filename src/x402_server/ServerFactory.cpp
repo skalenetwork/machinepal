@@ -51,7 +51,6 @@ std::shared_ptr< HTTPServer > ServerFactory::createServerInstance(
     const ServerConfig& serverConfig ) {
     try {
         HTTPServerOptions options;
-        spdlog::info( "Creating server instance" );
 
         auto factory = std::make_unique< X402HandlerFactory >( app_ );
 
@@ -79,12 +78,13 @@ std::shared_ptr< HTTPServer > ServerFactory::createServerInstance(
         auto server = std::make_shared< HTTPServer >( std::move( options ) );
 
         for ( const auto& config : ipConfigs ) {
-            spdlog::info( "Binding to {}:{} [{}]", config.address.getAddressStr(),
-                config.address.getPort(), config.sslConfigs.empty() ? " HTTP" : "HTTPS" );
+            auto protocol = config.sslConfigs.empty() ? "HTTP" : "HTTPS";
+            spdlog::info( "Starting {} server on  {}:{}",
+                protocol, config.address.getAddressStr(),
+                config.address.getPort());
         }
 
         server->bind( ipConfigs );
-        spdlog::info( "Server instance created and bound successfully." );
         return server;
     } catch ( const std::exception& ex ) {
         RETHROW_NESTED;

@@ -7,7 +7,6 @@ MachinePayApp::MachinePayApp(const std::map<std::string, std::string>& configVal
 {
     try
     {
-        spdlog::info("Looking for config");
         configManager_ = ConfigManager::initManager(configValuesFromCliAndEnv);
         configPath_ = configManager_->fileManager()->canonicalConfigDirPath();
         Init::initLogLevelFromConfig(configManager());
@@ -48,22 +47,19 @@ uint32_t MachinePayApp::runUntilExit()
 
     try
     {
-        spdlog::info("Creating and starting machinepay server");
+        spdlog::info("Starting machinepay");
         serverFactory_ = std::make_shared<ServerFactory>(*this);
         auto serverConfig = configManager_->latestConfig()->server();
 
         proxygenServer_ = serverFactory_->createServerInstance(*serverConfig);
 
-        spdlog::info("Creating thread pool");
         auto ioExecutor = std::make_shared<folly::IOThreadPoolExecutor>(
             256,
             std::make_shared<folly::NamedThreadFactory>("x402Processor"));
 
-        spdlog::info("Starting machinepay server");
-
         auto onSuccess = [this]()
         {
-            spdlog::info("Machinepay server started successfully.");
+            spdlog::info("Machinepay started successfully.");
             this->isStarted_ = true;
         };
         auto onError = [this](std::exception_ptr eptr)
@@ -74,15 +70,15 @@ uint32_t MachinePayApp::runUntilExit()
             }
             catch (const std::exception& ex)
             {
-                spdlog::error("Machinepay server failed to start: {}", ex.what());
+                spdlog::error("Machinepay failed to start: {}", ex.what());
                 this->setExited(1, ex.what());
                 return;
             }
             catch (...)
             {
             }
-            spdlog::error("Machinepay server failed to start: unknown error");
-            this->setExited(1, "Machinepay server failed to start: unknown error");
+            spdlog::error("Machinepay failed to start: unknown error");
+            this->setExited(1, "Machinepay failed to start: unknown error");
         };
 
         std::thread serverThread([this, ioExecutor, onSuccess, onError]()
@@ -94,8 +90,8 @@ uint32_t MachinePayApp::runUntilExit()
             }
             catch (...)
             {
-                spdlog::error("Proxygen server failed to start: unknown error");
-                setExited(1, "Unknown error starting machinepay server");
+                spdlog::error("Machinepay failed to start: unknown error");
+                setExited(1, "Unknown error starting machinepay");
             }
         });
 

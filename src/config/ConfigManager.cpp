@@ -151,7 +151,7 @@ void ConfigManager::reloadConfig() {
 
         spdlog::info( "Loading machinepay config from: {}", configPath.c_str() );
         spdlog::info(
-            "All relative paths in the config will be resolved against the machinepay config "
+            "All relative paths in the config are resolved relative to the config base "
             "directory: {}",
             fileManager_->canonicalConfigDirPath().c_str() );
 

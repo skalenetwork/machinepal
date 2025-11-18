@@ -19,7 +19,6 @@ public:
             checkFileExistsAndReadableCwd( userProvidedConfigPath );
             canonicalConfigPath_ =
                 FileManager::resolveCanonicalPathAgainstCwd( userProvidedConfigPath_ );
-            spdlog::info( "Resolved machinepay config path: {}", canonicalConfigPath_.c_str() );
             CHECK_STATE( !canonicalConfigPath_.empty() );
             canonicalConfigDirPath_ =
                 std::filesystem::path( canonicalConfigPath_ ).parent_path().string();

@@ -10,7 +10,7 @@
 
 
 void ProjectGenerator::generateProjectInCurrentWorkingDir() {
-    spdlog::info("Initializing project in the current directory...");
+    spdlog::info("Creating new project structure in the current directory…");
     auto cwd = std::filesystem::current_path();
     generateProject(cwd);
     spdlog::info("Project initialized successfully.");
@@ -82,6 +82,6 @@ void ProjectGenerator::validateBaseDirEmpty(const std::filesystem::path &baseDir
         throw std::runtime_error("Failed to read project base directory: " + baseDir.string());
     }
     if (it != std::filesystem::end(it)) {
-        throw std::runtime_error(string("Directory is not empty. Run init in an empty directory."));
+        throw std::runtime_error(string("Directory is not empty. Please run project init in an empty directory."));
     }
 }

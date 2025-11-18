@@ -85,19 +85,11 @@ map<string, string>  parseConfigValueOverloadsFromCommandLineAndEnvironment(int 
         setIfNotEmpty(envOverloads, "HOSTNAME", hostname);
         setBooleanSwitchIfNotEmpty(envOverloads, "INIT_PROJECT", initProject);
 
-        if (envOverloads.size() > 0) {
-            spdlog::info("Values set in command line and environment override "
-                         "the corresponding configuration file values."
-                         " Command line takes precedence over environment.");
-            for (const auto& kv : envOverloads) {
-                spdlog::info("{} = {}", kv.first, kv.second);
-            }
-        }
+
 
         if (!envOverloads.contains("CONFIG")) {
             // If config file is not set, set to default ./machinepay.yml
             envOverloads["CONFIG"] = "./machinepay.yml";
-            spdlog::info("No config file specified in command line or environment. Using default ./machinepay.yml");
         }
 
         return envOverloads;
@@ -118,7 +110,6 @@ int main(int argc, char *argv[]) {
     try {
         Init::initAllLibs(1, argv);
         auto configValueOverloads = parseConfigValueOverloadsFromCommandLineAndEnvironment(argc, argv);
-        Init::checkOperatingSystemConfiguration();
         if (configValueOverloads.contains("INIT_PROJECT")) {
             try {
                 ProjectGenerator::generateProjectInCurrentWorkingDir();
@@ -128,8 +119,28 @@ int main(int argc, char *argv[]) {
                 spdlog::error(ex.what());
                 return 1;
             }
-
         }
+
+        auto configFilePath =  configValueOverloads.at("CONFIG");
+
+        if (configFilePath == "./machinepay.yml") {
+            spdlog::info("Using default config path ./machinepay.yml");
+        } else {
+            spdlog::info("Using config path: {}", configFilePath);
+        }
+
+        if (configValueOverloads.size() > 0) {
+            spdlog::info("Values set in command line and environment override "
+                         "the corresponding configuration file values."
+                         " Command line takes precedence over environment.");
+            for (const auto& kv : configValueOverloads) {
+                spdlog::info("{} = {}", kv.first, kv.second);
+            }
+        }
+
+        Init::checkOperatingSystemConfiguration();
+
+
         auto machinePayApp = MachinePayApp::makeInstance(configValueOverloads);
         machinePayApp->runUntilExit();
         return 0;

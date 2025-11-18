@@ -17,8 +17,6 @@ EIP712Domain::EIP712Domain( const std::string& name, const std::string& version,
     auto computedDomainSeparator = hashDomain();
     domainSeparator_ = Encoding::toHex( computedDomainSeparator, true );
     if ( domainSeparator ) {
-        cerr << domainSeparator_ << endl;
-        cerr << domainSeparator.value() << endl;
         CHECK_STATE( domainSeparator_ == domainSeparator.value() );
     }
 }

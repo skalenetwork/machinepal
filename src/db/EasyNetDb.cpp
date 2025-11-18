@@ -103,13 +103,9 @@ EasyNetDb::EasyNetDb( MachinePayApp& app, DbType type, const optional< string >&
 
         if ( !stateTableExisted ) {
             logger_->info( "New 'state' table created and schema initialized." );
-        } else {
-            logger_->info( "Database schema verified, 'state' table already exists." );
         }
         if ( !transactionsTableExisted ) {
             logger_->info( "New 'transactions' table created and schema initialized." );
-        } else {
-            logger_->info( "Database schema verified, 'transactions' table already exists." );
         }
     } catch ( exception& e ) {
         RETHROW_NESTED2( "Failed to ensure schema " + string( e.what() ) );

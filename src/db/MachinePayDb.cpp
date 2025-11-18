@@ -241,8 +241,6 @@ void MachinePayDb::ensureSchema() {
         // --- Step 4: Log based on our check ---
         if ( !tableExisted ) {
             logger_->info( "New 'payments' table created and schema initialized." );
-        } else {
-            logger_->info( "Database schema verified, 'payments' table already exists." );
         }
     } catch ( std::exception& e ) {
         RETHROW_NESTED2( "Failed to ensure schema " + string( e.what() ) );

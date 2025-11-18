@@ -238,7 +238,7 @@ nlohmann::json FacilitatorClient::settle( const nlohmann::json& request ) const 
 
 void FacilitatorClient::selfTest() const {
     auto testUrl = baseUrl_ + "/settle";
-    spdlog::info("Performing test connection to facilitator edpoint "
+    spdlog::info("Testing connection to facilitator endpoint:"
         + testUrl);
 
     // Create a buffer to hold detailed error messages
@@ -286,6 +286,6 @@ void FacilitatorClient::selfTest() const {
                 testUrl, static_cast<int>(res), curl_easy_strerror(res),
                 errbuf);
     } else {
-        spdlog::info("Facilitator Connection Test SUCCESS");
+        spdlog::info("Facilitator Connection Test successful.");
     }
 }

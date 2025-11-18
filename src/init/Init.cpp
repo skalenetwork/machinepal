@@ -11,39 +11,41 @@
 
 
 // New: header callback to collect raw headers
-static size_t HeaderCallback( char* buffer, size_t size, size_t nitems, void* userdata ) {
+static size_t HeaderCallback(char *buffer, size_t size, size_t nitems, void *userdata) {
     size_t total = size * nitems;
-    auto* headers = static_cast< string* >( userdata );
-    headers->append( buffer, total );
+    auto *headers = static_cast<string *>(userdata);
+    headers->append(buffer, total);
     return total;
 }
 
-atomic< bool > Init::inited_{ false };
+atomic<bool> Init::inited_{false};
 
 
 void ThrowOnFailure() {
     cerr << "Fatal log or CHECK failed in proxygen" << endl;
-    throw runtime_error( "Fatal log or CHECK failed" );
+    throw runtime_error("Fatal log or CHECK failed");
 }
 
-void Init::initAllLibs( int _argc, char* _argv[] ) {
-    if ( !inited_.exchange( true ) ) {
-        auto rc = curl_global_init( CURL_GLOBAL_DEFAULT );
-        CHECK_STATE2( rc == CURLE_OK, "curl_global_init failed" );
+void Init::initAllLibs(int _argc, char *_argv[]) {
+    if (!inited_.exchange(true)) {
+        try {
+            auto rc = curl_global_init(CURL_GLOBAL_DEFAULT);
+            CHECK_STATE2(rc == CURLE_OK, "curl_global_init failed");
 
-        FLAGS_logtostderr = 1;
-        FLAGS_minloglevel = google::INFO;
-        static folly::Init init( &_argc, &_argv );  // Static to preserve lifetime, pass by pointer
+            FLAGS_logtostderr = 1;
+            FLAGS_minloglevel = google::INFO;
+            static folly::Init init(&_argc, &_argv); // Static to preserve lifetime, pass by pointer
 
 
-        google::InstallFailureFunction( &ThrowOnFailure );
+            google::InstallFailureFunction(&ThrowOnFailure);
 
-        auto logger = spdlog::stderr_logger_mt( "machinepay" );
-        spdlog::set_default_logger( logger );
-        spdlog::set_level( spdlog::level::info );  // Set global log level to INFO
-        // spdlog::set_pattern(
-        //   R"({"ts":"%Y-%m-%dT%H:%M:%S.%e%z","level":"%l","logger":"%n","pid":%P,"tid":%t,"msg":"%v"})");
-        spdlog::info( "Libraries initialized" );
+            auto logger = spdlog::stderr_logger_mt("machinepay");
+            spdlog::set_default_logger(logger);
+            spdlog::set_level(spdlog::level::info); // Set global log level to INFO
+        } catch (... ) {
+            RETHROW_NESTED2("FATAL: Failed to initialize machinepay libraries.");
+        }
+
     }
 }
 
@@ -52,118 +54,118 @@ bool Init::isInited() {
 }
 
 
-map< string, string > Init::getMachinePayEnvironmentOverloads() {
-    map< string, string > envOverloads;
-    extern char** environ;
+map<string, string> Init::getMachinePayEnvironmentOverloads() {
+    map<string, string> envOverloads;
+    extern char **environ;
     const string prefix = "MACHINE_PAY_";
-    for ( char** env = environ; *env != nullptr; ++env ) {
-        string environmentVariable( *env );
-        if ( !environmentVariable.starts_with( prefix ) )
+    for (char **env = environ; *env != nullptr; ++env) {
+        string environmentVariable(*env);
+        if (!environmentVariable.starts_with(prefix))
             continue;
-        auto pos = environmentVariable.find( '=' );
-        if ( pos == string::npos )
+        auto pos = environmentVariable.find('=');
+        if (pos == string::npos)
             continue;
-        string key = environmentVariable.substr( 0, pos );
-        string strippedKey = key.substr( prefix.size() );
+        string key = environmentVariable.substr(0, pos);
+        string strippedKey = key.substr(prefix.size());
 
-        if ( strippedKey.empty() ) {
+        if (strippedKey.empty()) {
             continue;
         }
 
-        if ( envOverloads.contains( strippedKey ) > 0 ) {
-            throw runtime_error( "Duplicate environment variable: " + string( key ) );
+        if (envOverloads.contains(strippedKey) > 0) {
+            throw runtime_error("Duplicate environment variable: " + string(key));
         }
-        envOverloads[strippedKey] = environmentVariable.substr( pos + 1 );
+        envOverloads[strippedKey] = environmentVariable.substr(pos + 1);
     }
     return envOverloads;
 }
 
 
-void Init::initLogLevelFromConfig( ptr< ConfigManager > manager ) {
-    CHECK_STATE( manager );
+void Init::initLogLevelFromConfig(ptr<ConfigManager> manager) {
+    CHECK_STATE(manager);
     auto logConfig = manager->latestConfig()->log();
     auto logLevel = logConfig->level();
 
     spdlog::level::level_enum spdlogLevel = spdlog::level::info;
 
-    if ( logLevel == LogLevel::trace )
+    if (logLevel == LogLevel::trace)
         spdlogLevel = spdlog::level::trace;
-    else if ( logLevel == LogLevel::debug )
+    else if (logLevel == LogLevel::debug)
         spdlogLevel = spdlog::level::debug;
-    else if ( logLevel == LogLevel::info )
+    else if (logLevel == LogLevel::info)
         spdlogLevel = spdlog::level::info;
-    else if ( logLevel == LogLevel::warn )
+    else if (logLevel == LogLevel::warn)
         spdlogLevel = spdlog::level::warn;
-    else if ( logLevel == LogLevel::error )
+    else if (logLevel == LogLevel::error)
         spdlogLevel = spdlog::level::err;
-    else if ( logLevel == LogLevel::fatal )
+    else if (logLevel == LogLevel::fatal)
         spdlogLevel = spdlog::level::critical;
     else {
-        CHECK_STATE( false );  // should never happen
+        CHECK_STATE(false); // should never happen
     }
 
-    spdlog::set_level( spdlogLevel );
+    spdlog::set_level(spdlogLevel);
 }
 
 bool Init::fetchInternetTime(
-    const char* url, string& utcDatetime, string& responseOut, string& errorOut ) {
-    CURL* curl = curl_easy_init();
-    if ( !curl ) {
+    const char *url, string &utcDatetime, string &responseOut, string &errorOut) {
+    CURL *curl = curl_easy_init();
+    if (!curl) {
         errorOut = "Failed to initialize curl for time check";
         return false;
     }
 
     // RAII for curl handle
     auto curl_cleanup = [&]() {
-        if ( curl ) {
-            curl_easy_cleanup( curl );
+        if (curl) {
+            curl_easy_cleanup(curl);
             curl = nullptr;
         }
     };
-    shared_ptr< void > guard( nullptr, [&]( void* ) { curl_cleanup(); } );
+    shared_ptr<void> guard(nullptr, [&](void *) { curl_cleanup(); });
 
 
     string headerBuffer;
     // First try: HEAD request to extract Date header
-    curl_easy_setopt( curl, CURLOPT_URL, url );
-    curl_easy_setopt( curl, CURLOPT_NOBODY, 1L );
-    curl_easy_setopt( curl, CURLOPT_HEADERFUNCTION, HeaderCallback );
-    curl_easy_setopt( curl, CURLOPT_HEADERDATA, &headerBuffer );
-    curl_easy_setopt( curl, CURLOPT_TIMEOUT, 5L );
-    CURLcode res = curl_easy_perform( curl );
+    curl_easy_setopt(curl, CURLOPT_URL, url);
+    curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);
+    curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, HeaderCallback);
+    curl_easy_setopt(curl, CURLOPT_HEADERDATA, &headerBuffer);
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 5L);
+    CURLcode res = curl_easy_perform(curl);
 
-    auto parseDateHeader = [&]( const string& headers ) -> bool {
-        istringstream iss( headers );
+    auto parseDateHeader = [&](const string &headers) -> bool {
+        istringstream iss(headers);
         string line;
-        while ( getline( iss, line ) ) {
-            if ( line.ends_with( "\r" ) )
+        while (getline(iss, line)) {
+            if (line.ends_with("\r"))
                 line.pop_back();
             // Case-insensitive starts_with "date:"
-            if ( line.size() >= 5 ) {
-                string prefix = line.substr( 0, 5 );
-                for ( auto& c : prefix )
+            if (line.size() >= 5) {
+                string prefix = line.substr(0, 5);
+                for (auto &c: prefix)
                     c = static_cast<char>(tolower(static_cast<unsigned char>(c)));
-                if ( prefix == "date:" ) {
-                    string value = line.substr( 5 );
+                if (prefix == "date:") {
+                    string value = line.substr(5);
                     // trim leading spaces
                     while (
-                        !value.empty() && isspace( static_cast< unsigned char >( value.front() ) ) )
-                        value.erase( value.begin() );
+                        !value.empty() && isspace(static_cast<unsigned char>(value.front())))
+                        value.erase(value.begin());
                     // Expected: Sun, 16 Nov 2025 12:19:42 GMT
                     // Remove trailing GMT if present for parsing
-                    if ( value.size() > 4 && value.substr( value.size() - 4 ) == " GMT" ) {
-                        value = value.substr( 0, value.size() - 4 );
+                    if (value.size() > 4 && value.substr(value.size() - 4) == " GMT") {
+                        value = value.substr(0, value.size() - 4);
                     }
                     tm tm{};
-                    istringstream parse( value );
-                    parse >> get_time( &tm, "%a, %d %b %Y %H:%M:%S" );
-                    if ( !parse.fail() ) {
-                        time_t t = timegm( &tm );
-                        if ( t != -1 ) {
-                            auto gmt = gmtime( &t );
-                            if ( gmt ) {
+                    istringstream parse(value);
+                    parse >> get_time(&tm, "%a, %d %b %Y %H:%M:%S");
+                    if (!parse.fail()) {
+                        time_t t = timegm(&tm);
+                        if (t != -1) {
+                            auto gmt = gmtime(&t);
+                            if (gmt) {
                                 ostringstream out;
-                                out << put_time( gmt, "%Y-%m-%dT%H:%M:%SZ" );
+                                out << put_time(gmt, "%Y-%m-%dT%H:%M:%SZ");
                                 utcDatetime = out.str();
                                 return true;
                             }
@@ -176,7 +178,7 @@ bool Init::fetchInternetTime(
         return false;
     };
 
-    if ( res == CURLE_OK && parseDateHeader( headerBuffer ) ) {
+    if (res == CURLE_OK && parseDateHeader(headerBuffer)) {
         responseOut = headerBuffer;
         return true;
     } else {
@@ -186,13 +188,13 @@ bool Init::fetchInternetTime(
 
 void Init::checkSystemTime() {
     string utcDatetime, response, error;
-    bool ok = fetchInternetTime( "https://google.com", utcDatetime, response, error );
-    if ( !ok ) {
-        spdlog::warn( "fetchInternetTime failed: {}", error );
+    bool ok = fetchInternetTime("https://google.com", utcDatetime, response, error);
+    if (!ok) {
+        spdlog::warn("fetchInternetTime failed: {}", error);
         return;
     }
-    if ( utcDatetime.empty() ) {
-        spdlog::warn( "Empty utcDatetime received. Response: {}", response );
+    if (utcDatetime.empty()) {
+        spdlog::warn("Empty utcDatetime received. Response: {}", response);
         return;
     }
 
@@ -202,19 +204,19 @@ void Init::checkSystemTime() {
     // 3) YYYY-MM-DDTHH:MM:SS+00:00
     // 4) YYYY-MM-DDTHH:MM:SS.ffffff+00:00
     // 5) YYYY-MM-DDTHH:MM:SS(.fraction)+00:00
-    if ( utcDatetime.size() < 19 ) {
-        spdlog::warn( "utcDatetime too short: {}", utcDatetime );
-        spdlog::warn( "Full response: {}", response );
+    if (utcDatetime.size() < 19) {
+        spdlog::warn("utcDatetime too short: {}", utcDatetime);
+        spdlog::warn("Full response: {}", response);
         return;
     }
 
-    string base = utcDatetime.substr( 0, 19 );  // YYYY-MM-DDTHH:MM:SS
+    string base = utcDatetime.substr(0, 19); // YYYY-MM-DDTHH:MM:SS
     tm tm{};
-    istringstream ss( base );
-    ss >> get_time( &tm, "%Y-%m-%dT%H:%M:%S" );
-    if ( ss.fail() ) {
-        spdlog::warn( "Failed to parse base datetime: {}", base );
-        spdlog::warn( "Full utcDatetime: {}", utcDatetime );
+    istringstream ss(base);
+    ss >> get_time(&tm, "%Y-%m-%dT%H:%M:%S");
+    if (ss.fail()) {
+        spdlog::warn("Failed to parse base datetime: {}", base);
+        spdlog::warn("Full utcDatetime: {}", utcDatetime);
         return;
     }
 
@@ -222,72 +224,115 @@ void Init::checkSystemTime() {
     int offsetSeconds = 0;
     size_t idx = 19;
     // Skip fractional seconds if present
-    if ( idx < utcDatetime.size() && utcDatetime[idx] == '.' ) {
+    if (idx < utcDatetime.size() && utcDatetime[idx] == '.') {
         ++idx;
-        while ( idx < utcDatetime.size() &&
-                isdigit( static_cast< unsigned char >( utcDatetime[idx] ) ) )
+        while (idx < utcDatetime.size() &&
+               isdigit(static_cast<unsigned char>(utcDatetime[idx])))
             ++idx;
     }
 
-    if ( idx < utcDatetime.size() ) {
+    if (idx < utcDatetime.size()) {
         char tzChar = utcDatetime[idx];
-        if ( tzChar == 'Z' ) {
+        if (tzChar == 'Z') {
             // UTC, no offset
-        } else if ( tzChar == '+' || tzChar == '-' ) {
-            int sign = ( tzChar == '+' ) ? 1 : -1;
+        } else if (tzChar == '+' || tzChar == '-') {
+            int sign = (tzChar == '+') ? 1 : -1;
             ++idx;
-            if ( idx + 4 < utcDatetime.size() ) {  // HH:MM (5 chars)
-                string hhStr = utcDatetime.substr( idx, 2 );
-                string mmStr = utcDatetime.substr( idx + 3, 2 );  // skip colon
-                if ( utcDatetime[idx + 2] == ':' && isdigit( hhStr[0] ) && isdigit( hhStr[1] ) &&
-                     isdigit( mmStr[0] ) && isdigit( mmStr[1] ) ) {
-                    int hh = stoi( hhStr );
-                    int mm = stoi( mmStr );
-                    offsetSeconds = sign * ( hh * 3600 + mm * 60 );
+            if (idx + 4 < utcDatetime.size()) {
+                // HH:MM (5 chars)
+                string hhStr = utcDatetime.substr(idx, 2);
+                string mmStr = utcDatetime.substr(idx + 3, 2); // skip colon
+                if (utcDatetime[idx + 2] == ':' && isdigit(hhStr[0]) && isdigit(hhStr[1]) &&
+                    isdigit(mmStr[0]) && isdigit(mmStr[1])) {
+                    int hh = stoi(hhStr);
+                    int mm = stoi(mmStr);
+                    offsetSeconds = sign * (hh * 3600 + mm * 60);
                 } else {
-                    spdlog::warn( "Malformed timezone segment in utcDatetime: {}", utcDatetime );
+                    spdlog::warn("Malformed timezone segment in utcDatetime: {}", utcDatetime);
                     return;
                 }
             } else {
-                spdlog::warn( "Incomplete timezone segment in utcDatetime: {}", utcDatetime );
+                spdlog::warn("Incomplete timezone segment in utcDatetime: {}", utcDatetime);
                 return;
             }
         } else {
             spdlog::warn(
-                "Unexpected character after datetime '{}' in '{}'", utcDatetime[idx], utcDatetime );
+                "Unexpected character after datetime '{}' in '{}'", utcDatetime[idx], utcDatetime);
             return;
         }
     }
 
-    time_t baseUtc = timegm( &tm );
-    if ( baseUtc == -1 ) {
-        spdlog::warn( "timegm failed for '{}'", base );
+
+    // Define a clear, descriptive constant for the synchronization limit.
+    // We'll use 5 seconds, as implied by the exception message.
+    const long TIME_SYNC_THRESHOLD_SECONDS = 5;
+
+    // --- Time Conversion & Validation ---
+    time_t baseUtc = timegm(&tm);
+    if (baseUtc == -1) {
+        // Log a warning if timegm fails, returning early as time calculation is impossible.
+        spdlog::warn("Time conversion failed: timegm returned -1 for '{}'", base);
         return;
     }
-    // If offset is +HH:MM, local time ahead of UTC, so UTC = local - offset.
-    time_t internetTime = baseUtc - offsetSeconds;
-    time_t systemTime = time( nullptr );
-    long diff = labs( systemTime - internetTime );
 
-    spdlog::info(
-        "System time: {} | Internet time: {} | Diff: {} seconds", systemTime, internetTime, diff );
-    if ( diff > 60 ) {
+    // If offset is +HH:MM, local time is ahead of UTC, so UTC = local - offset.
+    time_t internetTime = baseUtc - offsetSeconds;
+    time_t systemTime = time(nullptr);
+
+    // Calculate the absolute difference in seconds. Use a descriptive variable name.
+    long diffSeconds = labs(systemTime - internetTime);
+
+    // --- Synchronization Check ---
+    // Note: The original code checked diff > 60 seconds but the exception mentioned 5 seconds.
+    // We use 5 seconds as the logical, strict requirement for application startup.
+    if (diffSeconds > TIME_SYNC_THRESHOLD_SECONDS) {
+        // Format time strings once for the detailed error log. Use UTC explicitly.
+        char sysTimeStr[32], netTimeStr[32];
+        strftime(sysTimeStr, sizeof(sysTimeStr), "%Y-%m-%d %H:%M:%S UTC", gmtime(&systemTime));
+        strftime(netTimeStr, sizeof(netTimeStr), "%Y-%m-%d %H:%M:%S UTC", gmtime(&internetTime));
+
+        // Log the event as an ERROR (or CRITICAL) since it results in a runtime_error.
+        // Use the concise, actionable format.
+        spdlog::error(
+            "FATAL: Time sync check failed (Threshold: {}s). System ({}) vs. Internet ({}). Diff: {}s.",
+            TIME_SYNC_THRESHOLD_SECONDS,
+            sysTimeStr,
+            netTimeStr,
+            diffSeconds
+        );
+
+        // Calculate the signed difference to determine direction
+        long signedDiff = systemTime - internetTime;
+
+        // Determine the direction string
+        std::string direction;
+        if (signedDiff > 0) {
+            direction = "ahead of"; // System time > Internet time
+        } else {
+            direction = "behind";   // System time < Internet time (or equal, but the 'if' above handles equal)
+        }
+
         throw runtime_error(
-            "System time differs from internet time by more than 60 seconds. Synchronize system "
-            "time before starting machinepay." );
+            "FATAL: System clock is out of sync. "
+            "System time is " + direction + " internet time by " +
+            std::to_string(std::abs(signedDiff)) +
+            "s, exceeding the allowed threshold of " +
+            std::to_string(TIME_SYNC_THRESHOLD_SECONDS) +
+            "s. Please synchronize your system clock and restart machinepay."
+        );
+
     }
 }
 
 void Init::checkOperatingSystemConfiguration() {
     utsname buffer{};
-    if ( uname( &buffer ) != 0 ) {
-        throw runtime_error( "Failed to get OS information" );
+    if (uname(&buffer) != 0) {
+        throw runtime_error("Failed to get OS information");
     }
-    if ( string( buffer.sysname ) != "Linux" ) {
+    if (string(buffer.sysname) != "Linux") {
         throw runtime_error(
-            "Unsupported OS: " + string( buffer.sysname ) + ". Only Linux is supported." );
+            "Unsupported OS: " + string(buffer.sysname) + ". Only Linux is supported.");
     }
-    spdlog::info( "Operating system: {}", buffer.sysname );
 
     checkSystemTime();
 }
