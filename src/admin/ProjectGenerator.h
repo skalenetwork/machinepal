@@ -3,13 +3,6 @@
 
 class ProjectGenerator {
 
-    // Constants for directory and file names
-    static constexpr auto kSecretsDir = "secrets";
-    static constexpr auto kCertsDir = "certs";
-    static constexpr auto kWalletFile = "machinepay_wallet.key";
-    static constexpr auto kCertFile = "machinepay_tls_certificate.crt";
-    static constexpr auto kCertKeyFile = "machinepay_tls_certificate.key";
-    static constexpr auto kConfigFile = "machinepay.yml";
 
     // Private helper methods
     static void generateDirectoryStructure(const std::filesystem::path& baseDir);
@@ -20,6 +13,16 @@ class ProjectGenerator {
     static void validateBaseDirEmpty(const std::filesystem::path& baseDir);
 
 public:
+
+
+    // Constants for directory and file names
+    static constexpr auto kSecretsDir = "secrets";
+    static constexpr auto kCertsDir = "certs";
+    static constexpr auto kWalletFile = "machinepay_wallet.key";
+    static constexpr auto kCertFile = "machinepay_tls_certificate.crt";
+    static constexpr auto kCertKeyFile = "machinepay_tls_certificate.key";
+    static constexpr auto kConfigFile = "machinepay.yml";
+
 
     static void generateProject(const std::filesystem::path &baseDir);
 
