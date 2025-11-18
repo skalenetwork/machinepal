@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_CASE(test_generate_project_success) {
     BOOST_CHECK(fs::exists(certPath));
     BOOST_CHECK(fs::file_size(certPath) > 0);
 
-    const auto configPath = projectDir / ProjectGenerator::kConfigFile;
+    const auto configPath = projectDir / "machinepay_config.json";
     BOOST_CHECK(fs::exists(configPath));
     BOOST_CHECK(fs::file_size(configPath) > 0);
 }
