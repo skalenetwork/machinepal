@@ -6,10 +6,13 @@
 #include "MachinePayConfigGenerator.h"
 #include "crypto/EthPrivateKey.h"
 #include <stdexcept>
+#include <filesystem>
 
 
 void ProjectGenerator::generateProject(const std::filesystem::path& baseDir) {
     try {
+        validateBaseDirEmpty(baseDir);
+
         // Each step is now a clear, self-documenting function call
         generateDirectoryStructure(baseDir);
 
@@ -62,4 +65,25 @@ void ProjectGenerator::generateConfiguration(const std::filesystem::path& baseDi
                                            EthPrivateKey& machinePayKey) {
     MachinePayConfigGenerator cfgGen;
     cfgGen.generateDefaultConfig(baseDir, machinePayKey);
+}
+
+
+void ProjectGenerator::validateBaseDirEmpty(const std::filesystem::path& baseDir) {
+    std::error_code ec;
+    if (!std::filesystem::exists(baseDir, ec) || ec) {
+        throw std::runtime_error("Project basew directory does not exist: " + baseDir.string());
+    }
+    if (!std::filesystem::is_directory(baseDir, ec) || ec) {
+        throw std::runtime_error("Project base path is not a directory: " + baseDir.string());
+    }
+    // Check emptiness
+    auto it = std::filesystem::directory_iterator(baseDir, ec);
+    if (ec) {
+        throw std::runtime_error("Failed to read project base directory: " + baseDir.string());
+    }
+    if (it != std::filesystem::end(it)) {
+        throw std::runtime_error("Project base directory is not empty: " + baseDir.string()
+            + "Project init requires empty directory to avoid overwriting existing files."
+            "Please use an empty directory.");
+    }
 }
