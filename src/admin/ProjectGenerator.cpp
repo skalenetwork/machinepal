@@ -9,36 +9,36 @@
 #include <filesystem>
 
 
-void ProjectGenerator::generateProject(const std::filesystem::path& baseDir) {
-    try {
-        validateBaseDirEmpty(baseDir);
+void ProjectGenerator::generateProjectInCurrentWorkingDir() {
+    spdlog::info("Initializing project in the current directory...");
+    auto cwd = std::filesystem::current_path();
+    generateProject(cwd);
+    spdlog::info("Project initialized successfully.");
+}
 
-        // Each step is now a clear, self-documenting function call
-        generateDirectoryStructure(baseDir);
+void ProjectGenerator::generateProject(const std::filesystem::path &baseDir) {
+    validateBaseDirEmpty(baseDir);
 
-        // 1. Generate wallet (returns key for use in config)
-        auto machinePayKey = generateWallet(baseDir);
+    // Each step is now a clear, self-documenting function call
+    generateDirectoryStructure(baseDir);
 
-        // 2. Generate TLS certificate
-        generateTLSCertificate(baseDir);
+    // 1. Generate wallet (returns key for use in config)
+    auto machinePayKey = generateWallet(baseDir);
 
-        // 3. Generate configuration
-        generateConfiguration(baseDir, machinePayKey);
+    // 2. Generate TLS certificate
+    generateTLSCertificate(baseDir);
 
-    } catch (...) {
-        // The nested exception provides context for where the failure occurred.
-        std::throw_with_nested(std::runtime_error(
-            "Failed to generate project in directory: " + baseDir.string()));
-    }
+    // 3. Generate configuration
+    generateConfiguration(baseDir, machinePayKey);
 }
 
 
-void ProjectGenerator::generateDirectoryStructure(const std::filesystem::path& baseDir) {
+void ProjectGenerator::generateDirectoryStructure(const std::filesystem::path &baseDir) {
     FolderGenerator fg(baseDir);
     fg.generateFolderStructure();
 }
 
-EthPrivateKey ProjectGenerator::generateWallet(const std::filesystem::path& baseDir) {
+EthPrivateKey ProjectGenerator::generateWallet(const std::filesystem::path &baseDir) {
     auto machinePayKey = EthPrivateKey::generate();
 
     // Use constants for paths
@@ -51,7 +51,7 @@ EthPrivateKey ProjectGenerator::generateWallet(const std::filesystem::path& base
 }
 
 
-void ProjectGenerator::generateTLSCertificate(const std::filesystem::path& baseDir) {
+void ProjectGenerator::generateTLSCertificate(const std::filesystem::path &baseDir) {
     // Use constants for paths
     const auto certPath = baseDir / kCertsDir / kCertFile;
     const auto certKeyPath = baseDir / kSecretsDir / kCertKeyFile;
@@ -61,17 +61,17 @@ void ProjectGenerator::generateTLSCertificate(const std::filesystem::path& baseD
 }
 
 
-void ProjectGenerator::generateConfiguration(const std::filesystem::path& baseDir,
-                                           EthPrivateKey& machinePayKey) {
+void ProjectGenerator::generateConfiguration(const std::filesystem::path &baseDir,
+                                             EthPrivateKey &machinePayKey) {
     MachinePayConfigGenerator cfgGen;
     cfgGen.generateDefaultConfig(baseDir, machinePayKey);
 }
 
 
-void ProjectGenerator::validateBaseDirEmpty(const std::filesystem::path& baseDir) {
+void ProjectGenerator::validateBaseDirEmpty(const std::filesystem::path &baseDir) {
     std::error_code ec;
     if (!std::filesystem::exists(baseDir, ec) || ec) {
-        throw std::runtime_error("Project basew directory does not exist: " + baseDir.string());
+        throw std::runtime_error("Project base directory does not exist: " + baseDir.string());
     }
     if (!std::filesystem::is_directory(baseDir, ec) || ec) {
         throw std::runtime_error("Project base path is not a directory: " + baseDir.string());
@@ -82,8 +82,6 @@ void ProjectGenerator::validateBaseDirEmpty(const std::filesystem::path& baseDir
         throw std::runtime_error("Failed to read project base directory: " + baseDir.string());
     }
     if (it != std::filesystem::end(it)) {
-        throw std::runtime_error("Project base directory is not empty: " + baseDir.string()
-            + "Project init requires empty directory to avoid overwriting existing files."
-            "Please use an empty directory.");
+        throw std::runtime_error(string("Directory is not empty. Run init in an empty directory."));
     }
 }

@@ -17,6 +17,8 @@
 #include <map>
 #include <regex>
 
+#include "admin/ProjectGenerator.h"
+
 
 using namespace proxygen;
 
@@ -29,6 +31,14 @@ void setIfNotEmpty(std::map<std::string, std::string>& envOverloads, const std::
         envOverloads[key] = value;
     }
 }
+
+void setBooleanSwitchIfNotEmpty(std::map<std::string, std::string>& envOverloads, const std::string& key, bool value)
+{
+    if (value) {
+        envOverloads[key] = "true";
+    }
+}
+
 
 map<string, string>  parseConfigValueOverloadsFromCommandLineAndEnvironment(int argc, char **argv) {
     try {
@@ -58,6 +68,9 @@ map<string, string>  parseConfigValueOverloadsFromCommandLineAndEnvironment(int 
         app.add_option("--hostname", hostname,
             "Hostname for the server")
             ->type_name("HOSTNAME");
+        bool initProject = false;
+        app.add_flag("--init-project", initProject,
+            "Initialize project in the current working directory");
         try {
             app.parse(argc, argv);
         } catch (const CLI::ParseError &e) {
@@ -70,6 +83,7 @@ map<string, string>  parseConfigValueOverloadsFromCommandLineAndEnvironment(int 
         setIfNotEmpty(envOverloads, "LOG_TYPE", logType);
         setIfNotEmpty(envOverloads, "BIND_IP", bindIp);
         setIfNotEmpty(envOverloads, "HOSTNAME", hostname);
+        setBooleanSwitchIfNotEmpty(envOverloads, "INIT_PROJECT", initProject);
 
         if (envOverloads.size() > 0) {
             spdlog::info("Values set in command line and environment override "
@@ -105,6 +119,17 @@ int main(int argc, char *argv[]) {
         Init::initAllLibs(1, argv);
         auto configValueOverloads = parseConfigValueOverloadsFromCommandLineAndEnvironment(argc, argv);
         Init::checkOperatingSystemConfiguration();
+        if (configValueOverloads.contains("INIT_PROJECT")) {
+            try {
+                ProjectGenerator::generateProjectInCurrentWorkingDir();
+                return 0;
+            } catch (const std::exception &ex) {
+                spdlog::error("Failed to initialize project.");
+                spdlog::error(ex.what());
+                return 1;
+            }
+
+        }
         auto machinePayApp = MachinePayApp::makeInstance(configValueOverloads);
         machinePayApp->runUntilExit();
         return 0;
