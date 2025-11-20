@@ -28,7 +28,7 @@ const string PaymentExamples::EXACT_UCDC_PAYMENT_REQ_EASYNET = R"({
     "description": "",
     "mimeType": "application/json",
     "outputSchema": null,
-    "payTo": "0x2222222222222222222222222222222222222222",
+    "payTo": "0x209693bc6afc0c5328ba36faf03c514ef312287c",
     "maxTimeoutSeconds": 600,
     "asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
     "extra": {

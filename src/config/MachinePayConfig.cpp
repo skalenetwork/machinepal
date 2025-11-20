@@ -36,7 +36,17 @@ ptr< MachinePayConfig > MachinePayConfig::createFromJson(
         }
 
         auto resources = ResourceConfig::createVectorFromJsonArray( j, fileManager );
-        auto defaultOrganization = OrganizationConfig::createDefaultFromResources( resources );
+
+        bool isPassThrough = false;
+
+        if (j.contains("isPassThrough")) {
+            CHECK_STATE_JSON(j.at("isPassThrough").is_object(), "isPassThrough must be object", j);
+            auto isPassThroughObj = j.at("isPassThrough");
+            isPassThrough = JsonUtils::getBoolWithDefault(j.at("isPassThrough"), isPassThroughObj, false);;
+        }
+
+        auto defaultOrganization = OrganizationConfig::createDefaultFromResources( resources,
+            isPassThrough);
         auto networkConfig = NetworkConfig::createFromJson( j, fileManager );
         auto organizations = OrganizationConfig::createVectorFromJsonArray( j, fileManager );
         organizations->push_back( defaultOrganization );

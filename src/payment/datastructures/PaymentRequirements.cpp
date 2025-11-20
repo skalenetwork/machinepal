@@ -58,14 +58,14 @@ json PaymentRequirements::toJson() const {
 
 
 ptr< PaymentRequirements > PaymentRequirements::makePaymentRequirements(
-    const OrganizationConfig& organization, const ResourceConfig& resource,
+    const OrganizationConfig& , const ResourceConfig& resource,
     const NetworkConfig& networkConfig ) {
 
     auto priceStr = resource.priceStr();
     auto scheme = resource.paymentScheme();
     auto mimeType = resource.mimeType();
     auto network = networkConfig.name();
-    auto payTo = organization.payToAddressAsString();
+    auto payTo = networkConfig.walletAddress().toHex(PREFIX_0x);
     auto maxTimeoutSeconds = 600;
     auto description = resource.description();
     auto tokenName = resource.token();
