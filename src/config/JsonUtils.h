@@ -5,11 +5,14 @@
 #include <boost/multiprecision/cpp_int.hpp>
 #include "exceptions/JsonValidationException.h"
 
-#define CHECK_STATE_JSON( __EXPR__, __MSG__, __J__ ) \
-if (!(__EXPR__)) { \
-throw JsonValidationException(std::string(__MSG__), __J__); \
-}
-
+#define CHECK_STATE_JSON( _EXPRESSION_, __MSG__, __JSON__ )                         \
+do {                                                                                \
+    if ( !(_EXPRESSION_) ) {                                                        \
+        auto __msg__ = std::string( "Check failed: " ) + (__MSG__) + "\n" +         \
+                (__JSON__).dump( 4 );                                               \
+        throw JsonValidationException( __msg__, __JSON__);                          \
+    }                                                                               \
+} while (0)
 
 class MachinePayConfig;
 
@@ -74,7 +77,7 @@ public:
             CHECK_STATE_JSON(j.at( key ).is_number_integer(), key + " must be uint16", j);
             auto value = j.at(key).get<int>();
             CHECK_STATE_JSON(value > 0 && value <= 65535, "Value for key '" + key +
-                    "' is out of range for uint16: " + std::to_string(value), j)
+                             "' is out of range for uint16: " + std::to_string(value), j);
             return static_cast<uint16_t>(value);
         }
         return defaultValue;

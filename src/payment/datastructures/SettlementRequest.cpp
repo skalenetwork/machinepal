@@ -36,7 +36,7 @@ SettlementRequest SettlementRequest::fromJson( const nlohmann::json& j ) {
     payload = PaymentPayload::fromJson( j["paymentPayload"] );
 
     CHECK_STATE_JSON(
-        j.contains( "paymentRequirements" ) && !j["paymentRequirements"].is_null(), "", j )
+        j.contains( "paymentRequirements" ) && !j["paymentRequirements"].is_null(), "", j );
     requirements = PaymentRequirements::fromJson( j["paymentRequirements"] );
     CHECK_STATE( payload );
     CHECK_STATE( requirements );
