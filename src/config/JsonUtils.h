@@ -43,9 +43,10 @@ public:
 
 
     static bool asBool(const std::string &s) {
-        return s == "1" || s == "true" || s == "TRUE" || s == "yes" || s == "on";
+        std::string lowerS = s;
+        folly::toLowerAscii(lowerS);
+        return lowerS == "1" || lowerS == "true" || lowerS == "yes" || lowerS == "on";
     };
-
 
     // Helper to get a string from a json object with a default value
     static std::string getStringWithDefault(
@@ -72,11 +73,8 @@ public:
         if (j.contains(key)) {
             CHECK_STATE_JSON(j.at( key ).is_number_integer(), key + " must be uint16", j);
             auto value = j.at(key).get<int>();
-            if (value <= 0 || value > 65535) {
-                throw std::out_of_range(
-                    "Value for key '" + key +
-                    "' is out of range for uint16: " + std::to_string(value));
-            }
+            CHECK_STATE_JSON(value > 0 && value <= 65535, "Value for key '" + key +
+                    "' is out of range for uint16: " + std::to_string(value), j)
             return static_cast<uint16_t>(value);
         }
         return defaultValue;
@@ -84,7 +82,7 @@ public:
 
 
     static string mustContainString(const nlohmann::json &j, const string &key) {
-        CHECK_STATE_JSON(j.contains( key ), "Missing required " + key + " section", j);
+        CHECK_STATE_JSON(j.contains( key ), "Missing required " + key, j);
         CHECK_STATE_JSON(j.at( key ).is_string(), key + " must be string", j);
         return j.at(key).get<std::string>();
     }
@@ -104,9 +102,8 @@ public:
     static std::optional<std::string> getStringIfExists(
         const nlohmann::json &j, const std::string &key) {
         if (j.contains(key)) {
-            if (j.at(key).is_string()) {
-                return j.at(key).get<std::string>();
-            }
+            CHECK_STATE_JSON(j.at( key ).is_string(), key + " must be string", j);
+            return j.at(key).get<std::string>();
         }
         return std::nullopt;
     }
