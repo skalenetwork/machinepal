@@ -11,23 +11,23 @@ class X402Processor;
 class IResponseSender;
 
 class BackendConnection {
-    static bool proxyToBackEndGet(const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
+    static bool proxyToBackEndGet(const string& url, const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
                                   vector<pair<string, string>> &responseHeaders, std::string &responseBody,
                                   std::string &errorMessage);
 
-    static bool proxyToBackEndPost(const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
+    static bool proxyToBackEndPost(const string& url, const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
                             const std::string &requestBody,
                             vector<pair<string, string>> &responseHeaders, std::string &responseBody, std::string &errorMessage);
 
-    static bool proxyToBackEndHead(const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
+    static bool proxyToBackEndHead(const string& url, const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
                                    vector<pair<string, string>> &responseHeaders,
                                    std::string &errorMessage);
 
-    static bool proxyToBackEndOptions(const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
+    static bool proxyToBackEndOptions(const string& url, const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
                                       vector<pair<string, string>> &responseHeaders, std::string &responseBody,
                                       std::string &errorMessage);
 
-    static bool proxyToBackEndPut(const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
+    static bool proxyToBackEndPut(const string& url, const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
                                   const std::string &requestBody,
                                   vector<pair<string, string>> &responseHeaders, std::string &responseBody,
                                   std::string &errorMessage);
@@ -40,7 +40,7 @@ class BackendConnection {
 
 public:
 
-    static bool proxyToBackEnd(proxygen::HTTPMethod method_, const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
+    static bool proxyToBackEnd(const string& url, proxygen::HTTPMethod method_, const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
                                const std::string &requestBody, vector<pair<string, string>> &responseHeaders,
                                std::string &responseBody, std::string &errorMessage);
 };

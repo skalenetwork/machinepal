@@ -292,11 +292,11 @@ void X402Processor::onRequestStart(
 }
 
 
-bool X402Processor::proxyResponseToBackEnd(const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
+bool X402Processor::proxyResponseToBackEnd(const string& url, const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
                                            const std::string &requestBody, vector<pair<string, string>> &responseHeaders,
                                            std::string &responseBody) {
     std::string errorMessage;
-    bool success = BackendConnection::proxyToBackEnd(
+    bool success = BackendConnection::proxyToBackEnd( url,
         method_, reqHeaders, requestBody, responseHeaders, responseBody, errorMessage);
     if (!success) {
         reply502BadGateway(errorMessage.empty() ? "Failed to fetch content from upstream service." : errorMessage);
@@ -350,13 +350,23 @@ void X402Processor::doPassThrough(const std::unique_ptr<proxygen::HTTPMessage> &
 
         // Proxy the request to the backend without any payment checks
         std::string responseBody;
-        bool ok = false;
 
         std::vector<std::pair<std::string, std::string> > responseHeaders;
 
-        proxyResponseToBackEnd(reqHeaders, body, responseHeaders, responseBody);
+        string domain;
 
-        if (!ok) {
+        if (organization()->subdomain().empty()) {
+            domain = config()->server()->hostName();
+        } else {
+            domain = organization()->subdomain() + "." + config()->server()->hostName();
+        }
+
+        auto url = "http://" + domain + "." + config()->server()->hostName() + reqHeaders->getPath();
+
+
+        auto result = proxyResponseToBackEnd(url, reqHeaders, body, responseHeaders, responseBody);
+
+        if (!result) {
             return; // proxyResponseToBackEnd already sent an error response
         }
 
@@ -418,7 +428,8 @@ void X402Processor::onRequestFullyReceived(
 
         vector<pair<string, string>> responseHeaders;
 
-        if (!proxyResponseToBackEnd(reqHeaders, body,responseHeaders,  responseBody)) {
+
+        if (!proxyResponseToBackEnd(resource_->getLocation(), reqHeaders, body,responseHeaders,  responseBody)) {
             return;
         }
 

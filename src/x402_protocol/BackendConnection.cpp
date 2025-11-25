@@ -10,10 +10,10 @@
 #include <spdlog/spdlog.h>
 #include <algorithm> // Required for string trimming
 
+// "https://jsonplaceholder.typicode.com/posts"
 
 
-
-bool BackendConnection::proxyToBackEnd(
+bool BackendConnection::proxyToBackEnd( const string& url,
                                        proxygen::HTTPMethod method_,
                                        const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
                                        const std::string &requestBody, vector<pair<string, string>> &responseHeaders,
@@ -21,22 +21,22 @@ bool BackendConnection::proxyToBackEnd(
                                        std::string &errorMessage) {
     switch (method_) {
         case proxygen::HTTPMethod::GET:
-            return proxyToBackEndGet(requestHeaders, responseHeaders, responseBody, errorMessage);
+            return proxyToBackEndGet(url, requestHeaders, responseHeaders, responseBody, errorMessage);
         case proxygen::HTTPMethod::POST:
-            return proxyToBackEndPost(requestHeaders, requestBody, responseHeaders, responseBody, errorMessage);
+            return proxyToBackEndPost(url, requestHeaders, requestBody, responseHeaders, responseBody, errorMessage);
         case proxygen::HTTPMethod::HEAD:
-            return proxyToBackEndHead(requestHeaders, responseHeaders, errorMessage);
+            return proxyToBackEndHead(url,requestHeaders, responseHeaders, errorMessage);
         case proxygen::HTTPMethod::OPTIONS:
-            return proxyToBackEndOptions(requestHeaders, responseHeaders, responseBody, errorMessage);
+            return proxyToBackEndOptions(url,requestHeaders, responseHeaders, responseBody, errorMessage);
         case proxygen::HTTPMethod::PUT:
-            return proxyToBackEndPut(requestHeaders, requestBody, responseHeaders, responseBody, errorMessage);
+            return proxyToBackEndPut(url, requestHeaders, requestBody, responseHeaders, responseBody, errorMessage);
         default:
             errorMessage = "Unsupported HTTP method for backend proxying.";
             return false;
     }
 }
 
-bool BackendConnection::proxyToBackEndGet(const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
+bool BackendConnection::proxyToBackEndGet(const string& url, const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
                                           vector<pair<string, string>> &responseHeaders,
                                           std::string &responseBody, std::string &errorMessage) {
     static thread_local std::unique_ptr<CURL, decltype( &curl_easy_cleanup )> curlThreadLocal(
@@ -63,7 +63,7 @@ bool BackendConnection::proxyToBackEndGet(const std::unique_ptr<proxygen::HTTPMe
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-    curl_easy_setopt(curl, CURLOPT_URL, "https://jsonplaceholder.typicode.com/posts/1");
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 
     // --- Setup Response Header Parsing ---
     curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, headerCallback);
@@ -94,7 +94,7 @@ bool BackendConnection::proxyToBackEndGet(const std::unique_ptr<proxygen::HTTPMe
     return true;
 }
 
-bool BackendConnection::proxyToBackEndPost(const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
+bool BackendConnection::proxyToBackEndPost(const string& url, const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
                                            const std::string &requestBody,
                                            vector<pair<string, string>> &responseHeaders,
                                            std::string &responseBody,
@@ -122,7 +122,7 @@ bool BackendConnection::proxyToBackEndPost(const std::unique_ptr<proxygen::HTTPM
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-    curl_easy_setopt(curl, CURLOPT_URL, "https://jsonplaceholder.typicode.com/posts");
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 
     curl_easy_setopt(curl, CURLOPT_POST, 1L);
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, requestBody.c_str());
@@ -157,7 +157,7 @@ bool BackendConnection::proxyToBackEndPost(const std::unique_ptr<proxygen::HTTPM
     return true;
 }
 
-bool BackendConnection::proxyToBackEndHead(const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
+bool BackendConnection::proxyToBackEndHead(const string& url,const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
                                            vector<pair<string, string>> &responseHeaders,
                                            std::string &errorMessage) {
     static thread_local std::unique_ptr<CURL, decltype( &curl_easy_cleanup )> curlThreadLocal(
@@ -183,7 +183,7 @@ bool BackendConnection::proxyToBackEndHead(const std::unique_ptr<proxygen::HTTPM
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-    curl_easy_setopt(curl, CURLOPT_URL, "https://jsonplaceholder.typicode.com/posts/1");
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 
     curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);
 
@@ -208,7 +208,7 @@ bool BackendConnection::proxyToBackEndHead(const std::unique_ptr<proxygen::HTTPM
     return true;
 }
 
-bool BackendConnection::proxyToBackEndOptions(const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
+bool BackendConnection::proxyToBackEndOptions(const string& url, const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
                                               vector<pair<string, string>> &responseHeaders,
                                               std::string &responseBody,
                                               std::string &errorMessage) {
@@ -235,7 +235,7 @@ bool BackendConnection::proxyToBackEndOptions(const std::unique_ptr<proxygen::HT
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-    curl_easy_setopt(curl, CURLOPT_URL, "https://jsonplaceholder.typicode.com/posts/1");
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 
     // 1. Set the method
     curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "OPTIONS");
@@ -274,7 +274,7 @@ bool BackendConnection::proxyToBackEndOptions(const std::unique_ptr<proxygen::HT
     return true;
 }
 
-bool BackendConnection::proxyToBackEndPut(const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
+bool BackendConnection::proxyToBackEndPut(const string& url, const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
                                           const std::string &requestBody, vector<pair<string, string>> &responseHeaders,
                                           std::string &responseBody,
                                           std::string &errorMessage) {
@@ -301,7 +301,7 @@ bool BackendConnection::proxyToBackEndPut(const std::unique_ptr<proxygen::HTTPMe
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-    curl_easy_setopt(curl, CURLOPT_URL, "https://jsonplaceholder.typicode.com/posts/1");
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 
     curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, requestBody.c_str());
@@ -338,7 +338,7 @@ bool BackendConnection::proxyToBackEndPut(const std::unique_ptr<proxygen::HTTPMe
 
 
 curl_slist * BackendConnection::createCurlHeadersFromProxygen(const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders) {
-    struct curl_slist *chunk = nullptr;
+    curl_slist *chunk = nullptr;
 
     // Block list (must be all lowercase)
     static const std::unordered_set<std::string> blockedHeaders = {
