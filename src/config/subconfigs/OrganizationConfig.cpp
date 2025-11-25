@@ -4,6 +4,10 @@
 #include "exceptions/JsonValidationException.h"
 
 
+bool OrganizationConfig::isPassThrough() const {
+    return isPassThrough_;
+}
+
 void OrganizationConfig::validateOrgName(const std::string &name) {
     // Rule 1: Length must be between 1 and 39 characters
     if (name.empty() || name.size() > 39) {

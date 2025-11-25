@@ -23,6 +23,7 @@ class OrganizationConfig {
     }
 
 public:
+    [[nodiscard]] bool isPassThrough() const;
 
     const ptr< vector< ptr< ResourceConfig > > >& resources() const { return resources_; }
     const std::string& organizationName() const { return organizationName_; }

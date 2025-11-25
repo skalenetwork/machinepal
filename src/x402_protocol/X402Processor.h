@@ -38,6 +38,8 @@ public:
     void sendSettlementErrorResponse(
         ptr< Authorization > authorization, add_pointer_t< HttpError > error );
 
+    void doPassThrough(const std::unique_ptr< proxygen::HTTPMessage >& reqHeaders,const string& body);
+
     void onRequestFullyReceived(
         const std::unique_ptr< proxygen::HTTPMessage >& reqHeaders, const string& body ) noexcept override;
     void onBodySizeIncrease( size_t newSize ) override;
@@ -50,6 +52,8 @@ private:
         const std::string& body );
 
     void reply400InvalidPayment( const std::string& message );
+
+    void reply400ResourceNotFound(const std::string &message);
 
     string getErrorBody( const std::string& message );
 

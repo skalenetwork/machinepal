@@ -107,6 +107,16 @@ void X402Processor::reply400InvalidPayment( const std::string& message ) {
     state_ = X402ProcessorState::ERROR_SENT;
 }
 
+void X402Processor::reply400ResourceNotFound( const std::string& message ) {
+    auto paymentRequirements =
+        PaymentRequiredResponse::getPaymentRequiredResponseAsString(
+            organization(), resource(), config() );
+
+    sendResponse( { 400, "Resource Not Found" }, STANDARD_HEADERS, message );
+    state_ = X402ProcessorState::ERROR_SENT;
+}
+
+
 
 std::string X402Processor::getErrorBody( const std::string& message ) {
     if ( organization_ && resource_ && config_ ) {
@@ -260,9 +270,6 @@ void X402Processor::onRequestStart(
     try {
         CHECK_STATE( reqHeaders );
 
-        if ( !validateMethod( reqHeaders ) )
-            return;
-
         if ( !validateAndExtractSubDomainName( reqHeaders ) )
             return;
 
@@ -328,6 +335,10 @@ void X402Processor::sendSettlementErrorResponse(
         reply402PaymentRequired( *errorSettlementResponse );
     }
 }
+
+void X402Processor::doPassThrough(const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders, const string &body) {
+}
+
 void X402Processor::onRequestFullyReceived(
     const std::unique_ptr< proxygen::HTTPMessage >& reqHeaders,
     const string& body ) noexcept {
@@ -339,9 +350,21 @@ void X402Processor::onRequestFullyReceived(
         resource_ = organization_->getResourceByPath( decodedPath_, method_, body );
 
         if ( !resource_ ) {
-            reply400InvalidPayment( "Resource not found for path: " + decodedPath_ );
+            // resource not found. If is pass through organization, do pass through
+            // else reply 400
+            if (organization()->isPassThrough()) {
+                doPassThrough();
+            } else {
+                reply400ResourceNotFound(
+                    "Requested resource not found: " + decodedPath_ );
+            }
             return;
         }
+
+
+
+        if ( !validateMethod( reqHeaders ) )
+                return;
 
         if ( reply402IfNoPaymentHeader( reqHeaders ) ) {
             return;
