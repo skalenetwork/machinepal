@@ -336,7 +336,30 @@ void X402Processor::sendSettlementErrorResponse(
     }
 }
 
-void X402Processor::doPassThrough(const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders, const string &body) {
+void X402Processor::doPassThrough(const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders, const string &/*body*/) {
+    try {
+        // Validate request method (only GET/POST supported for now)
+        if (!validateMethod(reqHeaders)) {
+            return;
+        }
+
+        // Proxy the request to the backend without any payment checks
+        std::string responseBody;
+        if (!proxyResponseToBackEnd(responseBody)) {
+            return; // proxyResponseToBackEnd already sent an error response
+        }
+
+        // For pass-through, just return 200 OK with standard headers and the proxied body
+        sendResponse({200, "OK"}, STANDARD_HEADERS, responseBody);
+        state_ = X402ProcessorState::SUCCESS_REPLY_SENT;
+    } catch (std::exception &e) {
+        spdlog::critical("doPassThrough exception");
+        printNestedException(e);
+        reply500InternalError("Could not process pass-through request.");
+    } catch (...) {
+        spdlog::critical("doPassThrough unknown exception");
+        reply500InternalError("Could not process pass-through request.");
+    }
 }
 
 void X402Processor::onRequestFullyReceived(
@@ -353,7 +376,7 @@ void X402Processor::onRequestFullyReceived(
             // resource not found. If is pass through organization, do pass through
             // else reply 400
             if (organization()->isPassThrough()) {
-                doPassThrough();
+                doPassThrough(reqHeaders, body);
             } else {
                 reply400ResourceNotFound(
                     "Requested resource not found: " + decodedPath_ );
