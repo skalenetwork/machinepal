@@ -1,11 +1,12 @@
 #include "OrganizationConfig.h"
 
+#include "PassThroughConfig.h"
 #include "config/JsonUtils.h"
 #include "exceptions/JsonValidationException.h"
 
 
-bool OrganizationConfig::isPassThrough() const {
-    return isPassThrough_;
+ptr<PassThroughConfig> OrganizationConfig::passThroughConfig() const {
+    return passThroughConfig_;
 }
 
 void OrganizationConfig::validateOrgName(const std::string &name) {
@@ -38,19 +39,18 @@ ptr<OrganizationConfig> OrganizationConfig::createFromJson(
         std::string subdomain = JsonUtils::mustContainString("subdomain", j);
         auto resources = ResourceConfig::createVectorFromJsonArray(j, fileManager);
 
-        bool isPassThrough = false;
+        ptr<PassThroughConfig> passThroughConfig = nullptr;
 
-        if (j.contains("isPassThrough")) {
-            CHECK_STATE_JSON(j.at("isPassThrough").is_object(), "isPassThrough must be object", j);
-            auto isPassThroughObj = j.at("isPassThrough");
-            isPassThrough = JsonUtils::getBoolWithDefault(j.at("isPassThrough"), isPassThroughObj, false);;
+        if (j.contains("passthrough")) {
+            auto passThrough = j.at("passthrough");
+            CHECK_STATE_JSON(
+                passThrough, "passthrough must be object", j);
+            passThroughConfig = PassThroughConfig::createFromJson(passThrough, fileManager);
         }
 
-        auto defaultOrganization = OrganizationConfig::createDefaultFromResources( resources,
-            isPassThrough);
 
         return ptr<OrganizationConfig>(
-            new OrganizationConfig(resources, organizationName, subdomain, isPassThrough));
+            new OrganizationConfig(resources, organizationName, subdomain, passThroughConfig));
     } catch (const std::exception &ex) {
         RETHROW_NESTED;
     }
@@ -78,10 +78,7 @@ OrganizationConfig::createVectorFromJsonArray(
 }
 
 ptr<OrganizationConfig> OrganizationConfig::createDefaultFromResources(
-    ptr<vector<ptr<ResourceConfig> > > resources, bool isPassThrough) {
-    try {
-        return ptr<OrganizationConfig>(new OrganizationConfig(resources, "", "", isPassThrough));
-    } catch (const std::exception &ex) {
-        RETHROW_NESTED;
-    }
+    ptr<vector<ptr<ResourceConfig> > > resources, ptr<PassThroughConfig> passThroughConfig) {
+    return ptr<OrganizationConfig>(new OrganizationConfig(resources, "", "",
+                                                          passThroughConfig));
 }

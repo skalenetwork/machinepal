@@ -2,10 +2,10 @@
 server:
   hostname: localhost
   http:
-    enable: false
+    enable: true
     port: 8080
   https:
-    enable: false
+    enable: true
     port: 8443
     cert_file: certs/insecure_test_localhost.crt
     key_file: secrets/insecure_test_localhost.key
@@ -17,7 +17,7 @@ network:
   wallet_address: 0x209693Bc6afc0C5328bA36FaF03C514EF312287C
 
 passthrough:
-  enable: true
+  target_url: https://hackernews.ycombinator.com
 
 log:
   # Optional Log verbosity level — one of: trace, debug, info, warn, error, fatal

@@ -17,6 +17,7 @@
 #include <nlohmann/json.hpp>
 
 #include "JsonUtils.h"
+#include "subconfigs/PassThroughConfig.h"
 #include "x402_server/X402Handler.h"
 
 
@@ -37,16 +38,16 @@ ptr< MachinePayConfig > MachinePayConfig::createFromJson(
 
         auto resources = ResourceConfig::createVectorFromJsonArray( j, fileManager );
 
-        bool isPassThrough = false;
+        ptr<PassThroughConfig> passThroughConfig = nullptr;
 
-        if (j.contains("isPassThrough")) {
-            CHECK_STATE_JSON(j.at("isPassThrough").is_object(), "isPassThrough must be object", j);
-            auto isPassThroughObj = j.at("isPassThrough");
-            isPassThrough = JsonUtils::getBoolWithDefault(j.at("isPassThrough"), isPassThroughObj, false);;
+        if (j.contains("passthrough")) {
+            CHECK_STATE_JSON(j.at("passthrough").is_object(), "passthrough must be object", j);
+            auto passthroughObj = j.at("passthrough");
+            passThroughConfig = PassThroughConfig::createFromJson(passthroughObj, fileManager);
         }
 
         auto defaultOrganization = OrganizationConfig::createDefaultFromResources( resources,
-            isPassThrough);
+            passThroughConfig);
         auto networkConfig = NetworkConfig::createFromJson( j, fileManager );
         auto organizations = OrganizationConfig::createVectorFromJsonArray( j, fileManager );
         organizations->push_back( defaultOrganization );

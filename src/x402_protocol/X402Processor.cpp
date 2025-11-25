@@ -397,7 +397,7 @@ void X402Processor::onRequestFullyReceived(
         if (!resource_) {
             // resource not found. If is pass through organization, do pass through
             // else reply 400
-            if (organization()->isPassThrough()) {
+            if (organization()->passThroughConfig()) {
                 doPassThrough(reqHeaders, body);
             } else {
                 reply400ResourceNotFound(

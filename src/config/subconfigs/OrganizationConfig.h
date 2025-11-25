@@ -10,20 +10,24 @@
 #include <nlohmann/json.hpp>
 #include <string>
 
+
+class PassThroughConfig;
+
 class OrganizationConfig {
     ptr< vector< ptr< ResourceConfig > > > resources_;
     std::string organizationName_;
     std::string subdomain_;
-    bool isPassThrough_ = false;
+    ptr< PassThroughConfig> passThroughConfig_;
 
     OrganizationConfig( const ptr< vector< ptr< ResourceConfig > > >& server,
-        const std::string& organizationName, const std::string& subdomain, bool isPassThrough )
+        const std::string& organizationName, const std::string& subdomain,
+        ptr<PassThroughConfig> passThroughConfig)
         : resources_( server ), organizationName_( organizationName ), subdomain_( subdomain ),
-        isPassThrough_(isPassThrough){
+        passThroughConfig_(passThroughConfig) {
     }
 
 public:
-    [[nodiscard]] bool isPassThrough() const;
+    [[nodiscard]] ptr<PassThroughConfig> passThroughConfig() const;
 
     const ptr< vector< ptr< ResourceConfig > > >& resources() const { return resources_; }
     const std::string& organizationName() const { return organizationName_; }
@@ -38,7 +42,7 @@ public:
         const nlohmann::json& j, ptr< FileManager > fileManager );
 
     static ptr< OrganizationConfig > createDefaultFromResources(
-        ptr< vector< ptr< ResourceConfig > > > resources, bool isPassThrough);
+        ptr< vector< ptr< ResourceConfig > > > resources, ptr<PassThroughConfig> passThroughConfig);
 
     ptr< ResourceConfig > getResourceByPath(
         const std::string& path, proxygen::HTTPMethod, const std::string& ) const {
