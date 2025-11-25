@@ -11,30 +11,40 @@ static const std::regex ipv4_regex(
 static const std::regex ipv6_regex( R"(^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$)" );
 
 ServerConfig::ServerConfig( const std::string& hostName, const std::string& bindIp,
-    ptr< HTTPConfig > http, ptr< HTTPSConfig > https )
-    : hostName_( hostName ), bindIp_( bindIp ), http_( http ), https_( https ) {
+                            ptr< HTTPConfig > http, ptr< HTTPSConfig > https )
+    : hostName_( hostName ), bindIp_( bindIp ), http_( http ), https_( https )
+{
+    // --- 1. Hostname Validation ---
     if ( hostName_.empty() ) {
         throw std::invalid_argument( "hostName cannot be empty." );
     }
 
-    // Hostname validation: must be a valid local or internet hostname
+    // Regex is acceptable for Hostnames (logic is simpler than IP)
     static const std::regex hostname_regex(
         R"(^([a-zA-Z0-9][-a-zA-Z0-9]{0,62})(\.[a-zA-Z0-9][-a-zA-Z0-9]{0,62})*$)" );
+
     if ( !std::regex_match( hostName_, hostname_regex ) ) {
         throw std::invalid_argument(
-            "hostName is not a valid local or internet hostname. " + hostName_ );
+            "hostName is not a valid local or internet hostname: " + hostName_ );
     }
 
-
+    // --- 2. IP Address Validation (Optimized) ---
     if ( bindIp_.empty() ) {
         throw std::invalid_argument( "bindIp cannot be empty." );
     }
-    if ( !std::regex_match( bindIp_, ipv4_regex ) && !std::regex_match( bindIp_, ipv6_regex ) &&
-         bindIp_ != "0.0.0.0" && bindIp_ != "::" ) {
+
+    // We use a buffer large enough for IPv6 (16 bytes).
+    // inet_pton returns 1 on success.
+    unsigned char buf[sizeof(struct in6_addr)];
+    bool isValidIp = (inet_pton(AF_INET, bindIp_.c_str(), buf) == 1) ||
+                     (inet_pton(AF_INET6, bindIp_.c_str(), buf) == 1);
+
+    if ( !isValidIp ) {
         throw std::invalid_argument( "bindIp is not a valid IPv4 or IPv6 address." );
     }
 
-    if ( !http_ && !https_) {
+    // --- 3. Protocol Validation ---
+    if ( !http_ && !https_ ) {
         throw std::invalid_argument(
             "At least one protocol (HTTP or HTTPS) must be enabled in the server configuration." );
     }
