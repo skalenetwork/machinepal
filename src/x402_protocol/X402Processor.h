@@ -32,7 +32,7 @@ public:
     bool reply402IfNoPaymentHeader( const std::unique_ptr< proxygen::HTTPMessage >& req );
 
     void onRequestStart( const std::unique_ptr< proxygen::HTTPMessage >& headers ) noexcept override;
-    bool proxyResponseToBackEndGet( std::string& responseBody );
+
     bool proxyResponseToBackEndPost( const std::string& requestBody, std::string& responseBody );
 
     void replyToClientWithError( const HttpError& httpError ) override;
