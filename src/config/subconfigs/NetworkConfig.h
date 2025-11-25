@@ -12,11 +12,11 @@ class NetworkConfig {
 private:
     std::string name_;
     EthAddress walletAddress_;
-    std::optional<std::shared_ptr< FacilitatorConfig >> facilitator_;
+    ptr< FacilitatorConfig > facilitator_;
     ptr< EIP712Domain > eip712Domain_;
 
     NetworkConfig( const std::string& name, const EthAddress& walletAddress,
-        optional<ptr<FacilitatorConfig >>& facilitator, ptr< EIP712Domain >& domain ); // moved implementation to cpp
+        ptr<FacilitatorConfig>& facilitator, ptr< EIP712Domain >& domain ); // moved implementation to cpp
 
 
 public:
@@ -25,7 +25,7 @@ public:
     // Accessor for facilitator client
     [[nodiscard]] std::string name() const;
 
-    const std::optional<std::shared_ptr< FacilitatorConfig >>& facilitator() const {
+    const ptr< FacilitatorConfig > facilitator() const {
         return facilitator_;
     }
 

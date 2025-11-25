@@ -4,14 +4,11 @@
 
 // Constructor moved from header
 NetworkConfig::NetworkConfig( const std::string& name, const EthAddress& walletAddress,
-    optional<ptr< FacilitatorConfig >>& facilitator, ptr< EIP712Domain >& domain )
+    ptr< FacilitatorConfig >& facilitator, ptr< EIP712Domain >& domain )
     : name_( name ),
       walletAddress_( walletAddress ),
       facilitator_( facilitator ),
       eip712Domain_( domain ) {
-    if (facilitator_.has_value()) {
-        CHECK_STATE( facilitator_.value() );
-    }
     CHECK_STATE( eip712Domain_ );
 }
 
@@ -50,7 +47,7 @@ std::shared_ptr< NetworkConfig > NetworkConfig::createFromJson(
             supportedNetworks.contains( name ), "Unsupported network name in config:" + name, networkJson );
         // Select domain
         auto domain = supportedNetworks.at( name );
-        optional<ptr<FacilitatorConfig >> facilitator = nullopt;
+        ptr<FacilitatorConfig > facilitator = nullptr;
         if ( networkJson.contains( "facilitator" ) && networkJson["facilitator"].is_object() ) {
             facilitator =
                 FacilitatorConfig::createFomJson( networkJson["facilitator"], fileManager );
