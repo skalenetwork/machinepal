@@ -336,26 +336,42 @@ bool BackendConnection::proxyToBackEndPut(const std::unique_ptr<proxygen::HTTPMe
     return true;
 }
 
-struct curl_slist * BackendConnection::createCurlHeadersFromProxygen(const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders) {
+
+curl_slist * BackendConnection::createCurlHeadersFromProxygen(const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders) {
     struct curl_slist *chunk = nullptr;
+
+    // Block list (must be all lowercase)
+    static const std::unordered_set<std::string> blockedHeaders = {
+        "host",
+        "content-length",
+        "transfer-encoding",
+        "connection",
+        "expect",
+        "keep-alive",
+        "proxy-authenticate",
+        "proxy-authorization",
+        "upgrade"
+    };
+
     if (requestHeaders) {
-        requestHeaders->getHeaders().forEach([&chunk](const std::string &name, const std::string &value) {
-            std::string headerStr = name + ": " + value;
-            chunk = curl_slist_append(chunk, headerStr.c_str());
-        });
+        requestHeaders->getHeaders().forEach(
+            [&chunk](const std::string &name, const std::string &value) {
+
+                std::string lowerName = name;
+                folly::toLowerAscii(lowerName);
+
+                if (blockedHeaders.find(lowerName) == blockedHeaders.end()) {
+                        std::string headerStr = name + ": " + value;
+                        chunk = curl_slist_append(chunk, headerStr.c_str());
+                }
+            });
     }
     return chunk;
 }
 
 
 std::string BackendConnection::trimWhiteSpaceFromHeader(const std::string& str) {
-    const char* whitespace = " \t\r\n";
-    size_t first = str.find_first_not_of(whitespace);
-    if (std::string::npos == first) {
-        return "";
-    }
-    size_t last = str.find_last_not_of(whitespace);
-    return str.substr(first, (last - first + 1));
+    return folly::trimWhitespace(str).str();
 }
 
 
