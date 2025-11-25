@@ -259,9 +259,10 @@ bool X402Processor::validateMethod(
     method_ = method.value();
 
     if (method_ != proxygen::HTTPMethod::GET && method_ != proxygen::HTTPMethod::POST
-        && method != proxygen::HTTPMethod::HEAD && method != proxygen::HTTPMethod::OPTIONS) {
+        && method != proxygen::HTTPMethod::HEAD && method != proxygen::HTTPMethod::OPTIONS &&
+        method != proxygen::HTTPMethod::PUT) {
         reply400InvalidPayment(
-            "Unsupported HTTP method. Only GET, POST and HEAD are supported" +
+            "Unsupported HTTP method." +
             reqHeaders->getMethodString());
         return false;
     }
@@ -358,10 +359,10 @@ void X402Processor::doPassThrough(const std::unique_ptr<proxygen::HTTPMessage> &
         if (organization()->subdomain().empty()) {
             domain = config()->server()->hostName();
         } else {
-            domain = organization()->subdomain() + "." + config()->server()->hostName();
+            domain = organization()->subdomain() + config()->server()->hostName();
         }
 
-        auto url = "http://" + domain + "." + config()->server()->hostName() + reqHeaders->getPath();
+        auto url = "http://" + domain + "." + reqHeaders->getPath();
 
 
         auto result = proxyResponseToBackEnd(url, reqHeaders, body, responseHeaders, responseBody);
