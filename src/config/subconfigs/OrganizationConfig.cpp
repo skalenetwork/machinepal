@@ -32,19 +32,18 @@ ptr<OrganizationConfig> OrganizationConfig::createFromJson(
     const nlohmann::json &j, ptr<FileManager> fileManager) {
     try {
         CHECK_STATE(fileManager);
-        std::string organizationName = JsonUtils::mustContainString("name", j);
+        std::string organizationName = JsonUtils::mustContainString(j, "name");
         std::transform(
             organizationName.begin(), organizationName.end(), organizationName.begin(), ::tolower);
         validateOrgName(organizationName);
-        std::string subdomain = JsonUtils::mustContainString("subdomain", j);
+        std::string subdomain = JsonUtils::mustContainString(j, "subdomain");
         auto resources = ResourceConfig::createVectorFromJsonArray(j, fileManager);
 
         ptr<PassThroughConfig> passThroughConfig = nullptr;
 
         if (j.contains("passthrough")) {
             auto passThrough = j.at("passthrough");
-            CHECK_STATE_JSON(
-                passThrough, "passthrough must be object", j);
+            CHECK_STATE_JSON(passThrough.is_object(), "passthrough must be object", j);
             passThroughConfig = PassThroughConfig::createFromJson(passThrough, fileManager);
         }
 

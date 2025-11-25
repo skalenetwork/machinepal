@@ -48,7 +48,7 @@ ptr< vector< ptr< ResourceConfig > > > ResourceConfig::createVectorFromJsonArray
         if ( !j.contains( "resources" ) )
             return result;
         auto resources = j.at( "resources" );
-        CHECK_STATE_JSON( resources.is_array(), "Resources must be an array resources", j );
+        CHECK_STATE_JSON( resources.is_array(), "Resources must be an array", j );
         for ( const auto& item : resources ) {
             auto res = createFromJson( item, fileManager );
             CHECK_STATE( res );

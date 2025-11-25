@@ -56,8 +56,7 @@ std::shared_ptr< NetworkConfig > NetworkConfig::createFromJson(
         }
 
         if (name != "machinepay-easynet") {
-            CHECK_STATE_JSON( facilitator, "Facilitator config is required",
-                json);
+            CHECK_STATE2( facilitator, "Facilitator config is required");
         }
         return ptr< NetworkConfig >(
             new NetworkConfig( name, walletAddress, facilitator, domain ) );

@@ -1,20 +1,17 @@
 #pragma once
 
 
+#include "nlohmann/json.hpp"
+#include <boost/multiprecision/cpp_int.hpp>
+
 #define CHECK_STATE_JSON( _EXPRESSION_, __MSG__, __JSON__ )                           \
     if ( !( _EXPRESSION_ ) ) {                                                        \
-        auto __msg__ = std::string( "Check failed:" ) + __MSG__ + "\n" + j.dump( 4 ); \
+        auto __msg__ = std::string( "Check failed:" ) + __MSG__ + "\n" + __JSON__.dump( 4 ); \
         throw std::logic_error( __msg__ + "(): " + std::string( __MSG__ ) );          \
     }
 
 
-#pragma once
 
-
-#include "MachinePayConfig.h"
-#include "nlohmann/json.hpp"
-#include <boost/multiprecision/cpp_int.hpp>
-#include <mutex>
 
 
 class MachinePayConfig;
@@ -89,7 +86,7 @@ public:
     }
 
 
-    static string mustContainString( const nlohmann::json& j, string key ) {
+    static string mustContainString( const nlohmann::json& j, const string&  key ) {
         CHECK_STATE_JSON( j.contains( key ), "Missing required " + key + " section", j );
         CHECK_STATE_JSON( j.at( key ).is_string(), key + " must be string", j );
         return j.at( key ).get< std::string >();

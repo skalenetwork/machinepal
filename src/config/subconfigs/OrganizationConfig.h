@@ -1,14 +1,8 @@
 #pragma once
 #include "MachinePayCommon.h"
-#include "OrganizationConfig.h"
 #include "ResourceConfig.h"
 #include "ServerConfig.h"
-
-
 #include <proxygen/lib/http/HTTPMethod.h>
-#include <memory>
-#include <nlohmann/json.hpp>
-#include <string>
 
 
 class PassThroughConfig;
