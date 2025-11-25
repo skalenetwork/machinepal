@@ -22,7 +22,7 @@ ServerConfig::ServerConfig( const std::string& hostName, const std::string& bind
         R"(^([a-zA-Z0-9][-a-zA-Z0-9]{0,62})(\.[a-zA-Z0-9][-a-zA-Z0-9]{0,62})*$)" );
     if ( !std::regex_match( hostName_, hostname_regex ) ) {
         throw std::invalid_argument(
-            "hostName is not a valid local or internet hostname." + hostName_ );
+            "hostName is not a valid local or internet hostname. " + hostName_ );
     }
 
 
