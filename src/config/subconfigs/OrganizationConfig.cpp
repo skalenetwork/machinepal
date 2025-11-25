@@ -33,6 +33,7 @@ ptr<OrganizationConfig> OrganizationConfig::createFromJson(
     try {
         CHECK_STATE(fileManager);
         std::string organizationName = JsonUtils::mustContainString(j, "name");
+        CHECK_STATE_JSON(!organizationName.empty(), "Organization name cannot be empty", j);
         std::transform(
             organizationName.begin(), organizationName.end(), organizationName.begin(), ::tolower);
         validateOrgName(organizationName);

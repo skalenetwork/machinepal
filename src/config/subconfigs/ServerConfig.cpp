@@ -54,13 +54,14 @@ ptr< ServerConfig > ServerConfig::createFromJson(
 
         ptr< HTTPConfig > httpConfig = nullptr;
 
-        if ( j.count( "http" ) > 0 ) {
+        if ( j.contains( "http" )) {
+            CHECK_STATE_JSON( j.at( "http" ).is_object(), "http must be object", j );
             const auto& jt = j.at( "http" );
             httpConfig = HTTPConfig::createFromJson( jt, fileManager );
         }
         ptr< HTTPSConfig > httpsConfig = nullptr;
-        if ( j.count( "https" ) > 0 ) {
-            CHECK_STATE( j.at( "https" ).is_object() );
+        if ( j.contains( "https" )) {
+            CHECK_STATE_JSON( j.at( "https" ).is_object(), "https must be object", j );
             const auto& jt = j.at( "https" );
             httpsConfig = HTTPSConfig::createFromJson( jt, fileManager );
         }

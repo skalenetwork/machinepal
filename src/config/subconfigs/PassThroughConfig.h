@@ -16,5 +16,6 @@ private:
 public:
     [[nodiscard]] const std::string& targetUrl() const { return targetUrl_; }
 
-    static std::shared_ptr<PassThroughConfig> createFromJson(const nlohmann::json& j, ptr<FileManager> /*fileManager*/);
+    static
+        std::shared_ptr<PassThroughConfig> createFromJson(const nlohmann::json& j, ptr<FileManager> /*fileManager*/);
 };

@@ -25,11 +25,11 @@
         const nlohmann::json& j, ptr< FileManager > fileManager ) {
         try {
             CHECK_STATE( fileManager );
-            CHECK_STATE_JSON( j.count( "server" ) != 0, "Missing required 'server' config section", j );
+            CHECK_STATE_JSON( j.contains( "server" ), "Missing required 'server' config section", j );
             auto serverConfig = ServerConfig::createFromJson( j.at( "server" ), fileManager );
 
             ptr< LogConfig > logConfig;
-            if ( j.count( "log" ) == 0 ) {
+            if ( !j.contains( "log" )) {
                 // Default log config if not log element is present
                 logConfig = LogConfig::createDefault();
             } else {
