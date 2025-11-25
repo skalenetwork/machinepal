@@ -23,8 +23,6 @@ BOOST_AUTO_TEST_CASE( deserialize_basic_proxy_config ) {
     auto config = app->configManager()->latestConfig();
 
     BOOST_TEST( config->server()->http() );  // Check frontend
-    BOOST_TEST( config->server()->http()->isEnabled() == true );
-    BOOST_TEST( config->server()->https()->isEnabled() == true );
     BOOST_TEST( config->server()->http()->port() == 8080 );
     BOOST_TEST( config->server()->https()->port() == 8443 );
 

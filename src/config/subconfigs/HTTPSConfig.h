@@ -10,7 +10,7 @@ class HTTPSConfig : public HTTPConfig {
     CanonicalPath keyFile_;
     std::optional< CanonicalPath > keyPassFile_;
     std::optional< CanonicalPath > caFile_;
-    HTTPSConfig( bool isEnabled, uint16_t port, const CanonicalPath& certFile,
+    HTTPSConfig( uint16_t port, const CanonicalPath& certFile,
         const CanonicalPath& keyFile, const std::optional< CanonicalPath > keyPassFile,
         const std::optional< CanonicalPath >& caFile );
 

@@ -34,11 +34,7 @@ ServerConfig::ServerConfig( const std::string& hostName, const std::string& bind
         throw std::invalid_argument( "bindIp is not a valid IPv4 or IPv6 address." );
     }
 
-    if ( !http_ && !https_ ) {
-        throw std::invalid_argument(
-            "At least one of HTTP or HTTPS configuration must be provided." );
-    }
-    if ( !http_->isEnabled() && !https_->isEnabled() ) {
+    if ( !http_ && !https_) {
         throw std::invalid_argument(
             "At least one protocol (HTTP or HTTPS) must be enabled in the server configuration." );
     }
