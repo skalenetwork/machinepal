@@ -66,8 +66,10 @@ ptr< ServerConfig > ServerConfig::createFromJson(
                 "At least one of HTTP or HTTPS must be configured in server config", j );
         }
 
-        return ptr< ServerConfig >( new ServerConfig(
-            JsonUtils::getStringWithDefault( j, "hostname", "" ),
+        CHECK_STATE_JSON( j.contains( "hostname" ), "Missing required hostname in server config", j );
+        CHECK_STATE_JSON( j.at( "hostname" ).is_string(), "hostname must be string", j );
+        auto hostname = j.at( "hostname" ).get< std::string >();
+        return ptr< ServerConfig >( new ServerConfig(hostname,
             JsonUtils::getStringWithDefault( j, "bind_ip", "0.0.0.0" ), httpConfig, httpsConfig ) );
     } catch ( exception& ex ) {
         RETHROW_NESTED;
