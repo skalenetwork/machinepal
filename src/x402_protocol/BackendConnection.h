@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 
 class X402Processor;
 class IResponseSender;
@@ -9,5 +10,6 @@ public:
     static bool proxyToBackEndGet( std::string& backendResponseBody, std::string& errorMessage );
     static bool proxyToBackEndPost( const std::string& requestBody, std::string& backendResponseBody, std::string& errorMessage );
     static bool proxyToBackEndHead( const std::string& requestBody, std::string& backendResponseBody, std::string& errorMessage );
+    static bool proxyToBackEndOptions( const std::string& requestBody, std::string& backendResponseBody, std::string& errorMessage );
 
 };
