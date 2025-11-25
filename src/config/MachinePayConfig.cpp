@@ -65,6 +65,7 @@
         std::shared_ptr< NetworkConfig > network )
         : server_( server ), log_( log ), network_( network ) {
         CHECK_STATE( server );
+        CHECK_STATE( network);
         CHECK_STATE( log_ );
         organizationsByName_ = std::make_shared< std::map< string, ptr< OrganizationConfig > > >();
         organizationsBySubdomain_ = std::make_shared< std::map< string, ptr< OrganizationConfig > > >();

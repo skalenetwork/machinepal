@@ -25,16 +25,17 @@ std::shared_ptr< NetworkConfig > NetworkConfig::createFromJson(
     try {
         CHECK_STATE( fileManager );
 
-        if ( !j.contains( "network" ) ) {
-            return nullptr;
-        }
+        CHECK_STATE_JSON(j.contains("network"), "Missing required 'network' config section", j);
 
-        CHECK_STATE( j["network"].is_object() );
+        CHECK_STATE_JSON(
+            j["network"].is_object(), "'network' config section must be an object", j );
 
         auto networkJson = j["network"];
 
-        CHECK_STATE( networkJson.contains( "wallet_address" ) );
-        CHECK_STATE( networkJson["wallet_address"].is_string() );
+        CHECK_STATE_JSON( networkJson.contains( "wallet_address" ),
+            "Missing required 'wallet_address' in network config", networkJson );
+        CHECK_STATE_JSON( networkJson["wallet_address"].is_string(),
+            "'wallet_address' in network config must be a string", networkJson );
 
         auto walletAddressStr = networkJson["wallet_address"].get< std::string >();
 
@@ -45,8 +46,8 @@ std::shared_ptr< NetworkConfig > NetworkConfig::createFromJson(
             { "machinepay-easynet", EIP712Domain::machinePayEasyNet() },
             { "base-sepolia", EIP712Domain::baseSepolia() }, { "base", EIP712Domain::baseMainnet() }
         };
-        CHECK_STATE2(
-            supportedNetworks.contains( name ), "Unsupported network name in config:" + name );
+        CHECK_STATE_JSON(
+            supportedNetworks.contains( name ), "Unsupported network name in config:" + name, networkJson );
         // Select domain
         auto domain = supportedNetworks.at( name );
         optional<ptr<FacilitatorConfig >> facilitator = nullopt;
@@ -56,7 +57,7 @@ std::shared_ptr< NetworkConfig > NetworkConfig::createFromJson(
         }
 
         if (name != "machinepay-easynet") {
-            CHECK_STATE2( facilitator, "Facilitator config is required");
+            CHECK_STATE_JSON( facilitator, "Facilitator config is required", networkJson );
         }
         return ptr< NetworkConfig >(
             new NetworkConfig( name, walletAddress, facilitator, domain ) );

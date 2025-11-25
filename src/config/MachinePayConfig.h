@@ -8,7 +8,7 @@ class NetworkConfig;
 
 class OrganizationConfig;
 
-class MachinePayConfig {
+class  MachinePayConfig {
     ptr< ServerConfig > server_;
 
 
