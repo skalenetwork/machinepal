@@ -33,7 +33,8 @@ public:
 
     void onRequestStart( const std::unique_ptr< proxygen::HTTPMessage >& headers ) noexcept override;
 
-    bool proxyResponseToBackEndPost( const std::string& requestBody, std::string& responseBody );
+    bool proxyResponseToBackEndPost( const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
+        const std::string& requestBody, std::string& responseBody );
 
     void replyToClientWithError( const HttpError& httpError ) override;
     void sendSettlementErrorResponse(
