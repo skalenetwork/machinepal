@@ -300,6 +300,18 @@ bool X402Processor::proxyResponseToBackEnd( std::string& responseBody ) {
     return true;
 }
 
+bool X402Processor::proxyResponseToBackEndPost( const std::string& requestBody, std::string& responseBody ) {
+    std::string errorMessage;
+    bool success = BackendConnection::proxyToBackEndPost( requestBody, responseBody, errorMessage );
+    if ( !success ) {
+        reply502BadGateway( errorMessage.empty() ?
+                                "Failed to fetch content from upstream service." :
+                                errorMessage );
+        return false;
+    }
+    return true;
+}
+
 void X402Processor::replyToClientWithError( const HttpError& httpError ) {
     auto httpErrorMessage = httpError.message();
     switch ( httpError.type() ) {
@@ -336,7 +348,7 @@ void X402Processor::sendSettlementErrorResponse(
     }
 }
 
-void X402Processor::doPassThrough(const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders, const string &/*body*/) {
+void X402Processor::doPassThrough(const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders, const string &body) {
     try {
         // Validate request method (only GET/POST supported for now)
         if (!validateMethod(reqHeaders)) {
@@ -345,7 +357,13 @@ void X402Processor::doPassThrough(const std::unique_ptr<proxygen::HTTPMessage> &
 
         // Proxy the request to the backend without any payment checks
         std::string responseBody;
-        if (!proxyResponseToBackEnd(responseBody)) {
+        bool ok = false;
+        if (method_ == proxygen::HTTPMethod::POST) {
+            ok = proxyResponseToBackEndPost(body, responseBody);
+        } else {
+            ok = proxyResponseToBackEnd(responseBody);
+        }
+        if (!ok) {
             return; // proxyResponseToBackEnd already sent an error response
         }
 
