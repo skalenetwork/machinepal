@@ -256,9 +256,10 @@ bool X402Processor::validateMethod(
 
     method_ = method.value();
 
-    if ( method_ != proxygen::HTTPMethod::GET && method_ != proxygen::HTTPMethod::POST ) {
+    if ( method_ != proxygen::HTTPMethod::GET && method_ != proxygen::HTTPMethod::POST
+        && method != proxygen::HTTPMethod::HEAD  && method != proxygen::HTTPMethod::OPTIONS ) {
         reply400InvalidPayment(
-            "Unsupported HTTP method. Only GET and POST are supported" +
+            "Unsupported HTTP method. Only GET, POST and HEAD are supported" +
             reqHeaders->getMethodString() );
         return false;
     }
@@ -288,9 +289,9 @@ void X402Processor::onRequestStart(
     };
 }
 
-bool X402Processor::proxyResponseToBackEnd( std::string& responseBody ) {
+bool X402Processor::proxyResponseToBackEndGet( std::string& responseBody ) {
     std::string errorMessage;
-    bool success = BackendConnection::proxyToBackEnd( responseBody, errorMessage );
+    bool success = BackendConnection::proxyToBackEndGet( responseBody, errorMessage );
     if ( !success ) {
         reply502BadGateway( errorMessage.empty() ?
                                 "Failed to fetch content from upstream service." :
@@ -361,7 +362,7 @@ void X402Processor::doPassThrough(const std::unique_ptr<proxygen::HTTPMessage> &
         if (method_ == proxygen::HTTPMethod::POST) {
             ok = proxyResponseToBackEndPost(body, responseBody);
         } else {
-            ok = proxyResponseToBackEnd(responseBody);
+            ok = proxyResponseToBackEndGet(responseBody);
         }
         if (!ok) {
             return; // proxyResponseToBackEnd already sent an error response
@@ -423,7 +424,7 @@ void X402Processor::onRequestFullyReceived(
         }
 
         string responseBody;
-        if ( !proxyResponseToBackEnd( responseBody ) ) {
+        if ( !proxyResponseToBackEndGet( responseBody ) ) {
             return;
         }
 

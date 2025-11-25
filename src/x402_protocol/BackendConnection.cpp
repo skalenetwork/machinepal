@@ -6,7 +6,7 @@
 #include "X402Processor.h"
 #include "curl/curl.h"
 
-bool BackendConnection::proxyToBackEnd(
+bool BackendConnection::proxyToBackEndGet(
     std::string& backendResponseBody, std::string& errorMessage ) {
     static thread_local std::unique_ptr< CURL, decltype( &curl_easy_cleanup ) > curlThreadLocal(
         nullptr, &curl_easy_cleanup );
@@ -95,6 +95,62 @@ bool BackendConnection::proxyToBackEndPost(
             return _size * _nmemb;
         } );
     curl_easy_setopt( curl, CURLOPT_WRITEDATA, &backendResponseBody );
+
+    auto result = curl_easy_perform( curl );
+
+    if ( result != CURLE_OK ) {
+        spdlog::error( "CURL error: {}", curl_easy_strerror( result ) );
+    }
+
+    curl_easy_cleanup( curl );
+
+    if ( result != CURLE_OK ) {
+        errorMessage = "Failed to fetch content from upstream service.";
+        return false;
+    } else {
+        return true;
+    }
+}
+
+bool BackendConnection::proxyToBackEndHead(const std::string &requestBody, std::string &backendResponseBody,
+    std::string &errorMessage) {
+    (void)requestBody; // HEAD should not send a body
+    static thread_local std::unique_ptr< CURL, decltype( &curl_easy_cleanup ) > curlThreadLocal(
+        nullptr, &curl_easy_cleanup );
+
+    if ( !curlThreadLocal ) {
+        auto curlObject = curl_easy_init();
+        if ( !curlObject ) {
+            spdlog::error( "Could not initialize CURL object" );
+            errorMessage = "Could not initialize CURL object";
+            return false;
+        }
+        curlThreadLocal.reset( curlObject );
+    }
+
+    CHECK_STATE( curlThreadLocal );
+    auto* curl = curlThreadLocal.get();
+    curl_easy_reset( curl );
+
+    curl_easy_setopt( curl, CURLOPT_SSL_VERIFYPEER, 0L );
+    curl_easy_setopt( curl, CURLOPT_SSL_VERIFYHOST, 0L );
+    curl_easy_setopt( curl, CURLOPT_FOLLOWLOCATION, 1L );
+
+    // HEAD request to the same sample endpoint as GET
+    curl_easy_setopt( curl, CURLOPT_URL, "https://jsonplaceholder.typicode.com/posts/1" );
+
+    // Configure HEAD: no body
+    curl_easy_setopt( curl, CURLOPT_NOBODY, 1L );
+
+    // Capture response headers (if needed by caller)
+    curl_easy_setopt(
+        curl, CURLOPT_HEADERFUNCTION,
+        +[]( char* _ptr, size_t _size, size_t _nmemb, void* _userdata ) -> size_t {
+            auto* str = static_cast< std::string* >( _userdata );
+            str->append( _ptr, _size * _nmemb );
+            return _size * _nmemb;
+        } );
+    curl_easy_setopt( curl, CURLOPT_HEADERDATA, &backendResponseBody );
 
     auto result = curl_easy_perform( curl );
 
