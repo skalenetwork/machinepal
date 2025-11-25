@@ -296,9 +296,10 @@ void X402Processor::onRequestStart(
 bool X402Processor::proxyResponseToBackEnd(const string& url, const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
                                            const std::string &requestBody, vector<pair<string, string>> &responseHeaders,
                                            std::string &responseBody) {
+    uint64_t errorCode = 0;
     std::string errorMessage;
     bool success = BackendConnection::proxyToBackEnd( url,
-        method_, reqHeaders, requestBody, responseHeaders, responseBody, errorMessage);
+        method_, reqHeaders, requestBody, responseHeaders, responseBody, errorCode, errorMessage);
     if (!success) {
         reply502BadGateway(errorMessage.empty() ? "Failed to fetch content from upstream service." : errorMessage);
         return false;
