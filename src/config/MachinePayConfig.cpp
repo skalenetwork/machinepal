@@ -95,10 +95,9 @@
             CHECK_STATE2(false, "Neither HTTP nor HTTPS is enabled in server config");
         }
 
-        facilitatorClient_ = make_shared< EasyNetFacilitatorClient >(
-            protocol + "localhost:" +
-            to_string( port ) + EASYNET_FACILITATOR_PREFIX);
-
+        const auto& host = server_->hostName(); // provide accessor if missing
+        facilitatorClient_ = make_shared<EasyNetFacilitatorClient>(
+            protocol + host + ":" + to_string(port) + EASYNET_FACILITATOR_PREFIX);
 
     }
 
