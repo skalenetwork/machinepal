@@ -34,6 +34,17 @@ ptr< ResourceConfig > ResourceConfig::createFromJson(
         auto location = JsonUtils::mustContainString( j, "location" );
         auto price = JsonUtils::mustContainPrice( j, "price" );
         auto token = JsonUtils::mustContainString( j, "token" );
+
+
+        if (type != ResourceType::LocalFile) {
+            // For non-local files, validate URL format
+            CHECK_STATE_JSON(URLUtils::isValidUrl(location),
+                             "Invalid URL format for resource location: " + location, j);
+        } else {
+            // For local files, ensure the file exists and is readable
+            fileManager->checkFileExistsAndReadableAndResolve(location);
+        }
+
         return ptr< ResourceConfig >( new ResourceConfig( name, location, type, price, token ) );
     } catch ( const std::exception& ex ) {
         RETHROW_NESTED;
@@ -48,10 +59,10 @@ ptr< vector< ptr< ResourceConfig > > > ResourceConfig::createVectorFromJsonArray
         if ( !j.contains( "resources" ) )
             return result;
         auto resources = j.at( "resources" );
-        CHECK_STATE_JSON( resources.is_array(), "Resources must be an array", j );
+        CHECK_STATE_JSON( resources.is_array(), "resources must be an array", j );
         for ( const auto& item : resources ) {
             auto res = createFromJson( item, fileManager );
-            CHECK_STATE( res );
+            CHECK_STATE ( res );
             result->push_back( res );
         }
         return result;

@@ -38,6 +38,9 @@ ptr<OrganizationConfig> OrganizationConfig::createFromJson(
             organizationName.begin(), organizationName.end(), organizationName.begin(), ::tolower);
         validateOrgName(organizationName);
         std::string subdomain = JsonUtils::mustContainString(j, "subdomain");
+        CHECK_STATE_JSON(!subdomain.empty(), "subdomain cannot be empty", j);
+        static const std::regex label("^[a-z0-9]+(-[a-z0-9]+)*$");
+        CHECK_STATE_JSON(std::regex_match(subdomain, label), "Invalid subdomain format", j);
         auto resources = ResourceConfig::createVectorFromJsonArray(j, fileManager);
 
         ptr<PassThroughConfig> passThroughConfig = nullptr;
@@ -65,7 +68,7 @@ OrganizationConfig::createVectorFromJsonArray(
         if (!j.contains("organizations"))
             return result;
         auto organizations = j.at("organizations");
-        CHECK_STATE(organizations.is_array());
+        CHECK_STATE_JSON(organizations.is_array(), "organizations must be an array", j);
         for (const auto &item: organizations) {
             auto org = OrganizationConfig::createFromJson(item, fileManager);
             if (org)

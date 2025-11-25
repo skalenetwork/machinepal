@@ -62,6 +62,12 @@ bool URLUtils::isDomainName( const std::string& host ) {
     return ht == host_type::name;
 }
 
+bool URLUtils::isValidUrl(const std::string &url) {
+    // parse_uri returns a result object which is true on success
+    // and false on failure.
+    boost::system::result<boost::urls::url_view> result = boost::urls::parse_uri(url);
+    return result.has_value();
+}
 bool URLUtils::decodePath(
     const std::string& path, std::string& result, std::string& errorMessage ) {
     try {
