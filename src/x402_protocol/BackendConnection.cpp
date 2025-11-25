@@ -8,7 +8,7 @@
 #include "X402Processor.h"
 #include "curl/curl.h"
 #include <spdlog/spdlog.h>
-#include <algorithm> // Required for string trimming
+#include <folly/String.h> // Required for folly::toLowerAscii and folly::trimWhitespace
 
 // "https://jsonplaceholder.typicode.com/posts"
 
@@ -33,17 +33,21 @@ bool BackendConnection::proxyToBackEnd(const string &url,
         case proxygen::HTTPMethod::PUT:
             return proxyToBackEndPut(url, requestHeaders, requestBody, responseHeaders, responseBody, errorCode,
                                      errorMessage);
+        case proxygen::HTTPMethod::DELETE:
+            return proxyToBackEndDelete(url, requestHeaders, responseHeaders, responseBody, errorCode, errorMessage);
         default:
             errorMessage = "Unsupported HTTP method for backend proxying.";
             return false;
     }
 }
 
-bool BackendConnection::proxyToBackEndGet(const string &url,
-                                          const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
-                                          vector<pair<string, string> > &responseHeaders,
-                                          std::string &responseBody, uint64_t& errorCode, std::string &errorMessage) {
-    static thread_local std::unique_ptr<CURL, decltype( &curl_easy_cleanup )> curlThreadLocal(
+bool BackendConnection::executeCurlRequest(const string &url,
+                                           const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
+                                           vector<pair<string, string> > &responseHeaders,
+                                           std::string &responseBody, uint64_t &errorCode,
+                                           std::string &errorMessage,
+                                           const std::function<void(CURL *)> &configureMethod) {
+    static thread_local std::unique_ptr<CURL, decltype(&curl_easy_cleanup)> curlThreadLocal(
         nullptr, &curl_easy_cleanup);
 
     if (!curlThreadLocal) {
@@ -60,12 +64,12 @@ bool BackendConnection::proxyToBackEndGet(const string &url,
     auto *curl = curlThreadLocal.get();
     curl_easy_reset(curl);
 
-    // --- Process Request Headers ---
     struct curl_slist *headers = createCurlHeadersFromProxygen(requestHeaders);
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
 
-    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
-    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+    // Enable SSL certificate verification for security
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 
@@ -76,12 +80,17 @@ bool BackendConnection::proxyToBackEndGet(const string &url,
     // --- Setup Response Body Parsing ---
     curl_easy_setopt(
         curl, CURLOPT_WRITEFUNCTION,
-        +[]( char* _ptr, size_t _size, size_t _nmemb, void* _userdata ) -> size_t {
-        auto* str = static_cast< std::string* >( _userdata );
-        str->append( _ptr, _size * _nmemb );
-        return _size * _nmemb;
+        +[](char *_ptr, size_t _size, size_t _nmemb, void *_userdata) -> size_t {
+            auto *str = static_cast<std::string *>(_userdata);
+            str->append(_ptr, _size * _nmemb);
+            return _size * _nmemb;
         });
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &responseBody);
+
+    // Apply method-specific configurations
+    if (configureMethod) {
+        configureMethod(curl);
+    }
 
     auto result = curl_easy_perform(curl);
 
@@ -98,12 +107,18 @@ bool BackendConnection::proxyToBackEndGet(const string &url,
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &errorCode);
     if (errorCode >= 400) {
         spdlog::error("Upstream service returned HTTP error: {}", errorCode);
-        // The responseBody may contain a useful error message from the server
         errorMessage = "Upstream service error: " + std::to_string(errorCode);
         return false;
     }
 
     return true;
+}
+
+bool BackendConnection::proxyToBackEndGet(const string &url,
+                                          const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
+                                          vector<pair<string, string> > &responseHeaders,
+                                          std::string &responseBody, uint64_t& errorCode, std::string &errorMessage) {
+    return executeCurlRequest(url, requestHeaders, responseHeaders, responseBody, errorCode, errorMessage, nullptr);
 }
 
 bool BackendConnection::proxyToBackEndPost(const string &url,
@@ -112,130 +127,23 @@ bool BackendConnection::proxyToBackEndPost(const string &url,
                                            vector<pair<string, string> > &responseHeaders,
                                            std::string &responseBody, uint64_t& errorCode,
                                            std::string &errorMessage) {
-    static thread_local std::unique_ptr<CURL, decltype( &curl_easy_cleanup )> curlThreadLocal(
-        nullptr, &curl_easy_cleanup);
-
-    if (!curlThreadLocal) {
-        auto curlObject = curl_easy_init();
-        if (!curlObject) {
-            spdlog::error("Could not initialize CURL object");
-            errorMessage = "Could not initialize CURL object";
-            return false;
-        }
-        curlThreadLocal.reset(curlObject);
-    }
-
-    CHECK_STATE(curlThreadLocal);
-    auto *curl = curlThreadLocal.get();
-    curl_easy_reset(curl);
-
-    struct curl_slist *headers = createCurlHeadersFromProxygen(requestHeaders);
-    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-
-    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
-    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
-    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-
-    curl_easy_setopt(curl, CURLOPT_POST, 1L);
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, requestBody.c_str());
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, static_cast<long>( requestBody.size() ));
-
-    // --- Setup Response Header Parsing ---
-    curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, headerCallback);
-    curl_easy_setopt(curl, CURLOPT_HEADERDATA, &responseHeaders);
-
-    // --- Setup Response Body Parsing ---
-    curl_easy_setopt(
-        curl, CURLOPT_WRITEFUNCTION,
-        +[]( char* _ptr, size_t _size, size_t _nmemb, void* _userdata ) -> size_t {
-        auto* str = static_cast< std::string* >( _userdata );
-        str->append( _ptr, _size * _nmemb );
-        return _size * _nmemb;
-        });
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &responseBody);
-
-    auto result = curl_easy_perform(curl);
-
-    if (headers) {
-        curl_slist_free_all(headers);
-    }
-
-    if (result != CURLE_OK) {
-        spdlog::error("CURL error: {}", curl_easy_strerror(result));
-        errorMessage = "Failed to fetch content from upstream service.";
-        return false;
-    }
-
-    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &errorCode);
-    if (errorCode >= 400) {
-        spdlog::error("Upstream service returned HTTP error: {}", errorCode);
-        // The responseBody may contain a useful error message from the server
-        errorMessage = "Upstream service error: " + std::to_string(errorCode);
-        return false;
-    }
-
-    return true;
+    return executeCurlRequest(url, requestHeaders, responseHeaders, responseBody, errorCode, errorMessage,
+                              [&](CURL *curl) {
+                                  curl_easy_setopt(curl, CURLOPT_POST, 1L);
+                                  curl_easy_setopt(curl, CURLOPT_POSTFIELDS, requestBody.c_str());
+                                  curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, static_cast<long>(requestBody.size()));
+                              });
 }
 
 bool BackendConnection::proxyToBackEndHead(const string &url,
                                            const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
                                            vector<pair<string, string> > &responseHeaders, uint64_t& errorCode,
                                            std::string &errorMessage) {
-    static thread_local std::unique_ptr<CURL, decltype( &curl_easy_cleanup )> curlThreadLocal(
-        nullptr, &curl_easy_cleanup);
-
-    if (!curlThreadLocal) {
-        auto curlObject = curl_easy_init();
-        if (!curlObject) {
-            spdlog::error("Could not initialize CURL object");
-            errorMessage = "Could not initialize CURL object";
-            return false;
-        }
-        curlThreadLocal.reset(curlObject);
-    }
-
-    CHECK_STATE(curlThreadLocal);
-    auto *curl = curlThreadLocal.get();
-    curl_easy_reset(curl);
-
-    struct curl_slist *headers = createCurlHeadersFromProxygen(requestHeaders);
-    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-
-    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
-    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
-    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-
-    curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);
-
-    // --- Setup Response Header Parsing ---
-    // In previous code, HEADERFUNCTION wrote to responseBody.
-    // For HEAD, we want to populate responseHeaders.
-    curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, headerCallback);
-    curl_easy_setopt(curl, CURLOPT_HEADERDATA, &responseHeaders);
-
-    auto result = curl_easy_perform(curl);
-
-    if (headers) {
-        curl_slist_free_all(headers);
-    }
-
-    if (result != CURLE_OK) {
-        spdlog::error("CURL error: {}", curl_easy_strerror(result));
-        errorMessage = "Failed to fetch content from upstream service.";
-        return false;
-    }
-
-    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &errorCode);
-    if (errorCode >= 400) {
-        spdlog::error("Upstream service returned HTTP error: {}", errorCode);
-        // The responseBody may contain a useful error message from the server
-        errorMessage = "Upstream service error: " + std::to_string(errorCode);
-        return false;
-    }
-
-    return true;
+    std::string responseBody; // Ignored for HEAD
+    return executeCurlRequest(url, requestHeaders, responseHeaders, responseBody, errorCode, errorMessage,
+                              [](CURL *curl) {
+                                  curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);
+                              });
 }
 
 bool BackendConnection::proxyToBackEndOptions(const string &url,
@@ -243,74 +151,10 @@ bool BackendConnection::proxyToBackEndOptions(const string &url,
                                               vector<pair<string, string> > &responseHeaders,
                                               std::string &responseBody, uint64_t& errorCode,
                                               std::string &errorMessage) {
-    static thread_local std::unique_ptr<CURL, decltype( &curl_easy_cleanup )> curlThreadLocal(
-        nullptr, &curl_easy_cleanup);
-
-    if (!curlThreadLocal) {
-        auto curlObject = curl_easy_init();
-        if (!curlObject) {
-            spdlog::error("Could not initialize CURL object");
-            errorMessage = "Could not initialize CURL object";
-            return false;
-        }
-        curlThreadLocal.reset(curlObject);
-    }
-
-    CHECK_STATE(curlThreadLocal);
-    auto *curl = curlThreadLocal.get();
-    curl_easy_reset(curl);
-
-    struct curl_slist *headers = createCurlHeadersFromProxygen(requestHeaders);
-    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-
-    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
-    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
-    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-
-    // 1. Set the method
-    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "OPTIONS");
-
-    // 2. REMOVED: curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);
-    // OPTIONS responses might contain a body (e.g., WADL documentation or detailed specs).
-    // We must allow curl to read it, otherwise the stream might misalign or we lose data.
-
-    // 3. Setup Body Parsing (Required if server sends body)
-    curl_easy_setopt(
-        curl, CURLOPT_WRITEFUNCTION,
-        +[]( char* _ptr, size_t _size, size_t _nmemb, void* _userdata ) -> size_t {
-        auto* str = static_cast< std::string* >( _userdata );
-        str->append( _ptr, _size * _nmemb );
-        return _size * _nmemb;
-        });
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &responseBody);
-
-    // 4. Setup Response Header Parsing
-    // Assumes 'headerCallback' is defined as in the previous step
-    curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, headerCallback);
-    curl_easy_setopt(curl, CURLOPT_HEADERDATA, &responseHeaders);
-
-    auto result = curl_easy_perform(curl);
-
-    if (headers) {
-        curl_slist_free_all(headers);
-    }
-
-    if (result != CURLE_OK) {
-        spdlog::error("CURL error: {}", curl_easy_strerror(result));
-        errorMessage = "Failed to fetch content from upstream service.";
-        return false;
-    }
-
-    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &errorCode);
-    if (errorCode >= 400) {
-        spdlog::error("Upstream service returned HTTP error: {}", errorCode);
-        // The responseBody may contain a useful error message from the server
-        errorMessage = "Upstream service error: " + std::to_string(errorCode);
-        return false;
-    }
-
-    return true;
+    return executeCurlRequest(url, requestHeaders, responseHeaders, responseBody, errorCode, errorMessage,
+                              [](CURL *curl) {
+                                  curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "OPTIONS");
+                              });
 }
 
 bool BackendConnection::proxyToBackEndPut(const string &url,
@@ -319,79 +163,23 @@ bool BackendConnection::proxyToBackEndPut(const string &url,
                                           vector<pair<string, string> > &responseHeaders,
                                           std::string &responseBody, uint64_t& errorCode,
                                           std::string &errorMessage) {
-    static thread_local std::unique_ptr<CURL, decltype( &curl_easy_cleanup )> curlThreadLocal(
-        nullptr, &curl_easy_cleanup);
+    return executeCurlRequest(url, requestHeaders, responseHeaders, responseBody, errorCode, errorMessage,
+                              [&](CURL *curl) {
+                                  curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
+                                  curl_easy_setopt(curl, CURLOPT_POSTFIELDS, requestBody.c_str());
+                                  curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, static_cast<long>(requestBody.size()));
+                              });
+}
 
-    if (!curlThreadLocal) {
-        auto curlObject = curl_easy_init();
-        if (!curlObject) {
-            spdlog::error("Could not initialize CURL object");
-            errorMessage = "Could not initialize CURL object";
-            return false;
-        }
-        curlThreadLocal.reset(curlObject);
-    }
-
-    CHECK_STATE(curlThreadLocal);
-    auto *curl = curlThreadLocal.get();
-    curl_easy_reset(curl);
-
-    struct curl_slist *headers = createCurlHeadersFromProxygen(requestHeaders);
-    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-
-    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
-    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
-    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-
-    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, requestBody.c_str());
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, static_cast<long>( requestBody.size() ));
-
-    // --- Setup Response Header Parsing ---
-    curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, headerCallback);
-    curl_easy_setopt(curl, CURLOPT_HEADERDATA, &responseHeaders);
-
-    // --- Setup Response Body Parsing ---
-    curl_easy_setopt(
-        curl, CURLOPT_WRITEFUNCTION,
-        +[]( char* _ptr, size_t _size, size_t _nmemb, void* _userdata ) -> size_t {
-        auto* str = static_cast< std::string* >( _userdata );
-        str->append( _ptr, _size * _nmemb );
-        return _size * _nmemb;
-        });
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &responseBody);
-
-    auto result = curl_easy_perform(curl);
-
-    if (headers) {
-        curl_slist_free_all(headers);
-    }
-
-    if (result != CURLE_OK) {
-        spdlog::error("CURL error: {}", curl_easy_strerror(result));
-        errorCode = result;
-        errorMessage = "Failed to fetch content from upstream service.";
-        return false;
-    }
-
-    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &errorCode);
-    if (errorCode >= 400) {
-        spdlog::error("Upstream service returned HTTP error: {}", errorCode);
-        // The responseBody may contain a useful error message from the server
-        errorMessage = "Upstream service error: " + std::to_string(errorCode);
-        return false;
-    }
-    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &errorCode);
-    if (errorCode >= 400) {
-        spdlog::error("Upstream service returned HTTP error: {}", errorCode);
-        // The responseBody may contain a useful error message from the server
-        errorMessage = "Upstream service error: " + std::to_string(errorCode);
-        return false;
-    }
-
-
-    return true;
+bool BackendConnection::proxyToBackEndDelete(const string &url,
+                                             const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
+                                             vector<pair<string, string> > &responseHeaders,
+                                             std::string &responseBody, uint64_t& errorCode,
+                                             std::string &errorMessage) {
+    return executeCurlRequest(url, requestHeaders, responseHeaders, responseBody, errorCode, errorMessage,
+                              [](CURL *curl) {
+                                  curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
+                              });
 }
 
 
@@ -421,9 +209,12 @@ curl_slist *BackendConnection::createCurlHeadersFromProxygen(
                 if (blockedHeaders.find(lowerName) == blockedHeaders.end()) {
                     std::string headerStr = name + ": " + value;
                     chunk = curl_slist_append(chunk, headerStr.c_str());
+                    CHECK_STATE(chunk);
                 }
             });
     }
+
+
     return chunk;
 }
 
@@ -437,8 +228,17 @@ size_t BackendConnection::headerCallback(char *buffer, size_t size, size_t nitem
     size_t totalSize = size * nitems;
     std::string raw(buffer, totalSize);
 
-    // FIX: Cast to vector<pair<string, string>>*, not map*
     auto *headers = static_cast<std::vector<std::pair<std::string, std::string> > *>(userdata);
+
+    // Ignore blank lines (e.g., the one separating headers from body)
+    if (folly::trimWhitespace(raw).empty()) {
+        return totalSize;
+    }
+
+    // Ignore the HTTP status line (e.g., "HTTP/1.1 200 OK")
+    if (raw.rfind("HTTP/", 0) == 0) {
+        return totalSize;
+    }
 
     // HTTP headers come in the format "Key: Value"
     size_t colonPos = raw.find(':');
@@ -447,9 +247,12 @@ size_t BackendConnection::headerCallback(char *buffer, size_t size, size_t nitem
         std::string value = trimWhiteSpaceFromHeader(raw.substr(colonPos + 1));
 
         if (!key.empty()) {
-            // FIX: Use emplace_back for vector
             headers->emplace_back(key, value);
         }
+    } else if (!headers->empty() && (raw.starts_with(' ') || raw.starts_with('\t'))) {
+        // This is a folded header (continuation of the previous line)
+        headers->back().second.append(" " + trimWhiteSpaceFromHeader(raw));
     }
+
     return totalSize;
 }

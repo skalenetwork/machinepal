@@ -34,6 +34,11 @@ class BackendConnection {
                                   vector<pair<string, string>> &responseHeaders, std::string &responseBody,
                                   uint64_t& errorCode, std::string &errorMessage);
 
+    static bool proxyToBackEndDelete(const string &url, const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
+                              vector<pair<string, string>> &responseHeaders, std::string &responseBody,
+                              uint64_t &errorCode,
+                              std::string &errorMessage);
+
     static curl_slist *createCurlHeadersFromProxygen(const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders);
 
     static std::string trimWhiteSpaceFromHeader(const std::string &str);
@@ -45,4 +50,9 @@ public:
     static bool proxyToBackEnd(const string& url, proxygen::HTTPMethod method_, const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
                                const std::string &requestBody, vector<pair<string, string>> &responseHeaders,
                                std::string &responseBody, uint64_t& errorCode, std::string &errorMessage);
+
+    static bool executeCurlRequest(const string &url, const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
+                            vector<pair<string, string>> &responseHeaders, std::string &responseBody,
+                            uint64_t &errorCode,
+                            std::string &errorMessage, const std::function<void(CURL *)> &configureMethod);
 };
