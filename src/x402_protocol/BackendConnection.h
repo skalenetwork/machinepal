@@ -2,6 +2,8 @@
 
 #include <string>
 
+class BackendError;
+
 namespace proxygen {
     class HTTPMessage;
     enum class HTTPMethod;
@@ -11,33 +13,36 @@ class X402Processor;
 class IResponseSender;
 
 class BackendConnection {
-    static bool proxyToBackEndGet(const string& url, const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
-                                  vector<pair<string, string>> &responseHeaders, std::string &responseBody,
-                                  uint64_t& errorCode,
-                                  std::string &errorMessage);
+    static ptr<BackendError>proxyToBackEndGet(const string &url,
+                                                    const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
+                                                    vector<pair<string, string> > &responseHeaders,
+                                                    std::string &responseBody);
 
-    static bool proxyToBackEndPost(const string& url, const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
-                            const std::string &requestBody,
-                            vector<pair<string, string>> &responseHeaders, std::string &responseBody,
-                            uint64_t& errorCode, std::string &errorMessage);
+    static ptr<BackendError>proxyToBackEndPost(const string &url,
+                                                     const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
+                                                     const std::string &requestBody,
+                                                     vector<pair<string, string> > &responseHeaders,
+                                                     std::string &responseBody);
 
-    static bool proxyToBackEndHead(const string& url, const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
-                                   vector<pair<string, string>> &responseHeaders,
-                                   uint64_t& errorCode, std::string &errorMessage);
+    static ptr<BackendError>proxyToBackEndHead(const string &url,
+                                                     const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
+                                                     vector<pair<string, string> > &responseHeaders);
 
-    static bool proxyToBackEndOptions(const string& url, const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
-                                      vector<pair<string, string>> &responseHeaders, std::string &responseBody,
-                                      uint64_t& errorCode, std::string &errorMessage);
+    static ptr<BackendError>proxyToBackEndOptions(const string &url,
+                                                        const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
+                                                        vector<pair<string, string> > &responseHeaders,
+                                                        std::string &responseBody);
 
-    static bool proxyToBackEndPut(const string& url, const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
-                                  const std::string &requestBody,
-                                  vector<pair<string, string>> &responseHeaders, std::string &responseBody,
-                                  uint64_t& errorCode, std::string &errorMessage);
+    static ptr<BackendError>proxyToBackEndPut(const string &url,
+                                                    const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
+                                                    const std::string &requestBody,
+                                                    vector<pair<string, string> > &responseHeaders,
+                                                    std::string &responseBody);
 
-    static bool proxyToBackEndDelete(const string &url, const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
-                              vector<pair<string, string>> &responseHeaders, std::string &responseBody,
-                              uint64_t &errorCode,
-                              std::string &errorMessage);
+    static ptr<BackendError>proxyToBackEndDelete(const string &url,
+                                                       const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
+                                                       vector<pair<string, string> > &responseHeaders,
+                                                       std::string &responseBody);
 
     static curl_slist *createCurlHeadersFromProxygen(const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders);
 
@@ -46,13 +51,15 @@ class BackendConnection {
     static size_t headerCallback(char *buffer, size_t size, size_t nitems, void *userdata);
 
 public:
+    static ptr<BackendError>proxyToBackEnd(const string &url, proxygen::HTTPMethod method_,
+                                                 const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
+                                                 const std::string &requestBody,
+                                                 vector<pair<string, string> > &responseHeaders,
+                                                 std::string &responseBody);
 
-    static bool proxyToBackEnd(const string& url, proxygen::HTTPMethod method_, const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
-                               const std::string &requestBody, vector<pair<string, string>> &responseHeaders,
-                               std::string &responseBody, uint64_t& errorCode, std::string &errorMessage);
-
-    static bool executeCurlRequest(const string &url, const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
-                            vector<pair<string, string>> &responseHeaders, std::string &responseBody,
-                            uint64_t &errorCode,
-                            std::string &errorMessage, const std::function<void(CURL *)> &configureMethod);
+    static ptr<BackendError>executeCurlRequest(const string &url,
+                                                     const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
+                                                     vector<pair<string, string> > &responseHeaders,
+                                                     std::string &responseBody,
+                                                     const std::function<void(CURL *)> &configureMethod);
 };

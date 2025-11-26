@@ -9,6 +9,7 @@
 #include "payment/datastructures/Authorization.h"
 
 
+class BackendError;
 class SettlementResponse;
 class ResourceConfig;
 
@@ -33,7 +34,7 @@ public:
 
     void onRequestStart( const std::unique_ptr< proxygen::HTTPMessage >& headers ) noexcept override;
 
-    bool proxyResponseToBackEnd( const string& url, const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
+    ptr<BackendError> proxyResponseToBackEnd( const string& url, const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
         const std::string& requestBody, vector<pair<string, string>>& responseHeaders,
         std::string& responseBody );
 

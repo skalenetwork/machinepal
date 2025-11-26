@@ -5,6 +5,10 @@
 class BackendCurlError : public BackendError {
 
 public:
+    BackendCurlError(uint64_t error, const std::string &message)
+        : error_(error),
+          message_(message) {
+    }
 
     uint64_t getError() const {
         return error_;

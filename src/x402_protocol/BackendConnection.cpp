@@ -10,42 +10,40 @@
 #include <spdlog/spdlog.h>
 #include <folly/String.h> // Required for folly::toLowerAscii and folly::trimWhitespace
 
+#include "BackendCurlError.h"
+#include "BackendError.h"
+#include "BackendHttpError.h"
+
 // "https://jsonplaceholder.typicode.com/posts"
 
 
-bool BackendConnection::proxyToBackEnd(const string &url,
+ptr<BackendError>BackendConnection::proxyToBackEnd(const string &url,
                                        proxygen::HTTPMethod method_,
                                        const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
                                        const std::string &requestBody, vector<pair<string, string> > &responseHeaders,
-                                       std::string &responseBody, uint64_t &errorCode,
-                                       std::string &errorMessage) {
+                                       std::string &responseBody) {
     switch (method_) {
         case proxygen::HTTPMethod::GET:
-            return proxyToBackEndGet(url, requestHeaders, responseHeaders, responseBody, errorCode,
-                                     errorMessage);
+            return proxyToBackEndGet(url, requestHeaders, responseHeaders, responseBody);
         case proxygen::HTTPMethod::POST:
-            return proxyToBackEndPost(url, requestHeaders, requestBody, responseHeaders, responseBody,
-                                      errorCode, errorMessage);
+            return proxyToBackEndPost(url, requestHeaders, requestBody, responseHeaders, responseBody);
         case proxygen::HTTPMethod::HEAD:
-            return proxyToBackEndHead(url, requestHeaders, responseHeaders, errorCode, errorMessage);
+            return proxyToBackEndHead(url, requestHeaders, responseHeaders);
         case proxygen::HTTPMethod::OPTIONS:
-            return proxyToBackEndOptions(url, requestHeaders, responseHeaders, responseBody, errorCode, errorMessage);
+            return proxyToBackEndOptions(url, requestHeaders, responseHeaders, responseBody);
         case proxygen::HTTPMethod::PUT:
-            return proxyToBackEndPut(url, requestHeaders, requestBody, responseHeaders, responseBody, errorCode,
-                                     errorMessage);
+            return proxyToBackEndPut(url, requestHeaders, requestBody, responseHeaders, responseBody);
         case proxygen::HTTPMethod::DELETE:
-            return proxyToBackEndDelete(url, requestHeaders, responseHeaders, responseBody, errorCode, errorMessage);
+            return proxyToBackEndDelete(url, requestHeaders, responseHeaders, responseBody);
         default:
-            errorMessage = "Unsupported HTTP method for backend proxying.";
-            return false;
+            return make_shared<BackendHttpError>(501, "HTTP method not supported: " + std::to_string(static_cast<int>(method_)));
     }
 }
 
-bool BackendConnection::executeCurlRequest(const string &url,
+ptr<BackendError>BackendConnection::executeCurlRequest(const string &url,
                                            const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
                                            vector<pair<string, string> > &responseHeaders,
-                                           std::string &responseBody, uint64_t &errorCode,
-                                           std::string &errorMessage,
+                                           std::string &responseBody,
                                            const std::function<void(CURL *)> &configureMethod) {
     static thread_local std::unique_ptr<CURL, decltype(&curl_easy_cleanup)> curlThreadLocal(
         nullptr, &curl_easy_cleanup);
@@ -54,8 +52,7 @@ bool BackendConnection::executeCurlRequest(const string &url,
         auto curlObject = curl_easy_init();
         if (!curlObject) {
             spdlog::error("Could not initialize CURL object");
-            errorMessage = "Could not initialize CURL object";
-            return false;
+            throw runtime_error("Could not initialize CURL object");
         }
         curlThreadLocal.reset(curlObject);
     }
@@ -100,34 +97,33 @@ bool BackendConnection::executeCurlRequest(const string &url,
 
     if (result != CURLE_OK) {
         spdlog::error("CURL error: {}", curl_easy_strerror(result));
-        errorMessage = "Failed to fetch content from upstream service.";
-        return false;
+        return make_shared<BackendCurlError>(result,  curl_easy_strerror(result));;
     }
 
-    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &errorCode);
-    if (errorCode >= 400) {
-        spdlog::error("Upstream service returned HTTP error: {}", errorCode);
-        errorMessage = "Upstream service error: " + std::to_string(errorCode);
-        return false;
+    uint64_t httpErrorCode = 0;
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpErrorCode);
+    if (httpErrorCode >= 400) {
+        spdlog::error("Upstream service returned HTTP error: {}", httpErrorCode);
+        return make_shared<BackendHttpError>(httpErrorCode, "");
     }
 
-    return true;
+    return nullptr;
+
 }
 
-bool BackendConnection::proxyToBackEndGet(const string &url,
+ptr<BackendError>BackendConnection::proxyToBackEndGet(const string &url,
                                           const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
                                           vector<pair<string, string> > &responseHeaders,
-                                          std::string &responseBody, uint64_t& errorCode, std::string &errorMessage) {
-    return executeCurlRequest(url, requestHeaders, responseHeaders, responseBody, errorCode, errorMessage, nullptr);
+                                          std::string &responseBody) {
+    return executeCurlRequest(url, requestHeaders, responseHeaders, responseBody,  nullptr);
 }
 
-bool BackendConnection::proxyToBackEndPost(const string &url,
+ptr<BackendError>BackendConnection::proxyToBackEndPost(const string &url,
                                            const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
                                            const std::string &requestBody,
                                            vector<pair<string, string> > &responseHeaders,
-                                           std::string &responseBody, uint64_t& errorCode,
-                                           std::string &errorMessage) {
-    return executeCurlRequest(url, requestHeaders, responseHeaders, responseBody, errorCode, errorMessage,
+                                           std::string &responseBody) {
+    return executeCurlRequest(url, requestHeaders, responseHeaders, responseBody,
                               [&](CURL *curl) {
                                   curl_easy_setopt(curl, CURLOPT_POST, 1L);
                                   curl_easy_setopt(curl, CURLOPT_POSTFIELDS, requestBody.c_str());
@@ -135,35 +131,32 @@ bool BackendConnection::proxyToBackEndPost(const string &url,
                               });
 }
 
-bool BackendConnection::proxyToBackEndHead(const string &url,
+ptr<BackendError>BackendConnection::proxyToBackEndHead(const string &url,
                                            const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
-                                           vector<pair<string, string> > &responseHeaders, uint64_t& errorCode,
-                                           std::string &errorMessage) {
+                                           vector<pair<string, string> > &responseHeaders) {
     std::string responseBody; // Ignored for HEAD
-    return executeCurlRequest(url, requestHeaders, responseHeaders, responseBody, errorCode, errorMessage,
+    return executeCurlRequest(url, requestHeaders, responseHeaders, responseBody,
                               [](CURL *curl) {
                                   curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);
                               });
 }
 
-bool BackendConnection::proxyToBackEndOptions(const string &url,
+ptr<BackendError>BackendConnection::proxyToBackEndOptions(const string &url,
                                               const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
                                               vector<pair<string, string> > &responseHeaders,
-                                              std::string &responseBody, uint64_t& errorCode,
-                                              std::string &errorMessage) {
-    return executeCurlRequest(url, requestHeaders, responseHeaders, responseBody, errorCode, errorMessage,
+                                              std::string &responseBody) {
+    return executeCurlRequest(url, requestHeaders, responseHeaders, responseBody,
                               [](CURL *curl) {
                                   curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "OPTIONS");
                               });
 }
 
-bool BackendConnection::proxyToBackEndPut(const string &url,
+ptr<BackendError>BackendConnection::proxyToBackEndPut(const string &url,
                                           const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
                                           const std::string &requestBody,
                                           vector<pair<string, string> > &responseHeaders,
-                                          std::string &responseBody, uint64_t& errorCode,
-                                          std::string &errorMessage) {
-    return executeCurlRequest(url, requestHeaders, responseHeaders, responseBody, errorCode, errorMessage,
+                                          std::string &responseBody) {
+    return executeCurlRequest(url, requestHeaders, responseHeaders, responseBody,
                               [&](CURL *curl) {
                                   curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
                                   curl_easy_setopt(curl, CURLOPT_POSTFIELDS, requestBody.c_str());
@@ -171,12 +164,11 @@ bool BackendConnection::proxyToBackEndPut(const string &url,
                               });
 }
 
-bool BackendConnection::proxyToBackEndDelete(const string &url,
+ptr<BackendError>BackendConnection::proxyToBackEndDelete(const string &url,
                                              const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
                                              vector<pair<string, string> > &responseHeaders,
-                                             std::string &responseBody, uint64_t& errorCode,
-                                             std::string &errorMessage) {
-    return executeCurlRequest(url, requestHeaders, responseHeaders, responseBody, errorCode, errorMessage,
+                                             std::string &responseBody) {
+    return executeCurlRequest(url, requestHeaders, responseHeaders, responseBody,
                               [](CURL *curl) {
                                   curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
                               });

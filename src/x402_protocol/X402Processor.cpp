@@ -1,5 +1,6 @@
 #include "X402Processor.h"
 #include "BackendConnection.h"
+#include "BackendHttpError.h"
 #include "IResponseSender.h"
 #include "MachinePayApp.h"
 #include "MachinePayCommon.h"
@@ -293,18 +294,11 @@ void X402Processor::onRequestStart(
 }
 
 
-bool X402Processor::proxyResponseToBackEnd(const string& url, const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
+ptr<BackendError> X402Processor::proxyResponseToBackEnd(const string& url, const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
                                            const std::string &requestBody, vector<pair<string, string>> &responseHeaders,
                                            std::string &responseBody) {
-    uint64_t errorCode = 0;
-    std::string errorMessage;
-    bool success = BackendConnection::proxyToBackEnd( url,
-        method_, reqHeaders, requestBody, responseHeaders, responseBody, errorCode, errorMessage);
-    if (!success) {
-        reply502BadGateway(errorMessage.empty() ? "Failed to fetch content from upstream service." : errorMessage);
-        return false;
-    }
-    return true;
+    return BackendConnection::proxyToBackEnd( url,
+        method_, reqHeaders, requestBody, responseHeaders, responseBody);
 }
 
 void X402Processor::replyToClientWithError(const HttpError &httpError) {
@@ -366,9 +360,10 @@ void X402Processor::doPassThrough(const std::unique_ptr<proxygen::HTTPMessage> &
         auto url = "http://" + domain + "." + reqHeaders->getPath();
 
 
-        auto result = proxyResponseToBackEnd(url, reqHeaders, body, responseHeaders, responseBody);
+        auto error = proxyResponseToBackEnd(url, reqHeaders, body, responseHeaders, responseBody);
 
-        if (!result) {
+        if (error) {
+            reply502BadGateway("");
             return; // proxyResponseToBackEnd already sent an error response
         }
 
@@ -431,7 +426,8 @@ void X402Processor::onRequestFullyReceived(
         vector<pair<string, string>> responseHeaders;
 
 
-        if (!proxyResponseToBackEnd(resource_->getLocation(), reqHeaders, body,responseHeaders,  responseBody)) {
+        if (proxyResponseToBackEnd(resource_->getLocation(), reqHeaders, body,responseHeaders,  responseBody)) {
+            reply502BadGateway("");
             return;
         }
 
