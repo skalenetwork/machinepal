@@ -2,6 +2,7 @@
 #include <proxygen/lib/http/HTTPMethod.h>
 #include <optional>
 
+#include "IBackendError.h"
 #include "HttpError.h"
 #include "IProcessor.h"
 #include "IResponseSender.h"
@@ -9,7 +10,7 @@
 #include "payment/datastructures/Authorization.h"
 
 
-class BackendError;
+class IBackendError;
 class SettlementResponse;
 class ResourceConfig;
 
@@ -34,15 +35,12 @@ public:
 
     void onRequestStart( const std::unique_ptr< proxygen::HTTPMessage >& headers ) noexcept override;
 
-    ptr<BackendError> proxyResponseToBackEnd( const string& url, const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
-        const std::string& requestBody, vector<pair<string, string>>& responseHeaders,
-        std::string& responseBody );
 
     void replyToClientWithError( const HttpError& httpError ) override;
     void sendSettlementErrorResponse(
         ptr< Authorization > authorization, add_pointer_t< HttpError > error );
 
-    void doPassThrough(const std::unique_ptr< proxygen::HTTPMessage >& reqHeaders,const string& body);
+    void doPassThrough(const std::unique_ptr< proxygen::HTTPMessage >& requestHeaders,const string& requestBody);
 
     void onRequestFullyReceived(
         const std::unique_ptr< proxygen::HTTPMessage >& reqHeaders, const string& body ) noexcept override;
@@ -64,6 +62,10 @@ private:
     void reply500InternalError( const std::string& message );
 
     void reply502BadGateway( const std::string& message );
+
+    void replyGenericHttpError(IBackendError &error);
+
+    void replyPassThroughError( IBackendError& error );
 
     bool validateAndExtractSubDomainName(
         const std::unique_ptr< proxygen::HTTPMessage >& reqHeaders );

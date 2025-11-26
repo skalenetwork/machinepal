@@ -11,13 +11,13 @@
 #include <folly/String.h> // Required for folly::toLowerAscii and folly::trimWhitespace
 
 #include "BackendCurlError.h"
-#include "BackendError.h"
+#include "IBackendError.h"
 #include "BackendHttpError.h"
 
 // "https://jsonplaceholder.typicode.com/posts"
 
 
-ptr<BackendError>BackendConnection::proxyToBackEnd(const string &url,
+ptr<IBackendError>BackendConnection::proxyToBackEnd(const string &url,
                                        proxygen::HTTPMethod method_,
                                        const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
                                        const std::string &requestBody, vector<pair<string, string> > &responseHeaders,
@@ -40,7 +40,7 @@ ptr<BackendError>BackendConnection::proxyToBackEnd(const string &url,
     }
 }
 
-ptr<BackendError>BackendConnection::executeCurlRequest(const string &url,
+ptr<IBackendError>BackendConnection::executeCurlRequest(const string &url,
                                            const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
                                            vector<pair<string, string> > &responseHeaders,
                                            std::string &responseBody,
@@ -111,14 +111,14 @@ ptr<BackendError>BackendConnection::executeCurlRequest(const string &url,
 
 }
 
-ptr<BackendError>BackendConnection::proxyToBackEndGet(const string &url,
+ptr<IBackendError>BackendConnection::proxyToBackEndGet(const string &url,
                                           const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
                                           vector<pair<string, string> > &responseHeaders,
                                           std::string &responseBody) {
     return executeCurlRequest(url, requestHeaders, responseHeaders, responseBody,  nullptr);
 }
 
-ptr<BackendError>BackendConnection::proxyToBackEndPost(const string &url,
+ptr<IBackendError>BackendConnection::proxyToBackEndPost(const string &url,
                                            const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
                                            const std::string &requestBody,
                                            vector<pair<string, string> > &responseHeaders,
@@ -131,7 +131,7 @@ ptr<BackendError>BackendConnection::proxyToBackEndPost(const string &url,
                               });
 }
 
-ptr<BackendError>BackendConnection::proxyToBackEndHead(const string &url,
+ptr<IBackendError>BackendConnection::proxyToBackEndHead(const string &url,
                                            const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
                                            vector<pair<string, string> > &responseHeaders) {
     std::string responseBody; // Ignored for HEAD
@@ -141,7 +141,7 @@ ptr<BackendError>BackendConnection::proxyToBackEndHead(const string &url,
                               });
 }
 
-ptr<BackendError>BackendConnection::proxyToBackEndOptions(const string &url,
+ptr<IBackendError>BackendConnection::proxyToBackEndOptions(const string &url,
                                               const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
                                               vector<pair<string, string> > &responseHeaders,
                                               std::string &responseBody) {
@@ -151,7 +151,7 @@ ptr<BackendError>BackendConnection::proxyToBackEndOptions(const string &url,
                               });
 }
 
-ptr<BackendError>BackendConnection::proxyToBackEndPut(const string &url,
+ptr<IBackendError>BackendConnection::proxyToBackEndPut(const string &url,
                                           const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
                                           const std::string &requestBody,
                                           vector<pair<string, string> > &responseHeaders,
@@ -164,7 +164,7 @@ ptr<BackendError>BackendConnection::proxyToBackEndPut(const string &url,
                               });
 }
 
-ptr<BackendError>BackendConnection::proxyToBackEndDelete(const string &url,
+ptr<IBackendError>BackendConnection::proxyToBackEndDelete(const string &url,
                                              const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
                                              vector<pair<string, string> > &responseHeaders,
                                              std::string &responseBody) {

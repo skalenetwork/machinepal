@@ -1,8 +1,8 @@
 #pragma once
 
-#include "BackendError.h"
+#include "IBackendError.h"
 
-class BackendCurlError : public BackendError {
+class BackendCurlError : public IBackendError {
 
 public:
     BackendCurlError(uint64_t error, const std::string &message)
@@ -10,11 +10,11 @@ public:
           message_(message) {
     }
 
-    uint64_t getError() const {
+    uint64_t getError() const override {
         return error_;
     }
 
-    const std::string& getMessage() const {
+    const std::string& getMessage() const  override {
         return message_;
     }
 

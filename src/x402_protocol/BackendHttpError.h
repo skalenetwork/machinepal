@@ -1,9 +1,9 @@
 #pragma once
 #include <proxygen/lib/http/HTTPMessage.h>
 
-#include "BackendError.h"
+#include "IBackendError.h"
 
-class BackendHttpError : public BackendError {
+class BackendHttpError : public IBackendError {
 public:
     uint64_t getError() const {
         return error_;

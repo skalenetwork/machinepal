@@ -2,7 +2,7 @@
 
 #include <string>
 
-class BackendError;
+class IBackendError;
 
 namespace proxygen {
     class HTTPMessage;
@@ -13,33 +13,33 @@ class X402Processor;
 class IResponseSender;
 
 class BackendConnection {
-    static ptr<BackendError>proxyToBackEndGet(const string &url,
+    static ptr<IBackendError>proxyToBackEndGet(const string &url,
                                                     const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
                                                     vector<pair<string, string> > &responseHeaders,
                                                     std::string &responseBody);
 
-    static ptr<BackendError>proxyToBackEndPost(const string &url,
+    static ptr<IBackendError>proxyToBackEndPost(const string &url,
                                                      const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
                                                      const std::string &requestBody,
                                                      vector<pair<string, string> > &responseHeaders,
                                                      std::string &responseBody);
 
-    static ptr<BackendError>proxyToBackEndHead(const string &url,
+    static ptr<IBackendError>proxyToBackEndHead(const string &url,
                                                      const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
                                                      vector<pair<string, string> > &responseHeaders);
 
-    static ptr<BackendError>proxyToBackEndOptions(const string &url,
+    static ptr<IBackendError>proxyToBackEndOptions(const string &url,
                                                         const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
                                                         vector<pair<string, string> > &responseHeaders,
                                                         std::string &responseBody);
 
-    static ptr<BackendError>proxyToBackEndPut(const string &url,
+    static ptr<IBackendError>proxyToBackEndPut(const string &url,
                                                     const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
                                                     const std::string &requestBody,
                                                     vector<pair<string, string> > &responseHeaders,
                                                     std::string &responseBody);
 
-    static ptr<BackendError>proxyToBackEndDelete(const string &url,
+    static ptr<IBackendError>proxyToBackEndDelete(const string &url,
                                                        const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
                                                        vector<pair<string, string> > &responseHeaders,
                                                        std::string &responseBody);
@@ -51,13 +51,13 @@ class BackendConnection {
     static size_t headerCallback(char *buffer, size_t size, size_t nitems, void *userdata);
 
 public:
-    static ptr<BackendError>proxyToBackEnd(const string &url, proxygen::HTTPMethod method_,
+    static ptr<IBackendError>proxyToBackEnd(const string &url, proxygen::HTTPMethod method_,
                                                  const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
                                                  const std::string &requestBody,
                                                  vector<pair<string, string> > &responseHeaders,
                                                  std::string &responseBody);
 
-    static ptr<BackendError>executeCurlRequest(const string &url,
+    static ptr<IBackendError>executeCurlRequest(const string &url,
                                                      const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
                                                      vector<pair<string, string> > &responseHeaders,
                                                      std::string &responseBody,

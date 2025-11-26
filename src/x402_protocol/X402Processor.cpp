@@ -1,5 +1,6 @@
 #include "X402Processor.h"
 #include "BackendConnection.h"
+#include "BackendCurlError.h"
 #include "BackendHttpError.h"
 #include "IResponseSender.h"
 #include "MachinePayApp.h"
@@ -57,6 +58,22 @@ void X402Processor::reply502BadGateway(const std::string &message) {
 
     sendResponse({502, "Bad Gateway"}, STANDARD_HEADERS, body);
     state_ = X402ProcessorState::ERROR_SENT;
+}
+
+
+void X402Processor::replyGenericHttpError(IBackendError &error) {
+        string body = getErrorBody(error.getMessage());
+        sendResponse({static_cast<uint16_t>(error.getError()), error.getMessage()},
+                     STANDARD_HEADERS, body);
+    state_ = X402ProcessorState::ERROR_SENT;
+}
+
+void X402Processor::replyPassThroughError(IBackendError &error) {
+    if (dynamic_cast<BackendCurlError *>(&error)) {
+        reply502BadGateway(error.getMessage());
+    } else {
+        replyGenericHttpError(error);replyGenericHttpError(error);
+    }
 }
 
 void X402Processor::reply200Success(
@@ -294,13 +311,6 @@ void X402Processor::onRequestStart(
 }
 
 
-ptr<BackendError> X402Processor::proxyResponseToBackEnd(const string& url, const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
-                                           const std::string &requestBody, vector<pair<string, string>> &responseHeaders,
-                                           std::string &responseBody) {
-    return BackendConnection::proxyToBackEnd( url,
-        method_, reqHeaders, requestBody, responseHeaders, responseBody);
-}
-
 void X402Processor::replyToClientWithError(const HttpError &httpError) {
     auto httpErrorMessage = httpError.message();
     switch (httpError.type()) {
@@ -337,10 +347,11 @@ void X402Processor::sendSettlementErrorResponse(
     }
 }
 
-void X402Processor::doPassThrough(const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders, const string &body) {
+void X402Processor::doPassThrough(const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
+                                  const string &requestBody) {
     try {
         // Validate request method (only GET/POST supported for now)
-        if (!validateMethod(reqHeaders)) {
+        if (!validateMethod(requestHeaders)) {
             return;
         }
 
@@ -357,10 +368,11 @@ void X402Processor::doPassThrough(const std::unique_ptr<proxygen::HTTPMessage> &
             domain = organization()->subdomain() + config()->server()->hostName();
         }
 
-        auto url = "http://" + domain + "." + reqHeaders->getPath();
+        auto url = "http://" + domain + "." + requestHeaders->getPath();
 
 
-        auto error = proxyResponseToBackEnd(url, reqHeaders, body, responseHeaders, responseBody);
+        auto error = BackendConnection::proxyToBackEnd(url, method_, requestHeaders,
+                                                       requestBody, responseHeaders, responseBody);
 
         if (error) {
             reply502BadGateway("");
@@ -423,11 +435,15 @@ void X402Processor::onRequestFullyReceived(
 
         string responseBody;
 
-        vector<pair<string, string>> responseHeaders;
+        vector<pair<string, string> > responseHeaders;
 
 
-        if (proxyResponseToBackEnd(resource_->getLocation(), reqHeaders, body,responseHeaders,  responseBody)) {
-            reply502BadGateway("");
+        auto error = BackendConnection::proxyToBackEnd(resource_->getLocation(),
+                                                       method_, reqHeaders, body, responseHeaders, responseBody);
+
+
+        if (error) {
+            replyPassThroughError(*error);
             return;
         }
 
