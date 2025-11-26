@@ -375,7 +375,7 @@ void X402Processor::doPassThrough(const std::unique_ptr<proxygen::HTTPMessage> &
                                                        requestBody, responseHeaders, responseBody);
 
         if (error) {
-            reply502BadGateway("");
+            replyPassThroughError(*error);
             return; // proxyResponseToBackEnd already sent an error response
         }
 
