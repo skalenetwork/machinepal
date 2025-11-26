@@ -36,7 +36,7 @@ ptr<BackendError>BackendConnection::proxyToBackEnd(const string &url,
         case proxygen::HTTPMethod::DELETE:
             return proxyToBackEndDelete(url, requestHeaders, responseHeaders, responseBody);
         default:
-            return make_shared<BackendHttpError>(501, "HTTP method not supported: " + std::to_string(static_cast<int>(method_)));
+            return make_shared<BackendHttpError>(501);
     }
 }
 
@@ -104,7 +104,7 @@ ptr<BackendError>BackendConnection::executeCurlRequest(const string &url,
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpErrorCode);
     if (httpErrorCode >= 400) {
         spdlog::error("Upstream service returned HTTP error: {}", httpErrorCode);
-        return make_shared<BackendHttpError>(httpErrorCode, "");
+        return make_shared<BackendHttpError>(httpErrorCode);
     }
 
     return nullptr;

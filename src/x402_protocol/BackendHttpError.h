@@ -1,13 +1,10 @@
 #pragma once
+#include <proxygen/lib/http/HTTPMessage.h>
+
 #include "BackendError.h"
 
 class BackendHttpError : public BackendError {
 public:
-    BackendHttpError(uint64_t error, const std::string &message)
-        : error_(error),
-          message_(message) {
-    }
-
     uint64_t getError() const {
         return error_;
     }
@@ -17,6 +14,10 @@ public:
     }
 
     virtual ~BackendHttpError() = default;
+
+    BackendHttpError(uint64_t error)
+        : error_(error), message_(proxygen::HTTPMessage::getDefaultReason(static_cast<int>(error))) {
+    }
 
 private:
     uint64_t error_;
