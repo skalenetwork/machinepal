@@ -1,13 +1,10 @@
-//
-// Created by kladko on 11/26/25.
-//
+#pragma once
+#include "BackendError.h"
 
-#ifndef MACHINEPAY_BACKENDHTTPERROR_H
-#define MACHINEPAY_BACKENDHTTPERROR_H
+class BackendHttpError : public BackendError {
 
-
-class BackendHttpError {
 public:
+
     uint64_t getError() const {
         return error_;
     }
@@ -16,10 +13,9 @@ public:
         return message_;
     }
 
+    virtual ~BackendHttpError() = default;
+
 private:
     uint64_t error_;
     std::string message_;
 };
-
-
-#endif //MACHINEPAY_BACKENDHTTPERROR_H
