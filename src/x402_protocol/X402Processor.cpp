@@ -372,8 +372,10 @@ void X402Processor::doPassThrough(const std::unique_ptr<proxygen::HTTPMessage> &
         auto url = organization_->passThroughConfig()->targetUrl() + requestHeaders->getPath();
 
 
+        uint64_t httpStatusCode = 0;
+
         auto error = BackendConnection::proxyToBackEnd(url, method_, requestHeaders,
-                                                       requestBody, responseHeaders, responseBody);
+                                                       requestBody, httpStatusCode, responseHeaders, responseBody);
 
         if (error) {
             replyPassThroughError(*error, responseHeaders);
@@ -381,7 +383,7 @@ void X402Processor::doPassThrough(const std::unique_ptr<proxygen::HTTPMessage> &
         }
 
         // For pass-through, just return 200 OK with standard headers and the proxied body
-        sendResponse({200, "OK"}, responseHeaders, responseBody);
+        sendResponse({httpStatusCode, "OK"}, responseHeaders, responseBody);
         state_ = X402ProcessorState::SUCCESS_REPLY_SENT;
     } catch (std::exception &e) {
         spdlog::critical("doPassThrough exception");
@@ -438,9 +440,11 @@ void X402Processor::onRequestFullyReceived(
 
         vector<pair<string, string> > responseHeaders;
 
+        uint64_t httpStatusCode = 0;
 
         auto error = BackendConnection::proxyToBackEnd(resource_->getLocation(),
-                                                       method_, reqHeaders, body, responseHeaders, responseBody);
+                                                       method_, reqHeaders, body,
+                                                       httpStatusCode, responseHeaders, responseBody);
 
         if (error) {
             replyPassThroughError(*error, responseHeaders);
