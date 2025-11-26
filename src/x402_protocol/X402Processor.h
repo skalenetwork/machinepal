@@ -63,9 +63,9 @@ private:
 
     void reply502BadGateway( const std::string& message );
 
-    void replyGenericHttpError(IBackendError &error);
+    void replyGenericHttpError(IBackendError &error, vector<pair<string, string> > & responseHeaders);
 
-    void replyPassThroughError( IBackendError& error );
+    void replyPassThroughError( IBackendError& error, vector<pair<string, string> > & responseHeaders );
 
     bool validateAndExtractSubDomainName(
         const std::unique_ptr< proxygen::HTTPMessage >& reqHeaders );

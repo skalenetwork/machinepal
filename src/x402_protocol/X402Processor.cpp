@@ -6,6 +6,7 @@
 #include "MachinePayApp.h"
 #include "MachinePayCommon.h"
 #include "config/subconfigs/OrganizationConfig.h"
+#include "config/subconfigs/PassThroughConfig.h"
 #include "config/subconfigs/ServerConfig.h"
 #include "payment/datastructures/PaymentPayload.h"
 #include "payment/datastructures/PaymentRequiredResponse.h"
@@ -61,18 +62,18 @@ void X402Processor::reply502BadGateway(const std::string &message) {
 }
 
 
-void X402Processor::replyGenericHttpError(IBackendError &error) {
+void X402Processor::replyGenericHttpError(IBackendError &error, vector<pair<string, string> > & responseHeaders) {
         string body = getErrorBody(error.getMessage());
         sendResponse({static_cast<uint16_t>(error.getError()), error.getMessage()},
-                     STANDARD_HEADERS, body);
+                     responseHeaders, body);
     state_ = X402ProcessorState::ERROR_SENT;
 }
 
-void X402Processor::replyPassThroughError(IBackendError &error) {
+void X402Processor::replyPassThroughError(IBackendError &error, vector<pair<string, string> > & responseHeaders) {
     if (dynamic_cast<BackendCurlError *>(&error)) {
         reply502BadGateway(error.getMessage());
     } else {
-        replyGenericHttpError(error);replyGenericHttpError(error);
+        replyGenericHttpError(error, responseHeaders);
     }
 }
 
@@ -368,14 +369,14 @@ void X402Processor::doPassThrough(const std::unique_ptr<proxygen::HTTPMessage> &
             domain = organization()->subdomain() + config()->server()->hostName();
         }
 
-        auto url = "http://" + domain + "." + requestHeaders->getPath();
+        auto url = organization_->passThroughConfig()->targetUrl() + requestHeaders->getPath();
 
 
         auto error = BackendConnection::proxyToBackEnd(url, method_, requestHeaders,
                                                        requestBody, responseHeaders, responseBody);
 
         if (error) {
-            replyPassThroughError(*error);
+            replyPassThroughError(*error, responseHeaders);
             return; // proxyResponseToBackEnd already sent an error response
         }
 
@@ -441,9 +442,8 @@ void X402Processor::onRequestFullyReceived(
         auto error = BackendConnection::proxyToBackEnd(resource_->getLocation(),
                                                        method_, reqHeaders, body, responseHeaders, responseBody);
 
-
         if (error) {
-            replyPassThroughError(*error);
+            replyPassThroughError(*error, responseHeaders);
             return;
         }
 
