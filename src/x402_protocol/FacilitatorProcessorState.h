@@ -4,5 +4,5 @@
 enum class FacilitatorProcessorState {
     START,
     ERROR_SENT,
-    SUCCESS_REPLY_SENT
+    REPLY_SENT
 };

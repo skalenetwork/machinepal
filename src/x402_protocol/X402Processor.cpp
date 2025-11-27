@@ -21,7 +21,7 @@ X402Processor::X402Processor(MachinePayApp &app, ptr<IResponseSender> &responseS
 
 bool X402Processor::isReplySent() const {
     return state_ == X402ProcessorState::ERROR_SENT ||
-           state_ == X402ProcessorState::SUCCESS_REPLY_SENT;
+           state_ == X402ProcessorState::REPLY_SENT;
 }
 
 
@@ -89,7 +89,7 @@ void X402Processor::replyX402ResourceSuccess(uint64_t statusCode,
                      statusCode,
                      proxygen::HTTPMessage::getDefaultReason(statusCode)
                  }, headersFinal, responseBody);
-    state_ = X402ProcessorState::SUCCESS_REPLY_SENT;
+    state_ = X402ProcessorState::REPLY_SENT;
 }
 
 
@@ -115,7 +115,7 @@ void X402Processor::reply402PaymentRequired(
                     organization(), resource(), config(), errorString);
 
         sendResponse({402, "Payment Required"}, headers, paymentRequirements);
-        state_ = X402ProcessorState::SUCCESS_REPLY_SENT;
+        state_ = X402ProcessorState::REPLY_SENT;
     } catch
     (std::exception &e) {
         RETHROW_NESTED;
@@ -164,7 +164,7 @@ void X402Processor::sendResponse(
         return;
     }
 
-    if (state_ == X402ProcessorState::SUCCESS_REPLY_SENT) {
+    if (state_ == X402ProcessorState::REPLY_SENT) {
         spdlog::info("Attempted to send response after resource already sent.");
         return;
     }
@@ -340,9 +340,6 @@ void X402Processor::doPassThrough(const std::unique_ptr<proxygen::HTTPMessage> &
 
         std::vector<std::pair<std::string, std::string> > responseHeaders;
 
-        string domain;
-
-
         auto url = organization_->passThroughConfig()->targetUrl() + requestHeaders->getPath();
 
 
@@ -362,7 +359,7 @@ void X402Processor::doPassThrough(const std::unique_ptr<proxygen::HTTPMessage> &
                          httpStatusCode,
                          proxygen::HTTPMessage::getDefaultReason(httpStatusCode)
                      }, responseHeaders, responseBody);
-        state_ = X402ProcessorState::SUCCESS_REPLY_SENT;
+        state_ = X402ProcessorState::REPLY_SENT;
     } catch (std::exception &e) {
         spdlog::critical("doPassThrough exception");
         printNestedException(e);

@@ -71,7 +71,7 @@ void FacilitatorProcessor::sendResponse( const std::pair< uint16_t, std::string 
         return;
     }
 
-    if ( state_ == FacilitatorProcessorState::SUCCESS_REPLY_SENT ) {
+    if ( state_ == FacilitatorProcessorState::REPLY_SENT ) {
         spdlog::error( "Attempted to send response after resource already sent." );
         return;
     }
@@ -130,7 +130,7 @@ void FacilitatorProcessor::onRequestStart(
 
 bool FacilitatorProcessor::isReplySent() const {
     return state_ == FacilitatorProcessorState::ERROR_SENT ||
-           state_ == FacilitatorProcessorState::SUCCESS_REPLY_SENT;
+           state_ == FacilitatorProcessorState::REPLY_SENT;
 }
 
 void FacilitatorProcessor::onRequestFullyReceived(
@@ -162,7 +162,7 @@ void FacilitatorProcessor::onRequestFullyReceived(
         std::string responseBody = result.dump(); // assuming result is nlohmann::json
 
         sendResponse({200, "OK"}, X402Processor::APPLICATION_JSON_HEADERS, responseBody);
-        state_ = FacilitatorProcessorState::SUCCESS_REPLY_SENT;
+        state_ = FacilitatorProcessorState::REPLY_SENT;
 
     } catch ( std::exception& e ) {
         spdlog::critical( "onRequestFullyReceived exception" );

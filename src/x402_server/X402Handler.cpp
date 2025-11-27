@@ -15,7 +15,8 @@ void X402Handler::onRequest( std::unique_ptr< HTTPMessage > _headers ) noexcept 
 
     try {
         CHECK_STATE( self_ );
-        responseSender_ = std::make_shared< ProxygenResponseSender >( downstream_ );
+        responseSender_ = std::make_shared< ProxygenResponseSender >( downstream_ ,
+            folly::EventBaseManager::get()->getEventBase() );
         reqHeaders_ = std::move( _headers );
         if ( reqHeaders_->getPath().starts_with( EASYNET_FACILITATOR_PREFIX ) ) {
             processor_ = app_.makeFacilitatorProcessor( responseSender_ );
