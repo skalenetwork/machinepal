@@ -3,25 +3,28 @@
 
 using namespace boost::urls;
 
-std::string URLUtils::getLocationFromUrl( const std::string& urlStr ) {
-    // Parse using Boost.URL
-    boost::system::result< boost::urls::url_view > result = parse_uri( urlStr );
+std::string URLUtils::getLocationFromUrl(const std::string& urlStr) {
+    // Use parse_uri_reference to handle "/path" and "http://host/path"
+    auto result = boost::urls::parse_uri_reference(urlStr);
 
-    CHECK_STATE2( result, "Invalid URL: " + urlStr );
-
-    url_view u = *result;
-    // Return just the path (or "/" if empty)
-    std::string path = u.encoded_path().empty() ? "/" : std::string( u.encoded_path() );
-
-    // Optionally include query string
-    if ( !u.encoded_query().empty() ) {
-        path += "?";
-        path += u.encoded_query();
+    if (!result) {
+        spdlog::error("Invalid URL provided: {}", urlStr);
+        throw std::invalid_argument("Invalid URL: " + urlStr);
     }
 
-    CHECK_STATE2( path.starts_with( "/" ), "URL path must start with '/': " + path );
-    if ( path.size() > 1 && path.back() == '/' ) {
-        path = path.substr( 0, path.size() - 1 );
+    boost::urls::url_view u = *result;
+
+    // Use buffer to build path + query safely
+    std::string path;
+    if (u.encoded_path().empty()) {
+        path = "/";
+    } else {
+        path = std::string(u.encoded_path());
+    }
+
+    if (!u.encoded_query().empty()) {
+        path += "?";
+        path += u.encoded_query();
     }
 
     return path;
