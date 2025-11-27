@@ -115,7 +115,7 @@ void X402Processor::reply402PaymentRequired(
                     organization(), resource(), config(), errorString);
 
         sendResponse({402, "Payment Required"}, headers, paymentRequirements);
-        state_ = X402ProcessorState::SUCCESS_REPLY_SENT;
+        state_ = X402ProcessorState::ERROR_SENT;
     } catch
     (std::exception &e) {
         RETHROW_NESTED;
@@ -137,7 +137,6 @@ void X402Processor::reply404ResourceNotFound(const std::string &message) {
 
 
 void X402Processor::reply500InternalError(const std::string &message) {
-    string body = getJsonErrorBody(message);
     sendResponse({500, "Server Error"}, APPLICATION_JSON_HEADERS,
                  getJsonErrorBody(message));
     state_ = X402ProcessorState::ERROR_SENT;
