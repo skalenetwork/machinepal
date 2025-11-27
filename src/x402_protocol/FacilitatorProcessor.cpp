@@ -20,34 +20,34 @@ FacilitatorProcessor::FacilitatorProcessor( MachinePayApp& app, ptr< IResponseSe
 
 
 void FacilitatorProcessor::reply400BadRequest( const std::string& message ) {
-    string body = getErrorBody( message );
-    sendResponse( { 400, "Bad request" }, STANDARD_HEADERS, body );
+    string body = getJsonErrorBody( message );
+    sendResponse( { 400, "Bad request" }, X402Processor::APPLICATION_JSON_HEADERS, body );
     state_ = FacilitatorProcessorState::ERROR_SENT;
 }
 
 void FacilitatorProcessor::reply500InternalError( const std::string& message ) {
-    string body = getErrorBody( message );
-    sendResponse( { 500, "Server Error" }, STANDARD_HEADERS, body );
+    string body = getJsonErrorBody( message );
+    sendResponse( { 500, "Server Error" },  X402Processor::APPLICATION_JSON_HEADERS, body );
     state_ = FacilitatorProcessorState::ERROR_SENT;
 }
 
 void FacilitatorProcessor::reply405MethodNotAllowed( const std::string& message ) {
-    string body = getErrorBody( message );
-    auto headers = STANDARD_HEADERS;
+    string body = getJsonErrorBody( message );
+    auto headers =  X402Processor::APPLICATION_JSON_HEADERS;
     headers.push_back( {"Allow", "POST"} );
     sendResponse( { 405, "Method Not Allowed" }, headers, body );
     state_ = FacilitatorProcessorState::ERROR_SENT;
 }
 
 void FacilitatorProcessor::reply413PayloadTooLarge( const std::string& message ) {
-    string body = getErrorBody( message );
-    sendResponse( { 413, "Payload Too Large" }, STANDARD_HEADERS, body );
+    string body = getJsonErrorBody( message );
+    sendResponse( { 413, "Payload Too Large" },  X402Processor::APPLICATION_JSON_HEADERS, body );
     state_ = FacilitatorProcessorState::ERROR_SENT;
 }
 
 void FacilitatorProcessor::reply415UnsupportedMediaType( const std::string& message ) {
-    string body = getErrorBody( message );
-    auto headers = STANDARD_HEADERS;
+    string body = getJsonErrorBody( message );
+    auto headers =  X402Processor::APPLICATION_JSON_HEADERS;
     headers.push_back( {"Accept-Post", "application/json"} );
     sendResponse( { 415, "Unsupported Media Type" }, headers, body );
     state_ = FacilitatorProcessorState::ERROR_SENT;
@@ -56,7 +56,7 @@ void FacilitatorProcessor::reply415UnsupportedMediaType( const std::string& mess
 
 
 
-std::string FacilitatorProcessor::getErrorBody( const std::string& message ) {
+std::string FacilitatorProcessor::getJsonErrorBody( const std::string& message ) {
         nlohmann::json j;
         j["error"] = message;
         return j.dump();
@@ -179,7 +179,7 @@ void FacilitatorProcessor::onRequestFullyReceived(
 
         std::string responseBody = result.dump(); // assuming result is nlohmann::json
 
-        sendResponse({200, "OK"}, STANDARD_HEADERS, responseBody);
+        sendResponse({200, "OK"}, X402Processor::APPLICATION_JSON_HEADERS, responseBody);
         state_ = FacilitatorProcessorState::SUCCESS_REPLY_SENT;
 
     } catch ( std::exception& e ) {
@@ -202,7 +202,3 @@ void FacilitatorProcessor::onBodySizeIncrease( size_t newSize ) {
             "machinepay config if needed." );
     }
 }
-
-const std::vector< std::pair< std::string, std::string > > FacilitatorProcessor::STANDARD_HEADERS = {
-    { "Content-Type", "application/json" }
-};

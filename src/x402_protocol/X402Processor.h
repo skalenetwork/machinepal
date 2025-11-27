@@ -42,10 +42,15 @@ public:
 
     void doPassThrough(const std::unique_ptr< proxygen::HTTPMessage >& requestHeaders,const string& requestBody);
 
+    void handlePassThrowOrErrorOnNoResourceMatch(const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
+                                                 const string &body);
+
     void onRequestFullyReceived(
         const std::unique_ptr< proxygen::HTTPMessage >& requestHeaders, const string& body ) noexcept override;
     void onBodySizeIncrease( size_t newSize ) override;
-    static const std::vector< std::pair< std::string, std::string > > STANDARD_HEADERS;
+
+    static const std::vector< std::pair< std::string, std::string > > APPLICATION_TXT_HEADERS;
+    static const std::vector< std::pair< std::string, std::string > > APPLICATION_JSON_HEADERS;
 
 private:
     void reply402PaymentRequired( std::optional< SettlementResponse > errorResponse );
@@ -57,7 +62,7 @@ private:
 
     void reply400ResourceNotFound(const std::string& message);
 
-    string getErrorBody( const std::string& message );
+    string getJsonErrorBody( const std::string& message );
 
     void reply500InternalError( const std::string& message );
 

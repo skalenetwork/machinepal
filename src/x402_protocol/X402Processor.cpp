@@ -53,23 +53,21 @@ bool X402Processor::reply402IfNoPaymentHeader(
 
 
 void X402Processor::reply502BadGateway(const std::string &message) {
-    sendResponse({502, "Bad Gateway"}, STANDARD_HEADERS, message);
+    string body = getJsonErrorBody(message);
 
-    string body = getErrorBody(message);
-
-    sendResponse({502, "Bad Gateway"}, STANDARD_HEADERS, body);
+    sendResponse({502, "Bad Gateway"}, X402Processor::APPLICATION_JSON_HEADERS, body);
     state_ = X402ProcessorState::ERROR_SENT;
 }
 
 
-void X402Processor::replyGenericHttpError(IBackendError &error, vector<pair<string, string> > & responseHeaders) {
-        string body = getErrorBody(error.getMessage());
-        sendResponse({static_cast<uint16_t>(error.getError()), error.getMessage()},
-                     responseHeaders, body);
+void X402Processor::replyGenericHttpError(IBackendError &error, vector<pair<string, string> > &responseHeaders) {
+    string body = getJsonErrorBody(error.getMessage());
+    sendResponse({static_cast<uint16_t>(error.getError()), error.getMessage()},
+                 responseHeaders, body);
     state_ = X402ProcessorState::ERROR_SENT;
 }
 
-void X402Processor::replyPassThroughError(IBackendError &error, vector<pair<string, string> > & responseHeaders) {
+void X402Processor::replyPassThroughError(IBackendError &error, vector<pair<string, string> > &responseHeaders) {
     if (dynamic_cast<BackendCurlError *>(&error)) {
         reply502BadGateway(error.getMessage());
     } else {
@@ -78,9 +76,9 @@ void X402Processor::replyPassThroughError(IBackendError &error, vector<pair<stri
 }
 
 void X402Processor::replySuccess(uint64_t statusCode,
-    const std::string&settlementInfo,
-    const std::vector< std::pair< std::string, std::string > >&& headers,
-    std::string &responseBody) {
+                                 const std::string &settlementInfo,
+                                 const std::vector<std::pair<std::string, std::string> > &&headers,
+                                 std::string &responseBody) {
     CHECK_STATE(statusCode >= 200 && statusCode < 300);
     auto headersFinal = std::move(headers);
     headersFinal.emplace_back("X-PAYMENT-RESPONSE", settlementInfo);
@@ -98,16 +96,16 @@ void X402Processor::reply402PaymentRequired(
 
         std::vector<std::pair<std::string, std::string> > headers;
 
+
+        headers = APPLICATION_JSON_HEADERS;
+
         if (errorResponse) {
             errorString = errorResponse->errorReason().value_or(
                 "Payment required to access resource");
             auto settlementInfo = errorResponse->originalJsonToBase64();
-            headers = {
-                {"Content-Type", "application/json"},
-                {"X-PAYMENT-RESPONSE", settlementInfo}
-            };
-        } else {
-            headers = STANDARD_HEADERS;
+            headers = APPLICATION_JSON_HEADERS;
+            headers.push_back(
+                {"X-PAYMENT-RESPONSE", settlementInfo});
         }
 
         auto paymentRequirements =
@@ -116,7 +114,8 @@ void X402Processor::reply402PaymentRequired(
 
         sendResponse({402, "Payment Required"}, headers, paymentRequirements);
         state_ = X402ProcessorState::SUCCESS_REPLY_SENT;
-    } catch (std::exception &e) {
+    } catch
+    (std::exception &e) {
         RETHROW_NESTED;
     }
 }
@@ -127,7 +126,7 @@ void X402Processor::reply400InvalidPayment(const std::string &message) {
             PaymentRequiredResponse::getPaymentRequiredResponseAsString(
                 organization(), resource(), config());
 
-    sendResponse({400, "Invalid Payment"}, STANDARD_HEADERS, message);
+    sendResponse({400, "Invalid Payment"}, APPLICATION_JSON_HEADERS, message);
     state_ = X402ProcessorState::ERROR_SENT;
 }
 
@@ -136,12 +135,12 @@ void X402Processor::reply400ResourceNotFound(const std::string &message) {
             PaymentRequiredResponse::getPaymentRequiredResponseAsString(
                 organization(), resource(), config());
 
-    sendResponse({400, "Resource Not Found"}, STANDARD_HEADERS, message);
+    sendResponse({400, "Resource Not Found"}, APPLICATION_JSON_HEADERS, message);
     state_ = X402ProcessorState::ERROR_SENT;
 }
 
 
-std::string X402Processor::getErrorBody(const std::string &message) {
+std::string X402Processor::getJsonErrorBody(const std::string &message) {
     if (organization_ && resource_ && config_) {
         return PaymentRequiredResponse::getPaymentRequiredResponseAsString(
             organization(), resource(), config(), message);
@@ -153,8 +152,8 @@ std::string X402Processor::getErrorBody(const std::string &message) {
 }
 
 void X402Processor::reply500InternalError(const std::string &message) {
-    string body = getErrorBody(message);
-    sendResponse({500, "Server Error"}, STANDARD_HEADERS, body);
+    string body = getJsonErrorBody(message);
+    sendResponse({500, "Server Error"}, APPLICATION_JSON_HEADERS, body);
     state_ = X402ProcessorState::ERROR_SENT;
 }
 
@@ -397,6 +396,17 @@ void X402Processor::doPassThrough(const std::unique_ptr<proxygen::HTTPMessage> &
     }
 }
 
+void X402Processor::handlePassThrowOrErrorOnNoResourceMatch(const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders, const string &body) {
+    // resource not found. If is pass through organization, do pass through
+    // else reply 400
+    if (organization()->passThroughConfig()) {
+        doPassThrough(reqHeaders, body);
+    } else {
+        reply400ResourceNotFound(
+            "Requested resource not found: " + decodedPath_);
+    }
+}
+
 void X402Processor::onRequestFullyReceived(
     const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
     const string &body) noexcept {
@@ -408,14 +418,7 @@ void X402Processor::onRequestFullyReceived(
         resource_ = organization_->getResourceByPath(decodedPath_, method_, body);
 
         if (!resource_) {
-            // resource not found. If is pass through organization, do pass through
-            // else reply 400
-            if (organization()->passThroughConfig()) {
-                doPassThrough(reqHeaders, body);
-            } else {
-                reply400ResourceNotFound(
-                    "Requested resource not found: " + decodedPath_);
-            }
+            handlePassThrowOrErrorOnNoResourceMatch(reqHeaders, body);
             return;
         }
 
@@ -456,7 +459,7 @@ void X402Processor::onRequestFullyReceived(
         auto settlementResponse = std::get<SettlementResponse>(result);
 
         replySuccess(httpStatusCode, settlementResponse.originalJsonToBase64(), std::move(responseHeaders),
-            responseBody);
+                     responseBody);
     } catch (std::exception &e) {
         spdlog::critical("onRequestCompletion exception");
         printNestedException(e);
@@ -480,5 +483,9 @@ void X402Processor::onBodySizeIncrease(size_t newSize) {
     }
 }
 
-const std::vector<std::pair<std::string, std::string> >
-X402Processor::STANDARD_HEADERS = {{"Content-Type", "application/json"}};
+const std::vector<std::pair<std::string, std::string> > X402Processor::APPLICATION_JSON_HEADERS = {
+    {"Content-Type", "application/json"}
+};
+const std::vector<std::pair<std::string, std::string> > X402Processor::APPLICATION_TXT_HEADERS = {
+    {"Content-Type", "application/text"}
+};

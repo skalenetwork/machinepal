@@ -35,8 +35,6 @@ public:
     void onRequestFullyReceived(
         const std::unique_ptr< proxygen::HTTPMessage >& reqHeaders, const string& body ) noexcept override;
     void onBodySizeIncrease( size_t newSize ) override;
-    static const std::vector< std::pair< std::string, std::string > > STANDARD_HEADERS;
-
 
 
 private:
@@ -45,7 +43,7 @@ private:
         const std::vector< std::pair< std::string, std::string > >& headers,
         const std::string& body );
 
-    string getErrorBody( const std::string& message );
+    string getJsonErrorBody( const std::string& message );
 
 
     void reply405MethodNotAllowed( const std::string& message );
