@@ -27,20 +27,22 @@ std::string URLUtils::getLocationFromUrl( const std::string& urlStr ) {
     return path;
 }
 
-bool URLUtils::isIpAddress( const std::string& host ) {
-    // Try IPv4 first
-    boost::system::result< boost::urls::ipv4_address > v4 = boost::urls::parse_ipv4_address( host );
-    if ( v4 )
+bool URLUtils::isIpAddress(const std::string& host) {
+    using namespace boost::urls;
+
+    // Trim whitespace using Boost
+    std::string_view h = boost::algorithm::trim_copy(host);
+
+    // Try IPv4
+    if (parse_ipv4_address(h).has_value())
         return true;
 
-    // Try IPv6 (with or without brackets)
-    std::string cleanHost = host;
-    if ( !cleanHost.empty() && cleanHost.front() == '[' && cleanHost.back() == ']' )
-        cleanHost = cleanHost.substr( 1, cleanHost.size() - 2 );
+    // Handle bracketed IPv6: [::1]
+    if (h.size() >= 2 && h.front() == '[' && h.back() == ']')
+        h = h.substr(1, h.size() - 2);
 
-    boost::system::result< boost::urls::ipv6_address > v6 =
-        boost::urls::parse_ipv6_address( cleanHost );
-    return v6.has_value();
+    // Try IPv6
+    return parse_ipv6_address(h).has_value();
 }
 
 bool URLUtils::isDomainName( const std::string& host ) {
