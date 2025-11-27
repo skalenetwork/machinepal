@@ -60,7 +60,7 @@ private:
 
     void reply400InvalidPayment( const std::string& message );
 
-    void reply400ResourceNotFound(const std::string& message);
+    void reply404ResourceNotFound(const std::string& message);
 
     string getJsonErrorBody( const std::string& message );
 
@@ -81,7 +81,7 @@ private:
 
     bool validateMethod( const std::unique_ptr< proxygen::HTTPMessage >& requestHeaders );
 
-    void replySuccess( uint64_t statusCode, const std::string& settlementInfo,
+    void replyX402ResourceSuccess( uint64_t statusCode, const std::string& settlementInfo,
         const std::vector< std::pair< std::string, std::string > >&& headers,
         std::string& responseBody );
 

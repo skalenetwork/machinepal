@@ -75,14 +75,17 @@ void X402Processor::replyPassThroughError(IBackendError &error, vector<pair<stri
     }
 }
 
-void X402Processor::replySuccess(uint64_t statusCode,
+void X402Processor::replyX402ResourceSuccess(uint64_t statusCode,
                                  const std::string &settlementInfo,
                                  const std::vector<std::pair<std::string, std::string> > &&headers,
                                  std::string &responseBody) {
     CHECK_STATE(statusCode >= 200 && statusCode < 300);
     auto headersFinal = std::move(headers);
     headersFinal.emplace_back("X-PAYMENT-RESPONSE", settlementInfo);
-    sendResponse({statusCode, "OK"}, headersFinal, responseBody);
+    sendResponse({
+                     statusCode,
+                     proxygen::HTTPMessage::getDefaultReason(statusCode)
+                 }, headersFinal, responseBody);
     state_ = X402ProcessorState::SUCCESS_REPLY_SENT;
 }
 
@@ -130,12 +133,9 @@ void X402Processor::reply400InvalidPayment(const std::string &message) {
     state_ = X402ProcessorState::ERROR_SENT;
 }
 
-void X402Processor::reply400ResourceNotFound(const std::string &message) {
-    auto paymentRequirements =
-            PaymentRequiredResponse::getPaymentRequiredResponseAsString(
-                organization(), resource(), config());
-
-    sendResponse({400, "Resource Not Found"}, APPLICATION_JSON_HEADERS, message);
+void X402Processor::reply404ResourceNotFound(const std::string &message) {
+    sendResponse({404, "Not Found"}, APPLICATION_JSON_HEADERS,
+        getJsonErrorBody(message));
     state_ = X402ProcessorState::ERROR_SENT;
 }
 
@@ -270,7 +270,6 @@ bool X402Processor::matchOrganization() {
 
 bool X402Processor::validateMethod(
     const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders) {
-
     if (!reqHeaders->getMethod().has_value()) {
         reply400InvalidPayment("Missing HTTP method");
         return false;
@@ -384,7 +383,11 @@ void X402Processor::doPassThrough(const std::unique_ptr<proxygen::HTTPMessage> &
         }
 
         // For pass-through, just return 200 OK with standard headers and the proxied body
-        sendResponse({httpStatusCode, "OK"}, responseHeaders, responseBody);
+
+        sendResponse({
+                         httpStatusCode,
+                         proxygen::HTTPMessage::getDefaultReason(httpStatusCode)
+                     }, responseHeaders, responseBody);
         state_ = X402ProcessorState::SUCCESS_REPLY_SENT;
     } catch (std::exception &e) {
         spdlog::critical("doPassThrough exception");
@@ -396,13 +399,14 @@ void X402Processor::doPassThrough(const std::unique_ptr<proxygen::HTTPMessage> &
     }
 }
 
-void X402Processor::handlePassThrowOrErrorOnNoResourceMatch(const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders, const string &body) {
+void X402Processor::handlePassThrowOrErrorOnNoResourceMatch(const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
+                                                            const string &body) {
     // resource not found. If is pass through organization, do pass through
     // else reply 400
     if (organization()->passThroughConfig()) {
         doPassThrough(reqHeaders, body);
     } else {
-        reply400ResourceNotFound(
+        reply404ResourceNotFound(
             "Requested resource not found: " + decodedPath_);
     }
 }
@@ -459,7 +463,7 @@ void X402Processor::onRequestFullyReceived(
 
         auto settlementResponse = std::get<SettlementResponse>(result);
 
-        replySuccess(httpStatusCode, settlementResponse.originalJsonToBase64(), std::move(responseHeaders),
+        replyX402ResourceSuccess(httpStatusCode, settlementResponse.originalJsonToBase64(), std::move(responseHeaders),
                      responseBody);
     } catch (std::exception &e) {
         spdlog::critical("onRequestCompletion exception");
