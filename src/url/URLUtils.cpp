@@ -33,8 +33,7 @@ std::string URLUtils::getLocationFromUrl(const std::string &urlStr) {
 bool URLUtils::isIpAddress(const std::string &host) {
     using namespace boost::urls;
 
-    // Trim whitespace using Boost
-    std::string_view h = boost::algorithm::trim_copy(host);
+    auto h = host;
 
     // Try IPv4
     if (parse_ipv4_address(h).has_value())
@@ -110,17 +109,6 @@ bool URLUtils::decodePath(const std::string& path, std::string& result, std::str
         errorMessage = "Path traversal attempt";
         return false;
         }
-
-    // Character whitelist
-    for (char ch : decoded) {
-        bool isSafe = std::isalnum(static_cast<unsigned char>(ch)) ||
-                      ch == '/' || ch == '.' || ch == '-' || ch == '_';
-
-        if (!isSafe) {
-            errorMessage = "Invalid character in path";
-            return false;
-        }
-    }
 
     result = decoded;
     return true;
