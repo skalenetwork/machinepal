@@ -62,7 +62,10 @@ void X402Processor::reply502BadGateway(const std::string &message) {
 
 void X402Processor::replyGenericHttpError(IBackendError &error, vector<pair<string, string> > &responseHeaders) {
     string body = getJsonErrorBody(error.getMessage());
-    sendResponse({static_cast<uint16_t>(error.getError()), error.getMessage()},
+    sendResponse({
+                     static_cast<uint16_t>(error.getError()),
+                     proxygen::HTTPMessage::getDefaultReason(static_cast<uint16_t>(error.getError()))
+                 },
                  responseHeaders, body);
     state_ = X402ProcessorState::ERROR_SENT;
 }
@@ -76,9 +79,9 @@ void X402Processor::replyPassThroughError(IBackendError &error, vector<pair<stri
 }
 
 void X402Processor::replyX402ResourceSuccess(uint64_t statusCode,
-                                 const std::string &settlementInfo,
-                                 const std::vector<std::pair<std::string, std::string> > &&headers,
-                                 std::string &responseBody) {
+                                             const std::string &settlementInfo,
+                                             const std::vector<std::pair<std::string, std::string> > &&headers,
+                                             std::string &responseBody) {
     CHECK_STATE(statusCode >= 200 && statusCode < 300);
     auto headersFinal = std::move(headers);
     headersFinal.emplace_back("X-PAYMENT-RESPONSE", settlementInfo);
@@ -97,16 +100,12 @@ void X402Processor::reply402PaymentRequired(
 
         std::optional<string> errorString = std::nullopt;
 
-        std::vector<std::pair<std::string, std::string> > headers;
-
-
-        headers = APPLICATION_JSON_HEADERS;
+        auto headers = APPLICATION_JSON_HEADERS;
 
         if (errorResponse) {
             errorString = errorResponse->errorReason().value_or(
                 "Payment required to access resource");
             auto settlementInfo = errorResponse->originalJsonToBase64();
-            headers = APPLICATION_JSON_HEADERS;
             headers.push_back(
                 {"X-PAYMENT-RESPONSE", settlementInfo});
         }
@@ -125,17 +124,22 @@ void X402Processor::reply402PaymentRequired(
 
 
 void X402Processor::reply400BadRequest(const std::string &message) {
-    auto paymentRequirements =
-            PaymentRequiredResponse::getPaymentRequiredResponseAsString(
-                organization(), resource(), config());
-
-    sendResponse({400, "Bad Request"}, APPLICATION_JSON_HEADERS, message);
+    sendResponse({400, "Bad Request"}, APPLICATION_JSON_HEADERS,
+                 getJsonErrorBody(message));
     state_ = X402ProcessorState::ERROR_SENT;
 }
 
 void X402Processor::reply404ResourceNotFound(const std::string &message) {
     sendResponse({404, "Not Found"}, APPLICATION_JSON_HEADERS,
-        getJsonErrorBody(message));
+                 getJsonErrorBody(message));
+    state_ = X402ProcessorState::ERROR_SENT;
+}
+
+
+void X402Processor::reply500InternalError(const std::string &message) {
+    string body = getJsonErrorBody(message);
+    sendResponse({500, "Server Error"}, APPLICATION_JSON_HEADERS,
+                 getJsonErrorBody(message));
     state_ = X402ProcessorState::ERROR_SENT;
 }
 
@@ -149,12 +153,6 @@ std::string X402Processor::getJsonErrorBody(const std::string &message) {
         j["error"] = message;
         return j.dump();
     }
-}
-
-void X402Processor::reply500InternalError(const std::string &message) {
-    string body = getJsonErrorBody(message);
-    sendResponse({500, "Server Error"}, APPLICATION_JSON_HEADERS, body);
-    state_ = X402ProcessorState::ERROR_SENT;
 }
 
 
@@ -279,7 +277,7 @@ bool X402Processor::validateMethod(
 
     if (method_ != proxygen::HTTPMethod::GET && method_ != proxygen::HTTPMethod::POST
         && method_ != proxygen::HTTPMethod::HEAD && method_ != proxygen::HTTPMethod::OPTIONS &&
-        method_ != proxygen::HTTPMethod::PUT) {
+        method_ != proxygen::HTTPMethod::PUT && method_ != proxygen::HTTPMethod::DELETE) {
         reply400BadRequest(
             "Unsupported HTTP method." +
             reqHeaders->getMethodString());
@@ -310,7 +308,6 @@ void X402Processor::onRequestStart(
         reply500InternalError("Could not process x402 request start.");
     };
 }
-
 
 
 void X402Processor::sendSettlementErrorResponse(
@@ -442,7 +439,7 @@ void X402Processor::onRequestFullyReceived(
         auto settlementResponse = std::get<SettlementResponse>(result);
 
         replyX402ResourceSuccess(httpStatusCode, settlementResponse.originalJsonToBase64(), std::move(responseHeaders),
-                     responseBody);
+                                 responseBody);
     } catch (std::exception &e) {
         spdlog::critical("onRequestCompletion exception");
         printNestedException(e);
