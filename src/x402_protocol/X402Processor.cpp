@@ -422,13 +422,13 @@ void X402Processor::onRequestFullyReceived(
             return;
         }
 
-        if (reply402IfNoPaymentHeader(reqHeaders)) {
-            return;
-        }
-
 
         if (!validateMethod(reqHeaders))
             return;
+
+        if (reply402IfNoPaymentHeader(reqHeaders)) {
+            return;
+        }
 
 
         ptr<Authorization> authorization;
