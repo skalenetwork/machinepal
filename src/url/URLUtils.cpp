@@ -74,6 +74,7 @@ bool URLUtils::isValidUrl(const std::string &url) {
 }
 
 
+
 bool URLUtils::decodePath(const std::string& path, std::string& result, std::string& errorMessage) {
     if (path.empty() || path[0] != '/') {
         errorMessage = "Path must start with /";
@@ -81,7 +82,7 @@ bool URLUtils::decodePath(const std::string& path, std::string& result, std::str
     }
 
     // 1. Parse as a URI reference.
-    // This validates the %-encoding (e.g., rejects "%2") and structure.
+    // This validates the %-encoding (e.g., rejects "%2" or "%XY").
     boost::system::result<boost::urls::url_view> rv = boost::urls::parse_uri_reference(path);
 
     if (rv.has_error()) {
@@ -89,26 +90,29 @@ bool URLUtils::decodePath(const std::string& path, std::string& result, std::str
         return false;
     }
 
-    // 2. Decode the path safely.
-    // rv->encoded_path() returns a validated pct_string_view.
-    // .decode() converts it to std::string.
-    std::string decoded = rv->encoded_path().decode();
+    const boost::urls::url_view u = *rv;
 
-    // --- Security Checks (Same as before) ---
+    // 2. SECURITY FIX: Robust Path Traversal Detection.
+    // Iterate over the segments identified by the parser.
+    // u.segments() returns already decoded segments (std::string).
+    for (const auto& segment : u.segments()) {
+        // Check if the decoded segment is exactly ".."
+        if (segment == "..") {
+            errorMessage = "Path traversal attempt (..) detected";
+            return false;
+        }
+    }
 
-    // Check for null bytes (poisoning)
+    // 3. Decode the path safely.
+    // We still use .decode() here on the full encoded_path() view to get the final contiguous string.
+    std::string decoded = u.encoded_path().decode();
+
+    // 4. Security Check: Null Byte Poisoning.
+    // Essential if the decoded string is passed to C-style APIs.
     if (decoded.find('\0') != std::string::npos) {
         errorMessage = "Null byte detected";
         return false;
     }
-
-    // Check for ".." traversal
-    if (decoded.find("/../") != std::string::npos ||
-        decoded.ends_with("/..") ||
-        decoded == "..") {
-        errorMessage = "Path traversal attempt";
-        return false;
-        }
 
     result = decoded;
     return true;
