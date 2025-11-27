@@ -99,11 +99,7 @@ void X402Handler::onEOM() noexcept {
 
 void X402Handler::onError( proxygen::ProxygenError _err ) noexcept  {
     spdlog::error( "X402Handler::onError called: {}", proxygen::getErrorString( ( _err ) ) );
-    if (responseSender_) {
-        // Cast to concrete type to access detach, or add detach to interface
-        auto sender = std::dynamic_pointer_cast<ProxygenResponseSender>(responseSender_);
-        if (sender) sender->detach();
-    }
+    responseSender().reset();
     // clean object if not used by different thread
     self_.reset();
 }

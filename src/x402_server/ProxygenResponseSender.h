@@ -6,11 +6,6 @@
 class ProxygenResponseSender : public IResponseSender {
 public:
 
-
-    void detach() {
-        downstream_ = nullptr;
-    }
-
     explicit ProxygenResponseSender( proxygen::ResponseHandler* downstream,
         folly::EventBase* eventBase)
         : downstream_( downstream ), eventBase_( eventBase ) {
