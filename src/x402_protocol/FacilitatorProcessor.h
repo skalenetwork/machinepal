@@ -29,7 +29,6 @@ public:
     void onRequestStart( const std::unique_ptr< proxygen::HTTPMessage >& headers ) noexcept override;
     bool settle( std::string& responseBody );
 
-    void replyToClientWithError( const HttpError& httpError ) override;
     bool isReplySent() const override;
 
     void onRequestFullyReceived(

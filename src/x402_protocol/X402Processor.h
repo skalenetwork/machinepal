@@ -35,8 +35,6 @@ public:
 
     void onRequestStart( const std::unique_ptr< proxygen::HTTPMessage >& headers ) noexcept override;
 
-
-    void replyToClientWithError( const HttpError& httpError ) override;
     void sendSettlementErrorResponse(
         ptr< Authorization > authorization, add_pointer_t< HttpError > error );
 

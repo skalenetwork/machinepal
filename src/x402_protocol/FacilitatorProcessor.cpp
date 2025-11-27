@@ -126,24 +126,6 @@ void FacilitatorProcessor::onRequestStart(
 }
 
 
-void FacilitatorProcessor::replyToClientWithError( const HttpError& httpError ) {
-    auto httpErrorMessage = httpError.message();
-    switch ( httpError.type() ) {
-    case ErrorType::ERR_BAD_REQUEST:
-        reply400BadRequest( httpErrorMessage );
-        break;
-    case ErrorType::ERR_INTERNAL_SERVER_ERROR:
-        reply500InternalError( httpErrorMessage );
-        break;
-    case ErrorType::ERR_BAD_GATEWAY:
-        // cant happen for facilitator
-        reply500InternalError( httpErrorMessage );
-        break;
-    default:
-        // cant happen
-        CHECK_STATE( false );
-    }
-}
 
 
 bool FacilitatorProcessor::isReplySent() const {

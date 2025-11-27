@@ -312,23 +312,6 @@ void X402Processor::onRequestStart(
 }
 
 
-void X402Processor::replyToClientWithError(const HttpError &httpError) {
-    auto httpErrorMessage = httpError.message();
-    switch (httpError.type()) {
-        case ErrorType::ERR_BAD_REQUEST:
-            reply400InvalidPayment(httpErrorMessage);
-            break;
-        case ErrorType::ERR_INTERNAL_SERVER_ERROR:
-            reply500InternalError(httpErrorMessage);
-            break;
-        case ErrorType::ERR_BAD_GATEWAY:
-            reply502BadGateway(httpErrorMessage);
-            break;
-        default:
-            // cant happen
-            CHECK_STATE(false);
-    }
-}
 
 void X402Processor::sendSettlementErrorResponse(
     ptr<Authorization> authorization, add_pointer_t<HttpError> const error) {

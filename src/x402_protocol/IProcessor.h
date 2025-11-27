@@ -15,7 +15,6 @@ public:
     virtual void onRequestStart(const std::unique_ptr<proxygen::HTTPMessage>& headers) noexcept = 0;
     virtual void onRequestFullyReceived(const std::unique_ptr<proxygen::HTTPMessage>& reqHeaders, const std::string& body) noexcept = 0;
     virtual void onBodySizeIncrease(size_t newSize) = 0;
-    virtual void replyToClientWithError(const HttpError& httpError) = 0;
     virtual bool isReplySent() const = 0;
 };
 
