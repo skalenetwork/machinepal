@@ -273,6 +273,7 @@ bool X402Processor::validateMethod(
 
     if (!reqHeaders->getMethod().has_value()) {
         reply400InvalidPayment("Missing HTTP method");
+        return false;
     }
 
     method_ = reqHeaders->getMethod().value();
