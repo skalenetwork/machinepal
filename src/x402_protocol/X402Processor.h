@@ -47,7 +47,6 @@ public:
         const std::unique_ptr< proxygen::HTTPMessage >& requestHeaders, const string& body ) noexcept override;
     void onBodySizeIncrease( size_t newSize ) override;
 
-    static const std::vector< std::pair< std::string, std::string > > APPLICATION_TXT_HEADERS;
     static const std::vector< std::pair< std::string, std::string > > APPLICATION_JSON_HEADERS;
 
 private:

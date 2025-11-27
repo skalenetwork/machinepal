@@ -465,6 +465,3 @@ void X402Processor::onBodySizeIncrease(size_t newSize) {
 const std::vector<std::pair<std::string, std::string> > X402Processor::APPLICATION_JSON_HEADERS = {
     {"Content-Type", "application/json"}
 };
-const std::vector<std::pair<std::string, std::string> > X402Processor::APPLICATION_TXT_HEADERS = {
-    {"Content-Type", "application/text"}
-};
