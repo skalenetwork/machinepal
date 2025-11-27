@@ -363,11 +363,6 @@ void X402Processor::doPassThrough(const std::unique_ptr<proxygen::HTTPMessage> &
 
         string domain;
 
-        if (organization()->subdomain().empty()) {
-            domain = config()->server()->hostName();
-        } else {
-            domain = organization()->subdomain() + config()->server()->hostName();
-        }
 
         auto url = organization_->passThroughConfig()->targetUrl() + requestHeaders->getPath();
 
