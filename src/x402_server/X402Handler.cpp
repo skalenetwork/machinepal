@@ -22,8 +22,10 @@ void X402Handler::onRequest( std::unique_ptr< HTTPMessage > _headers ) noexcept 
 
     try {
         CHECK_STATE( self_ );
-        responseSender_ = std::make_shared< ProxygenResponseSender >( downstream_ ,
+        auto sender  = std::make_shared< ProxygenResponseSender >( downstream_ ,
             folly::EventBaseManager::get()->getEventBase() );
+        sender->setWeakSelf( sender );
+        responseSender_ = sender;
         reqHeaders_ = std::move( _headers );
         auto weakResponseSender = std::weak_ptr< IResponseSender >( responseSender_ );
         if ( reqHeaders_->getPath().starts_with( EASYNET_FACILITATOR_PREFIX ) ) {

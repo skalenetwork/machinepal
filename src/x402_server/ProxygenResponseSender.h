@@ -34,4 +34,10 @@ public:
 private:
     proxygen::ResponseHandler* downstream_;
     folly::EventBase* eventBase_;
+    weak_ptr< IResponseSender > weakSelf_;
+
+public:
+    void setWeakSelf(const weak_ptr<IResponseSender> &weakSelf) {
+        weakSelf_ = weakSelf;
+    }
 };
