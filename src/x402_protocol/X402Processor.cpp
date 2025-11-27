@@ -78,12 +78,12 @@ void X402Processor::replyPassThroughError(IBackendError &error, vector<pair<stri
 }
 
 void X402Processor::replySuccess(uint64_t statusCode,
-    const std::string &settlementInfo, std::string &proxiedBody) {
+    const std::string &settlementInfo, std::string &responseBody) {
     CHECK_STATE(statusCode >= 200 && statusCode < 300);
     std::vector<std::pair<std::string, std::string> > headers = {
         {"Content-Type", "text/plain"}, {"X-PAYMENT-RESPONSE", settlementInfo}
     };
-    sendResponse({statusCode, "OK"}, headers, proxiedBody);
+    sendResponse({statusCode, "OK"}, headers, responseBody);
     state_ = X402ProcessorState::SUCCESS_REPLY_SENT;
 }
 

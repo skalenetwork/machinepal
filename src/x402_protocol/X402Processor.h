@@ -43,7 +43,7 @@ public:
     void doPassThrough(const std::unique_ptr< proxygen::HTTPMessage >& requestHeaders,const string& requestBody);
 
     void onRequestFullyReceived(
-        const std::unique_ptr< proxygen::HTTPMessage >& reqHeaders, const string& body ) noexcept override;
+        const std::unique_ptr< proxygen::HTTPMessage >& requestHeaders, const string& body ) noexcept override;
     void onBodySizeIncrease( size_t newSize ) override;
     static const std::vector< std::pair< std::string, std::string > > STANDARD_HEADERS;
 
@@ -55,7 +55,7 @@ private:
 
     void reply400InvalidPayment( const std::string& message );
 
-    void reply400ResourceNotFound(const std::string &message);
+    void reply400ResourceNotFound(const std::string& message);
 
     string getErrorBody( const std::string& message );
 
@@ -68,15 +68,15 @@ private:
     void replyPassThroughError( IBackendError& error, vector<pair<string, string> > & responseHeaders );
 
     bool validateAndExtractSubDomainName(
-        const std::unique_ptr< proxygen::HTTPMessage >& reqHeaders );
+        const std::unique_ptr< proxygen::HTTPMessage >& requestHeaders );
 
-    bool validateAndDecodePath( const std::unique_ptr< proxygen::HTTPMessage >& reqHeaders );
+    bool validateAndDecodePath( const std::unique_ptr< proxygen::HTTPMessage >& requestHeaders );
 
     bool matchOrganization();
 
-    bool validateMethod( const std::unique_ptr< proxygen::HTTPMessage >& reqHeaders );
+    bool validateMethod( const std::unique_ptr< proxygen::HTTPMessage >& requestHeaders );
 
-    void replySuccess( uint64_t statusCode, const std::string& settlementInfo, std::string& proxyBody );
+    void replySuccess( uint64_t statusCode, const std::string& settlementInfo, std::string& responseBody );
 
     [[nodiscard]] ptr< MachinePayConfig > config() const {
         CHECK_STATE( config_ );
