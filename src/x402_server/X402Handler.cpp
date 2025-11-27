@@ -25,10 +25,11 @@ void X402Handler::onRequest( std::unique_ptr< HTTPMessage > _headers ) noexcept 
         responseSender_ = std::make_shared< ProxygenResponseSender >( downstream_ ,
             folly::EventBaseManager::get()->getEventBase() );
         reqHeaders_ = std::move( _headers );
+        auto weakResponseSender = std::weak_ptr< IResponseSender >( responseSender_ );
         if ( reqHeaders_->getPath().starts_with( EASYNET_FACILITATOR_PREFIX ) ) {
-            processor_ = app_.makeFacilitatorProcessor( responseSender_ );
+            processor_ = app_.makeFacilitatorProcessor( weakResponseSender );
         } else {
-            processor_ = app_.makeX402Processor( responseSender_ );
+            processor_ = app_.makeX402Processor( weakResponseSender );
         }
 
         // processor_ is now of type std::shared_ptr<IProcessorInterface>

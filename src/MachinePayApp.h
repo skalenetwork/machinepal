@@ -45,13 +45,13 @@ public:
     }
 
 
-    std::shared_ptr<IProcessor> makeFacilitatorProcessor(ptr<IResponseSender>& _responseSender)
+    std::shared_ptr<IProcessor> makeFacilitatorProcessor(weak_ptr<IResponseSender>& _responseSender)
     {
         return std::make_shared<FacilitatorProcessor>(*this, _responseSender);;
     }
 
 
-    std::shared_ptr<IProcessor> makeX402Processor(ptr<IResponseSender>& _responseSender)
+    std::shared_ptr<IProcessor> makeX402Processor(weak_ptr<IResponseSender>& _responseSender)
     {
         return std::make_shared<X402Processor>(*this, _responseSender);;
     }

@@ -23,7 +23,7 @@ class OrganizationConfig;
 class FacilitatorProcessor : public IProcessor {
 public:
 
-    explicit FacilitatorProcessor( MachinePayApp& app, ptr< IResponseSender >& responseSender );
+    explicit FacilitatorProcessor( MachinePayApp& app, weak_ptr< IResponseSender >& responseSender );
     void reply400BadRequest( const std::string& message );
 
     void onRequestStart( const std::unique_ptr< proxygen::HTTPMessage >& headers ) noexcept override;
@@ -62,7 +62,7 @@ private:
     MachinePayApp& app_;
     ptr< MachinePayConfig > config_;
     std::string decodedPath_;
-    ptr< IResponseSender > responseSender_;
+    weak_ptr< IResponseSender > responseSender_;
     FacilitatorProcessorState state_ = FacilitatorProcessorState::START;
     // initially set to non-supported value
     proxygen::HTTPMethod method_ = proxygen::HTTPMethod::TRACE;

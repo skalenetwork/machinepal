@@ -13,7 +13,7 @@ auto SETTLE_PATH = EASYNET_FACILITATOR_PREFIX + string("/settle");
 auto VERIFY_PATH = EASYNET_FACILITATOR_PREFIX + string("/verify");
 
 
-FacilitatorProcessor::FacilitatorProcessor( MachinePayApp& app, ptr< IResponseSender >& responseSender )
+FacilitatorProcessor::FacilitatorProcessor( MachinePayApp& app, weak_ptr< IResponseSender >& responseSender )
     : app_( app ), responseSender_( responseSender ) {
     config_ = app_.configManager()->latestConfig();
 }
@@ -76,9 +76,13 @@ void FacilitatorProcessor::sendResponse( const std::pair< uint16_t, std::string 
         return;
     }
 
-    CHECK_STATE( responseSender_ );
+    auto responseSender = responseSender_.lock();
+    if ( !responseSender ) {
+        spdlog::error( "Connection closed before sending reply" );
+        return;
+    }
     try {
-        responseSender_->sendResponse( statusAndMessage, headers, body );
+        responseSender->sendResponse( statusAndMessage, headers, body );
     } catch ( std::exception& e ) {
         spdlog::error( "Exception while sending response: {}", e.what() );
         // nothing can be done so we consider response as sent

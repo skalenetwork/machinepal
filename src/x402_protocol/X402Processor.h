@@ -27,7 +27,7 @@ class OrganizationConfig;
 class X402Processor : public IProcessor {
 public:
 
-    explicit X402Processor( MachinePayApp& app, ptr< IResponseSender >& responseSender );
+    explicit X402Processor( MachinePayApp& app, weak_ptr< IResponseSender >& responseSender );
 
     bool isReplySent() const override;
 
@@ -107,7 +107,7 @@ private:
     std::string subDomainName_;
     ptr< OrganizationConfig > organization_;
     ptr< ResourceConfig > resource_;
-    ptr< IResponseSender > responseSender_;
+    weak_ptr< IResponseSender > responseSender_;
     X402ProcessorState state_ = X402ProcessorState::START;
     // initially set to non-supported value
     proxygen::HTTPMethod method_ = proxygen::HTTPMethod::TRACE;

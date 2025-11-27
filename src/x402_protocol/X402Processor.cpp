@@ -14,7 +14,7 @@
 #include "url/URLUtils.h"
 
 
-X402Processor::X402Processor(MachinePayApp &app, ptr<IResponseSender> &responseSender)
+X402Processor::X402Processor(MachinePayApp &app, weak_ptr<IResponseSender> &responseSender)
     : app_(app), responseSender_(responseSender) {
     config_ = app_.configManager()->latestConfig();
 }
@@ -170,9 +170,13 @@ void X402Processor::sendResponse(
     }
 
 
-    CHECK_STATE(responseSender_);
+    auto responseSender = responseSender_.lock();
+    if (!responseSender) {
+        spdlog::error("Connection closed before response could be sent.");
+        return;
+    }
     try {
-        responseSender_->sendResponse(statusAndMessage, headers, body);
+        responseSender->sendResponse(statusAndMessage, headers, body);
     } catch (std::exception &e) {
         spdlog::error("Exception while sending response: {}", e.what());
         // nothing can be done so we consider response as sent
