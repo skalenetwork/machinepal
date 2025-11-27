@@ -22,10 +22,9 @@ void X402Handler::onRequest( std::unique_ptr< HTTPMessage > _headers ) noexcept 
 
     try {
         CHECK_STATE( self_ );
-        auto sender  = std::make_shared< ProxygenResponseSender >( downstream_ ,
+
+        responseSender_ = ProxygenResponseSender::makeShared(downstream_ ,
             folly::EventBaseManager::get()->getEventBase() );
-        sender->setWeakSelf( sender );
-        responseSender_ = sender;
         reqHeaders_ = std::move( _headers );
         auto weakResponseSender = std::weak_ptr< IResponseSender >( responseSender_ );
         if ( reqHeaders_->getPath().starts_with( EASYNET_FACILITATOR_PREFIX ) ) {
@@ -34,7 +33,6 @@ void X402Handler::onRequest( std::unique_ptr< HTTPMessage > _headers ) noexcept 
             processor_ = app_.makeX402Processor( weakResponseSender );
         }
 
-        // processor_ is now of type std::shared_ptr<IProcessorInterface>
         processor()->onRequestStart( reqHeaders_ );
     } catch ( const std::exception& e ) {
         spdlog::critical( "Error in onRequest: {}", e.what() );
