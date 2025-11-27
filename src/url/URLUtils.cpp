@@ -3,7 +3,7 @@
 
 using namespace boost::urls;
 
-std::string URLUtils::getLocationFromUrl(const std::string& urlStr) {
+std::string URLUtils::getLocationFromUrl(const std::string &urlStr) {
     // Use parse_uri_reference to handle "/path" and "http://host/path"
     auto result = boost::urls::parse_uri_reference(urlStr);
 
@@ -30,7 +30,7 @@ std::string URLUtils::getLocationFromUrl(const std::string& urlStr) {
     return path;
 }
 
-bool URLUtils::isIpAddress(const std::string& host) {
+bool URLUtils::isIpAddress(const std::string &host) {
     using namespace boost::urls;
 
     // Trim whitespace using Boost
@@ -48,15 +48,15 @@ bool URLUtils::isIpAddress(const std::string& host) {
     return parse_ipv6_address(h).has_value();
 }
 
-bool URLUtils::isDomainName( const std::string& host ) {
+bool URLUtils::isDomainName(const std::string &host) {
     using namespace boost::urls;
     using boost::system::result;
 
     // Wrap host in dummy authority so Boost can parse it
     // e.g., "example.com" → "example.com:80"
-    result< authority_view > res = parse_authority( host );
+    result<authority_view> res = parse_authority(host);
 
-    if ( !res ) {
+    if (!res) {
         // Not even a valid authority syntax
         return false;
     }
@@ -73,60 +73,55 @@ bool URLUtils::isValidUrl(const std::string &url) {
     boost::system::result<boost::urls::url_view> result = boost::urls::parse_uri(url);
     return result.has_value();
 }
-bool URLUtils::decodePath(
-    const std::string& path, std::string& result, std::string& errorMessage ) {
-    try {
-        if ( path.empty() ) {
-            errorMessage = "Empty URL path " + path;
-            goto error;
-        }
 
 
-        std::string decodedPath;
-        try {
-            auto decoded = boost::urls::decode_view( path );
-            decodedPath = std::string( decoded.begin(), decoded.end() );
-        } catch ( const std::exception& e ) {
-            errorMessage = "Path contains invalid characters";
-            goto error;
-            ;
-        }
-        if ( decodedPath.empty() ) {
-            errorMessage = "Empty decoded URL path " + path;
-            goto error;
-        }
-        if ( decodedPath.front() != '/' ) {
-            errorMessage = "URL path does not start with '/'";
-            goto error;
-            ;
-            ;
-        }
-        // Reject traversal attempts (including encoded)
-        if ( decodedPath.find( ".." ) != std::string::npos ) {
-            errorMessage = "URL path traversal not allowed";
-            goto error;
-            ;
-        }
-
-
-        std::wstring wideText = boost::locale::conv::to_utf< wchar_t >( decodedPath, "UTF-8" );
-
-        for ( wchar_t ch : wideText ) {
-            auto isValid = iswalnum( ch ) || ch == L'/';
-            if ( !isValid ) {
-                errorMessage = "URL path contains invalid character:" + path;
-                goto error;
-            }
-        }
-
-        result = decodedPath;
-        return true;
-    } catch ( std::exception& e ) {
-        errorMessage = e.what();
-        goto error;
+bool URLUtils::decodePath(const std::string& path, std::string& result, std::string& errorMessage) {
+    if (path.empty() || path[0] != '/') {
+        errorMessage = "Path must start with /";
+        return false;
     }
 
-error:
-    spdlog::error( "Error parsing user submitted URL path in X402Processor: {}", errorMessage );
-    return false;
+    // 1. Parse as a URI reference.
+    // This validates the %-encoding (e.g., rejects "%2") and structure.
+    boost::system::result<boost::urls::url_view> rv = boost::urls::parse_uri_reference(path);
+
+    if (rv.has_error()) {
+        errorMessage = "Path contains invalid encoding: " + rv.error().message();
+        return false;
+    }
+
+    // 2. Decode the path safely.
+    // rv->encoded_path() returns a validated pct_string_view.
+    // .decode() converts it to std::string.
+    std::string decoded = rv->encoded_path().decode();
+
+    // --- Security Checks (Same as before) ---
+
+    // Check for null bytes (poisoning)
+    if (decoded.find('\0') != std::string::npos) {
+        errorMessage = "Null byte detected";
+        return false;
+    }
+
+    // Check for ".." traversal
+    if (decoded.find("/../") != std::string::npos ||
+        decoded.ends_with("/..") ||
+        decoded == "..") {
+        errorMessage = "Path traversal attempt";
+        return false;
+        }
+
+    // Character whitelist
+    for (char ch : decoded) {
+        bool isSafe = std::isalnum(static_cast<unsigned char>(ch)) ||
+                      ch == '/' || ch == '.' || ch == '-' || ch == '_';
+
+        if (!isSafe) {
+            errorMessage = "Invalid character in path";
+            return false;
+        }
+    }
+
+    result = decoded;
+    return true;
 }
