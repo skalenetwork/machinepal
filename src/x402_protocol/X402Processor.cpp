@@ -270,17 +270,16 @@ bool X402Processor::matchOrganization() {
 
 bool X402Processor::validateMethod(
     const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders) {
-    auto method = reqHeaders->getMethod();
 
-    if (!method.has_value()) {
+    if (!reqHeaders->getMethod().has_value()) {
         reply400InvalidPayment("Missing HTTP method");
     }
 
-    method_ = method.value();
+    method_ = reqHeaders->getMethod().value();
 
     if (method_ != proxygen::HTTPMethod::GET && method_ != proxygen::HTTPMethod::POST
-        && method != proxygen::HTTPMethod::HEAD && method != proxygen::HTTPMethod::OPTIONS &&
-        method != proxygen::HTTPMethod::PUT) {
+        && method_ != proxygen::HTTPMethod::HEAD && method_ != proxygen::HTTPMethod::OPTIONS &&
+        method_ != proxygen::HTTPMethod::PUT) {
         reply400InvalidPayment(
             "Unsupported HTTP method." +
             reqHeaders->getMethodString());
