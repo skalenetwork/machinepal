@@ -124,12 +124,12 @@ void X402Processor::reply402PaymentRequired(
 }
 
 
-void X402Processor::reply400InvalidPayment(const std::string &message) {
+void X402Processor::reply400BadRequest(const std::string &message) {
     auto paymentRequirements =
             PaymentRequiredResponse::getPaymentRequiredResponseAsString(
                 organization(), resource(), config());
 
-    sendResponse({400, "Invalid Payment"}, APPLICATION_JSON_HEADERS, message);
+    sendResponse({400, "Bad Request"}, APPLICATION_JSON_HEADERS, message);
     state_ = X402ProcessorState::ERROR_SENT;
 }
 
@@ -189,12 +189,12 @@ bool X402Processor::validateAndExtractSubDomainName(
     // Remove port if present (e.g., example.com:8080 -> example.com)
 
     if (domainName.empty()) {
-        reply400InvalidPayment("Missing Host header");
+        reply400BadRequest("Missing Host header");
         return false;
     }
 
     if (URLUtils::isIpAddress(domainName)) {
-        reply400InvalidPayment(
+        reply400BadRequest(
             "Unknown host: " + domainName +
             ". You need to access MachinePay using a hostname, not an IP address. "
             "Please use a valid hostname to access this service.");
@@ -209,7 +209,7 @@ bool X402Processor::validateAndExtractSubDomainName(
     // check for IP address again
 
     if (URLUtils::isIpAddress(domainName)) {
-        reply400InvalidPayment(
+        reply400BadRequest(
             "Unknown host: " + domainName +
             ". You need to access MachinePay using a hostname, not an IP address. "
             "Please use a valid hostname specified in machinepay config "
@@ -218,7 +218,7 @@ bool X402Processor::validateAndExtractSubDomainName(
     }
 
     if (!URLUtils::isDomainName(domainName)) {
-        reply400InvalidPayment(
+        reply400BadRequest(
             "Invalid host name: " + domainName +
             "."
             "Please use a valid hostname specified in machinepay config "
@@ -233,7 +233,7 @@ bool X402Processor::validateAndExtractSubDomainName(
     } else if (domainName.ends_with("." + hostName)) {
         subDomainName_ = domainName.substr(0, domainName.size() - hostName.size() - 1);
     } else {
-        reply400InvalidPayment(
+        reply400BadRequest(
             "Unknown host: " + domainName +
             " "
             "Please use a valid hostname specified in machinepay config "
@@ -249,7 +249,7 @@ bool X402Processor::validateAndDecodePath(
     auto path = reqHeaders->getPath();
     std::string errorMessage;
     if (!URLUtils::decodePath(path, decodedPath_, errorMessage)) {
-        reply400InvalidPayment(errorMessage);
+        reply400BadRequest(errorMessage);
         return false;
     }
     return true;
@@ -259,7 +259,7 @@ bool X402Processor::matchOrganization() {
     organization_ = config()->getOrganizationBySubdomainName(subDomainName_);
 
     if (!organization_) {
-        reply400InvalidPayment(
+        reply400BadRequest(
             "Unknown subdomain  " + subDomainName_ + "." + config_->server()->hostName() +
             " Please use a valid subdomain specified in machinepay config "
             "(like localhost or xyz.com) to access this service.");
@@ -271,7 +271,7 @@ bool X402Processor::matchOrganization() {
 bool X402Processor::validateMethod(
     const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders) {
     if (!reqHeaders->getMethod().has_value()) {
-        reply400InvalidPayment("Missing HTTP method");
+        reply400BadRequest("Missing HTTP method");
         return false;
     }
 
@@ -280,7 +280,7 @@ bool X402Processor::validateMethod(
     if (method_ != proxygen::HTTPMethod::GET && method_ != proxygen::HTTPMethod::POST
         && method_ != proxygen::HTTPMethod::HEAD && method_ != proxygen::HTTPMethod::OPTIONS &&
         method_ != proxygen::HTTPMethod::PUT) {
-        reply400InvalidPayment(
+        reply400BadRequest(
             "Unsupported HTTP method." +
             reqHeaders->getMethodString());
         return false;
@@ -459,7 +459,7 @@ void X402Processor::onBodySizeIncrease(size_t newSize) {
         return;
     constexpr size_t MAX_BODY_SIZE = 1024 * 1024;
     if (newSize > MAX_BODY_SIZE) {
-        reply400InvalidPayment(
+        reply400BadRequest(
             "Request body too large. Maximum allowed is 1MByte. You can increase this "
             "limit in "
             "machinepay config if needed.");

@@ -51,12 +51,14 @@ public:
     static const std::vector< std::pair< std::string, std::string > > APPLICATION_JSON_HEADERS;
 
 private:
-    void reply402PaymentRequired( std::optional< SettlementResponse > errorResponse );
+
     void sendResponse( const std::pair< uint16_t, std::string >& statusAndMessage,
         const std::vector< std::pair< std::string, std::string > >& headers,
         const std::string& body );
 
-    void reply400InvalidPayment( const std::string& message );
+    void reply400BadRequest( const std::string& message );
+
+    void reply402PaymentRequired( std::optional< SettlementResponse > errorResponse );
 
     void reply404ResourceNotFound(const std::string& message);
 
