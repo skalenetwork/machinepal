@@ -78,11 +78,11 @@ void X402Processor::replyPassThroughError(IBackendError &error, vector<pair<stri
 }
 
 void X402Processor::replySuccess(uint64_t statusCode,
-    const std::string &settlementInfo,
-    const std::vector< std::pair< std::string, std::string > >& headers,
+    const std::string&settlementInfo,
+    const std::vector< std::pair< std::string, std::string > >&& headers,
     std::string &responseBody) {
     CHECK_STATE(statusCode >= 200 && statusCode < 300);
-    auto headersFinal = headers;
+    auto headersFinal = std::move(headers);
     headersFinal.emplace_back("X-PAYMENT-RESPONSE", settlementInfo);
     sendResponse({statusCode, "OK"}, headersFinal, responseBody);
     state_ = X402ProcessorState::SUCCESS_REPLY_SENT;
@@ -440,9 +440,9 @@ void X402Processor::onRequestFullyReceived(
 
         string responseBody;
 
-        vector<pair<string, string> > responseHeaders;
-
         uint64_t httpStatusCode = 0;
+
+        vector<pair<string, string> > responseHeaders;
 
         auto error = BackendConnection::proxyToBackEnd(resource_->getLocation(),
                                                        method_, reqHeaders, body,
@@ -455,7 +455,7 @@ void X402Processor::onRequestFullyReceived(
 
         auto settlementResponse = std::get<SettlementResponse>(result);
 
-        replySuccess(httpStatusCode, settlementResponse.originalJsonToBase64(), responseHeaders,
+        replySuccess(httpStatusCode, settlementResponse.originalJsonToBase64(), std::move(responseHeaders),
             responseBody);
     } catch (std::exception &e) {
         spdlog::critical("onRequestCompletion exception");

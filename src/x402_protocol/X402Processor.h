@@ -77,7 +77,7 @@ private:
     bool validateMethod( const std::unique_ptr< proxygen::HTTPMessage >& requestHeaders );
 
     void replySuccess( uint64_t statusCode, const std::string& settlementInfo,
-        const std::vector< std::pair< std::string, std::string > >& headers,
+        const std::vector< std::pair< std::string, std::string > >&& headers,
         std::string& responseBody );
 
     [[nodiscard]] ptr< MachinePayConfig > config() const {
