@@ -15,9 +15,7 @@ public:
 
     void sendResponse(const std::pair<uint16_t, std::string>& statusAndMessage,
                       const std::vector<std::pair<std::string, std::string>>& headers,
-                      const std::string& body = "") override {
-
-        if (!downstream_) return; // Check immediate validity
+                      const std::string& body ) override {
 
         auto task = [downstream = downstream_, statusAndMessage, headers, body]() mutable {
             proxygen::ResponseBuilder builder(downstream);
