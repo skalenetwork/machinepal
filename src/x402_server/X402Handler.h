@@ -20,28 +20,15 @@ public:
     void sendInternalError();
     void onEOM() noexcept override;
 
-    void requestComplete() noexcept override {
-        // clean object if not used by different thread
-        self_.reset();
-    }
+    void requestComplete() noexcept override;
 
     ~X402Handler() override {}
 
-    void onError( proxygen::ProxygenError _err ) noexcept override {
-        spdlog::error( "X402Handler::onError called: {}", proxygen::getErrorString( ( _err ) ) );
-        // clean object if not used by different thread
-        self_.reset();
-    }
+    void onError( proxygen::ProxygenError _err ) noexcept override;
 
-    void onUpgrade( proxygen::UpgradeProtocol /*_prot*/ ) noexcept override {
-        // No upgrade handling needed for now
-    }
+    void onUpgrade( proxygen::UpgradeProtocol /*_prot*/ ) noexcept override;
 
-    explicit X402Handler( MachinePayApp& app ) : app_( app ) {
-        // we take the latest condig at the start
-        config_ = app_.configManager()->latestConfig();
-        CHECK_STATE( config_ );
-    }
+    explicit X402Handler( MachinePayApp& app );
 
 private:
     MachinePayApp& app_;

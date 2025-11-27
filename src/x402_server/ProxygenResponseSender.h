@@ -5,6 +5,12 @@
 
 class ProxygenResponseSender : public IResponseSender {
 public:
+
+
+    void detach() {
+        downstream_ = nullptr;
+    }
+
     explicit ProxygenResponseSender( proxygen::ResponseHandler* downstream,
         folly::EventBase* eventBase)
         : downstream_( downstream ), eventBase_( eventBase ) {
@@ -15,6 +21,9 @@ public:
     void sendResponse(const std::pair<uint16_t, std::string>& statusAndMessage,
                       const std::vector<std::pair<std::string, std::string>>& headers,
                       const std::string& body = "") override {
+
+        if (!downstream_) return; // Check immediate validity
+
         auto task = [downstream = downstream_, statusAndMessage, headers, body]() mutable {
             proxygen::ResponseBuilder builder(downstream);
             builder.status(statusAndMessage.first, statusAndMessage.second);

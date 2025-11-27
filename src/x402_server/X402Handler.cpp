@@ -9,6 +9,13 @@
 using namespace proxygen;
 
 
+X402Handler::X402Handler( MachinePayApp& app ) : app_( app ) {
+    // we take the latest condig at the start
+    config_ = app_.configManager()->latestConfig();
+    CHECK_STATE( config_ );
+}
+
+
 void X402Handler::onRequest( std::unique_ptr< HTTPMessage > _headers ) noexcept {
     if ( internalErrorSent_ )
         return;
@@ -87,4 +94,27 @@ void X402Handler::onEOM() noexcept {
         spdlog::critical( "Unknown errror in onEOM" );
         sendInternalError();
     }
+}
+
+
+void X402Handler::onError( proxygen::ProxygenError _err ) noexcept  {
+    spdlog::error( "X402Handler::onError called: {}", proxygen::getErrorString( ( _err ) ) );
+    if (responseSender_) {
+        // Cast to concrete type to access detach, or add detach to interface
+        auto sender = std::dynamic_pointer_cast<ProxygenResponseSender>(responseSender_);
+        if (sender) sender->detach();
+    }
+    // clean object if not used by different thread
+    self_.reset();
+}
+
+
+
+void X402Handler::requestComplete() noexcept {
+    // clean object if not used by different thread
+    self_.reset();
+}
+
+void X402Handler::onUpgrade( proxygen::UpgradeProtocol /*_prot*/ ) noexcept {
+    // No upgrade handling needed for now
 }
