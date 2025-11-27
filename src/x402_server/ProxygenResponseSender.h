@@ -17,8 +17,13 @@ public:
                       const std::vector<std::pair<std::string, std::string>>& headers,
                       const std::string& body ) override {
 
-        auto task = [downstream = downstream_, statusAndMessage, headers, body]() mutable {
-            proxygen::ResponseBuilder builder(downstream);
+        auto task = [weakSelf = weakSelf_, statusAndMessage, headers, body]() mutable {
+            auto self = weakSelf.lock();
+            if (!self) {
+                spdlog::error("Connection closed before sending reply");
+                return;
+            }
+            proxygen::ResponseBuilder builder(self->downstream_);
             builder.status(statusAndMessage.first, statusAndMessage.second);
             for (const auto& h : headers) builder.header(h.first, h.second);
             if (!body.empty()) builder.body(body);
@@ -34,10 +39,10 @@ public:
 private:
     proxygen::ResponseHandler* downstream_;
     folly::EventBase* eventBase_;
-    weak_ptr< IResponseSender > weakSelf_;
+    weak_ptr< ProxygenResponseSender > weakSelf_;
 
 public:
-    void setWeakSelf(const weak_ptr<IResponseSender> &weakSelf) {
+    void setWeakSelf(const weak_ptr<ProxygenResponseSender> &weakSelf) {
         weakSelf_ = weakSelf;
     }
 };
