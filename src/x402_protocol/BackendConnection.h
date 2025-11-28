@@ -13,6 +13,16 @@ class X402Processor;
 class IResponseSender;
 
 class BackendConnection {
+
+
+    static curl_slist *createCurlHeadersFromProxygen(const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders);
+
+    static std::string trimWhiteSpaceFromHeader(const std::string &str);
+
+    static size_t headerCallback(char *buffer, size_t size, size_t nitems, void *userdata);
+
+public:
+
     static ptr<IBackendError>proxyToBackEndGet(const string &url,
                                                     const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
                                                     uint64_t& httpStatusCode,
@@ -50,13 +60,6 @@ class BackendConnection {
                                                        vector<pair<string, string> > &responseHeaders,
                                                        std::string &responseBody, bool printHttpTrace = false);
 
-    static curl_slist *createCurlHeadersFromProxygen(const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders);
-
-    static std::string trimWhiteSpaceFromHeader(const std::string &str);
-
-    static size_t headerCallback(char *buffer, size_t size, size_t nitems, void *userdata);
-
-public:
     static ptr<IBackendError>proxyToBackEnd(const string &url, proxygen::HTTPMethod method_,
                                                  const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
                                                  const std::string &requestBody,

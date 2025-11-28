@@ -15,32 +15,11 @@ std::string X402Client::baseUrl() {
     return "http://" + connectHost;
 }
 
-std::string X402Client::parseStatusLineAndHeaders( const std::vector< std::string >& _headersVector,
-    std::map< std::string, std::string >& _headersMap ) {
-    std::string statusLine;
-    if ( !_headersVector.empty() ) {
-        statusLine = _headersVector[0];
-        statusLine.erase( statusLine.find_last_not_of( " \t\r\n" ) + 1 );
-    }
-    for ( size_t _i = 1; _i < _headersVector.size(); ++_i ) {
-        auto _pos = _headersVector[_i].find( ':' );
-        if ( _pos != std::string::npos ) {
-            std::string _key = _headersVector[_i].substr( 0, _pos );
-            std::string _value = _headersVector[_i].substr( _pos + 1 );
-            _key.erase( 0, _key.find_first_not_of( " \t\r\n" ) );
-            _key.erase( _key.find_last_not_of( " \t\r\n" ) + 1 );
-            _value.erase( 0, _value.find_first_not_of( " \t\r\n" ) );
-            _value.erase( _value.find_last_not_of( " \t\r\n" ) + 1 );
-            _headersMap[_key] = _value;
-        }
-    }
-    return statusLine;
-}
 
 HttpResponse X402Client::sendRequestAndParseResult(
     std::string _location, const std::vector<pair<string, string> >& _extraHeaders, bool printHttpTrace ) {
     (void)printHttpTrace; // currently unused with proxyToBackEnd public API
-    // Build the full URL
+
     std::string url = baseUrl() + ":" + std::to_string(port) + _location;
 
     // Prepare request headers from "Key: Value" strings
@@ -54,17 +33,15 @@ HttpResponse X402Client::sendRequestAndParseResult(
     std::string responseBody;
 
     // Execute via BackendConnection with GET method (public API)
-    auto err = BackendConnection::proxyToBackEnd(
-        url, proxygen::HTTPMethod::GET, requestHeaders, std::string{},
+    auto err = BackendConnection::proxyToBackEndGet(
+        url, requestHeaders,
         httpStatusCode, responseHeaders, responseBody, printHttpTrace);
-    (void)err; // We continue to return the response details regardless of error ptr
 
     // Build HttpResponse compatible with previous usage
     HttpResponse resp;
     resp.status = static_cast<long>(httpStatusCode);
     resp.body = std::move(responseBody);
-    resp.headers = responseHeaders;
-
+    resp.headers.insert(responseHeaders.begin(), responseHeaders.end());
 
 
     for (const auto &kv : responseHeaders) {

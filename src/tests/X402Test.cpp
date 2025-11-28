@@ -145,8 +145,8 @@ BOOST_AUTO_TEST_CASE( Returns200WhenPaymentHeaderPresent ) {
 
 
     BOOST_TEST( resp.status == 200 );
-    //BOOST_TEST( resp.headers.contains( "X-PAYMENT-RESPONSE" ) );
-    //auto paymentResponse = headersMap.at( "X-PAYMENT-RESPONSE" );
+    BOOST_TEST( resp.headers.contains( "X-PAYMENT-RESPONSE" ) );
+    auto paymentResponse = resp.headers.at( "X-PAYMENT-RESPONSE" );
     BOOST_TEST( resp.body.size() > 0 );
 
     // this should cause exception
