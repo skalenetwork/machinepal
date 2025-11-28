@@ -28,18 +28,18 @@ HttpResponse X402Client::sendRequestAndParseResult(
             requestHeaders->getHeaders().add(header.first, header.second);
     }
 
-    vector<pair<string,string>> responseHeaders;
+
 
     HttpResponse resp;
     auto err = HttpEndpointConnection::doGetRequest(
         url, requestHeaders,
-        resp.status, responseHeaders, resp.body, printHttpTrace);
+        resp.status, resp.headers, resp.body, printHttpTrace);
 
-    resp.headers.insert(responseHeaders.begin(), responseHeaders.end());
 
-    for (const auto &kv : responseHeaders) {
-        spdlog::info("{}: {}", kv.first, kv.second);
-    }
+    resp.headers.forEach([](const std::string& name, const std::string& value) {
+        spdlog::info("{}: {}", name, value);
+    });
+
     spdlog::info("BODY::{}", resp.body);
 
     return { resp };

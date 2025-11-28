@@ -52,15 +52,23 @@ bool X402Processor::reply402IfNoPaymentHeader(
 }
 
 
+proxygen::HTTPHeaders X402Processor::getApplicationJsonHeaders() {
+    proxygen::HTTPHeaders headers;
+    for (const auto &header: APPLICATION_JSON_HEADERS) {
+        headers.add(header.first, header.second);
+    }
+    return headers;
+}
+
 void X402Processor::reply502BadGateway(const std::string &message) {
     string body = getJsonErrorBody(message);
 
-    sendResponse({502, "Bad Gateway"}, X402Processor::APPLICATION_JSON_HEADERS, body);
+    sendResponse({502, "Bad Gateway"}, getApplicationJsonHeaders(), body);
     state_ = X402ProcessorState::ERROR_SENT;
 }
 
 
-void X402Processor::replyGenericHttpError(IBackendError &error, vector<pair<string, string> > &responseHeaders) {
+void X402Processor::replyGenericHttpError(IBackendError &error, proxygen::HTTPHeaders &responseHeaders) {
     string body = getJsonErrorBody(error.getMessage());
     sendResponse({
                      static_cast<uint16_t>(error.getError()),
@@ -70,7 +78,7 @@ void X402Processor::replyGenericHttpError(IBackendError &error, vector<pair<stri
     state_ = X402ProcessorState::ERROR_SENT;
 }
 
-void X402Processor::replyPassThroughError(IBackendError &error, vector<pair<string, string> > &responseHeaders) {
+void X402Processor::replyPassThroughError(IBackendError &error, proxygen::HTTPHeaders &responseHeaders) {
     if (dynamic_cast<BackendCurlError *>(&error)) {
         reply502BadGateway(error.getMessage());
     } else {
@@ -80,11 +88,11 @@ void X402Processor::replyPassThroughError(IBackendError &error, vector<pair<stri
 
 void X402Processor::replyX402ResourceSuccess(uint64_t statusCode,
                                              const std::string &settlementInfo,
-                                             const std::vector<std::pair<std::string, std::string> > &&headers,
+                                             const proxygen::HTTPHeaders &&headers,
                                              std::string &responseBody) {
     CHECK_STATE(statusCode >= 200 && statusCode < 300);
     auto headersFinal = std::move(headers);
-    headersFinal.emplace_back("X-PAYMENT-RESPONSE", settlementInfo);
+    headersFinal.add("X-PAYMENT-RESPONSE", settlementInfo);
     sendResponse({
                      statusCode,
                      proxygen::HTTPMessage::getDefaultReason(statusCode)
@@ -100,14 +108,14 @@ void X402Processor::reply402PaymentRequired(
 
         std::optional<string> errorString = std::nullopt;
 
-        auto headers = APPLICATION_JSON_HEADERS;
+        auto headers = getApplicationJsonHeaders();
 
         if (errorResponse) {
             errorString = errorResponse->errorReason().value_or(
                 "Payment required to access resource");
             auto settlementInfo = errorResponse->originalJsonToBase64();
-            headers.push_back(
-                {"X-PAYMENT-RESPONSE", settlementInfo});
+            headers.add(
+                "X-PAYMENT-RESPONSE", settlementInfo);
         }
 
         auto paymentRequirements =
@@ -124,20 +132,20 @@ void X402Processor::reply402PaymentRequired(
 
 
 void X402Processor::reply400BadRequest(const std::string &message) {
-    sendResponse({400, "Bad Request"}, APPLICATION_JSON_HEADERS,
+    sendResponse({400, "Bad Request"}, getApplicationJsonHeaders(),
                  getJsonErrorBody(message));
     state_ = X402ProcessorState::ERROR_SENT;
 }
 
 void X402Processor::reply404ResourceNotFound(const std::string &message) {
-    sendResponse({404, "Not Found"}, APPLICATION_JSON_HEADERS,
+    sendResponse({404, "Not Found"}, getApplicationJsonHeaders(),
                  getJsonErrorBody(message));
     state_ = X402ProcessorState::ERROR_SENT;
 }
 
 
 void X402Processor::reply500InternalError(const std::string &message) {
-    sendResponse({500, "Server Error"}, APPLICATION_JSON_HEADERS,
+    sendResponse({500, "Server Error"}, getApplicationJsonHeaders(),
                  getJsonErrorBody(message));
     state_ = X402ProcessorState::ERROR_SENT;
 }
@@ -157,7 +165,7 @@ std::string X402Processor::getJsonErrorBody(const std::string &message) {
 
 void X402Processor::sendResponse(
     const std::pair<uint16_t, std::string> &statusAndMessage,
-    const std::vector<std::pair<std::string, std::string> > &headers,
+    const proxygen::HTTPHeaders &headers,
     const std::string &body) {
     if (state_ == X402ProcessorState::ERROR_SENT) {
         spdlog::info("Attempted to send response after error response already sent.");
@@ -176,7 +184,11 @@ void X402Processor::sendResponse(
         return;
     }
     try {
-        responseSender->sendResponse(statusAndMessage, headers, body);
+        std::vector<std::pair<std::string, std::string>> headersVec;
+        headers.forEach([&headersVec](const std::string& name, const std::string& value) {
+            headersVec.emplace_back(name, value);
+        });
+        responseSender->sendResponse(statusAndMessage, headersVec, body);
     } catch (std::exception &e) {
         spdlog::error("Exception while sending response: {}", e.what());
         // nothing can be done so we consider response as sent
@@ -342,7 +354,7 @@ void X402Processor::doPassThrough(const std::unique_ptr<proxygen::HTTPMessage> &
         // Proxy the request to the backend without any payment checks
         std::string responseBody;
 
-        std::vector<std::pair<std::string, std::string> > responseHeaders;
+        proxygen::HTTPHeaders responseHeaders;
 
         auto url = organization_->passThroughConfig()->targetUrl() + requestHeaders->getPath();
 
@@ -425,7 +437,7 @@ void X402Processor::onRequestFullyReceived(
 
         uint64_t httpStatusCode = 0;
 
-        vector<pair<string, string> > responseHeaders;
+        proxygen::HTTPHeaders responseHeaders;
 
         auto error = HttpEndpointConnection::doRequest(resource_->getLocation(),
                                                        method_, reqHeaders, body,

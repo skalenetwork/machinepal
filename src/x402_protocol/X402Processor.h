@@ -15,7 +15,8 @@ class SettlementResponse;
 class ResourceConfig;
 
 namespace proxygen {
-enum class HTTPMethod;
+    class HTTPHeaders;
+    enum class HTTPMethod;
 class ResponseHandler;
 class HTTPMessage;
 }  // namespace proxygen
@@ -32,6 +33,8 @@ public:
     bool isReplySent() const override;
 
     bool reply402IfNoPaymentHeader( const std::unique_ptr< proxygen::HTTPMessage >& req );
+
+    proxygen::HTTPHeaders getApplicationJsonHeaders();
 
     void onRequestStart( const std::unique_ptr< proxygen::HTTPMessage >& headers ) noexcept override;
 
@@ -52,7 +55,7 @@ public:
 private:
 
     void sendResponse( const std::pair< uint16_t, std::string >& statusAndMessage,
-        const std::vector< std::pair< std::string, std::string > >& headers,
+        const proxygen::HTTPHeaders& headers,
         const std::string& body );
 
     void reply400BadRequest( const std::string& message );
@@ -67,9 +70,9 @@ private:
 
     void reply502BadGateway( const std::string& message );
 
-    void replyGenericHttpError(IBackendError &error, vector<pair<string, string> > & responseHeaders);
+    void replyGenericHttpError(IBackendError &error, proxygen::HTTPHeaders & responseHeaders);
 
-    void replyPassThroughError( IBackendError& error, vector<pair<string, string> > & responseHeaders );
+    void replyPassThroughError( IBackendError& error, proxygen::HTTPHeaders & responseHeaders );
 
     bool validateAndExtractSubDomainName(
         const std::unique_ptr< proxygen::HTTPMessage >& requestHeaders );
@@ -80,8 +83,8 @@ private:
 
     bool validateMethod( const std::unique_ptr< proxygen::HTTPMessage >& requestHeaders );
 
-    void replyX402ResourceSuccess( uint64_t statusCode, const std::string& settlementInfo,
-        const std::vector< std::pair< std::string, std::string > >&& headers,
+    void  replyX402ResourceSuccess( uint64_t statusCode, const std::string& settlementInfo,
+        const proxygen::HTTPHeaders&& responseHeaders,
         std::string& responseBody );
 
     [[nodiscard]] ptr< MachinePayConfig > config() const {

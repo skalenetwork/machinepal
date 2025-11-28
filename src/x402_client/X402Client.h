@@ -11,7 +11,7 @@ class PaymentPayload;
 struct HttpResponse {
     uint64_t status = 0;
     std::string body;
-    std::map<string, string> headers;
+    proxygen::HTTPHeaders headers;
 };
 
 struct X402Client {

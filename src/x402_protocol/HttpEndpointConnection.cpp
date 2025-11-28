@@ -22,20 +22,21 @@ ptr<IBackendError> HttpEndpointConnection::doRequest(const string &url,
                                                      const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
                                                      const std::string &requestBody,
                                                      uint64_t &httpStatusCode,
-                                                     vector<pair<string, string> > &responseHeaders,
+                                                     proxygen::HTTPHeaders &responseHeaders,
                                                      std::string &responseBody, bool printHttpTrace) {
     switch (method_) {
         case proxygen::HTTPMethod::GET:
             return doGetRequest(url, requestHeaders, httpStatusCode, responseHeaders, responseBody, printHttpTrace);
         case proxygen::HTTPMethod::POST:
-            return doPostRequest(url, requestHeaders, requestBody, httpStatusCode, responseHeaders, responseBody, printHttpTrace);
+            return doPostRequest(url, requestHeaders, requestBody, httpStatusCode, responseHeaders, responseBody,
+                                 printHttpTrace);
         case proxygen::HTTPMethod::HEAD:
             return doHeadRequest(url, requestHeaders, httpStatusCode, responseHeaders, printHttpTrace);
         case proxygen::HTTPMethod::OPTIONS:
             return doOptions(url, requestHeaders, httpStatusCode, responseHeaders, responseBody, printHttpTrace);
         case proxygen::HTTPMethod::PUT:
             return doPutRequest(url, requestHeaders, requestBody, httpStatusCode, responseHeaders, responseBody,
-                printHttpTrace);
+                                printHttpTrace);
         case proxygen::HTTPMethod::DELETE:
             return doDeleteRequest(url, requestHeaders, httpStatusCode, responseHeaders, responseBody, printHttpTrace);
         default:
@@ -44,12 +45,13 @@ ptr<IBackendError> HttpEndpointConnection::doRequest(const string &url,
 }
 
 ptr<IBackendError> HttpEndpointConnection::executeCurlRequest(const string &url,
-                                                         const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
-                                                         uint64_t &httpStatusCode,
-                                                         vector<pair<string, string> > &responseHeaders,
-                                                         std::string &responseBody,
-                                                         const std::function<void(CURL *)> &configureMethod,
-                                                         bool printHttpTrace) {
+                                                              const std::unique_ptr<proxygen::HTTPMessage> &
+                                                              requestHeaders,
+                                                              uint64_t &httpStatusCode,
+                                                              proxygen::HTTPHeaders &responseHeaders,
+                                                              std::string &responseBody,
+                                                              const std::function<void(CURL *)> &configureMethod,
+                                                              bool printHttpTrace) {
     static thread_local std::unique_ptr<CURL, decltype(&curl_easy_cleanup)> curlThreadLocal(
         nullptr, &curl_easy_cleanup);
 
@@ -126,17 +128,17 @@ ptr<IBackendError> HttpEndpointConnection::executeCurlRequest(const string &url,
 ptr<IBackendError> HttpEndpointConnection::doGetRequest(const string &url,
                                                         const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
                                                         uint64_t &httpStatusCode,
-                                                        vector<pair<string, string> > &responseHeaders,
+                                                        proxygen::HTTPHeaders &responseHeaders,
                                                         std::string &responseBody, bool printHttpTrace) {
     return executeCurlRequest(url, requestHeaders, httpStatusCode, responseHeaders, responseBody, nullptr,
-        printHttpTrace);
+                              printHttpTrace);
 }
 
 ptr<IBackendError> HttpEndpointConnection::doPostRequest(const string &url,
                                                          const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
                                                          const std::string &requestBody,
                                                          uint64_t &httpStatusCode,
-                                                         vector<pair<string, string> > &responseHeaders,
+                                                         proxygen::HTTPHeaders &responseHeaders,
                                                          std::string &responseBody, bool printHttpTrace) {
     return executeCurlRequest(url, requestHeaders, httpStatusCode, responseHeaders, responseBody,
                               [&](CURL *curl) {
@@ -149,7 +151,7 @@ ptr<IBackendError> HttpEndpointConnection::doPostRequest(const string &url,
 ptr<IBackendError> HttpEndpointConnection::doHeadRequest(const string &url,
                                                          const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
                                                          uint64_t &httpStatusCode,
-                                                         vector<pair<string, string> > &responseHeaders, bool printHttpTrace) {
+                                                         proxygen::HTTPHeaders &responseHeaders, bool printHttpTrace) {
     std::string responseBody; // Ignored for HEAD
     return executeCurlRequest(url, requestHeaders, httpStatusCode, responseHeaders, responseBody,
                               [](CURL *curl) {
@@ -158,11 +160,11 @@ ptr<IBackendError> HttpEndpointConnection::doHeadRequest(const string &url,
 }
 
 ptr<IBackendError> HttpEndpointConnection::doOptions(const string &url,
-                                                            const std::unique_ptr<proxygen::HTTPMessage> &
-                                                            requestHeaders,
-                                                            uint64_t &httpStatusCode,
-                                                            vector<pair<string, string> > &responseHeaders,
-                                                            std::string &responseBody, bool printHttpTrace) {
+                                                     const std::unique_ptr<proxygen::HTTPMessage> &
+                                                     requestHeaders,
+                                                     uint64_t &httpStatusCode,
+                                                     proxygen::HTTPHeaders &responseHeaders,
+                                                     std::string &responseBody, bool printHttpTrace) {
     return executeCurlRequest(url, requestHeaders, httpStatusCode, responseHeaders, responseBody,
                               [](CURL *curl) {
                                   curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "OPTIONS");
@@ -173,7 +175,7 @@ ptr<IBackendError> HttpEndpointConnection::doPutRequest(const string &url,
                                                         const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
                                                         const std::string &requestBody,
                                                         uint64_t &httpStatusCode,
-                                                        vector<pair<string, string> > &responseHeaders,
+                                                        proxygen::HTTPHeaders &responseHeaders,
                                                         std::string &responseBody, bool printHttpTrace) {
     return executeCurlRequest(url, requestHeaders, httpStatusCode, responseHeaders, responseBody,
                               [&](CURL *curl) {
@@ -186,7 +188,7 @@ ptr<IBackendError> HttpEndpointConnection::doPutRequest(const string &url,
 ptr<IBackendError> HttpEndpointConnection::doDeleteRequest(const string &url,
                                                            const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
                                                            uint64_t &httpStatusCode,
-                                                           vector<pair<string, string> > &responseHeaders,
+                                                           proxygen::HTTPHeaders &responseHeaders,
                                                            std::string &responseBody, bool printHttpTrace) {
     return executeCurlRequest(url, requestHeaders, httpStatusCode, responseHeaders, responseBody,
                               [](CURL *curl) {
@@ -240,7 +242,9 @@ size_t HttpEndpointConnection::headerCallback(char *buffer, size_t size, size_t 
     size_t totalSize = size * nitems;
     std::string raw(buffer, totalSize);
 
-    auto *headers = static_cast<std::vector<std::pair<std::string, std::string> > *>(userdata);
+    auto *headers = static_cast<proxygen::HTTPHeaders*>(userdata);
+
+    CHECK_STATE(headers);
 
     // Ignore blank lines (e.g., the one separating headers from body)
     if (folly::trimWhitespace(raw).empty()) {
@@ -259,12 +263,10 @@ size_t HttpEndpointConnection::headerCallback(char *buffer, size_t size, size_t 
         std::string value = trimWhiteSpaceFromHeader(raw.substr(colonPos + 1));
 
         if (!key.empty()) {
-            headers->emplace_back(key, value);
+            headers->add(key, value);
         }
-    } else if (!headers->empty() && (raw.starts_with(' ') || raw.starts_with('\t'))) {
-        // This is a folded header (continuation of the previous line)
-        headers->back().second.append(" " + trimWhiteSpaceFromHeader(raw));
     }
+
 
     return totalSize;
 }
