@@ -9,7 +9,7 @@
 class PaymentPayload;
 
 struct HttpResponse {
-    long status = 0;
+    uint64_t status = 0;
     std::string body;
     std::map<string, string> headers;
 };
@@ -26,7 +26,7 @@ public:
     std::string baseUrl();
     HttpResponse
     sendRequestAndParseResult( std::string _location,
-        const std::vector< pair<string, string> >& _extraHeaders, bool printHttpTrace = false );
+        const std::vector< pair<string, string> >& _requestHeaders, bool printHttpTrace = false );
 
      HttpResponse sendRequestWithPayloadAndParseResult(
         std::string _location, ptr< PaymentPayload > payload, bool printHttpTrace );

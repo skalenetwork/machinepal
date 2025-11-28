@@ -2,7 +2,7 @@
 
 #include "payment/datastructures/PaymentPayload.h"
 #include <functional>
-#include "x402_protocol/BackendConnection.h"
+#include "x402_protocol/HttpEndpointConnection.h"
 #include <proxygen/lib/http/HTTPMessage.h>
 #include <proxygen/lib/http/HTTPMethod.h>
 
@@ -17,32 +17,25 @@ std::string X402Client::baseUrl() {
 
 
 HttpResponse X402Client::sendRequestAndParseResult(
-    std::string _location, const std::vector<pair<string, string> >& _extraHeaders, bool printHttpTrace ) {
-    (void)printHttpTrace; // currently unused with proxyToBackEnd public API
+    std::string _location, const std::vector<pair<string, string> >& _requestHeaders, bool printHttpTrace ) {
 
     std::string url = baseUrl() + ":" + std::to_string(port) + _location;
 
     // Prepare request headers from "Key: Value" strings
     auto requestHeaders = std::make_unique<proxygen::HTTPMessage>();
-    for (const auto &header : _extraHeaders) {
+
+    for (const auto &header : _requestHeaders) {
             requestHeaders->getHeaders().add(header.first, header.second);
     }
 
-    uint64_t httpStatusCode = 0;
-    std::vector<std::pair<std::string,std::string>> responseHeaders;
-    std::string responseBody;
+    vector<pair<string,string>> responseHeaders;
 
-    // Execute via BackendConnection with GET method (public API)
-    auto err = BackendConnection::proxyToBackEndGet(
-        url, requestHeaders,
-        httpStatusCode, responseHeaders, responseBody, printHttpTrace);
-
-    // Build HttpResponse compatible with previous usage
     HttpResponse resp;
-    resp.status = static_cast<long>(httpStatusCode);
-    resp.body = std::move(responseBody);
-    resp.headers.insert(responseHeaders.begin(), responseHeaders.end());
+    auto err = HttpEndpointConnection::doGetRequest(
+        url, requestHeaders,
+        resp.status, responseHeaders, resp.body, printHttpTrace);
 
+    resp.headers.insert(responseHeaders.begin(), responseHeaders.end());
 
     for (const auto &kv : responseHeaders) {
         spdlog::info("{}: {}", kv.first, kv.second);

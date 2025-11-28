@@ -12,7 +12,7 @@ namespace proxygen {
 class X402Processor;
 class IResponseSender;
 
-class BackendConnection {
+class HttpEndpointConnection {
 
 
     static curl_slist *createCurlHeadersFromProxygen(const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders);
@@ -23,44 +23,44 @@ class BackendConnection {
 
 public:
 
-    static ptr<IBackendError>proxyToBackEndGet(const string &url,
+    static ptr<IBackendError>doGetRequest(const string &url,
                                                     const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
                                                     uint64_t& httpStatusCode,
                                                     vector<pair<string, string> > &responseHeaders,
                                                     std::string &responseBody, bool printHttpTrace = false);
 
-    static ptr<IBackendError>proxyToBackEndPost(const string &url,
+    static ptr<IBackendError>doPostRequest(const string &url,
                                                      const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
                                                      const std::string &requestBody,
                                                      uint64_t& httpStatusCode,
                                                      vector<pair<string, string> > &responseHeaders,
                                                      std::string &responseBody, bool printHttpTrace = false);
 
-    static ptr<IBackendError>proxyToBackEndHead(const string &url,
+    static ptr<IBackendError>doHeadRequest(const string &url,
                                                      const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
                                                      uint64_t& httpStatusCode,
                                                      vector<pair<string, string> > &responseHeaders, bool printHttpTrace = false);
 
-    static ptr<IBackendError>proxyToBackEndOptions(const string &url,
+    static ptr<IBackendError>doOptions(const string &url,
                                                         const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
                                                         uint64_t& httpStatusCode,
                                                         vector<pair<string, string> > &responseHeaders,
                                                         std::string &responseBody, bool printHttpTrace = false);
 
-    static ptr<IBackendError>proxyToBackEndPut(const string &url,
+    static ptr<IBackendError>doPutRequest(const string &url,
                                                     const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
                                                     const std::string &requestBody,
                                                     uint64_t& httpStatusCode,
                                                     vector<pair<string, string> > &responseHeaders,
                                                     std::string &responseBody, bool printHttpTrace = false);
 
-    static ptr<IBackendError>proxyToBackEndDelete(const string &url,
+    static ptr<IBackendError>doDeleteRequest(const string &url,
                                                        const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
                                                        uint64_t& httpStatusCode,
                                                        vector<pair<string, string> > &responseHeaders,
                                                        std::string &responseBody, bool printHttpTrace = false);
 
-    static ptr<IBackendError>proxyToBackEnd(const string &url, proxygen::HTTPMethod method_,
+    static ptr<IBackendError>doRequest(const string &url, proxygen::HTTPMethod method_,
                                                  const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
                                                  const std::string &requestBody,
                                                  uint64_t& httpStatusCode,

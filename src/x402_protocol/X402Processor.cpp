@@ -1,5 +1,5 @@
 #include "X402Processor.h"
-#include "BackendConnection.h"
+#include "HttpEndpointConnection.h"
 #include "BackendCurlError.h"
 #include "BackendHttpError.h"
 #include "IResponseSender.h"
@@ -349,7 +349,7 @@ void X402Processor::doPassThrough(const std::unique_ptr<proxygen::HTTPMessage> &
 
         uint64_t httpStatusCode = 0;
 
-        auto error = BackendConnection::proxyToBackEnd(url, method_, requestHeaders,
+        auto error = HttpEndpointConnection::doRequest(url, method_, requestHeaders,
                                                        requestBody, httpStatusCode, responseHeaders, responseBody);
 
         if (error) {
@@ -427,7 +427,7 @@ void X402Processor::onRequestFullyReceived(
 
         vector<pair<string, string> > responseHeaders;
 
-        auto error = BackendConnection::proxyToBackEnd(resource_->getLocation(),
+        auto error = HttpEndpointConnection::doRequest(resource_->getLocation(),
                                                        method_, reqHeaders, body,
                                                        httpStatusCode, responseHeaders, responseBody);
 

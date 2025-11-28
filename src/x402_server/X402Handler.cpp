@@ -3,7 +3,7 @@
 
 #include "ProxygenResponseSender.h"
 #include "examples/PaymentExamples.h"
-#include "x402_protocol/BackendConnection.h"
+#include "x402_protocol/HttpEndpointConnection.h"
 #include "x402_protocol/IProcessor.h"
 
 using namespace proxygen;

@@ -108,7 +108,7 @@ BOOST_AUTO_TEST_CASE( Returns402WhenNoPaymentHeader ) {
 
 
     BOOST_TEST( resp.status == 402 );
-    //BOOST_TEST( resp.headers["Content-Type"] == "application/json" );
+    BOOST_TEST( resp.headers["Content-Type"] == "application/json" );
 
     PaymentRequiredResponse response;
 
@@ -154,7 +154,7 @@ BOOST_AUTO_TEST_CASE( Returns200WhenPaymentHeaderPresent ) {
         client->sendRequestWithPayloadAndParseResult( "/posts/1", paymentPayload, true );
 
     BOOST_TEST( resp2.status == 402 );
-    //BOOST_TEST( headersMap2.contains( "X-PAYMENT-RESPONSE" ) );
+    BOOST_TEST(  resp2.headers.contains( "X-PAYMENT-RESPONSE" ) );
     BOOST_TEST( resp2.body.size() > 0 );
 
 
