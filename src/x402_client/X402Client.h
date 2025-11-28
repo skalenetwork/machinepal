@@ -47,4 +47,13 @@ public:
 
     HttpResponse httpOptions( const std::string& _baseURL, const std::string& _location,
         const std::vector< std::string >& _extraHeaders, bool printHttpTrace = false );
+
+    HttpResponse httpPut( const std::string& _baseURL, const std::string& _location,
+        const std::vector< std::string >& _extraHeaders, bool printHttpTrace = false );
+
+    HttpResponse httpPost( const std::string& _baseURL, const std::string& _location,
+        const std::vector< std::string >& _extraHeaders, bool printHttpTrace = false );
+
+    HttpResponse httpDelete( const std::string& _baseURL, const std::string& _location,
+        const std::vector< std::string >& _extraHeaders, bool printHttpTrace = false );
 };
