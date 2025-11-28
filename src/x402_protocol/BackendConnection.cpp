@@ -47,7 +47,8 @@ ptr<IBackendError> BackendConnection::executeCurlRequest(const string &url,
                                                          uint64_t &httpStatusCode,
                                                          vector<pair<string, string> > &responseHeaders,
                                                          std::string &responseBody,
-                                                         const std::function<void(CURL *)> &configureMethod) {
+                                                         const std::function<void(CURL *)> &configureMethod,
+                                                         bool printHttpTrace) {
     static thread_local std::unique_ptr<CURL, decltype(&curl_easy_cleanup)> curlThreadLocal(
         nullptr, &curl_easy_cleanup);
 
@@ -87,6 +88,13 @@ ptr<IBackendError> BackendConnection::executeCurlRequest(const string &url,
         });
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &responseBody);
 
+
+    if (printHttpTrace) {
+        curl_easy_setopt(curl, CURLOPT_DEBUGFUNCTION, BackendConnection::debugCallback);
+        curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+    }
+
+
     // Apply method-specific configurations
     if (configureMethod) {
         configureMethod(curl);
@@ -118,8 +126,9 @@ ptr<IBackendError> BackendConnection::proxyToBackEndGet(const string &url,
                                                         const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
                                                         uint64_t &httpStatusCode,
                                                         vector<pair<string, string> > &responseHeaders,
-                                                        std::string &responseBody) {
-    return executeCurlRequest(url, requestHeaders, httpStatusCode, responseHeaders, responseBody, nullptr);
+                                                        std::string &responseBody, bool printHttpTrace) {
+    return executeCurlRequest(url, requestHeaders, httpStatusCode, responseHeaders, responseBody, nullptr,
+        printHttpTrace);
 }
 
 ptr<IBackendError> BackendConnection::proxyToBackEndPost(const string &url,
@@ -127,24 +136,24 @@ ptr<IBackendError> BackendConnection::proxyToBackEndPost(const string &url,
                                                          const std::string &requestBody,
                                                          uint64_t &httpStatusCode,
                                                          vector<pair<string, string> > &responseHeaders,
-                                                         std::string &responseBody) {
+                                                         std::string &responseBody, bool printHttpTrace) {
     return executeCurlRequest(url, requestHeaders, httpStatusCode, responseHeaders, responseBody,
                               [&](CURL *curl) {
                                   curl_easy_setopt(curl, CURLOPT_POST, 1L);
                                   curl_easy_setopt(curl, CURLOPT_POSTFIELDS, requestBody.c_str());
                                   curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, static_cast<long>(requestBody.size()));
-                              });
+                              }, printHttpTrace);
 }
 
 ptr<IBackendError> BackendConnection::proxyToBackEndHead(const string &url,
                                                          const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
                                                          uint64_t &httpStatusCode,
-                                                         vector<pair<string, string> > &responseHeaders) {
+                                                         vector<pair<string, string> > &responseHeaders, bool printHttpTrace) {
     std::string responseBody; // Ignored for HEAD
     return executeCurlRequest(url, requestHeaders, httpStatusCode, responseHeaders, responseBody,
                               [](CURL *curl) {
                                   curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);
-                              });
+                              }, printHttpTrace);
 }
 
 ptr<IBackendError> BackendConnection::proxyToBackEndOptions(const string &url,
@@ -152,11 +161,11 @@ ptr<IBackendError> BackendConnection::proxyToBackEndOptions(const string &url,
                                                             requestHeaders,
                                                             uint64_t &httpStatusCode,
                                                             vector<pair<string, string> > &responseHeaders,
-                                                            std::string &responseBody) {
+                                                            std::string &responseBody, bool printHttpTrace) {
     return executeCurlRequest(url, requestHeaders, httpStatusCode, responseHeaders, responseBody,
                               [](CURL *curl) {
                                   curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "OPTIONS");
-                              });
+                              }, printHttpTrace);
 }
 
 ptr<IBackendError> BackendConnection::proxyToBackEndPut(const string &url,
@@ -164,24 +173,24 @@ ptr<IBackendError> BackendConnection::proxyToBackEndPut(const string &url,
                                                         const std::string &requestBody,
                                                         uint64_t &httpStatusCode,
                                                         vector<pair<string, string> > &responseHeaders,
-                                                        std::string &responseBody) {
+                                                        std::string &responseBody, bool printHttpTrace) {
     return executeCurlRequest(url, requestHeaders, httpStatusCode, responseHeaders, responseBody,
                               [&](CURL *curl) {
                                   curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
                                   curl_easy_setopt(curl, CURLOPT_POSTFIELDS, requestBody.c_str());
                                   curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, static_cast<long>(requestBody.size()));
-                              });
+                              }, printHttpTrace);
 }
 
 ptr<IBackendError> BackendConnection::proxyToBackEndDelete(const string &url,
                                                            const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
                                                            uint64_t &httpStatusCode,
                                                            vector<pair<string, string> > &responseHeaders,
-                                                           std::string &responseBody) {
+                                                           std::string &responseBody, bool printHttpTrace) {
     return executeCurlRequest(url, requestHeaders, httpStatusCode, responseHeaders, responseBody,
                               [](CURL *curl) {
                                   curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
-                              });
+                              }, printHttpTrace);
 }
 
 
