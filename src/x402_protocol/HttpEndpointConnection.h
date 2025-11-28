@@ -15,7 +15,7 @@ class IResponseSender;
 class HttpEndpointConnection {
 
 
-    static curl_slist *createCurlHeadersFromProxygen(const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders);
+    static curl_slist *createCurlHeadersFromProxygenHeaders(const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders);
 
     static std::string trimWhiteSpaceFromHeader(const std::string &str);
 

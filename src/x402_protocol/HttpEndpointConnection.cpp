@@ -66,7 +66,7 @@ ptr<IBackendError> HttpEndpointConnection::executeCurlRequest(const string &url,
     auto *curl = curlThreadLocal.get();
     curl_easy_reset(curl);
 
-    struct curl_slist *headers = createCurlHeadersFromProxygen(requestHeaders);
+    struct curl_slist *headers = createCurlHeadersFromProxygenHeaders(requestHeaders);
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
 
     // Enable SSL certificate verification for security
@@ -195,7 +195,7 @@ ptr<IBackendError> HttpEndpointConnection::doDeleteRequest(const string &url,
 }
 
 
-curl_slist *HttpEndpointConnection::createCurlHeadersFromProxygen(
+curl_slist *HttpEndpointConnection::createCurlHeadersFromProxygenHeaders(
     const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders) {
     curl_slist *chunk = nullptr;
 
