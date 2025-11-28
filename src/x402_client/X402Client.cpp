@@ -133,3 +133,54 @@ HttpResponse X402Client::httpGet( const std::string& _baseURL, const std::string
     curl_easy_cleanup( curl );
     return resp;
 }
+
+HttpResponse X402Client::httpHead( const std::string& _baseURL, const std::string& _location,
+    const std::vector< std::string >& _extraHeaders, bool printHttpTrace ) {
+    CURL* curl = curl_easy_init();
+    if ( !curl )
+        throw std::runtime_error( "curl_easy_init failed" );
+
+    std::string url = _baseURL + ":" + std::to_string( port ) + _location;
+
+    struct curl_slist* hdrs = nullptr;
+    for ( auto& _h : _extraHeaders )
+        hdrs = curl_slist_append( hdrs, _h.c_str() );
+
+    HttpResponse resp;
+    curl_easy_setopt( curl, CURLOPT_URL, url.c_str() );
+    curl_easy_setopt( curl, CURLOPT_FOLLOWLOCATION, 0L );
+
+    // HEAD request: do not download body
+    curl_easy_setopt( curl, CURLOPT_NOBODY, 1L );
+    curl_easy_setopt( curl, CURLOPT_CUSTOMREQUEST, "HEAD" );
+
+    // We still want headers
+    curl_easy_setopt( curl, CURLOPT_HEADERFUNCTION, writeHeader );
+    curl_easy_setopt( curl, CURLOPT_HEADERDATA, &resp.headers );
+
+    // For some servers, libcurl might still try to call write callback. Provide it to be safe.
+    curl_easy_setopt( curl, CURLOPT_WRITEFUNCTION, writeBody );
+    curl_easy_setopt( curl, CURLOPT_WRITEDATA, &resp.body );
+
+    if ( printHttpTrace ) {
+        curl_easy_setopt( curl, CURLOPT_DEBUGFUNCTION, debugCallback );
+        curl_easy_setopt( curl, CURLOPT_VERBOSE, 1L );
+    }
+
+    if ( hdrs )
+        curl_easy_setopt( curl, CURLOPT_HTTPHEADER, hdrs );
+
+    auto rc = curl_easy_perform( curl );
+    if ( rc != CURLE_OK ) {
+        if ( hdrs )
+            curl_slist_free_all( hdrs );
+        curl_easy_cleanup( curl );
+        throw std::runtime_error( std::string( "curl perform error: " ) + curl_easy_strerror( rc ) );
+    }
+    curl_easy_getinfo( curl, CURLINFO_RESPONSE_CODE, &resp.status );
+
+    if ( hdrs )
+        curl_slist_free_all( hdrs );
+    curl_easy_cleanup( curl );
+    return resp;
+}
