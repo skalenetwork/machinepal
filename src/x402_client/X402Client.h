@@ -44,4 +44,7 @@ public:
 
     HttpResponse httpHead( const std::string& _baseURL, const std::string& _location,
         const std::vector< std::string >& _extraHeaders, bool printHttpTrace = false );
+
+    HttpResponse httpOptions( const std::string& _baseURL, const std::string& _location,
+        const std::vector< std::string >& _extraHeaders, bool printHttpTrace = false );
 };
