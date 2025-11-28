@@ -23,20 +23,21 @@ ptr<IBackendError> BackendConnection::proxyToBackEnd(const string &url,
                                                      const std::string &requestBody,
                                                      uint64_t &httpStatusCode,
                                                      vector<pair<string, string> > &responseHeaders,
-                                                     std::string &responseBody) {
+                                                     std::string &responseBody, bool printHttpTrace) {
     switch (method_) {
         case proxygen::HTTPMethod::GET:
-            return proxyToBackEndGet(url, requestHeaders, httpStatusCode, responseHeaders, responseBody);
+            return proxyToBackEndGet(url, requestHeaders, httpStatusCode, responseHeaders, responseBody, printHttpTrace);
         case proxygen::HTTPMethod::POST:
-            return proxyToBackEndPost(url, requestHeaders, requestBody, httpStatusCode, responseHeaders, responseBody);
+            return proxyToBackEndPost(url, requestHeaders, requestBody, httpStatusCode, responseHeaders, responseBody, printHttpTrace);
         case proxygen::HTTPMethod::HEAD:
-            return proxyToBackEndHead(url, requestHeaders, httpStatusCode, responseHeaders);
+            return proxyToBackEndHead(url, requestHeaders, httpStatusCode, responseHeaders, printHttpTrace);
         case proxygen::HTTPMethod::OPTIONS:
-            return proxyToBackEndOptions(url, requestHeaders, httpStatusCode, responseHeaders, responseBody);
+            return proxyToBackEndOptions(url, requestHeaders, httpStatusCode, responseHeaders, responseBody, printHttpTrace);
         case proxygen::HTTPMethod::PUT:
-            return proxyToBackEndPut(url, requestHeaders, requestBody, httpStatusCode, responseHeaders, responseBody);
+            return proxyToBackEndPut(url, requestHeaders, requestBody, httpStatusCode, responseHeaders, responseBody,
+                printHttpTrace);
         case proxygen::HTTPMethod::DELETE:
-            return proxyToBackEndDelete(url, requestHeaders, httpStatusCode, responseHeaders, responseBody);
+            return proxyToBackEndDelete(url, requestHeaders, httpStatusCode, responseHeaders, responseBody, printHttpTrace);
         default:
             return make_shared<BackendHttpError>(501);
     }

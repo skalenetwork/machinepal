@@ -62,7 +62,7 @@ public:
                                                  const std::string &requestBody,
                                                  uint64_t& httpStatusCode,
                                                  vector<pair<string, string> > &responseHeaders,
-                                                 std::string &responseBody);
+                                                 std::string &responseBody, bool printHttpTrace = false);
 
     static ptr<IBackendError>executeCurlRequest(const string &url,
                                                      const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,

@@ -2,6 +2,9 @@
 
 #include "payment/datastructures/PaymentPayload.h"
 #include <functional>
+#include "x402_protocol/BackendConnection.h"
+#include <proxygen/lib/http/HTTPMessage.h>
+#include <proxygen/lib/http/HTTPMethod.h>
 
 X402Client::X402Client( const std::string& _connect_ip, uint16_t _port )
     : connectHost( _connect_ip ), port( _port ) {}
@@ -36,16 +39,47 @@ std::string X402Client::parseStatusLineAndHeaders( const std::vector< std::strin
 
 std::tuple< std::map< std::string, std::string >, std::string, HttpResponse >
 X402Client::sendRequestAndParseResult(
-    std::string _location, const std::vector< std::string >& _extraHeaders, bool printHttpTrace ) {
-    auto resp = httpGet( baseUrl(), _location, _extraHeaders, printHttpTrace );
-    auto headersVector = resp.headers;
-    std::map< std::string, std::string > headersMap;
-    auto statusLine = parseStatusLineAndHeaders( headersVector, headersMap );
-    spdlog::info( "STATUS::{}", statusLine );
-    for ( const auto& [key, value] : headersMap ) {
-        spdlog::info( "{}: {}", key, value );
+    std::string _location, const std::vector<pair<string, string> >& _extraHeaders, bool printHttpTrace ) {
+    (void)printHttpTrace; // currently unused with proxyToBackEnd public API
+    // Build the full URL
+    std::string url = baseUrl() + ":" + std::to_string(port) + _location;
+
+    // Prepare request headers from "Key: Value" strings
+    auto requestHeaders = std::make_unique<proxygen::HTTPMessage>();
+    for (const auto &header : _extraHeaders) {
+            requestHeaders->getHeaders().add(header.first, header.second);
     }
-    spdlog::info( "BODY::{}", resp.body );
+
+    uint64_t httpStatusCode = 0;
+    std::vector<std::pair<std::string,std::string>> responseHeaders;
+    std::string responseBody;
+
+    // Execute via BackendConnection with GET method (public API)
+    auto err = BackendConnection::proxyToBackEnd(
+        url, proxygen::HTTPMethod::GET, requestHeaders, std::string{},
+        httpStatusCode, responseHeaders, responseBody, printHttpTrace);
+    (void)err; // We continue to return the response details regardless of error ptr
+
+    // Build HttpResponse compatible with previous usage
+    HttpResponse resp;
+    resp.status = static_cast<long>(httpStatusCode);
+    resp.body = std::move(responseBody);
+    // Reconstruct a header vector beginning with a status line for compatibility
+    std::string statusLine = std::string("HTTP/1.1 ") + std::to_string(resp.status);
+    resp.headers.push_back(statusLine + "\r\n");
+
+    std::map<std::string, std::string> headersMap;
+    for (const auto &kv : responseHeaders) {
+        headersMap[kv.first] = kv.second;
+        resp.headers.push_back(kv.first + ": " + kv.second + "\r\n");
+    }
+
+    spdlog::info("STATUS::{}", statusLine);
+    for (const auto &kv : headersMap) {
+        spdlog::info("{}: {}", kv.first, kv.second);
+    }
+    spdlog::info("BODY::{}", resp.body);
+
     return { headersMap, statusLine, resp };
 }
 
@@ -58,256 +92,4 @@ X402Client::sendRequestWithPayloadAndParseResult(
     return sendRequestAndParseResult( _location, { header }, printHttpTrace );
 }
 
-size_t X402Client::writeBody( char* _ptr, size_t _size, size_t _nmemb, void* _userdata ) {
-    auto* out = static_cast< std::string* >( _userdata );
-    out->append( _ptr, _size * _nmemb );
-    return _size * _nmemb;
-}
-
-size_t X402Client::writeHeader( char* _buffer, size_t _size, size_t _nitems, void* _userdata ) {
-    auto* headers = static_cast< std::vector< std::string >* >( _userdata );
-    headers->emplace_back( _buffer, _size * _nitems );
-    return _size * _nitems;
-}
-
-int X402Client::debugCallback( CURL*, curl_infotype type, char* data, size_t size, void* ) {
-    switch ( type ) {
-    case CURLINFO_HEADER_OUT:
-        spdlog::info( "CURL SEND HEADER:\n{}", std::string( data, size ) );
-        break;
-    case CURLINFO_DATA_OUT:
-        spdlog::info( "CURL SEND DATA:\n{}", std::string( data, size ) );
-        break;
-    case CURLINFO_HEADER_IN:
-        spdlog::info( "CURL RECV HEADER:\n{}", std::string( data, size ) );
-        break;
-    case CURLINFO_DATA_IN:
-        spdlog::info( "CURL RECV DATA:\n{}", std::string( data, size ) );
-        break;
-    default:
-        break;
-    }
-    return 0;
-}
-
-// Internal helper to reduce duplication across HTTP methods
-static HttpResponse executeClientCurlRequest(
-    const std::string& url,
-    const std::vector<std::string>& extraHeaders,
-    bool printHttpTrace,
-    const std::function<void(CURL*)>& configureMethod)
-{
-    CURL* curl = curl_easy_init();
-    if (!curl)
-        throw std::runtime_error("curl_easy_init failed");
-
-    struct curl_slist* hdrs = nullptr;
-    for (const auto& h : extraHeaders)
-        hdrs = curl_slist_append(hdrs, h.c_str());
-
-    HttpResponse resp;
-
-    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 0L);
-
-    // Common callbacks
-    curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, X402Client::writeHeader);
-    curl_easy_setopt(curl, CURLOPT_HEADERDATA, &resp.headers);
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, X402Client::writeBody);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &resp.body);
-
-    if (printHttpTrace) {
-        curl_easy_setopt(curl, CURLOPT_DEBUGFUNCTION, X402Client::debugCallback);
-        curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
-    }
-
-    if (hdrs)
-        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, hdrs);
-
-    if (configureMethod)
-        configureMethod(curl);
-
-    auto rc = curl_easy_perform(curl);
-    if (rc != CURLE_OK) {
-        if (hdrs)
-            curl_slist_free_all(hdrs);
-        curl_easy_cleanup(curl);
-        throw std::runtime_error(std::string("curl perform error: ") + curl_easy_strerror(rc));
-    }
-
-    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &resp.status);
-
-    if (hdrs)
-        curl_slist_free_all(hdrs);
-    curl_easy_cleanup(curl);
-    return resp;
-}
-
-HttpResponse X402Client::httpGet( const std::string& _baseURL, const std::string& _location,
-    const std::vector< std::string >& _extraHeaders, bool printHttpTrace ) {
-    std::string url = _baseURL + ":" + std::to_string( port ) + _location;
-    return executeClientCurlRequest(url, _extraHeaders, printHttpTrace, nullptr);
-}
-
-HttpResponse X402Client::httpHead( const std::string& _baseURL, const std::string& _location,
-    const std::vector< std::string >& _extraHeaders, bool printHttpTrace ) {
-    std::string url = _baseURL + ":" + std::to_string( port ) + _location;
-    return executeClientCurlRequest(url, _extraHeaders, printHttpTrace, [](CURL* curl){
-        curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);
-        curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "HEAD");
-    });
-}
-
-HttpResponse X402Client::httpOptions( const std::string& _baseURL, const std::string& _location,
-    const std::vector< std::string >& _extraHeaders, bool printHttpTrace ) {
-    std::string url = _baseURL + ":" + std::to_string( port ) + _location;
-    return executeClientCurlRequest(url, _extraHeaders, printHttpTrace, [](CURL* curl){
-        curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);
-        curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "OPTIONS");
-    });
-}
-
-HttpResponse X402Client::httpPut( const std::string& _baseURL, const std::string& _location,
-    const std::vector< std::string >& _extraHeaders, bool printHttpTrace ) {
-    CURL* curl = curl_easy_init();
-    if ( !curl )
-        throw std::runtime_error( "curl_easy_init failed" );
-
-    std::string url = _baseURL + ":" + std::to_string( port ) + _location;
-
-    struct curl_slist* hdrs = nullptr;
-    for ( auto& _h : _extraHeaders )
-        hdrs = curl_slist_append( hdrs, _h.c_str() );
-
-    HttpResponse resp;
-    curl_easy_setopt( curl, CURLOPT_URL, url.c_str() );
-    curl_easy_setopt( curl, CURLOPT_FOLLOWLOCATION, 0L );
-
-    // PUT request: no body by default; this overload only sends headers
-    curl_easy_setopt( curl, CURLOPT_CUSTOMREQUEST, "PUT" );
-
-    // Collect response headers and body
-    curl_easy_setopt( curl, CURLOPT_HEADERFUNCTION, writeHeader );
-    curl_easy_setopt( curl, CURLOPT_HEADERDATA, &resp.headers );
-    curl_easy_setopt( curl, CURLOPT_WRITEFUNCTION, writeBody );
-    curl_easy_setopt( curl, CURLOPT_WRITEDATA, &resp.body );
-
-    if ( printHttpTrace ) {
-        curl_easy_setopt( curl, CURLOPT_DEBUGFUNCTION, debugCallback );
-        curl_easy_setopt( curl, CURLOPT_VERBOSE, 1L );
-    }
-
-    if ( hdrs )
-        curl_easy_setopt( curl, CURLOPT_HTTPHEADER, hdrs );
-
-    auto rc = curl_easy_perform( curl );
-    if ( rc != CURLE_OK ) {
-        if ( hdrs )
-            curl_slist_free_all( hdrs );
-        curl_easy_cleanup( curl );
-        throw std::runtime_error( std::string( "curl perform error: " ) + curl_easy_strerror( rc ) );
-    }
-    curl_easy_getinfo( curl, CURLINFO_RESPONSE_CODE, &resp.status );
-
-    if ( hdrs )
-        curl_slist_free_all( hdrs );
-    curl_easy_cleanup( curl );
-    return resp;
-}
-
-HttpResponse X402Client::httpPost( const std::string& _baseURL, const std::string& _location,
-    const std::vector< std::string >& _extraHeaders, bool printHttpTrace ) {
-    CURL* curl = curl_easy_init();
-    if ( !curl )
-        throw std::runtime_error( "curl_easy_init failed" );
-
-    std::string url = _baseURL + ":" + std::to_string( port ) + _location;
-
-    struct curl_slist* hdrs = nullptr;
-    for ( auto& _h : _extraHeaders )
-        hdrs = curl_slist_append( hdrs, _h.c_str() );
-
-    HttpResponse resp;
-    curl_easy_setopt( curl, CURLOPT_URL, url.c_str() );
-    curl_easy_setopt( curl, CURLOPT_FOLLOWLOCATION, 0L );
-
-    // POST request without a body; only headers are sent unless caller adds content headers
-    curl_easy_setopt( curl, CURLOPT_CUSTOMREQUEST, "POST" );
-
-    // Collect response headers and body
-    curl_easy_setopt( curl, CURLOPT_HEADERFUNCTION, writeHeader );
-    curl_easy_setopt( curl, CURLOPT_HEADERDATA, &resp.headers );
-    curl_easy_setopt( curl, CURLOPT_WRITEFUNCTION, writeBody );
-    curl_easy_setopt( curl, CURLOPT_WRITEDATA, &resp.body );
-
-    if ( printHttpTrace ) {
-        curl_easy_setopt( curl, CURLOPT_DEBUGFUNCTION, debugCallback );
-        curl_easy_setopt( curl, CURLOPT_VERBOSE, 1L );
-    }
-
-    if ( hdrs )
-        curl_easy_setopt( curl, CURLOPT_HTTPHEADER, hdrs );
-
-    auto rc = curl_easy_perform( curl );
-    if ( rc != CURLE_OK ) {
-        if ( hdrs )
-            curl_slist_free_all( hdrs );
-        curl_easy_cleanup( curl );
-        throw std::runtime_error( std::string( "curl perform error: " ) + curl_easy_strerror( rc ) );
-    }
-    curl_easy_getinfo( curl, CURLINFO_RESPONSE_CODE, &resp.status );
-
-    if ( hdrs )
-        curl_slist_free_all( hdrs );
-    curl_easy_cleanup( curl );
-    return resp;
-}
-
-HttpResponse X402Client::httpDelete( const std::string& _baseURL, const std::string& _location,
-    const std::vector< std::string >& _extraHeaders, bool printHttpTrace ) {
-    CURL* curl = curl_easy_init();
-    if ( !curl )
-        throw std::runtime_error( "curl_easy_init failed" );
-
-    std::string url = _baseURL + ":" + std::to_string( port ) + _location;
-
-    struct curl_slist* hdrs = nullptr;
-    for ( auto& _h : _extraHeaders )
-        hdrs = curl_slist_append( hdrs, _h.c_str() );
-
-    HttpResponse resp;
-    curl_easy_setopt( curl, CURLOPT_URL, url.c_str() );
-    curl_easy_setopt( curl, CURLOPT_FOLLOWLOCATION, 0L );
-
-    // DELETE request
-    curl_easy_setopt( curl, CURLOPT_CUSTOMREQUEST, "DELETE" );
-
-    // Collect response headers and body
-    curl_easy_setopt( curl, CURLOPT_HEADERFUNCTION, writeHeader );
-    curl_easy_setopt( curl, CURLOPT_HEADERDATA, &resp.headers );
-    curl_easy_setopt( curl, CURLOPT_WRITEFUNCTION, writeBody );
-    curl_easy_setopt( curl, CURLOPT_WRITEDATA, &resp.body );
-
-    if ( printHttpTrace ) {
-        curl_easy_setopt( curl, CURLOPT_DEBUGFUNCTION, debugCallback );
-        curl_easy_setopt( curl, CURLOPT_VERBOSE, 1L );
-    }
-
-    if ( hdrs )
-        curl_easy_setopt( curl, CURLOPT_HTTPHEADER, hdrs );
-
-    auto rc = curl_easy_perform( curl );
-    if ( rc != CURLE_OK ) {
-        if ( hdrs )
-            curl_slist_free_all( hdrs );
-        curl_easy_cleanup( curl );
-        throw std::runtime_error( std::string( "curl perform error: " ) + curl_easy_strerror( rc ) );
-    }
-    curl_easy_getinfo( curl, CURLINFO_RESPONSE_CODE, &resp.status );
-
-    if ( hdrs )
-        curl_slist_free_all( hdrs );
-    curl_easy_cleanup( curl );
-    return resp;
-}
 

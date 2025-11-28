@@ -32,7 +32,7 @@ public:
     static ptr< PaymentPayload > createDefaultPaymentPayload( EthPrivateKey& privKey,
         EthAddress& to, EIP3009Value& value, EIP3009Nonce& nonce, std::string networkName );
 
-    std::string createHttpHeaderValue();
+    pair<string, string> createHttpHeaderValue();
 
 private:
     int x402Version_;
