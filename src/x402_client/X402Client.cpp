@@ -37,8 +37,7 @@ std::string X402Client::parseStatusLineAndHeaders( const std::vector< std::strin
     return statusLine;
 }
 
-std::tuple< std::map< std::string, std::string >, std::string, HttpResponse >
-X402Client::sendRequestAndParseResult(
+HttpResponse X402Client::sendRequestAndParseResult(
     std::string _location, const std::vector<pair<string, string> >& _extraHeaders, bool printHttpTrace ) {
     (void)printHttpTrace; // currently unused with proxyToBackEnd public API
     // Build the full URL
@@ -64,28 +63,20 @@ X402Client::sendRequestAndParseResult(
     HttpResponse resp;
     resp.status = static_cast<long>(httpStatusCode);
     resp.body = std::move(responseBody);
-    // Reconstruct a header vector beginning with a status line for compatibility
-    std::string statusLine = std::string("HTTP/1.1 ") + std::to_string(resp.status);
-    resp.headers.push_back(statusLine + "\r\n");
+    resp.headers = responseHeaders;
 
-    std::map<std::string, std::string> headersMap;
+
+
     for (const auto &kv : responseHeaders) {
-        headersMap[kv.first] = kv.second;
-        resp.headers.push_back(kv.first + ": " + kv.second + "\r\n");
-    }
-
-    spdlog::info("STATUS::{}", statusLine);
-    for (const auto &kv : headersMap) {
         spdlog::info("{}: {}", kv.first, kv.second);
     }
     spdlog::info("BODY::{}", resp.body);
 
-    return { headersMap, statusLine, resp };
+    return { resp };
 }
 
 
-std::tuple< std::map< std::string, std::string >, std::string, HttpResponse >
-X402Client::sendRequestWithPayloadAndParseResult(
+HttpResponse  X402Client::sendRequestWithPayloadAndParseResult(
     std::string _location, ptr< PaymentPayload > payload, bool printHttpTrace ) {
     CHECK_STATE( payload );
     auto header = payload->createHttpHeaderValue();

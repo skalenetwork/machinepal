@@ -11,7 +11,7 @@ class PaymentPayload;
 struct HttpResponse {
     long status = 0;
     std::string body;
-    std::vector< std::string > headers;
+    std::vector< pair<string, string> > headers;
 };
 
 struct X402Client {
@@ -26,12 +26,11 @@ public:
     std::string baseUrl();
     static std::string parseStatusLineAndHeaders( const std::vector< std::string >& _headersVector,
         std::map< std::string, std::string >& _headersMap );
-    std::tuple< std::map< std::string, std::string >, std::string, HttpResponse >
+    HttpResponse
     sendRequestAndParseResult( std::string _location,
         const std::vector< pair<string, string> >& _extraHeaders, bool printHttpTrace = false );
 
-    std::tuple< std::map< std::string, std::string >, std::string, HttpResponse >
-    sendRequestWithPayloadAndParseResult(
+     HttpResponse sendRequestWithPayloadAndParseResult(
         std::string _location, ptr< PaymentPayload > payload, bool printHttpTrace );
 
 
