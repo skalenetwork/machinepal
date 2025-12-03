@@ -16,11 +16,10 @@ struct HttpResponse {
 
 struct X402Client {
 private:
-    std::string connectHost;
-    uint16_t port;
+    std::string baseUrl_;
 
 public:
-    X402Client( const std::string& _connectIp, uint16_t _port );
+    X402Client( const std::string& baseUrl);
     ~X402Client();
 
     std::string baseUrl();
