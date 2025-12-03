@@ -58,10 +58,10 @@ struct X402ServerFixture {
             app_ = MachinePayApp::makeInstance( configMap );
             auto config = app_->configManager()->latestConfig();
             auto url = "https://" + config->server()->hostName() + ":" +
-                       std::to_string( config->server()->http()->port() );
-            client = std::make_shared< X402Client >( url );
+                       std::to_string( config->server()->https()->port() );
+            client_ = std::make_shared< X402Client >( url );
 
-            srvThread = std::thread( [this] {
+            srvThread_ = std::thread( [this] {
                 app_->runUntilExit();  //
             } );
 
@@ -89,16 +89,16 @@ struct X402ServerFixture {
     ~X402ServerFixture() {
         if ( app_ )
             app_->stopServer();
-        if ( srvThread.joinable() )
-            srvThread.join();
+        if ( srvThread_.joinable() )
+            srvThread_.join();
     }
 
 
     std::shared_ptr< MachinePayApp > app_;
-    std::shared_ptr< X402Client > client;
+    std::shared_ptr< X402Client > client_;
 
-    std::thread srvThread;
-    uint16_t port{ 0 };
+    std::thread srvThread_;
+    uint16_t port_{ 0 };
 };
 
 
@@ -106,7 +106,7 @@ struct X402ServerFixture {
 BOOST_FIXTURE_TEST_SUITE( X402Suite, X402ServerFixture )
 
 BOOST_AUTO_TEST_CASE( Returns402WhenNoPaymentHeader ) {
-    auto resp = client->sendGetRequestAndParseResult( "/posts/1", {});
+    auto resp = client_->sendGetRequestAndParseResult( "/posts/1", {});
 
 
 
@@ -150,7 +150,7 @@ BOOST_AUTO_TEST_CASE( Returns200WhenPaymentHeaderPresent ) {
     sleep(1);
 
    auto resp =
-        client->sendRequestWithPayloadAndParseResult( "/posts/1", paymentPayload);
+        client_->sendRequestWithPayloadAndParseResult( "/posts/1", paymentPayload);
 
 
     BOOST_TEST( resp.status == 200 );
@@ -160,7 +160,7 @@ BOOST_AUTO_TEST_CASE( Returns200WhenPaymentHeaderPresent ) {
 
     // this should cause exception
     auto resp2 =
-        client->sendRequestWithPayloadAndParseResult( "/posts/1", paymentPayload);
+        client_->sendRequestWithPayloadAndParseResult( "/posts/1", paymentPayload);
 
     BOOST_TEST( resp2.status == 402 );
     BOOST_TEST(  resp2.headers.exists( "X-PAYMENT-RESPONSE" ) );

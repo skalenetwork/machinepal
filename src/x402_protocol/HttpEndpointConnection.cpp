@@ -18,38 +18,102 @@
 
 
 ptr<IBackendError> HttpEndpointConnection::doRequest(
-                                                     proxygen::HTTPMethod method_,
-                                                     const proxygen::HTTPHeaders &requestHeaders,
-                                                     const std::string &requestBody,
-                                                     uint64_t &httpStatusCode,
-                                                     proxygen::HTTPHeaders &responseHeaders,
-                                                     std::string &responseBody) {
+    proxygen::HTTPMethod method_,
+    const proxygen::HTTPHeaders &requestHeaders,
+    const std::string &requestBody,
+    uint64_t &httpStatusCode,
+    proxygen::HTTPHeaders &responseHeaders,
+    std::string &responseBody) {
     switch (method_) {
         case proxygen::HTTPMethod::GET:
-            return doGetRequest( requestHeaders, httpStatusCode, responseHeaders, responseBody);
+            return doGetRequest(requestHeaders, httpStatusCode, responseHeaders, responseBody);
         case proxygen::HTTPMethod::POST:
-            return doPostRequest( requestHeaders, requestBody, httpStatusCode, responseHeaders, responseBody);
+            return doPostRequest(requestHeaders, requestBody, httpStatusCode, responseHeaders, responseBody);
         case proxygen::HTTPMethod::HEAD:
-            return doHeadRequest( requestHeaders, httpStatusCode, responseHeaders);
+            return doHeadRequest(requestHeaders, httpStatusCode, responseHeaders);
         case proxygen::HTTPMethod::OPTIONS:
-            return doOptions( requestHeaders, httpStatusCode, responseHeaders, responseBody);
+            return doOptions(requestHeaders, httpStatusCode, responseHeaders, responseBody);
         case proxygen::HTTPMethod::PUT:
-            return doPutRequest( requestHeaders, requestBody, httpStatusCode, responseHeaders, responseBody
+            return doPutRequest(requestHeaders, requestBody, httpStatusCode, responseHeaders, responseBody
             );
         case proxygen::HTTPMethod::DELETE:
-            return doDeleteRequest( requestHeaders, httpStatusCode, responseHeaders, responseBody);
+            return doDeleteRequest(requestHeaders, httpStatusCode, responseHeaders, responseBody);
         default:
             return make_shared<BackendHttpError>(501);
     }
 }
 
+
+// Helper to check if string starts with a prefix (case insensitive handling recommended in production)
+bool startsWith(const std::string &fullString, const std::string &prefix) {
+    return fullString.rfind(prefix, 0) == 0;
+}
+
+std::string getDetailedError(CURL *curl, CURLcode result) {
+    // 1. Start with the standard libcurl description
+    std::string errorMessage = std::string(curl_easy_strerror(result));
+
+    // 2. Gather Context: URL and Port
+    char *urlPtr = nullptr;
+    long port = 0;
+    curl_easy_getinfo(curl, CURLINFO_EFFECTIVE_URL, &urlPtr);
+    curl_easy_getinfo(curl, CURLINFO_PRIMARY_PORT, &port);
+
+    std::string url = urlPtr ? std::string(urlPtr) : "unknown url";
+    bool isHttpScheme = startsWith(url, "http://");
+    bool isHttpsScheme = startsWith(url, "https://");
+
+    // 3. Append context-aware troubleshooting advice
+    if (result == CURLE_PEER_FAILED_VERIFICATION) {
+        errorMessage += " (SSL Certificate Problem). \n"
+                "Possible causes:\n"
+                "1. The server is using a self-signed certificate.\n"
+                "2. The system's CA bundle is outdated or missing.\n"
+                "3. System clock is incorrect (certificate appears expired).";
+    } else if (result == CURLE_SSL_CONNECT_ERROR) {
+        errorMessage += " (SSL Handshake Failed). \n"
+                "The client and server could not agree on a protocol or cipher. ";
+
+        // --- DETECT HTTPS -> HTTP PORT MISMATCH ---
+        if (isHttpsScheme && port == 80) {
+            errorMessage += "\n**POTENTIAL CONFIG ERROR:** You are connecting via HTTPS to port 80. "
+                    "Standard HTTP ports do not support SSL handshakes. "
+                    "Change the URL to 'http://' or the port to 443.";
+        } else {
+            errorMessage += "\nEnsure your client supports the TLS version required by the server.";
+        }
+    } else if (result == CURLE_OPERATION_TIMEDOUT) {
+        errorMessage += " (Connection Timeout). \n"
+                "The server took too long to respond. ";
+    } else if (result == CURLE_COULDNT_CONNECT) {
+        errorMessage += " (Connection Refused). \n"
+                "Target port is not listening or is blocked by a firewall.";
+    } else if (result == CURLE_GOT_NOTHING) {
+        // --- DETECT HTTP -> HTTPS PORT MISMATCH ---
+        if (isHttpScheme && port == 443) {
+            errorMessage += " (Empty Response). \n"
+                    "**POTENTIAL CONFIG ERROR:** You are connected via plain HTTP to port 443. "
+                    "The server likely expects an SSL connection. Try changing URL to 'https://'.";
+        } else {
+            errorMessage += " The server closed the connection without sending any data.";
+        }
+    }
+
+    // 4. General warning for plain HTTP errors
+    if (isHttpScheme && result != CURLE_OK) {
+        errorMessage += "\n[Note]: Request was made over unencrypted HTTP.";
+    }
+
+    return errorMessage;
+}
+
 ptr<IBackendError> HttpEndpointConnection::executeCurlRequest(
-                                                              const proxygen::HTTPHeaders &
-                                                              requestHeaders,
-                                                              uint64_t &httpStatusCode,
-                                                              proxygen::HTTPHeaders &responseHeaders,
-                                                              std::string &responseBody,
-                                                              const std::function<void(CURL *)> &configureMethod) {
+    const proxygen::HTTPHeaders &
+    requestHeaders,
+    uint64_t &httpStatusCode,
+    proxygen::HTTPHeaders &responseHeaders,
+    std::string &responseBody,
+    const std::function<void(CURL *)> &configureMethod) {
     static thread_local std::unique_ptr<CURL, decltype(&curl_easy_cleanup)> curlThreadLocal(
         nullptr, &curl_easy_cleanup);
 
@@ -94,15 +158,14 @@ ptr<IBackendError> HttpEndpointConnection::executeCurlRequest(
     }
 
 
-
-  //if (acceptAllCerts_) {
-        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
-        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
-  //  } else {
-        // Enable SSL certificate verification for security
-   //     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
-   //     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
-   // }
+    //if (acceptAllCerts_) {
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+    //  } else {
+    // Enable SSL certificate verification for security
+    //     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
+    //     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
+    // }
 
     // Apply method-specific configurations
     if (configureMethod) {
@@ -116,8 +179,29 @@ ptr<IBackendError> HttpEndpointConnection::executeCurlRequest(
     }
 
     if (result != CURLE_OK) {
-        spdlog::error("CURL error: {}", curl_easy_strerror(result));
-        return make_shared<BackendCurlError>(result, curl_easy_strerror(result));;
+        std::string errorMessage = curl_easy_strerror(result);
+        if (result == CURLE_PEER_FAILED_VERIFICATION) {
+            errorMessage += " (SSL Certificate Problem). \n"
+                    "Possible causes:\n"
+                    "1. The server is using a self-signed certificate.\n"
+                    "2. The system's CA bundle is outdated or missing.\n"
+                    "3. System clock is incorrect (certificate appears expired or not yet valid).";
+        } else if (result == CURLE_SSL_CONNECT_ERROR) {
+            errorMessage += " (SSL Handshake Failed). \n"
+                    "You may be trying to connect to non-HTTPS endoint. Or there may be a mismatch in supported"
+                    "TLS ciphers \n";
+        } else if (result == CURLE_OPERATION_TIMEDOUT) {
+            errorMessage += " (Connection Timeout). \n"
+                    "The server took too long to respond. Check your firewall settings or the server's load.";
+        } else if (result == CURLE_COULDNT_RESOLVE_HOST) {
+            errorMessage += " (DNS Resolution Failed). \n"
+                    "Could not translate the hostname to an IP address. Check your DNS configuration or internet connection.";
+        } else if (result == CURLE_COULDNT_CONNECT) {
+            errorMessage += " (Connection Refused). \n"
+                    "Target port is not listening or is blocked by a firewall.";
+        }
+        spdlog::error("CURL error: {}", errorMessage);
+        return make_shared<BackendCurlError>(result, errorMessage);
     }
 
     uint64_t statusCode = 0;
@@ -132,19 +216,19 @@ ptr<IBackendError> HttpEndpointConnection::executeCurlRequest(
 }
 
 ptr<IBackendError> HttpEndpointConnection::doGetRequest(
-                                                        const proxygen::HTTPHeaders &requestHeaders,
-                                                        uint64_t &httpStatusCode,
-                                                        proxygen::HTTPHeaders &responseHeaders,
-                                                        std::string &responseBody) {
+    const proxygen::HTTPHeaders &requestHeaders,
+    uint64_t &httpStatusCode,
+    proxygen::HTTPHeaders &responseHeaders,
+    std::string &responseBody) {
     return executeCurlRequest(requestHeaders, httpStatusCode, responseHeaders, responseBody, nullptr);
 }
 
 ptr<IBackendError> HttpEndpointConnection::doPostRequest(
-                                                         const proxygen::HTTPHeaders &requestHeaders,
-                                                         const std::string &requestBody,
-                                                         uint64_t &httpStatusCode,
-                                                         proxygen::HTTPHeaders &responseHeaders,
-                                                         std::string &responseBody) {
+    const proxygen::HTTPHeaders &requestHeaders,
+    const std::string &requestBody,
+    uint64_t &httpStatusCode,
+    proxygen::HTTPHeaders &responseHeaders,
+    std::string &responseBody) {
     return executeCurlRequest(requestHeaders, httpStatusCode, responseHeaders, responseBody,
                               [&](CURL *curl) {
                                   curl_easy_setopt(curl, CURLOPT_POST, 1L);
@@ -154,22 +238,22 @@ ptr<IBackendError> HttpEndpointConnection::doPostRequest(
 }
 
 ptr<IBackendError> HttpEndpointConnection::doHeadRequest(
-                                                         const proxygen::HTTPHeaders &requestHeaders,
-                                                         uint64_t &httpStatusCode,
-                                                         proxygen::HTTPHeaders &responseHeaders) {
+    const proxygen::HTTPHeaders &requestHeaders,
+    uint64_t &httpStatusCode,
+    proxygen::HTTPHeaders &responseHeaders) {
     std::string responseBody; // Ignored for HEAD
-    return executeCurlRequest( requestHeaders, httpStatusCode, responseHeaders, responseBody,
+    return executeCurlRequest(requestHeaders, httpStatusCode, responseHeaders, responseBody,
                               [](CURL *curl) {
                                   curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);
                               });
 }
 
 ptr<IBackendError> HttpEndpointConnection::doOptions(
-                                                     const proxygen::HTTPHeaders &
-                                                     requestHeaders,
-                                                     uint64_t &httpStatusCode,
-                                                     proxygen::HTTPHeaders &responseHeaders,
-                                                     std::string &responseBody) {
+    const proxygen::HTTPHeaders &
+    requestHeaders,
+    uint64_t &httpStatusCode,
+    proxygen::HTTPHeaders &responseHeaders,
+    std::string &responseBody) {
     return executeCurlRequest(requestHeaders, httpStatusCode, responseHeaders, responseBody,
                               [](CURL *curl) {
                                   curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "OPTIONS");
@@ -177,11 +261,11 @@ ptr<IBackendError> HttpEndpointConnection::doOptions(
 }
 
 ptr<IBackendError> HttpEndpointConnection::doPutRequest(
-                                                        const proxygen::HTTPHeaders &requestHeaders,
-                                                        const std::string &requestBody,
-                                                        uint64_t &httpStatusCode,
-                                                        proxygen::HTTPHeaders &responseHeaders,
-                                                        std::string &responseBody) {
+    const proxygen::HTTPHeaders &requestHeaders,
+    const std::string &requestBody,
+    uint64_t &httpStatusCode,
+    proxygen::HTTPHeaders &responseHeaders,
+    std::string &responseBody) {
     return executeCurlRequest(requestHeaders, httpStatusCode, responseHeaders, responseBody,
                               [&](CURL *curl) {
                                   curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
@@ -191,11 +275,11 @@ ptr<IBackendError> HttpEndpointConnection::doPutRequest(
 }
 
 ptr<IBackendError> HttpEndpointConnection::doDeleteRequest(
-                                                           const proxygen::HTTPHeaders &requestHeaders,
-                                                           uint64_t &httpStatusCode,
-                                                           proxygen::HTTPHeaders &responseHeaders,
-                                                           std::string &responseBody) {
-    return executeCurlRequest( requestHeaders, httpStatusCode, responseHeaders, responseBody,
+    const proxygen::HTTPHeaders &requestHeaders,
+    uint64_t &httpStatusCode,
+    proxygen::HTTPHeaders &responseHeaders,
+    std::string &responseBody) {
+    return executeCurlRequest(requestHeaders, httpStatusCode, responseHeaders, responseBody,
                               [](CURL *curl) {
                                   curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
                               });

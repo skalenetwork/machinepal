@@ -39,10 +39,6 @@ HttpResponse X402Client::sendGetRequestAndParseResult(
     auto err = httpEndpointConnection.doGetRequest(requestHeaders,
                                                    resp.status, resp.headers, resp.body);
 
-    if (err) {
-        throw std::runtime_error("Error during X402 GET request: " + err->getMessage());
-    }
-
 
     return {resp};
 }
