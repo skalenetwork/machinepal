@@ -26,53 +26,52 @@ public:
                                            const proxygen::HTTPHeaders &reqHeaders,
                                            uint64_t &httpStatusCode,
                                            proxygen::HTTPHeaders &responseHeaders,
-                                           std::string &responseBody, bool printHttpTrace = false);
+                                           std::string &responseBody);
 
     static ptr<IBackendError> doPostRequest(const string &url,
                                             const proxygen::HTTPHeaders &requestHeaders,
                                             const std::string &requestBody,
                                             uint64_t &httpStatusCode,
                                             proxygen::HTTPHeaders &responseHeaders,
-                                            std::string &responseBody, bool printHttpTrace = false);
+                                            std::string &responseBody);
 
     static ptr<IBackendError> doHeadRequest(const string &url,
                                             const proxygen::HTTPHeaders &reqHeaders,
                                             uint64_t &httpStatusCode,
-                                            proxygen::HTTPHeaders &responseHeaders, bool printHttpTrace = false);
+                                            proxygen::HTTPHeaders &responseHeaders);
 
     static ptr<IBackendError> doOptions(const string &url,
                                         const proxygen::HTTPHeaders &reqHeaders,
                                         uint64_t &httpStatusCode,
                                         proxygen::HTTPHeaders &responseHeaders,
-                                        std::string &responseBody, bool printHttpTrace = false);
+                                        std::string &responseBody);
 
     static ptr<IBackendError> doPutRequest(const string &url,
                                            const proxygen::HTTPHeaders &reqHeaders,
                                            const std::string &requestBody,
                                            uint64_t &httpStatusCode,
                                            proxygen::HTTPHeaders &responseHeaders,
-                                           std::string &responseBody, bool printHttpTrace = false);
+                                           std::string &responseBody);
 
     static ptr<IBackendError> doDeleteRequest(const string &url,
                                               const proxygen::HTTPHeaders &requestHeaders,
                                               uint64_t &httpStatusCode,
                                               proxygen::HTTPHeaders &responseHeaders,
-                                              std::string &responseBody, bool printHttpTrace = false);
+                                              std::string &responseBody);
 
     static ptr<IBackendError> doRequest(const string &url, proxygen::HTTPMethod method_,
                                         const proxygen::HTTPHeaders &reqHeaders,
                                         const std::string &requestBody,
                                         uint64_t &httpStatusCode,
                                         proxygen::HTTPHeaders &responseHeaders,
-                                        std::string &responseBody, bool printHttpTrace = false);
+                                        std::string &responseBody);
 
     static ptr<IBackendError> executeCurlRequest(const string &url,
                                                  const proxygen::HTTPHeaders &requestHeaders,
                                                  uint64_t &httpStatusCode,
                                                  proxygen::HTTPHeaders &responseHeaders,
                                                  std::string &responseBody,
-                                                 const std::function<void(CURL *)> &configureMethod,
-                                                 bool printHttpTrace);
+                                                 const std::function<void(CURL *)> &configureMethod);
 
     static int debugCallback(CURL *, curl_infotype type, char *data, size_t size, void *) {
         switch (type) {

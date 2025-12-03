@@ -23,22 +23,21 @@ ptr<IBackendError> HttpEndpointConnection::doRequest(const string &url,
                                                      const std::string &requestBody,
                                                      uint64_t &httpStatusCode,
                                                      proxygen::HTTPHeaders &responseHeaders,
-                                                     std::string &responseBody, bool printHttpTrace) {
+                                                     std::string &responseBody) {
     switch (method_) {
         case proxygen::HTTPMethod::GET:
-            return doGetRequest(url, requestHeaders, httpStatusCode, responseHeaders, responseBody, printHttpTrace);
+            return doGetRequest(url, requestHeaders, httpStatusCode, responseHeaders, responseBody);
         case proxygen::HTTPMethod::POST:
-            return doPostRequest(url, requestHeaders, requestBody, httpStatusCode, responseHeaders, responseBody,
-                                 printHttpTrace);
+            return doPostRequest(url, requestHeaders, requestBody, httpStatusCode, responseHeaders, responseBody);
         case proxygen::HTTPMethod::HEAD:
-            return doHeadRequest(url, requestHeaders, httpStatusCode, responseHeaders, printHttpTrace);
+            return doHeadRequest(url, requestHeaders, httpStatusCode, responseHeaders);
         case proxygen::HTTPMethod::OPTIONS:
-            return doOptions(url, requestHeaders, httpStatusCode, responseHeaders, responseBody, printHttpTrace);
+            return doOptions(url, requestHeaders, httpStatusCode, responseHeaders, responseBody);
         case proxygen::HTTPMethod::PUT:
-            return doPutRequest(url, requestHeaders, requestBody, httpStatusCode, responseHeaders, responseBody,
-                                printHttpTrace);
+            return doPutRequest(url, requestHeaders, requestBody, httpStatusCode, responseHeaders, responseBody
+            );
         case proxygen::HTTPMethod::DELETE:
-            return doDeleteRequest(url, requestHeaders, httpStatusCode, responseHeaders, responseBody, printHttpTrace);
+            return doDeleteRequest(url, requestHeaders, httpStatusCode, responseHeaders, responseBody);
         default:
             return make_shared<BackendHttpError>(501);
     }
@@ -50,8 +49,7 @@ ptr<IBackendError> HttpEndpointConnection::executeCurlRequest(const string &url,
                                                               uint64_t &httpStatusCode,
                                                               proxygen::HTTPHeaders &responseHeaders,
                                                               std::string &responseBody,
-                                                              const std::function<void(CURL *)> &configureMethod,
-                                                              bool printHttpTrace) {
+                                                              const std::function<void(CURL *)> &configureMethod) {
     static thread_local std::unique_ptr<CURL, decltype(&curl_easy_cleanup)> curlThreadLocal(
         nullptr, &curl_easy_cleanup);
 
@@ -92,7 +90,7 @@ ptr<IBackendError> HttpEndpointConnection::executeCurlRequest(const string &url,
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &responseBody);
 
 
-    if (printHttpTrace) {
+    if (spdlog::get_level() == spdlog::level::trace) {
         curl_easy_setopt(curl, CURLOPT_DEBUGFUNCTION, HttpEndpointConnection::debugCallback);
         curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
     }
@@ -129,9 +127,8 @@ ptr<IBackendError> HttpEndpointConnection::doGetRequest(const string &url,
                                                         const proxygen::HTTPHeaders &requestHeaders,
                                                         uint64_t &httpStatusCode,
                                                         proxygen::HTTPHeaders &responseHeaders,
-                                                        std::string &responseBody, bool printHttpTrace) {
-    return executeCurlRequest(url, requestHeaders, httpStatusCode, responseHeaders, responseBody, nullptr,
-                              printHttpTrace);
+                                                        std::string &responseBody) {
+    return executeCurlRequest(url, requestHeaders, httpStatusCode, responseHeaders, responseBody, nullptr);
 }
 
 ptr<IBackendError> HttpEndpointConnection::doPostRequest(const string &url,
@@ -139,24 +136,24 @@ ptr<IBackendError> HttpEndpointConnection::doPostRequest(const string &url,
                                                          const std::string &requestBody,
                                                          uint64_t &httpStatusCode,
                                                          proxygen::HTTPHeaders &responseHeaders,
-                                                         std::string &responseBody, bool printHttpTrace) {
+                                                         std::string &responseBody) {
     return executeCurlRequest(url, requestHeaders, httpStatusCode, responseHeaders, responseBody,
                               [&](CURL *curl) {
                                   curl_easy_setopt(curl, CURLOPT_POST, 1L);
                                   curl_easy_setopt(curl, CURLOPT_POSTFIELDS, requestBody.c_str());
                                   curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, static_cast<long>(requestBody.size()));
-                              }, printHttpTrace);
+                              });
 }
 
 ptr<IBackendError> HttpEndpointConnection::doHeadRequest(const string &url,
                                                          const proxygen::HTTPHeaders &requestHeaders,
                                                          uint64_t &httpStatusCode,
-                                                         proxygen::HTTPHeaders &responseHeaders, bool printHttpTrace) {
+                                                         proxygen::HTTPHeaders &responseHeaders) {
     std::string responseBody; // Ignored for HEAD
     return executeCurlRequest(url, requestHeaders, httpStatusCode, responseHeaders, responseBody,
                               [](CURL *curl) {
                                   curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);
-                              }, printHttpTrace);
+                              });
 }
 
 ptr<IBackendError> HttpEndpointConnection::doOptions(const string &url,
@@ -164,11 +161,11 @@ ptr<IBackendError> HttpEndpointConnection::doOptions(const string &url,
                                                      requestHeaders,
                                                      uint64_t &httpStatusCode,
                                                      proxygen::HTTPHeaders &responseHeaders,
-                                                     std::string &responseBody, bool printHttpTrace) {
+                                                     std::string &responseBody) {
     return executeCurlRequest(url, requestHeaders, httpStatusCode, responseHeaders, responseBody,
                               [](CURL *curl) {
                                   curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "OPTIONS");
-                              }, printHttpTrace);
+                              });
 }
 
 ptr<IBackendError> HttpEndpointConnection::doPutRequest(const string &url,
@@ -176,24 +173,24 @@ ptr<IBackendError> HttpEndpointConnection::doPutRequest(const string &url,
                                                         const std::string &requestBody,
                                                         uint64_t &httpStatusCode,
                                                         proxygen::HTTPHeaders &responseHeaders,
-                                                        std::string &responseBody, bool printHttpTrace) {
+                                                        std::string &responseBody) {
     return executeCurlRequest(url, requestHeaders, httpStatusCode, responseHeaders, responseBody,
                               [&](CURL *curl) {
                                   curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
                                   curl_easy_setopt(curl, CURLOPT_POSTFIELDS, requestBody.c_str());
                                   curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, static_cast<long>(requestBody.size()));
-                              }, printHttpTrace);
+                              });
 }
 
 ptr<IBackendError> HttpEndpointConnection::doDeleteRequest(const string &url,
                                                            const proxygen::HTTPHeaders &requestHeaders,
                                                            uint64_t &httpStatusCode,
                                                            proxygen::HTTPHeaders &responseHeaders,
-                                                           std::string &responseBody, bool printHttpTrace) {
+                                                           std::string &responseBody) {
     return executeCurlRequest(url, requestHeaders, httpStatusCode, responseHeaders, responseBody,
                               [](CURL *curl) {
                                   curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
-                              }, printHttpTrace);
+                              });
 }
 
 

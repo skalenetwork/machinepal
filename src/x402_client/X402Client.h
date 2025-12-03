@@ -19,16 +19,16 @@ private:
     std::string baseUrl_;
 
 public:
-    X402Client( const std::string& baseUrl);
+    X402Client(const std::string &baseUrl);
+
     ~X402Client();
 
     std::string baseUrl();
+
     HttpResponse
-    sendRequestAndParseResult( std::string _location,
-        const std::vector< pair<string, string> >& _requestHeaders, bool printHttpTrace = false );
+    sendRequestAndParseResult(std::string _location,
+                              const std::vector<pair<string, string> > &_requestHeaders);
 
-     HttpResponse sendRequestWithPayloadAndParseResult(
-        std::string _location, ptr< PaymentPayload > payload, bool printHttpTrace );
-
-
+    HttpResponse sendRequestWithPayloadAndParseResult(
+        std::string _location, ptr<PaymentPayload> payload);
 };
