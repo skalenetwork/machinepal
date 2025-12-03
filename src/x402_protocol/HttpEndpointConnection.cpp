@@ -69,9 +69,6 @@ ptr<IBackendError> HttpEndpointConnection::executeCurlRequest(
     struct curl_slist *headers = createCurlHeadersFromProxygenHeaders(requestHeaders);
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
 
-    // Enable SSL certificate verification for security
-    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
-    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
     CHECK_STATE(!url_.empty());
     curl_easy_setopt(curl, CURLOPT_URL, url_.c_str());
@@ -96,6 +93,16 @@ ptr<IBackendError> HttpEndpointConnection::executeCurlRequest(
         curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
     }
 
+
+
+  //if (acceptAllCerts_) {
+        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+  //  } else {
+        // Enable SSL certificate verification for security
+   //     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
+   //     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
+   // }
 
     // Apply method-specific configurations
     if (configureMethod) {
