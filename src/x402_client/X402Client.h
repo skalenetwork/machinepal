@@ -26,7 +26,7 @@ public:
     std::string baseUrl();
 
     HttpResponse
-    sendRequestAndParseResult(std::string _location,
+    sendGetRequestAndParseResult(std::string _location,
                               const std::vector<pair<string, string> > &_requestHeaders);
 
     HttpResponse sendRequestWithPayloadAndParseResult(

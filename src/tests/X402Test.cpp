@@ -106,7 +106,7 @@ struct X402ServerFixture {
 BOOST_FIXTURE_TEST_SUITE( X402Suite, X402ServerFixture )
 
 BOOST_AUTO_TEST_CASE( Returns402WhenNoPaymentHeader ) {
-    auto resp = client->sendRequestAndParseResult( "/posts/1", {});
+    auto resp = client->sendGetRequestAndParseResult( "/posts/1", {});
 
 
 

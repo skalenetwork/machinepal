@@ -18,7 +18,7 @@ std::string X402Client::baseUrl() {
 }
 
 
-HttpResponse X402Client::sendRequestAndParseResult(
+HttpResponse X402Client::sendGetRequestAndParseResult(
     std::string _location, const std::vector<pair<string, string> > &_requestHeaders) {
     std::string url = baseUrl() + _location;
 
@@ -43,5 +43,5 @@ HttpResponse X402Client::sendRequestWithPayloadAndParseResult(
     std::string _location, ptr<PaymentPayload> payload) {
     CHECK_STATE(payload);
     auto header = payload->createHttpHeaderValue();
-    return sendRequestAndParseResult(_location, {header});
+    return sendGetRequestAndParseResult(_location, {header});
 }
