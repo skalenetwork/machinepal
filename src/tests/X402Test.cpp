@@ -57,7 +57,7 @@ struct X402ServerFixture {
                 "src/tests/configs/basic/machinepay.yml" } };
             app_ = MachinePayApp::makeInstance( configMap );
             auto config = app_->configManager()->latestConfig();
-            auto url = "http://" + config->server()->hostName() + ":" +
+            auto url = "https://" + config->server()->hostName() + ":" +
                        std::to_string( config->server()->http()->port() );
             client = std::make_shared< X402Client >( url );
 

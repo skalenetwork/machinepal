@@ -331,7 +331,6 @@ void X402Processor::sendSettlementErrorResponse(
 void X402Processor::doPassThrough(const std::unique_ptr<proxygen::HTTPMessage> &request,
                                   const string &requestBody) {
     try {
-
         // Validate request method (only GET/POST supported for now)
         if (!validateMethod(request)) {
             return;
@@ -347,8 +346,11 @@ void X402Processor::doPassThrough(const std::unique_ptr<proxygen::HTTPMessage> &
 
         uint64_t httpStatusCode = 0;
 
-        auto error = HttpEndpointConnection::doRequest(url, method_, request->getHeaders(),
-                                                       requestBody, httpStatusCode, responseHeaders, responseBody);
+
+        HttpEndpointConnection httpEndpointConnection(url, true);
+
+        auto error = httpEndpointConnection.doRequest(method_, request->getHeaders(),
+                                                      requestBody, httpStatusCode, responseHeaders, responseBody);
 
         if (error) {
             replyPassThroughError(*error, responseHeaders);
@@ -425,9 +427,13 @@ void X402Processor::onRequestFullyReceived(
 
         proxygen::HTTPHeaders responseHeaders;
 
-        auto error = HttpEndpointConnection::doRequest(resource_->getLocation(),
-                                                       method_, request->getHeaders(), body,
-                                                       httpStatusCode, responseHeaders, responseBody);
+        auto url = resource_->getLocation();
+
+        HttpEndpointConnection httpEndpointConnection(url, true);
+
+        auto error = httpEndpointConnection.doRequest(
+            method_, request->getHeaders(), body,
+            httpStatusCode, responseHeaders, responseBody);
 
         if (error) {
             replyPassThroughError(*error, responseHeaders);

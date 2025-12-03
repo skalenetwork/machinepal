@@ -17,7 +17,7 @@
 // "https://jsonplaceholder.typicode.com/posts"
 
 
-ptr<IBackendError> HttpEndpointConnection::doRequest(const string &url,
+ptr<IBackendError> HttpEndpointConnection::doRequest(
                                                      proxygen::HTTPMethod method_,
                                                      const proxygen::HTTPHeaders &requestHeaders,
                                                      const std::string &requestBody,
@@ -26,24 +26,24 @@ ptr<IBackendError> HttpEndpointConnection::doRequest(const string &url,
                                                      std::string &responseBody) {
     switch (method_) {
         case proxygen::HTTPMethod::GET:
-            return doGetRequest(url, requestHeaders, httpStatusCode, responseHeaders, responseBody);
+            return doGetRequest( requestHeaders, httpStatusCode, responseHeaders, responseBody);
         case proxygen::HTTPMethod::POST:
-            return doPostRequest(url, requestHeaders, requestBody, httpStatusCode, responseHeaders, responseBody);
+            return doPostRequest( requestHeaders, requestBody, httpStatusCode, responseHeaders, responseBody);
         case proxygen::HTTPMethod::HEAD:
-            return doHeadRequest(url, requestHeaders, httpStatusCode, responseHeaders);
+            return doHeadRequest( requestHeaders, httpStatusCode, responseHeaders);
         case proxygen::HTTPMethod::OPTIONS:
-            return doOptions(url, requestHeaders, httpStatusCode, responseHeaders, responseBody);
+            return doOptions( requestHeaders, httpStatusCode, responseHeaders, responseBody);
         case proxygen::HTTPMethod::PUT:
-            return doPutRequest(url, requestHeaders, requestBody, httpStatusCode, responseHeaders, responseBody
+            return doPutRequest( requestHeaders, requestBody, httpStatusCode, responseHeaders, responseBody
             );
         case proxygen::HTTPMethod::DELETE:
-            return doDeleteRequest(url, requestHeaders, httpStatusCode, responseHeaders, responseBody);
+            return doDeleteRequest( requestHeaders, httpStatusCode, responseHeaders, responseBody);
         default:
             return make_shared<BackendHttpError>(501);
     }
 }
 
-ptr<IBackendError> HttpEndpointConnection::executeCurlRequest(const string &url,
+ptr<IBackendError> HttpEndpointConnection::executeCurlRequest(
                                                               const proxygen::HTTPHeaders &
                                                               requestHeaders,
                                                               uint64_t &httpStatusCode,
@@ -73,7 +73,8 @@ ptr<IBackendError> HttpEndpointConnection::executeCurlRequest(const string &url,
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+    CHECK_STATE(!url_.empty());
+    curl_easy_setopt(curl, CURLOPT_URL, url_.c_str());
 
     // --- Setup Response Header Parsing ---
     curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, headerCallback);
@@ -123,21 +124,21 @@ ptr<IBackendError> HttpEndpointConnection::executeCurlRequest(const string &url,
     return nullptr;
 }
 
-ptr<IBackendError> HttpEndpointConnection::doGetRequest(const string &url,
+ptr<IBackendError> HttpEndpointConnection::doGetRequest(
                                                         const proxygen::HTTPHeaders &requestHeaders,
                                                         uint64_t &httpStatusCode,
                                                         proxygen::HTTPHeaders &responseHeaders,
                                                         std::string &responseBody) {
-    return executeCurlRequest(url, requestHeaders, httpStatusCode, responseHeaders, responseBody, nullptr);
+    return executeCurlRequest(requestHeaders, httpStatusCode, responseHeaders, responseBody, nullptr);
 }
 
-ptr<IBackendError> HttpEndpointConnection::doPostRequest(const string &url,
+ptr<IBackendError> HttpEndpointConnection::doPostRequest(
                                                          const proxygen::HTTPHeaders &requestHeaders,
                                                          const std::string &requestBody,
                                                          uint64_t &httpStatusCode,
                                                          proxygen::HTTPHeaders &responseHeaders,
                                                          std::string &responseBody) {
-    return executeCurlRequest(url, requestHeaders, httpStatusCode, responseHeaders, responseBody,
+    return executeCurlRequest(requestHeaders, httpStatusCode, responseHeaders, responseBody,
                               [&](CURL *curl) {
                                   curl_easy_setopt(curl, CURLOPT_POST, 1L);
                                   curl_easy_setopt(curl, CURLOPT_POSTFIELDS, requestBody.c_str());
@@ -145,36 +146,36 @@ ptr<IBackendError> HttpEndpointConnection::doPostRequest(const string &url,
                               });
 }
 
-ptr<IBackendError> HttpEndpointConnection::doHeadRequest(const string &url,
+ptr<IBackendError> HttpEndpointConnection::doHeadRequest(
                                                          const proxygen::HTTPHeaders &requestHeaders,
                                                          uint64_t &httpStatusCode,
                                                          proxygen::HTTPHeaders &responseHeaders) {
     std::string responseBody; // Ignored for HEAD
-    return executeCurlRequest(url, requestHeaders, httpStatusCode, responseHeaders, responseBody,
+    return executeCurlRequest( requestHeaders, httpStatusCode, responseHeaders, responseBody,
                               [](CURL *curl) {
                                   curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);
                               });
 }
 
-ptr<IBackendError> HttpEndpointConnection::doOptions(const string &url,
+ptr<IBackendError> HttpEndpointConnection::doOptions(
                                                      const proxygen::HTTPHeaders &
                                                      requestHeaders,
                                                      uint64_t &httpStatusCode,
                                                      proxygen::HTTPHeaders &responseHeaders,
                                                      std::string &responseBody) {
-    return executeCurlRequest(url, requestHeaders, httpStatusCode, responseHeaders, responseBody,
+    return executeCurlRequest(requestHeaders, httpStatusCode, responseHeaders, responseBody,
                               [](CURL *curl) {
                                   curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "OPTIONS");
                               });
 }
 
-ptr<IBackendError> HttpEndpointConnection::doPutRequest(const string &url,
+ptr<IBackendError> HttpEndpointConnection::doPutRequest(
                                                         const proxygen::HTTPHeaders &requestHeaders,
                                                         const std::string &requestBody,
                                                         uint64_t &httpStatusCode,
                                                         proxygen::HTTPHeaders &responseHeaders,
                                                         std::string &responseBody) {
-    return executeCurlRequest(url, requestHeaders, httpStatusCode, responseHeaders, responseBody,
+    return executeCurlRequest(requestHeaders, httpStatusCode, responseHeaders, responseBody,
                               [&](CURL *curl) {
                                   curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
                                   curl_easy_setopt(curl, CURLOPT_POSTFIELDS, requestBody.c_str());
@@ -182,12 +183,12 @@ ptr<IBackendError> HttpEndpointConnection::doPutRequest(const string &url,
                               });
 }
 
-ptr<IBackendError> HttpEndpointConnection::doDeleteRequest(const string &url,
+ptr<IBackendError> HttpEndpointConnection::doDeleteRequest(
                                                            const proxygen::HTTPHeaders &requestHeaders,
                                                            uint64_t &httpStatusCode,
                                                            proxygen::HTTPHeaders &responseHeaders,
                                                            std::string &responseBody) {
-    return executeCurlRequest(url, requestHeaders, httpStatusCode, responseHeaders, responseBody,
+    return executeCurlRequest( requestHeaders, httpStatusCode, responseHeaders, responseBody,
                               [](CURL *curl) {
                                   curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
                               });

@@ -14,6 +14,16 @@ class X402Processor;
 class IResponseSender;
 
 class HttpEndpointConnection {
+    string &url_;
+    bool acceptAllCerts_;
+
+public:
+    HttpEndpointConnection(string &url, bool acceptAllCerts)
+        : url_(url),
+          acceptAllCerts_(acceptAllCerts) {
+    }
+
+private:
     static curl_slist *createCurlHeadersFromProxygenHeaders(
         const proxygen::HTTPHeaders &requestHeaders);
 
@@ -22,56 +32,56 @@ class HttpEndpointConnection {
     static size_t headerCallback(char *buffer, size_t size, size_t nitems, void *userdata);
 
 public:
-    static ptr<IBackendError> doGetRequest(const string &url,
-                                           const proxygen::HTTPHeaders &reqHeaders,
-                                           uint64_t &httpStatusCode,
-                                           proxygen::HTTPHeaders &responseHeaders,
-                                           std::string &responseBody);
+    ptr<IBackendError> doGetRequest(
+        const proxygen::HTTPHeaders &reqHeaders,
+        uint64_t &httpStatusCode,
+        proxygen::HTTPHeaders &responseHeaders,
+        std::string &responseBody);
 
-    static ptr<IBackendError> doPostRequest(const string &url,
-                                            const proxygen::HTTPHeaders &requestHeaders,
-                                            const std::string &requestBody,
-                                            uint64_t &httpStatusCode,
-                                            proxygen::HTTPHeaders &responseHeaders,
-                                            std::string &responseBody);
+    ptr<IBackendError> doPostRequest(
+        const proxygen::HTTPHeaders &requestHeaders,
+        const std::string &requestBody,
+        uint64_t &httpStatusCode,
+        proxygen::HTTPHeaders &responseHeaders,
+        std::string &responseBody);
 
-    static ptr<IBackendError> doHeadRequest(const string &url,
-                                            const proxygen::HTTPHeaders &reqHeaders,
-                                            uint64_t &httpStatusCode,
-                                            proxygen::HTTPHeaders &responseHeaders);
+    ptr<IBackendError> doHeadRequest(
+        const proxygen::HTTPHeaders &reqHeaders,
+        uint64_t &httpStatusCode,
+        proxygen::HTTPHeaders &responseHeaders);
 
-    static ptr<IBackendError> doOptions(const string &url,
-                                        const proxygen::HTTPHeaders &reqHeaders,
-                                        uint64_t &httpStatusCode,
-                                        proxygen::HTTPHeaders &responseHeaders,
-                                        std::string &responseBody);
+    ptr<IBackendError> doOptions(
+        const proxygen::HTTPHeaders &reqHeaders,
+        uint64_t &httpStatusCode,
+        proxygen::HTTPHeaders &responseHeaders,
+        std::string &responseBody);
 
-    static ptr<IBackendError> doPutRequest(const string &url,
-                                           const proxygen::HTTPHeaders &reqHeaders,
-                                           const std::string &requestBody,
-                                           uint64_t &httpStatusCode,
-                                           proxygen::HTTPHeaders &responseHeaders,
-                                           std::string &responseBody);
+    ptr<IBackendError> doPutRequest(
+        const proxygen::HTTPHeaders &reqHeaders,
+        const std::string &requestBody,
+        uint64_t &httpStatusCode,
+        proxygen::HTTPHeaders &responseHeaders,
+        std::string &responseBody);
 
-    static ptr<IBackendError> doDeleteRequest(const string &url,
-                                              const proxygen::HTTPHeaders &requestHeaders,
-                                              uint64_t &httpStatusCode,
-                                              proxygen::HTTPHeaders &responseHeaders,
-                                              std::string &responseBody);
+    ptr<IBackendError> doDeleteRequest(
+        const proxygen::HTTPHeaders &requestHeaders,
+        uint64_t &httpStatusCode,
+        proxygen::HTTPHeaders &responseHeaders,
+        std::string &responseBody);
 
-    static ptr<IBackendError> doRequest(const string &url, proxygen::HTTPMethod method_,
-                                        const proxygen::HTTPHeaders &reqHeaders,
-                                        const std::string &requestBody,
-                                        uint64_t &httpStatusCode,
-                                        proxygen::HTTPHeaders &responseHeaders,
-                                        std::string &responseBody);
+    ptr<IBackendError> doRequest(proxygen::HTTPMethod method_,
+                                 const proxygen::HTTPHeaders &reqHeaders,
+                                 const std::string &requestBody,
+                                 uint64_t &httpStatusCode,
+                                 proxygen::HTTPHeaders &responseHeaders,
+                                 std::string &responseBody);
 
-    static ptr<IBackendError> executeCurlRequest(const string &url,
-                                                 const proxygen::HTTPHeaders &requestHeaders,
-                                                 uint64_t &httpStatusCode,
-                                                 proxygen::HTTPHeaders &responseHeaders,
-                                                 std::string &responseBody,
-                                                 const std::function<void(CURL *)> &configureMethod);
+    ptr<IBackendError> executeCurlRequest(
+        const proxygen::HTTPHeaders &requestHeaders,
+        uint64_t &httpStatusCode,
+        proxygen::HTTPHeaders &responseHeaders,
+        std::string &responseBody,
+        const std::function<void(CURL *)> &configureMethod);
 
     static int debugCallback(CURL *, curl_infotype type, char *data, size_t size, void *) {
         switch (type) {

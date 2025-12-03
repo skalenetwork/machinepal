@@ -6,6 +6,8 @@
 #include <proxygen/lib/http/HTTPMessage.h>
 #include <proxygen/lib/http/HTTPMethod.h>
 
+#include "x402_protocol/IBackendError.h"
+
 X402Client::X402Client(const std::string &baseUrl)
     : baseUrl_(baseUrl) {
 }
@@ -30,9 +32,16 @@ HttpResponse X402Client::sendGetRequestAndParseResult(
 
 
     HttpResponse resp;
-    auto err = HttpEndpointConnection::doGetRequest(
-        url, requestHeaders,
-        resp.status, resp.headers, resp.body);
+
+
+    HttpEndpointConnection httpEndpointConnection(url, true);
+
+    auto err = httpEndpointConnection.doGetRequest(requestHeaders,
+                                                   resp.status, resp.headers, resp.body);
+
+    if (err) {
+        throw std::runtime_error("Error during X402 GET request: " + err->getMessage());
+    }
 
 
     return {resp};
