@@ -6,7 +6,7 @@
 class ProxygenResponseSender : public IResponseSender {
 public:
     void sendResponse(const std::pair<uint16_t, std::string> &statusAndMessage,
-                      const std::vector<std::pair<std::string, std::string> > &headers,
+                      const proxygen::HTTPHeaders &headers,
                       const std::string &body) override {
         auto task = [weakSelf = weakSelf_, statusAndMessage, headers, body]() mutable {
             auto self = weakSelf.lock();
@@ -16,7 +16,9 @@ public:
             }
             proxygen::ResponseBuilder builder(self->downstream_);
             builder.status(statusAndMessage.first, statusAndMessage.second);
-            for (const auto &h: headers) builder.header(h.first, h.second);
+            headers.forEach([&builder](const std::string &name, const std::string &value) {
+                builder.header(name, value);
+            });
             if (!body.empty()) builder.body(body);
             builder.sendWithEOM();
         };

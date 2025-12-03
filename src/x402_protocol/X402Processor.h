@@ -32,25 +32,24 @@ public:
 
     bool isReplySent() const override;
 
-    bool reply402IfNoPaymentHeader( const std::unique_ptr< proxygen::HTTPMessage >& req );
+    bool reply402IfNoPaymentHeader( const proxygen::HTTPHeaders& requestHeaders );
 
-    proxygen::HTTPHeaders getApplicationJsonHeaders();
+    static const proxygen::HTTPHeaders &getApplicationJsonHeaders();
 
-    void onRequestStart( const std::unique_ptr< proxygen::HTTPMessage >& headers ) noexcept override;
+    void onRequestStart( const std::unique_ptr< proxygen::HTTPMessage >& request ) noexcept override;
 
     void sendSettlementErrorResponse(
         ptr< Authorization > authorization, add_pointer_t< HttpError > error );
 
-    void doPassThrough(const std::unique_ptr< proxygen::HTTPMessage >& requestHeaders,const string& requestBody);
+    void doPassThrough(const std::unique_ptr< proxygen::HTTPMessage >& request,const string& requestBody);
 
-    void handlePassThrowOrErrorOnNoResourceMatch(const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
+    void handlePassThrowOrErrorOnNoResourceMatch(const std::unique_ptr<proxygen::HTTPMessage> &request,
                                                  const string &body);
 
     void onRequestFullyReceived(
-        const std::unique_ptr< proxygen::HTTPMessage >& requestHeaders, const string& body ) noexcept override;
+        const std::unique_ptr< proxygen::HTTPMessage >& request, const string& body ) noexcept override;
     void onBodySizeIncrease( size_t newSize ) override;
 
-    static const std::vector< std::pair< std::string, std::string > > APPLICATION_JSON_HEADERS;
 
 private:
 
@@ -75,13 +74,13 @@ private:
     void replyPassThroughError( IBackendError& error, proxygen::HTTPHeaders & responseHeaders );
 
     bool validateAndExtractSubDomainName(
-        const std::unique_ptr< proxygen::HTTPMessage >& requestHeaders );
+        const std::unique_ptr< proxygen::HTTPMessage >& request );
 
-    bool validateAndDecodePath( const std::unique_ptr< proxygen::HTTPMessage >& requestHeaders );
+    bool validateAndDecodePath( const std::unique_ptr< proxygen::HTTPMessage >& request );
 
     bool matchOrganization();
 
-    bool validateMethod( const std::unique_ptr< proxygen::HTTPMessage >& requestHeaders );
+    bool validateMethod( const std::unique_ptr< proxygen::HTTPMessage >& request );
 
     void  replyX402ResourceSuccess( uint64_t statusCode, const std::string& settlementInfo,
         const proxygen::HTTPHeaders&& responseHeaders,

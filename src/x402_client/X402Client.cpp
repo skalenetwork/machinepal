@@ -22,10 +22,10 @@ HttpResponse X402Client::sendRequestAndParseResult(
     std::string url = baseUrl() + ":" + std::to_string(port) + _location;
 
     // Prepare request headers from "Key: Value" strings
-    auto requestHeaders = std::make_unique<proxygen::HTTPMessage>();
+    auto requestHeaders = proxygen::HTTPHeaders();
 
     for (const auto &header : _requestHeaders) {
-            requestHeaders->getHeaders().add(header.first, header.second);
+            requestHeaders.add(header.first, header.second);
     }
 
 

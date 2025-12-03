@@ -37,9 +37,9 @@ bool X402Processor::isReplySent() const {
 
 
 bool X402Processor::reply402IfNoPaymentHeader(
-    const std::unique_ptr<proxygen::HTTPMessage> &req) {
+    const proxygen::HTTPHeaders &requestHeaders) {
     try {
-        if (req->getHeaders().exists("X-PAYMENT"))
+        if (requestHeaders.exists("X-PAYMENT"))
             return false;
 
         reply402PaymentRequired(std::nullopt);
@@ -51,14 +51,6 @@ bool X402Processor::reply402IfNoPaymentHeader(
     return true;
 }
 
-
-proxygen::HTTPHeaders X402Processor::getApplicationJsonHeaders() {
-    proxygen::HTTPHeaders headers;
-    for (const auto &header: APPLICATION_JSON_HEADERS) {
-        headers.add(header.first, header.second);
-    }
-    return headers;
-}
 
 void X402Processor::reply502BadGateway(const std::string &message) {
     string body = getJsonErrorBody(message);
@@ -184,11 +176,7 @@ void X402Processor::sendResponse(
         return;
     }
     try {
-        std::vector<std::pair<std::string, std::string>> headersVec;
-        headers.forEach([&headersVec](const std::string& name, const std::string& value) {
-            headersVec.emplace_back(name, value);
-        });
-        responseSender->sendResponse(statusAndMessage, headersVec, body);
+        responseSender->sendResponse(statusAndMessage, headers, body);
     } catch (std::exception &e) {
         spdlog::error("Exception while sending response: {}", e.what());
         // nothing can be done so we consider response as sent
@@ -197,8 +185,8 @@ void X402Processor::sendResponse(
 
 
 bool X402Processor::validateAndExtractSubDomainName(
-    const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders) {
-    auto domainName = reqHeaders->getHeaders().getSingleOrEmpty("host");
+    const std::unique_ptr<proxygen::HTTPMessage> &request) {
+    auto domainName = request->getHeaders().getSingleOrEmpty("host");
     // Remove port if present (e.g., example.com:8080 -> example.com)
 
     if (domainName.empty()) {
@@ -257,9 +245,8 @@ bool X402Processor::validateAndExtractSubDomainName(
     return true;
 }
 
-bool X402Processor::validateAndDecodePath(
-    const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders) {
-    auto path = reqHeaders->getPath();
+bool X402Processor::validateAndDecodePath(const std::unique_ptr<proxygen::HTTPMessage> &request) {
+    auto path = request->getPath();
     std::string errorMessage;
     if (!URLUtils::decodePath(path, decodedPath_, errorMessage)) {
         reply400BadRequest(errorMessage);
@@ -281,38 +268,36 @@ bool X402Processor::matchOrganization() {
     return true;
 }
 
-bool X402Processor::validateMethod(
-    const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders) {
-    if (!reqHeaders->getMethod().has_value()) {
+bool X402Processor::validateMethod(const std::unique_ptr<proxygen::HTTPMessage> &request) {
+    if (!request->getMethod().has_value()) {
         reply400BadRequest("Missing HTTP method");
         return false;
     }
 
-    method_ = reqHeaders->getMethod().value();
+    method_ = request->getMethod().value();
 
     if (method_ != proxygen::HTTPMethod::GET && method_ != proxygen::HTTPMethod::POST
         && method_ != proxygen::HTTPMethod::HEAD && method_ != proxygen::HTTPMethod::OPTIONS &&
         method_ != proxygen::HTTPMethod::PUT && method_ != proxygen::HTTPMethod::DELETE) {
         reply400BadRequest(
             "Unsupported HTTP method." +
-            reqHeaders->getMethodString());
+            request->getMethodString());
         return false;
     }
     return true;
 }
 
-void X402Processor::onRequestStart(
-    const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders) noexcept {
+void X402Processor::onRequestStart(const std::unique_ptr<proxygen::HTTPMessage> &request) noexcept {
     try {
-        CHECK_STATE(reqHeaders);
+        CHECK_STATE(request);
 
-        if (!validateAndExtractSubDomainName(reqHeaders))
+        if (!validateAndExtractSubDomainName(request))
             return;
 
         if (!matchOrganization())
             return;
 
-        if (!validateAndDecodePath(reqHeaders))
+        if (!validateAndDecodePath(request))
             return;
     } catch (std::exception &e) {
         spdlog::critical("onRequestStart exception");
@@ -343,11 +328,12 @@ void X402Processor::sendSettlementErrorResponse(
     }
 }
 
-void X402Processor::doPassThrough(const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
+void X402Processor::doPassThrough(const std::unique_ptr<proxygen::HTTPMessage> &request,
                                   const string &requestBody) {
     try {
+
         // Validate request method (only GET/POST supported for now)
-        if (!validateMethod(requestHeaders)) {
+        if (!validateMethod(request)) {
             return;
         }
 
@@ -356,12 +342,12 @@ void X402Processor::doPassThrough(const std::unique_ptr<proxygen::HTTPMessage> &
 
         proxygen::HTTPHeaders responseHeaders;
 
-        auto url = organization_->passThroughConfig()->targetUrl() + requestHeaders->getPath();
+        auto url = organization_->passThroughConfig()->targetUrl() + request->getPath();
 
 
         uint64_t httpStatusCode = 0;
 
-        auto error = HttpEndpointConnection::doRequest(url, method_, requestHeaders,
+        auto error = HttpEndpointConnection::doRequest(url, method_, request->getHeaders(),
                                                        requestBody, httpStatusCode, responseHeaders, responseBody);
 
         if (error) {
@@ -386,12 +372,13 @@ void X402Processor::doPassThrough(const std::unique_ptr<proxygen::HTTPMessage> &
     }
 }
 
-void X402Processor::handlePassThrowOrErrorOnNoResourceMatch(const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
-                                                            const string &body) {
+void X402Processor::handlePassThrowOrErrorOnNoResourceMatch(
+    const std::unique_ptr<proxygen::HTTPMessage> &request,
+    const std::string &body) {
     // resource not found. If is pass through organization, do pass through
     // else reply 400
     if (organization()->passThroughConfig()) {
-        doPassThrough(reqHeaders, body);
+        doPassThrough(request, body);
     } else {
         reply404ResourceNotFound(
             "Requested resource not found: " + decodedPath_);
@@ -399,8 +386,7 @@ void X402Processor::handlePassThrowOrErrorOnNoResourceMatch(const std::unique_pt
 }
 
 void X402Processor::onRequestFullyReceived(
-    const std::unique_ptr<proxygen::HTTPMessage> &reqHeaders,
-    const string &body) noexcept {
+    const std::unique_ptr<proxygen::HTTPMessage> &request, const string &body) noexcept {
     try {
         if (state_ == X402ProcessorState::ERROR_SENT)
             return;
@@ -409,15 +395,15 @@ void X402Processor::onRequestFullyReceived(
         resource_ = organization_->getResourceByPath(decodedPath_, method_, body);
 
         if (!resource_) {
-            handlePassThrowOrErrorOnNoResourceMatch(reqHeaders, body);
+            handlePassThrowOrErrorOnNoResourceMatch(request, body);
             return;
         }
 
 
-        if (!validateMethod(reqHeaders))
+        if (!validateMethod(request))
             return;
 
-        if (reply402IfNoPaymentHeader(reqHeaders)) {
+        if (reply402IfNoPaymentHeader(request->getHeaders())) {
             return;
         }
 
@@ -425,7 +411,7 @@ void X402Processor::onRequestFullyReceived(
         ptr<Authorization> authorization;
 
         auto result = app_.paymentManager()->decodePreValidateAndSettleWithFacilitator(
-            reqHeaders, *config(), *resource(), *organization(), authorization);
+            request, *config(), *resource(), *organization(), authorization);
 
         if (holds_alternative<HttpError>(result)) {
             auto const error = std::get_if<HttpError>(&result);
@@ -440,7 +426,7 @@ void X402Processor::onRequestFullyReceived(
         proxygen::HTTPHeaders responseHeaders;
 
         auto error = HttpEndpointConnection::doRequest(resource_->getLocation(),
-                                                       method_, reqHeaders, body,
+                                                       method_, request->getHeaders(), body,
                                                        httpStatusCode, responseHeaders, responseBody);
 
         if (error) {
@@ -475,6 +461,11 @@ void X402Processor::onBodySizeIncrease(size_t newSize) {
     }
 }
 
-const std::vector<std::pair<std::string, std::string> > X402Processor::APPLICATION_JSON_HEADERS = {
-    {"Content-Type", "application/json"}
-};
+const proxygen::HTTPHeaders &X402Processor::getApplicationJsonHeaders() {
+    static proxygen::HTTPHeaders headers = [] {
+        proxygen::HTTPHeaders h;
+        h.add("Content-Type", "application/json");
+        return h;
+    }();
+    return headers;
+}

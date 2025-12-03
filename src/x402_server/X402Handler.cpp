@@ -74,10 +74,13 @@ void X402Handler::sendInternalError() {
         spdlog::critical( "Response sender not available in sendInternalError" );
         return;
     }
+    proxygen::HTTPHeaders headers;
+    headers.add("Content-Type", "application/json");
     responseSender_->sendResponse(
-        { 500, "Server Error" }, { { "Content-Type", "text/plain" } },
-        "Internal server error." );
+        { 500, "Server Error" }, headers,
+        "{\"error\":\"Internal server error.\"}" );
 }
+
 void X402Handler::onEOM() noexcept {
     if ( internalErrorSent_ )
         return;

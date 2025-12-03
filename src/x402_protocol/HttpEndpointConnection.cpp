@@ -19,7 +19,7 @@
 
 ptr<IBackendError> HttpEndpointConnection::doRequest(const string &url,
                                                      proxygen::HTTPMethod method_,
-                                                     const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
+                                                     const proxygen::HTTPHeaders &requestHeaders,
                                                      const std::string &requestBody,
                                                      uint64_t &httpStatusCode,
                                                      proxygen::HTTPHeaders &responseHeaders,
@@ -45,7 +45,7 @@ ptr<IBackendError> HttpEndpointConnection::doRequest(const string &url,
 }
 
 ptr<IBackendError> HttpEndpointConnection::executeCurlRequest(const string &url,
-                                                              const std::unique_ptr<proxygen::HTTPMessage> &
+                                                              const proxygen::HTTPHeaders &
                                                               requestHeaders,
                                                               uint64_t &httpStatusCode,
                                                               proxygen::HTTPHeaders &responseHeaders,
@@ -126,7 +126,7 @@ ptr<IBackendError> HttpEndpointConnection::executeCurlRequest(const string &url,
 }
 
 ptr<IBackendError> HttpEndpointConnection::doGetRequest(const string &url,
-                                                        const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
+                                                        const proxygen::HTTPHeaders &requestHeaders,
                                                         uint64_t &httpStatusCode,
                                                         proxygen::HTTPHeaders &responseHeaders,
                                                         std::string &responseBody, bool printHttpTrace) {
@@ -135,7 +135,7 @@ ptr<IBackendError> HttpEndpointConnection::doGetRequest(const string &url,
 }
 
 ptr<IBackendError> HttpEndpointConnection::doPostRequest(const string &url,
-                                                         const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
+                                                         const proxygen::HTTPHeaders &requestHeaders,
                                                          const std::string &requestBody,
                                                          uint64_t &httpStatusCode,
                                                          proxygen::HTTPHeaders &responseHeaders,
@@ -149,7 +149,7 @@ ptr<IBackendError> HttpEndpointConnection::doPostRequest(const string &url,
 }
 
 ptr<IBackendError> HttpEndpointConnection::doHeadRequest(const string &url,
-                                                         const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
+                                                         const proxygen::HTTPHeaders &requestHeaders,
                                                          uint64_t &httpStatusCode,
                                                          proxygen::HTTPHeaders &responseHeaders, bool printHttpTrace) {
     std::string responseBody; // Ignored for HEAD
@@ -160,7 +160,7 @@ ptr<IBackendError> HttpEndpointConnection::doHeadRequest(const string &url,
 }
 
 ptr<IBackendError> HttpEndpointConnection::doOptions(const string &url,
-                                                     const std::unique_ptr<proxygen::HTTPMessage> &
+                                                     const proxygen::HTTPHeaders &
                                                      requestHeaders,
                                                      uint64_t &httpStatusCode,
                                                      proxygen::HTTPHeaders &responseHeaders,
@@ -172,7 +172,7 @@ ptr<IBackendError> HttpEndpointConnection::doOptions(const string &url,
 }
 
 ptr<IBackendError> HttpEndpointConnection::doPutRequest(const string &url,
-                                                        const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
+                                                        const proxygen::HTTPHeaders &requestHeaders,
                                                         const std::string &requestBody,
                                                         uint64_t &httpStatusCode,
                                                         proxygen::HTTPHeaders &responseHeaders,
@@ -186,7 +186,7 @@ ptr<IBackendError> HttpEndpointConnection::doPutRequest(const string &url,
 }
 
 ptr<IBackendError> HttpEndpointConnection::doDeleteRequest(const string &url,
-                                                           const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders,
+                                                           const proxygen::HTTPHeaders &requestHeaders,
                                                            uint64_t &httpStatusCode,
                                                            proxygen::HTTPHeaders &responseHeaders,
                                                            std::string &responseBody, bool printHttpTrace) {
@@ -198,7 +198,7 @@ ptr<IBackendError> HttpEndpointConnection::doDeleteRequest(const string &url,
 
 
 curl_slist *HttpEndpointConnection::createCurlHeadersFromProxygenHeaders(
-    const std::unique_ptr<proxygen::HTTPMessage> &requestHeaders) {
+    const proxygen::HTTPHeaders &requestHeaders) {
     curl_slist *chunk = nullptr;
 
     // Block list (must be all lowercase)
@@ -214,19 +214,17 @@ curl_slist *HttpEndpointConnection::createCurlHeadersFromProxygenHeaders(
         "upgrade"
     };
 
-    if (requestHeaders) {
-        requestHeaders->getHeaders().forEach(
-            [&chunk](const std::string &name, const std::string &value) {
-                std::string lowerName = name;
-                folly::toLowerAscii(lowerName);
+    requestHeaders.forEach(
+        [&chunk](const std::string &name, const std::string &value) {
+            std::string lowerName = name;
+            folly::toLowerAscii(lowerName);
 
-                if (blockedHeaders.find(lowerName) == blockedHeaders.end()) {
-                    std::string headerStr = name + ": " + value;
-                    chunk = curl_slist_append(chunk, headerStr.c_str());
-                    CHECK_STATE(chunk);
-                }
-            });
-    }
+            if (blockedHeaders.find(lowerName) == blockedHeaders.end()) {
+                std::string headerStr = name + ": " + value;
+                chunk = curl_slist_append(chunk, headerStr.c_str());
+                CHECK_STATE(chunk);
+            }
+        });
 
 
     return chunk;
@@ -242,7 +240,7 @@ size_t HttpEndpointConnection::headerCallback(char *buffer, size_t size, size_t 
     size_t totalSize = size * nitems;
     std::string raw(buffer, totalSize);
 
-    auto *headers = static_cast<proxygen::HTTPHeaders*>(userdata);
+    auto *headers = static_cast<proxygen::HTTPHeaders *>(userdata);
 
     CHECK_STATE(headers);
 
