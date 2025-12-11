@@ -59,7 +59,9 @@ struct X402ServerFixture {
             auto config = app_->configManager()->latestConfig();
             auto url = "https://" + config->server()->hostName() + ":" +
                        std::to_string( config->server()->https()->port() );
-            client_ = std::make_shared< X402Client >( url );
+            client_ = std::make_shared< X402Client >();
+            baseUrl_ = url;
+
 
             srvThread_ = std::thread( [this] {
                 app_->runUntilExit();  //
@@ -96,6 +98,7 @@ struct X402ServerFixture {
 
     std::shared_ptr< MachinePayApp > app_;
     std::shared_ptr< X402Client > client_;
+    std::string baseUrl_;
 
     std::thread srvThread_;
     uint16_t port_{ 0 };
@@ -106,7 +109,8 @@ struct X402ServerFixture {
 BOOST_FIXTURE_TEST_SUITE( X402Suite, X402ServerFixture )
 
 BOOST_AUTO_TEST_CASE( Returns402WhenNoPaymentHeader ) {
-    auto resp = client_->doGetRequest( "/posts/1", {});
+    auto resp = client_->doGetRequest(
+        baseUrl_ + "/posts/1", {});
 
 
 
@@ -150,7 +154,8 @@ BOOST_AUTO_TEST_CASE( Returns200WhenPaymentHeaderPresent ) {
     sleep(1);
 
    auto resp =
-        client_->doX402GetRequest( "/posts/1", paymentPayload);
+        client_->doX402GetRequest( baseUrl_
+            + "/posts/1", paymentPayload);
 
 
     BOOST_TEST( resp.status == 200 );
@@ -160,7 +165,7 @@ BOOST_AUTO_TEST_CASE( Returns200WhenPaymentHeaderPresent ) {
 
     // this should cause exception
     auto resp2 =
-        client_->doX402GetRequest( "/posts/1", paymentPayload);
+        client_->doX402GetRequest( baseUrl_ + "/posts/1", paymentPayload);
 
     BOOST_TEST( resp2.status == 402 );
     BOOST_TEST(  resp2.headers.exists( "X-PAYMENT-RESPONSE" ) );

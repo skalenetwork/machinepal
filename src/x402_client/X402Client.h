@@ -16,10 +16,10 @@ struct HttpResponse {
 
 struct X402Client {
 private:
-    std::string baseUrl_;
+
 
 public:
-    X402Client(const std::string &baseUrl);
+    X402Client();
 
     ~X402Client();
 

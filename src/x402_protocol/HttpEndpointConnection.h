@@ -14,11 +14,11 @@ class X402Processor;
 class IResponseSender;
 
 class HttpEndpointConnection {
-    string &url_;
+    string url_;
     bool acceptAllCerts_;
 
 public:
-    HttpEndpointConnection(string &url, bool acceptAllCerts)
+    HttpEndpointConnection(const string &url, bool acceptAllCerts)
         : url_(url),
           acceptAllCerts_(acceptAllCerts) {
     }

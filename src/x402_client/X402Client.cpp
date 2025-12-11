@@ -8,21 +8,18 @@
 
 #include "x402_protocol/IBackendError.h"
 
-X402Client::X402Client(const std::string &baseUrl)
-    : baseUrl_(baseUrl) {
+X402Client::X402Client() {
 }
 
 X402Client::~X402Client() {
 }
 
-std::string X402Client::baseUrl() {
-    return baseUrl_;
-}
+
 
 
 HttpResponse X402Client::doGetRequest(
-    std::string _location, const std::vector<pair<string, string> > &_requestHeaders) {
-    std::string url = baseUrl() + _location;
+    std::string url, const std::vector<pair<string, string> > &_requestHeaders) {
+
 
     auto requestHeaders = proxygen::HTTPHeaders();
 
@@ -45,10 +42,9 @@ HttpResponse X402Client::doGetRequest(
 
 
 HttpResponse X402Client::doPostRequest(
-    const std::string& _location,
+    const std::string& url,
     const std::vector<std::pair<std::string, std::string>>& _requestHeaders,
     const std::string& requestBody) {
-    std::string url = baseUrl() + _location;
 
     auto requestHeaders = proxygen::HTTPHeaders();
 
@@ -68,22 +64,22 @@ HttpResponse X402Client::doPostRequest(
 
 
 HttpResponse X402Client::doX402GetRequest(
-    std::string _location, ptr<PaymentPayload> payload) {
+    std::string url, ptr<PaymentPayload> payload) {
     std::vector<pair<string, string> > header;
     if ( payload) {
         header.push_back(payload->createHttpHeaderValue());
     }
-    return doGetRequest(_location, {header});
+    return doGetRequest(url, {header});
 }
 
 
 HttpResponse X402Client::doX402PostRequest(
-    const std::string& _location,
+    const std::string& url,
     ptr<PaymentPayload> payload,
     const std::string& requestBody) {
     std::vector<pair<string, string> > header;
     if ( payload) {
         header.push_back(payload->createHttpHeaderValue());
     }
-    return doPostRequest(_location, {header}, requestBody);
+    return doPostRequest(url, {header}, requestBody);
 }

@@ -48,7 +48,7 @@ int ClientCli::runClientCommand(const ClientConfig &config) {
     ptr<PaymentPayload> payload = nullptr;
 
     try {
-        X402Client client("");
+        X402Client client;
 
         if (config.payload != "") {
             payload = PaymentPayload::fromJson(json::parse(config.payload));
