@@ -53,7 +53,7 @@ int ClientCli::runClientCommand(const ClientConfig &config) {
         if (config.payload != "") {
             payload = PaymentPayload::fromJson(json::parse(config.payload));
         }
-        if (config.method == "GET") {
+        if (config.method == proxygen::HTTPMethod::GET) {
             client.doX402GetRequest(config.url, payload);
         } else {
             client.doX402PostRequest(config.url, payload, "");

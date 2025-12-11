@@ -6,10 +6,14 @@
 #include "CLI/CLI.hpp"
 
 
+namespace proxygen {
+    enum class HTTPMethod;
+}
+
 class ClientConfig {
 public:
     std::string url;
-    std::string method;
+    proxygen::HTTPMethod method;
     std::string payload;
 };
 
