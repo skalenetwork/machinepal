@@ -4,6 +4,7 @@
 #include "EthereumWalletGenerator.h"
 #include "TLSCertGenerator.h"
 #include "MachinePayConfigGenerator.h"
+#include "ResourceGenerator.h"
 #include "crypto/EthPrivateKey.h"
 #include <stdexcept>
 #include <filesystem>
@@ -29,7 +30,10 @@ void ProjectGenerator::generateProject(const std::filesystem::path &baseDir) {
     // 2. Generate TLS certificate
     generateTLSCertificate(baseDir);
 
-    // 3. Generate configuration
+    // 3. Generate default resources
+    generateResources(baseDir);
+
+    // 4. Generate configuration
     generateConfiguration(baseDir, machinePayKey);
 }
 
@@ -59,6 +63,11 @@ void ProjectGenerator::generateTLSCertificate(const std::filesystem::path &baseD
 
     TLSCertGenerator tlsGen;
     tlsGen.generateDefaultCertFiles(certPath, certKeyPath);
+}
+
+void ProjectGenerator::generateResources(const std::filesystem::path &baseDir) {
+     ResourceGenerator resourceGen;
+     resourceGen.generateDefaultResources(baseDir);
 }
 
 

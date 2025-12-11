@@ -54,12 +54,21 @@ void ClientCli::addClientSubcommand(CLI::App& app, ClientConfig& config) {
 
 int ClientCli::runClientCommand(const ClientConfig &config) {
     ptr<PaymentPayload> payload = nullptr;
+    std::string payloadContent;
 
     try {
         X402Client client;
 
-        if (config.payload != "") {
-            payload = PaymentPayload::fromJson(json::parse(config.payload));
+        if (!config.payload.empty()) {
+            std::ifstream payloadFile(config.payload);
+            if (!payloadFile) {
+                spdlog::error("Failed to open payload file: {}", config.payload);
+                return 1;
+            }
+            std::stringstream buffer;
+            buffer << payloadFile.rdbuf();
+            payloadContent = buffer.str();
+            payload = PaymentPayload::fromJson(json::parse(payloadContent));
         }
 
         client.doX402Request(config.method, config.url, payload, nullptr);

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <filesystem>
+
 class FolderGenerator {
 public:
     FolderGenerator(const std::filesystem::path& baseDir);
