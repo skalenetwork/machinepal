@@ -6,6 +6,7 @@
 #include <proxygen/lib/http/HTTPMessage.h>
 #include <proxygen/lib/http/HTTPMethod.h>
 
+#include "payment/datastructures/PaymentRequiredResponse.h"
 #include "x402_protocol/IBackendError.h"
 
 X402Client::X402Client() {
@@ -77,6 +78,42 @@ HttpResponse X402Client::doX402Request(proxygen::HTTPMethod method, const std::s
     }
 }
 
-HttpResponse X402Client::buyAndRetrieveX402Resource(proxygen::HTTPMethod method, const std::string &_location) {
-    return doX402Request(method, _location, nullptr, nullptr);
-};
+HttpResponse X402Client::buyAndRetrieveX402Resource(proxygen::HTTPMethod method, const std::string &url,
+    EthPrivateKey& fundingKey, ptr<string> requestBody) {
+    auto resp = doX402Request(method, url, nullptr, make_shared<string>(""));
+
+    CHECK_STATE(resp.status == 402);
+    CHECK_STATE(resp.headers.getSingleOrEmpty("Content-Type") == "application/json");
+
+    PaymentRequiredResponse response;
+
+    try {
+        response = PaymentRequiredResponse::fromJson(nlohmann::json::parse(resp.body));
+    } catch (const std::exception &ex) {
+        RETHROW_NESTED;
+    }
+
+    auto accepts = response.accepts();
+    CHECK_STATE(accepts.size() == 1);
+    auto req = accepts.front();
+
+
+    EthAddress to = EthAddress::parseFlexible(req.payTo());
+    auto  value = EIP3009Value::fromHexOrDecimal(req.maxAmountRequired());
+    EIP3009Nonce nonce = EIP3009Nonce::generateRandomNonce();
+
+    auto paymentPayload =
+            PaymentPayload().createDefaultPaymentPayload(fundingKey, to,
+                                                         value, nonce, req.network());
+
+    resp = doX402Request(method, url, paymentPayload, requestBody);
+
+
+    CHECK_STATE(resp.status == 200);
+    CHECK_STATE(resp.headers.exists( "X-PAYMENT-RESPONSE" ));
+    //auto paymentResponse = resp.headers.getSingleOrEmpty("X-PAYMENT-RESPONSE");
+
+    return resp;
+}
+
+

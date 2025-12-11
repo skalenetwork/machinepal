@@ -18,7 +18,7 @@ std::shared_ptr< std::string > PaymentRequirements::toString( const PaymentRequi
  * @brief Deserializes a nlohmann::json object into a PaymentRequirements struct.
  * Handles 'outputSchema' conditionally: sets the optional to nullopt if the key is missing.
  */
-std::shared_ptr< PaymentRequirements > PaymentRequirements::fromJson( const json& j ) {
+std::shared_ptr< PaymentRequirements > PaymentRequirements:: fromJson( const json& j ) {
     auto scheme = JsonUtils::mustContainString( j, "scheme" );
     auto network = JsonUtils::mustContainString( j, "network" );
     auto maxAmountRequired = JsonUtils::mustContainString( j, "maxAmountRequired" );

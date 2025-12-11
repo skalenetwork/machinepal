@@ -6,6 +6,7 @@
 #include <folly/init/Init.h>
 #include <proxygen/httpserver/HTTPServer.h>
 
+class EthPrivateKey;
 class PaymentPayload;
 
 struct HttpResponse {
@@ -39,7 +40,8 @@ public:
     HttpResponse doX402Request(proxygen::HTTPMethod method, const std::string &_location, const ptr<PaymentPayload> payload,
                                                           const ptr<std::string> &requestBody);
 
-    HttpResponse buyAndRetrieveX402Resource(proxygen::HTTPMethod method, const std::string &_location);
+    HttpResponse buyAndRetrieveX402Resource(proxygen::HTTPMethod method, const std::string &url,
+        EthPrivateKey& fundingKey, ptr<string> requestBody);;
 
 
 };
