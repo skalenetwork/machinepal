@@ -1,62 +1,99 @@
 #!/bin/sh
+# ==============================================================================
+# RUNIT FINISH SCRIPT - EXPONENTIAL BACKOFF STRATEGY
+# ==============================================================================
+# This script is executed by 'runit' every time the main 'run' script exits.
+#
+# CRITICAL MECHANISM:
+# 'runit' waits for this script to exit before it attempts to restart the
+# service. By placing a 'sleep' command here, we delay the restart loop.
+# ==============================================================================
+
+# 1. Capture Arguments passed by runit
+# $1 = Exit code of the 'run' script
+# $2 = Status code (least significant byte of the exit status)
 EXIT_CODE=$1
 STATUS=$2
 
-# Files to track state (stored in volatile /tmp)
+# ==============================================================================
+# CONFIGURATION & STATE
+# ==============================================================================
+
+# We use /tmp because we want this state to persist while the container is running
+# but vanish if the container itself is restarted/recreated.
 COUNT_FILE="/tmp/machinepay_fail_count"
 START_TIME_FILE="/tmp/machinepay_start_time"
 
-# Configuration
-RESET_TIME=60      # If app runs > 60s, we consider it "healthy" and reset counter
-MAX_BACKOFF=60     # Max sleep time (cap at 60 seconds)
+# RESET_TIME: "The Healthy Threshold"
+# If the app runs for longer than this (60s), we assume the previous crash was
+# a fluke or unrelated to the current one. We reset the backoff counter to 0.
+RESET_TIME=60
+
+# MAX_BACKOFF: "The Ceiling"
+# We cap the sleep time here so we don't end up waiting hours after many failures.
+MAX_BACKOFF=60
+
+# ==============================================================================
+# LOGIC START
+# ==============================================================================
 
 # 1. Calculate Uptime
+# We need to know how long the service was running before it crashed.
 NOW=$(date +%s)
+
 if [ -f "$START_TIME_FILE" ]; then
+    # Read the start time recorded by the 'run' script
     START=$(cat "$START_TIME_FILE")
 else
+    # Fallback: If file is missing, assume it just started (uptime = 0)
     START=$NOW
 fi
+
+# Calculate difference in seconds
 UPTIME=$((NOW - START))
 
-# 2. Reset counter if the service was healthy
+# 2. Check for "Healthy" Run
+# If the service survived longer than RESET_TIME, it wasn't a "crash loop".
+# We reset the failure counter so the next backoff starts at 1 second again.
 if [ "$UPTIME" -gt "$RESET_TIME" ]; then
     echo "Service ran for ${UPTIME}s (Healthy). Resetting backoff counter."
     echo 0 > "$COUNT_FILE"
 fi
 
-# 3. Read current failure count
+# 3. Read Current Failure Count
+# This file holds the number of consecutive crashes (runs < RESET_TIME).
 if [ -f "$COUNT_FILE" ]; then
     COUNT=$(cat "$COUNT_FILE")
 else
+    # Default to 0 if this is the very first crash
     COUNT=0
 fi
 
-# 4. Handle Clean Exit (Code 0)
+# 4. Handle Clean Exit (Exit Code 0)
+# If the application exited voluntarily with success (0), it usually means
+# it finished a task or was told to stop. We should NOT restart it.
 if [ "$EXIT_CODE" -eq 0 ]; then
     echo "Service exited normally (Code 0). Stopping service permanently."
+
+    # 'sv down' tells runit to stop managing this service entirely.
+    # Without this, runit would restart it immediately even after code 0.
     sv down /etc/service/machinepay
+
+    # Exit this script immediately; no need to sleep.
     exit 0
 fi
 
-# 5. Calculate Backoff (Exponential: 2^COUNT)
-# We use bit shifting (1 << COUNT) to calculate powers of 2 in sh
+# ==============================================================================
+# BACKOFF CALCULATION
+# ==============================================================================
+
+# 5. Calculate Sleep Duration (Exponential: 2^COUNT)
+# We use bitwise shifting because it's standard POSIX shell math.
+# 1 << 0 = 1
+# 1 << 1 = 2
+# 1 << 2 = 4
+# 1 << 3 = 8
 if [ "$COUNT" -gt 10 ]; then
-    # Prevent integer overflow for huge counts
-    SLEEP_TIME=$MAX_BACKOFF
-else
-    SLEEP_TIME=$((1 << COUNT))
-fi
-
-# Cap the sleep time
-if [ "$SLEEP_TIME" -gt "$MAX_BACKOFF" ]; then
-    SLEEP_TIME=$MAX_BACKOFF
-fi
-
-# 6. Execute Backoff
-# runit will NOT restart the service until this script finishes.
-echo "CRASH DETECTED (Code: $EXIT_CODE). Retry #$((COUNT+1)) in ${SLEEP_TIME}s..."
-sleep "$SLEEP_TIME"
-
-# 7. Increment and Save
-echo $((COUNT + 1)) > "$COUNT_FILE"
+    # SAFETY: 2^11 is 2048. To prevent integer overflow in the shell or
+    # excessively large numbers, we just clamp it immediately if count is high.
+    SLEEP_TIME=$MAX_BACK
