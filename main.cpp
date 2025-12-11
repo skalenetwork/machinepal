@@ -74,8 +74,8 @@ map<string, string>  parseConfigValueOverloadsFromCommandLineAndEnvironment(int 
             "Initialize project in the current working directory");
 
         // Client submenu options
-        std::string clientUrl;
-        ClientCli::addClientSubcommand(app, clientUrl);
+        ClientConfig clientConfig;
+        ClientCli::addClientSubcommand(app, clientConfig);
 
         try {
             app.parse(argc, argv);
@@ -84,8 +84,10 @@ map<string, string>  parseConfigValueOverloadsFromCommandLineAndEnvironment(int 
             exit(code);
         }
 
-        // store client URL if provided
-        setIfNotEmpty(envOverloads, "CLIENT_URL", clientUrl);
+        if (app.get_subcommand("client")->parsed()) {
+            auto returnCode = ClientCli::runClientCommand(clientConfig);
+            exit(returnCode);
+        }
 
         setIfNotEmpty(envOverloads, "CONFIG", configFilePath);
         setIfNotEmpty(envOverloads, "LOG_LEVEL", logLevel);

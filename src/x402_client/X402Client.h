@@ -33,9 +33,9 @@ public:
                                                const std::vector<std::pair<std::string, std::string>> &_requestHeaders,
                                                const std::string &requestBody);
 
-    HttpResponse doGetRequestWithPayload(
+    HttpResponse doX402GetRequest(
         std::string _location, ptr<PaymentPayload> payload);
 
-    HttpResponse doPostRequestWithPayload(const std::string &_location, ptr<PaymentPayload> payload,
+    HttpResponse doX402PostRequest(const std::string &_location, ptr<PaymentPayload> payload,
                                                           const std::string &requestBody);
 };

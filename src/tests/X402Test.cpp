@@ -150,7 +150,7 @@ BOOST_AUTO_TEST_CASE( Returns200WhenPaymentHeaderPresent ) {
     sleep(1);
 
    auto resp =
-        client_->doGetRequestWithPayload( "/posts/1", paymentPayload);
+        client_->doX402GetRequest( "/posts/1", paymentPayload);
 
 
     BOOST_TEST( resp.status == 200 );
@@ -160,7 +160,7 @@ BOOST_AUTO_TEST_CASE( Returns200WhenPaymentHeaderPresent ) {
 
     // this should cause exception
     auto resp2 =
-        client_->doGetRequestWithPayload( "/posts/1", paymentPayload);
+        client_->doX402GetRequest( "/posts/1", paymentPayload);
 
     BOOST_TEST( resp2.status == 402 );
     BOOST_TEST(  resp2.headers.exists( "X-PAYMENT-RESPONSE" ) );

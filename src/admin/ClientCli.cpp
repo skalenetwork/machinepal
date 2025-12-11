@@ -3,12 +3,9 @@
 #include <CLI/CLI.hpp>
 #include <boost/url.hpp> // Requires Boost 1.81+
 
+#include "payment/datastructures/PaymentPayload.h"
+#include "x402_client/X402Client.h"
 
-struct ClientConfig {
-    std::string url;
-    std::string method;
-    std::string payload;
-};
 
 void ClientCli::addClientSubcommand(CLI::App& app, ClientConfig& config) {
     auto* client = app.add_subcommand("client", "Client commands");
@@ -43,6 +40,29 @@ void ClientCli::addClientSubcommand(CLI::App& app, ClientConfig& config) {
           ->default_val("GET")
           ->check(CLI::IsMember({"GET", "POST"}, CLI::ignore_case));
 
-    client->add_option("-p,--payload", config.payload, "JSON payload")
+    client->add_option("-p,--payload-file", config.payload, "JSON payload file")
           ->type_name("JSON_STRING");
+}
+
+int ClientCli::runClientCommand(const ClientConfig &config) {
+    ptr<PaymentPayload> payload = nullptr;
+
+    try {
+        X402Client client("");
+
+        if (config.payload != "") {
+            payload = PaymentPayload::fromJson(json::parse(config.payload));
+        }
+        if (config.method == "GET") {
+            client.doX402GetRequest(config.url, payload);
+        } else {
+            client.doX402PostRequest(config.url, payload, "");
+        }
+    } catch (const std::exception &ex) {
+        spdlog::error("Exception running client command: {}", ex.what());
+        return 1;
+    }
+
+    return 0;
+
 }

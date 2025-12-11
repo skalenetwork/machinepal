@@ -67,19 +67,23 @@ HttpResponse X402Client::doPostRequest(
 }
 
 
-HttpResponse X402Client::doGetRequestWithPayload(
+HttpResponse X402Client::doX402GetRequest(
     std::string _location, ptr<PaymentPayload> payload) {
-    CHECK_STATE(payload);
-    auto header = payload->createHttpHeaderValue();
+    std::vector<pair<string, string> > header;
+    if ( payload) {
+        header.push_back(payload->createHttpHeaderValue());
+    }
     return doGetRequest(_location, {header});
 }
 
 
-HttpResponse X402Client::doPostRequestWithPayload(
+HttpResponse X402Client::doX402PostRequest(
     const std::string& _location,
     ptr<PaymentPayload> payload,
     const std::string& requestBody) {
-    CHECK_STATE(payload);
-    auto header = payload->createHttpHeaderValue();
+    std::vector<pair<string, string> > header;
+    if ( payload) {
+        header.push_back(payload->createHttpHeaderValue());
+    }
     return doPostRequest(_location, {header}, requestBody);
 }
