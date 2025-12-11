@@ -44,9 +44,42 @@ HttpResponse X402Client::sendGetRequestAndParseResult(
 }
 
 
-HttpResponse X402Client::sendRequestWithPayloadAndParseResult(
+HttpResponse X402Client::sendPostRequestAndParseResult(
+    const std::string& _location,
+    const std::vector<std::pair<std::string, std::string>>& _requestHeaders,
+    const std::string& requestBody) {
+    std::string url = baseUrl() + _location;
+
+    auto requestHeaders = proxygen::HTTPHeaders();
+
+    for (const auto& header : _requestHeaders) {
+        requestHeaders.add(header.first, header.second);
+    }
+
+    HttpResponse resp;
+
+    HttpEndpointConnection httpEndpointConnection(url, true);
+
+    auto err = httpEndpointConnection.doPostRequest(requestHeaders, requestBody,
+                                                    resp.status, resp.headers, resp.body);
+
+    return resp;
+}
+
+
+HttpResponse X402Client::sendGetRequestWithPayloadAndParseResult(
     std::string _location, ptr<PaymentPayload> payload) {
     CHECK_STATE(payload);
     auto header = payload->createHttpHeaderValue();
     return sendGetRequestAndParseResult(_location, {header});
+}
+
+
+HttpResponse X402Client::sendPostRequestWithPayloadAndParseResult(
+    const std::string& _location,
+    ptr<PaymentPayload> payload,
+    const std::string& requestBody) {
+    CHECK_STATE(payload);
+    auto header = payload->createHttpHeaderValue();
+    return sendPostRequestAndParseResult(_location, {header}, requestBody);
 }

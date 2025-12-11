@@ -29,6 +29,13 @@ public:
     sendGetRequestAndParseResult(std::string _location,
                               const std::vector<pair<string, string> > &_requestHeaders);
 
-    HttpResponse sendRequestWithPayloadAndParseResult(
+    HttpResponse sendPostRequestAndParseResult(const std::string &_location,
+                                               const std::vector<std::pair<std::string, std::string>> &_requestHeaders,
+                                               const std::string &requestBody);
+
+    HttpResponse sendGetRequestWithPayloadAndParseResult(
         std::string _location, ptr<PaymentPayload> payload);
+
+    HttpResponse sendPostRequestWithPayloadAndParseResult(const std::string &_location, ptr<PaymentPayload> payload,
+                                                          const std::string &requestBody);
 };
