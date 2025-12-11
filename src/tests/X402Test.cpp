@@ -175,6 +175,18 @@ BOOST_FIXTURE_TEST_SUITE(X402Suite, X402ServerFixture)
     }
 
 
+
+
+    BOOST_AUTO_TEST_CASE(X402LiveBuyResourceFlow) {
+        EthPrivateKey privKey = *app_->configManager()->latestConfig()->network()->fundingWalletKey();
+        auto resp = client_->buyAndRetrieveX402Resource(proxygen::HTTPMethod::GET,
+                                                        baseUrl_ + "/posts/1", privKey,
+                                                        nullptr);
+
+        BOOST_TEST(resp.status == 200);
+    }
+
+
  BOOST_AUTO_TEST_CASE(ClientCliRunsExecutable) {
         // Determine path to machinepay executable relative to this test binary
         namespace fs = std::filesystem;
