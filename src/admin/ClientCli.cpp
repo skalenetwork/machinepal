@@ -5,6 +5,7 @@
 
 #include "payment/datastructures/PaymentPayload.h"
 #include "x402_client/X402Client.h"
+#include <proxygen/lib/http/HTTPMethod.h>
 
 
 void ClientCli::addClientSubcommand(CLI::App& app, ClientConfig& config) {
@@ -35,10 +36,17 @@ void ClientCli::addClientSubcommand(CLI::App& app, ClientConfig& config) {
           ->check(boostUrlValidator) // Apply the Boost validator here
           ->required();
 
-    // 3. Capture option pointers...
+    // Map method strings to proxygen::HTTPMethod enum values and transform input accordingly
+    auto methodTransformer = CLI::CheckedTransformer(
+            std::map<std::string, proxygen::HTTPMethod>{
+                    {"GET", proxygen::HTTPMethod::GET},
+                    {"POST", proxygen::HTTPMethod::POST},
+            }, CLI::ignore_case);
+
     client->add_option("-m,--method", config.method, "HTTP method")
-          ->default_val("GET")
-          ->check(CLI::IsMember({"GET", "POST"}, CLI::ignore_case));
+          ->type_name("METHOD")
+          ->transform(methodTransformer)
+          ->default_str("GET");
 
     client->add_option("-p,--payload-file", config.payload, "JSON payload file")
           ->type_name("JSON_STRING");

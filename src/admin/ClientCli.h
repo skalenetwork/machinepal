@@ -3,6 +3,8 @@
 #pragma once
 
 #include <string>
+#include <proxygen/lib/http/HTTPMethod.h>
+
 #include "CLI/CLI.hpp"
 
 
@@ -13,7 +15,7 @@ namespace proxygen {
 class ClientConfig {
 public:
     std::string url;
-    proxygen::HTTPMethod method;
+    proxygen::HTTPMethod method = proxygen::HTTPMethod::GET;
     std::string payload;
 };
 

@@ -22,6 +22,9 @@
 #include <folly/SocketAddress.h>
 #include <proxygen/httpserver/HTTPServer.h>
 #include <nlohmann/json.hpp>
+#include <filesystem>
+#include <cstdlib>
+#include <sys/wait.h>
 
 
 const std::string BIND_IP = "0.0.0.0";
@@ -179,6 +182,31 @@ BOOST_FIXTURE_TEST_SUITE(X402Suite, X402ServerFixture)
 
 
         unsetenv("TEST_DISABLE_AUTHORIZATION_TIME_CHECK");
+    }
+
+    BOOST_AUTO_TEST_CASE(ClientCliRunsExecutable) {
+        // Determine path to machinepay executable relative to this test binary
+        namespace fs = std::filesystem;
+        auto& ts = boost::unit_test::framework::master_test_suite();
+        fs::path testExePath(ts.argv[0]);
+        fs::path exeDir = testExePath.parent_path();
+        fs::path machinepayPath = exeDir / "../machinepay";
+        // In some setups executables are in the same directory
+        if (!fs::exists(machinepayPath)) {
+            machinepayPath = exeDir / "machinepay";
+        }
+        BOOST_REQUIRE_MESSAGE(fs::exists(machinepayPath), std::string("machinepay executable not found at ") + machinepayPath.string());
+
+        std::string url = baseUrl_ + "/posts/1";
+        std::string cmd = std::string("\"") + machinepayPath.string() + "\" client --method GET --url \"" + url + "\"";
+        int rc = std::system(cmd.c_str());
+        int exitCode = -1;
+        if (WIFEXITED(rc)) {
+            exitCode = WEXITSTATUS(rc);
+        } else {
+            exitCode = rc;
+        }
+        BOOST_TEST(exitCode == 0);
     }
 
 BOOST_AUTO_TEST_SUITE_END()
