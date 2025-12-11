@@ -148,6 +148,28 @@ end
 
 ## ⚡ Build Instructions
 
+
+Install prerequisites:
+```bash
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        git \
+        pkg-config \
+        unzip \
+        zip \
+        tar \
+        build-essential \
+        python3 \
+        linux-libc-dev \
+        autoconf \
+        libtool \
+        automake \
+        bison \
+        flex \
+```
+
 ```bash
 # Clone with dependencies
 git clone --recursive https://github.com/skalenetwork/machinepay.git
