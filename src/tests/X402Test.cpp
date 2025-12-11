@@ -116,17 +116,10 @@ struct X402ServerFixture {
 // Use the fixture for all tests in this suite
 BOOST_FIXTURE_TEST_SUITE(X402Suite, X402ServerFixture)
 
-    BOOST_AUTO_TEST_CASE(Returns402WhenNoPaymentHeader) {
+    BOOST_AUTO_TEST_CASE(X402BuyResourceFlow) {
         auto resp = client_->doX402Request(proxygen::HTTPMethod::GET,
             baseUrl_ + "/posts/1", nullptr,
             nullptr);
-
-
-        resp.headers.forEach([](const std::string &name, const std::string &value) {
-            spdlog::info("{}: {}", name, value);
-        });
-        spdlog::info("BODY::{}", resp.body);
-
 
         BOOST_TEST(resp.status == 402);
         BOOST_TEST(resp.headers.getSingleOrEmpty("Content-Type") == "application/json");
@@ -145,10 +138,9 @@ BOOST_FIXTURE_TEST_SUITE(X402Suite, X402ServerFixture)
         auto expected = PaymentRequirements::fromJson(
             nlohmann::json::parse(PaymentExamples::EXACT_UCDC_PAYMENT_REQ_EASYNET));
         BOOST_TEST(req == *expected);
-    }
 
-    BOOST_AUTO_TEST_CASE(Returns200WhenPaymentHeaderPresent) {
-        EthAddress to("0x209693bc6afc0c5328ba36faf03c514ef312287c");
+
+        EthAddress to = EthAddress::parseFlexible(expected->payTo());
         EIP3009Value value(12000000000000000000ULL);
         EIP3009Nonce nonce = EIP3009Nonce::generateRandomNonce();
         EthPrivateKey privKey = *app_->configManager()->latestConfig()->network()->fundingWalletKey();
@@ -159,7 +151,7 @@ BOOST_FIXTURE_TEST_SUITE(X402Suite, X402ServerFixture)
 
         sleep(1);
 
-        auto resp =
+        resp =
                 client_->doX402Request(proxygen::HTTPMethod::GET, baseUrl_
                                           + "/posts/1", paymentPayload, nullptr);
 
