@@ -18,13 +18,6 @@ struct X402Client {
 private:
 
 
-public:
-    X402Client();
-
-    ~X402Client();
-
-    std::string baseUrl();
-
     HttpResponse
     doGetRequest(std::string _location,
                               const std::vector<pair<string, string> > &_requestHeaders);
@@ -32,6 +25,15 @@ public:
     HttpResponse doPostRequest(const std::string &_location,
                                                const std::vector<std::pair<std::string, std::string>> &_requestHeaders,
                                                const std::string &requestBody);
+
+
+public:
+    X402Client();
+
+    ~X402Client();
+
+    std::string baseUrl();
+
 
     HttpResponse doX402GetRequest(
         std::string _location, ptr<PaymentPayload> payload);
