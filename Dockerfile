@@ -1,24 +1,30 @@
+# syntax=docker/dockerfile:1
+
 # ==========================================
 # STAGE 1: Builder
 # ==========================================
+# Assuming this image contains /app/vcpkg fully bootstrapped
 FROM ghcr.io/skalenetwork/machinepay-deps:latest AS builder
 
-# Prevent interactive prompts during build
 ENV DEBIAN_FRONTEND=noninteractive
-
-
 WORKDIR /app
 
+# Set vcpkg root (must match where it was installed in the deps image)
 ENV VCPKG_ROOT=/app/vcpkg \
     VCPKG_DISABLE_METRICS=1
 
-
-COPY src src
-COPY CMakeLists.txt .
-COPY main.cpp .
+# 1. Copy Manifests first (Optimization)
+# We copy these before source code so we don't invalidate dependency checks
+# if only main.cpp changes.
 COPY vcpkg.json .
-RUN rm -rf build cmake-build-release cmake-build-debug
+COPY CMakeLists.txt .
 
+# 2. Copy Source Code
+COPY src src
+COPY main.cpp .
+
+# 3. Configure (CMake)
+# Using the pre-downloaded tools from the base image
 RUN $VCPKG_ROOT/downloads/tools/cmake-*/cmake-*/bin/cmake -S . -B build \
       -G Ninja \
       -DCMAKE_BUILD_TYPE=Release \
@@ -26,7 +32,8 @@ RUN $VCPKG_ROOT/downloads/tools/cmake-*/cmake-*/bin/cmake -S . -B build \
       -DVCPKG_TARGET_TRIPLET=x64-linux \
       -DCMAKE_MAKE_PROGRAM=$VCPKG_ROOT/downloads/tools/ninja-*/ninja
 
-RUN  $VCPKG_ROOT/downloads/tools/cmake-*/cmake-*/bin/cmake --build build --target machinepay
+# 4. Build
+RUN $VCPKG_ROOT/downloads/tools/cmake-*/cmake-*/bin/cmake --build build --target machinepay
 
 # ==========================================
 # STAGE 2: Runtime
@@ -50,8 +57,9 @@ WORKDIR /machinepay
 COPY --from=builder /app/build/machinepay /machinepay/machinepay
 
 # Copy service scripts
+# ERROR FIXED: You were overwriting entrypoint.sh with first_run.sh previously
 COPY --chmod=755 docker/run_machinepay.sh /etc/service/machinepay/run
 COPY --chmod=755 docker/first_run.sh /machinepay/first_run.sh
+COPY --chmod=755 docker/entrypoint.sh /machinepay/entrypoint.sh
 
-# Entrypoint
-ENTRYPOINT ["/usr/sbin/runsvdir", "/etc/service"]
+ENTRYPOINT ["/machinepay/entrypoint.sh"]
