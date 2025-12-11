@@ -1,32 +1,11 @@
 # ==========================================
 # STAGE 1: Builder
 # ==========================================
-FROM ubuntu:22.04 AS builder
+FROM machinepay_deps AS builder
 
 # Prevent interactive prompts during build
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install Build Dependencies
-# Added python3 which is often required for Boost build scripts
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-        bison \
-        flex \
-        ca-certificates \
-        curl \
-        git \
-        pkg-config \
-        unzip \
-        zip \
-        tar \
-        build-essential \
-        python3 \
-        linux-libc-dev \
-        autoconf \
-        libtool \
-        automake \
-        autoconf-archive \
-    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -34,25 +13,16 @@ ENV VCPKG_ROOT=/app/vcpkg \
     VCPKG_DISABLE_METRICS=1
 
 
-RUN git clone https://github.com/microsoft/vcpkg.git $VCPKG_ROOT && \
-    $VCPKG_ROOT/bootstrap-vcpkg.sh
-
-
-COPY vcpkg.json .
-
-RUN $VCPKG_ROOT/vcpkg install --triplet x64-linux
-
-# 4. Copy Source Code
 COPY . .
-
 
 RUN $VCPKG_ROOT/downloads/tools/cmake-*/cmake-*/bin/cmake -S . -B build \
       -G Ninja \
       -DCMAKE_BUILD_TYPE=Release \
       -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake \
       -DVCPKG_TARGET_TRIPLET=x64-linux \
-      -DCMAKE_MAKE_PROGRAM=$VCPKG_ROOT/downloads/tools/ninja-*/ninja \
-    && $VCPKG_ROOT/downloads/tools/cmake-*/cmake-*/bin/cmake --build build --target machinepay
+      -DCMAKE_MAKE_PROGRAM=$VCPKG_ROOT/downloads/tools/ninja-*/ninja
+
+RUN  $VCPKG_ROOT/downloads/tools/cmake-*/cmake-*/bin/cmake --build build --target machinepay
 
 # ==========================================
 # STAGE 2: Runtime
