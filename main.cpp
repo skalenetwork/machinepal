@@ -18,6 +18,7 @@
 #include <regex>
 
 #include "admin/ProjectGenerator.h"
+#include "admin/ClientCli.h"
 
 
 using namespace proxygen;
@@ -71,12 +72,20 @@ map<string, string>  parseConfigValueOverloadsFromCommandLineAndEnvironment(int 
         bool initProject = false;
         app.add_flag("--init-project", initProject,
             "Initialize project in the current working directory");
+
+        // Client submenu options
+        std::string clientUrl;
+        ClientCli::addClientSubcommand(app, clientUrl);
+
         try {
             app.parse(argc, argv);
         } catch (const CLI::ParseError &e) {
             auto code = app.exit(e);
             exit(code);
         }
+
+        // store client URL if provided
+        setIfNotEmpty(envOverloads, "CLIENT_URL", clientUrl);
 
         setIfNotEmpty(envOverloads, "CONFIG", configFilePath);
         setIfNotEmpty(envOverloads, "LOG_LEVEL", logLevel);
