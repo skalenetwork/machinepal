@@ -76,3 +76,7 @@ HttpResponse X402Client::doX402Request(proxygen::HTTPMethod method, const std::s
         return doPostRequest(url, {header}, *requestBody);
     }
 }
+
+HttpResponse X402Client::buyAndRetrieveX402Resource(proxygen::HTTPMethod method, const std::string &_location) {
+    return doX402Request(method, _location, nullptr, nullptr);
+};

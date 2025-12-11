@@ -38,4 +38,8 @@ public:
 
     HttpResponse doX402Request(proxygen::HTTPMethod method, const std::string &_location, const ptr<PaymentPayload> payload,
                                                           const ptr<std::string> &requestBody);
+
+    HttpResponse buyAndRetrieveX402Resource(proxygen::HTTPMethod method, const std::string &_location);
+
+
 };
