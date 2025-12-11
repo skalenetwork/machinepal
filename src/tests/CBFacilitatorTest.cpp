@@ -49,7 +49,7 @@ BOOST_AUTO_TEST_CASE( verify_call_real_server_invalid_sig ) {
         // Contains "valid" (bool) for some facilitator implementations or "error" for rejected
         // payloads.
         BOOST_TEST(
-            ( res.contains( "valid" ) || res.contains( "error" ) || res.contains( "message" ) ) );
+            ( res.contains( "valid" ) || res.contains( "invalidReason" ) || res.contains( "message" ) ) );
         BOOST_TEST_MESSAGE( "verify response: " + res.dump() );
     } catch ( VerificationError& e ) {
         BOOST_TEST_MESSAGE(
@@ -73,7 +73,7 @@ BOOST_AUTO_TEST_CASE( settle_call_real_server_stub ) {
         // non-2xx. We accept any valid JSON object but assert that the response is parsed.
         BOOST_TEST( res.is_object() );
         BOOST_TEST(
-            ( res.contains( "txHash" ) || res.contains( "error" ) || res.contains( "message" ) ) );
+            ( res.contains( "txHash" ) || res.contains( "errorReason" ) || res.contains( "message" ) ) );
         BOOST_TEST_MESSAGE( "settle response: " + res.dump() );
     } catch ( const std::exception& e ) {
         // Likely outcome for dummy signature: facilitator rejects with an HTTP error that our
