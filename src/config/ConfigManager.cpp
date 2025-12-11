@@ -70,36 +70,26 @@ std::string ConfigManager::computeBlakeHash( const filesystem::path& filePath ) 
 }
 
 void ConfigManager::checkFileExistsAndReadable( const std::string& configFile ) {
-    char cwd[4096];
-    if ( !getcwd( cwd, sizeof( cwd ) ) ) {
-        throw std::runtime_error( "Config file '" + configFile +
-                                  "' does not exist. Failed to get current working directory." );
-    }
+
 
     // Check that configFile exists
     if ( !std::filesystem::exists( configFile ) ) {
         throw std::runtime_error(
             "Config file '" + configFile +
-            "' does not exist. Current working directory: " + std::string( cwd ) );
+            "' does not exist.");
     }
     // Check that configFile is not a directory
     if ( std::filesystem::is_directory( configFile ) ) {
         throw std::runtime_error(
             "Config file '" + configFile +
-            "' is a directory, not a file. Current working directory: " + std::string( cwd ) );
+            "' is a directory, not a file");
     }
     // Check that configFile is readable
     std::ifstream configTest( configFile );
     if ( !configTest.good() ) {
-        char cwd2[4096];
-        if ( !getcwd( cwd2, sizeof( cwd2 ) ) ) {
-            throw std::runtime_error(
-                "Config file '" + configFile +
-                "' is not readable. Failed to get current working directory." );
-        }
         throw std::runtime_error(
             "Config file '" + configFile +
-            "' is not readable. Current working directory: " + std::string( cwd2 ) );
+            "' is not readable.");
     }
     configTest.close();
 }

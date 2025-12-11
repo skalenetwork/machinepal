@@ -34,9 +34,41 @@ std::shared_ptr< NetworkConfig > NetworkConfig::createFromJson(
         CHECK_STATE_JSON( networkJson["revenue_wallet_address"].is_string(),
             "'revenue_wallet_address' in network config must be a string", networkJson );
 
-        auto walletAddressStr = networkJson["revenue_wallet_address"].get< std::string >();
+        auto revenueWalletAddressStr = networkJson["revenue_wallet_address"].get< std::string >();
 
-        auto walletAddress = EthAddress::parseHexAddress( walletAddressStr );
+        auto revenueWalletAddress = EthAddress::parseHexAddress( revenueWalletAddressStr );
+
+
+        if (networkJson.contains("funding_wallet_key_file")) {
+            CHECK_STATE_JSON(networkJson["funding_wallet_key_file"].is_string(),
+                             "'funding_wallet_key_file' must be a string path", networkJson);
+            auto fundingWalletKeyFileStr = networkJson["funding_wallet_key_file"].get< std::string >();
+            auto fundingWalletPath = fileManager->resolveCanonicalPath(fundingWalletKeyFileStr);
+            // Ensure file exists and is readable
+            FileManager::checkFileExistsAndReadableCwd(fundingWalletPath.string());
+
+            // Read file contents
+            std::ifstream keyFile(fundingWalletPath);
+            CHECK_STATE_JSON(keyFile.is_open(), "Unable to open funding wallet key file", networkJson);
+            std::string hexFundingWalletKey;
+            {
+                std::ostringstream oss;
+                oss << keyFile.rdbuf();
+                hexFundingWalletKey = oss.str();
+            }
+            keyFile.close();
+            // Trim whitespace/newlines
+            auto trim_inplace = [](std::string &s) {
+                auto not_space = [](unsigned char c){ return !std::isspace(c); };
+                s.erase(s.begin(), std::find_if(s.begin(), s.end(), not_space));
+                s.erase(std::find_if(s.rbegin(), s.rend(), not_space).base(), s.end());
+            };
+            trim_inplace(hexFundingWalletKey);
+            CHECK_STATE_JSON(!hexFundingWalletKey.empty(), "Funding wallet key file is empty", networkJson);
+
+            auto fundingWalletKey = EthPrivateKey::parseHex(hexFundingWalletKey);
+            (void)fundingWalletKey; // validate-only for now
+        }
 
         std::string name = networkJson.value( "name", "machinepay-easynet" );
         std::map< std::string, ptr< EIP712Domain > > supportedNetworks{
@@ -57,7 +89,7 @@ std::shared_ptr< NetworkConfig > NetworkConfig::createFromJson(
             CHECK_STATE_JSON( facilitator, "Facilitator config is required", networkJson );
         }
         return ptr< NetworkConfig >(
-            new NetworkConfig( name, walletAddress, facilitator, domain ) );
+            new NetworkConfig( name, revenueWalletAddress, facilitator, domain ) );
     } catch ( const std::exception& ex ) {
         RETHROW_NESTED;
     }
