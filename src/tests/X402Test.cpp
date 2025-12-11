@@ -184,7 +184,8 @@ BOOST_FIXTURE_TEST_SUITE(X402Suite, X402ServerFixture)
         unsetenv("TEST_DISABLE_AUTHORIZATION_TIME_CHECK");
     }
 
-    BOOST_AUTO_TEST_CASE(ClientCliRunsExecutable) {
+
+ BOOST_AUTO_TEST_CASE(ClientCliRunsExecutable) {
         // Determine path to machinepay executable relative to this test binary
         namespace fs = std::filesystem;
         auto& ts = boost::unit_test::framework::master_test_suite();
@@ -208,6 +209,10 @@ BOOST_FIXTURE_TEST_SUITE(X402Suite, X402ServerFixture)
         }
         BOOST_TEST(exitCode == 0);
     }
+
+BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE(InitProjectSuite)
 
     BOOST_AUTO_TEST_CASE(InitProjectGeneratesFilesInTmp) {
         namespace fs = std::filesystem;
@@ -261,6 +266,39 @@ BOOST_FIXTURE_TEST_SUITE(X402Suite, X402ServerFixture)
         BOOST_TEST(fs::exists(cert));
         BOOST_TEST(fs::exists(certKey));
 
+        // now run machinepay server in /tmp/machinepay to see if it starts correctly
+        fs::path pidFile = baseDir / "machinepay.pid";
+        cmd = "cd \"" + baseDir.string() + "\" && \"" + machinepayPath.string() + "\" & echo $! > " + pidFile.string();
+        rc = std::system(cmd.c_str());
+        BOOST_TEST(WEXITSTATUS(rc) == 0);
+        sleep(3); // wait a bit for server to start
+
+        // check if process is running by reading pid and checking with kill -0
+        std::ifstream pid_file(pidFile.string());
+        pid_t pid = 0;
+        if (pid_file.is_open()) {
+            pid_file >> pid;
+            pid_file.close();
+        }
+        BOOST_REQUIRE(pid > 0);
+
+        std::string check_cmd = "kill -0 " + std::to_string(pid);
+        int check_rc = std::system(check_cmd.c_str());
+        BOOST_CHECK_EQUAL(WEXITSTATUS(check_rc), 0);
+
+
+        // kill the server gracefully with SIGINT (Ctrl-C)
+        std::string kill_cmd = "kill -SIGINT " + std::to_string(pid);
+        int kill_rc = std::system(kill_cmd.c_str());
+        BOOST_TEST(WEXITSTATUS(kill_rc) == 0);
+        sleep(2); // give it a moment to die
+
+        // Verify the process is no longer running
+        check_rc = std::system(check_cmd.c_str());
+        BOOST_CHECK_NE(WEXITSTATUS(check_rc), 0);
     }
 
+
 BOOST_AUTO_TEST_SUITE_END()
+
+
