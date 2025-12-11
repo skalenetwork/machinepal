@@ -106,7 +106,7 @@ struct X402ServerFixture {
 BOOST_FIXTURE_TEST_SUITE( X402Suite, X402ServerFixture )
 
 BOOST_AUTO_TEST_CASE( Returns402WhenNoPaymentHeader ) {
-    auto resp = client_->sendGetRequestAndParseResult( "/posts/1", {});
+    auto resp = client_->doGetRequest( "/posts/1", {});
 
 
 
@@ -150,7 +150,7 @@ BOOST_AUTO_TEST_CASE( Returns200WhenPaymentHeaderPresent ) {
     sleep(1);
 
    auto resp =
-        client_->sendGetRequestWithPayloadAndParseResult( "/posts/1", paymentPayload);
+        client_->doGetRequestWithPayload( "/posts/1", paymentPayload);
 
 
     BOOST_TEST( resp.status == 200 );
@@ -160,7 +160,7 @@ BOOST_AUTO_TEST_CASE( Returns200WhenPaymentHeaderPresent ) {
 
     // this should cause exception
     auto resp2 =
-        client_->sendGetRequestWithPayloadAndParseResult( "/posts/1", paymentPayload);
+        client_->doGetRequestWithPayload( "/posts/1", paymentPayload);
 
     BOOST_TEST( resp2.status == 402 );
     BOOST_TEST(  resp2.headers.exists( "X-PAYMENT-RESPONSE" ) );

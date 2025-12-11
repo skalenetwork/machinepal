@@ -26,16 +26,16 @@ public:
     std::string baseUrl();
 
     HttpResponse
-    sendGetRequestAndParseResult(std::string _location,
+    doGetRequest(std::string _location,
                               const std::vector<pair<string, string> > &_requestHeaders);
 
-    HttpResponse sendPostRequestAndParseResult(const std::string &_location,
+    HttpResponse doPostRequest(const std::string &_location,
                                                const std::vector<std::pair<std::string, std::string>> &_requestHeaders,
                                                const std::string &requestBody);
 
-    HttpResponse sendGetRequestWithPayloadAndParseResult(
+    HttpResponse doGetRequestWithPayload(
         std::string _location, ptr<PaymentPayload> payload);
 
-    HttpResponse sendPostRequestWithPayloadAndParseResult(const std::string &_location, ptr<PaymentPayload> payload,
+    HttpResponse doPostRequestWithPayload(const std::string &_location, ptr<PaymentPayload> payload,
                                                           const std::string &requestBody);
 };
