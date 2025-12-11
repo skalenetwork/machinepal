@@ -13,7 +13,11 @@ ENV VCPKG_ROOT=/app/vcpkg \
     VCPKG_DISABLE_METRICS=1
 
 
-COPY . .
+COPY src src
+COPY CMakeLists.txt .
+COPY main.cpp .
+COPY vcpkg.json .
+RUN rm -rf build cmake-build-release cmake-build-debug
 
 RUN $VCPKG_ROOT/downloads/tools/cmake-*/cmake-*/bin/cmake -S . -B build \
       -G Ninja \
