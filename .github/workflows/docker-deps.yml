@@ -1,8 +1,7 @@
 name: Build and Push Docker Deps Image
 
 on:
-  push:
-    branches: [ "develop" ]
+  workflow_dispatch: # This enables manual triggering only
 
 permissions:
   contents: read
