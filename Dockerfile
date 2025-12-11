@@ -48,21 +48,22 @@ RUN apt-get update && \
         runit \
     && rm -rf /var/lib/apt/lists/*
 
-# Create a non-root user
-RUN useradd -m -s /bin/bash appuser
 
+RUN useradd -m -s /bin/bash machinepay
+
+# FIX: Removed duplicate WORKDIR
 WORKDIR /machinepay
+RUN chown machinepay:machinepay /machinepay
 
-WORKDIR /machinepay
-# Ensure appuser owns it so the app can write data there
-RUN chown appuser:appuser /machinepay
-
-# 2. Copy Binary to SYSTEM path (Safe from volume overwrites)
 COPY --from=builder /app/build/machinepay /usr/local/bin/machinepay
 
-# 3. Copy Scripts
+# Copy Scripts
 COPY --chmod=755 docker/run_machinepay.sh /etc/service/machinepay/run
 COPY --chmod=755 docker/first_run.sh /usr/local/bin/first_run.sh
 COPY --chmod=755 docker/entrypoint.sh /entrypoint.sh
 
-ENTRYPOINT ["/machinepay/entrypoint.sh"]
+# FIX: Point to root /entrypoint.sh (where you copied it above)
+ENTRYPOINT ["/entrypoint.sh"]
+
+# Recommended: Add a default CMD so it's clear what happens with no args
+CMD [""]

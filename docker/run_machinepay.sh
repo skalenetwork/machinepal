@@ -14,15 +14,15 @@ if [ ! -f "$FLAG_FILE" ]; then
     echo "First run detected..."
 
     # 2. Correct path to setup script
-    # We execute this as appuser so created files have correct permissions
-    chpst -u appuser /usr/local/bin/first_run.sh
+    # We execute this as machinepay so created files have correct permissions
+    chpst -u machinepay /usr/local/bin/first_run.sh
 
     touch "$FLAG_FILE"
-    # Fix ownership of flag file so appuser can see it later
-    chown appuser:appuser "$FLAG_FILE"
+    # Fix ownership of flag file so machinepay can see it later
+    chown machinepay:machinepay "$FLAG_FILE"
 fi
 
-# 3. Run binary as appuser
+# 3. Run binary as machinepay
 # -u: user
 # -C: working directory
-exec chpst -u appuser -C /machinepay /usr/local/bin/machinepay
+exec chpst -u machinepay -C /machinepay /usr/local/bin/machinepay
