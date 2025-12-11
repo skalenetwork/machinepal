@@ -1,5 +1,3 @@
-# syntax=docker/dockerfile:1
-
 # ==========================================
 # STAGE 1: Builder
 # ==========================================
@@ -27,31 +25,29 @@ RUN apt-get update && \
         autoconf \
         libtool \
         automake \
+        autoconf-archive \
+        libtoolize
+
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Setup Vcpkg Environment Variables
-# REMOVED: VCPKG_FORCE_SYSTEM_BINARIES=1 (Caused the ninja failure)
 ENV VCPKG_ROOT=/app/vcpkg \
     VCPKG_DISABLE_METRICS=1
 
-# 1. Install Vcpkg
+
 RUN git clone https://github.com/microsoft/vcpkg.git $VCPKG_ROOT && \
     $VCPKG_ROOT/bootstrap-vcpkg.sh
 
-# 2. Copy ONLY dependency manifest first (Optimization)
+
 COPY vcpkg.json .
 
-# 3. Install dependencies
-# We let vcpkg manage its own CMake/Ninja now, which fixes the "ninja -v" error
 RUN $VCPKG_ROOT/vcpkg install --triplet x64-linux
 
 # 4. Copy Source Code
 COPY . .
 
-# 5. Build
-# Use the vcpkg toolchain file to link libraries automatically
+
 RUN $VCPKG_ROOT/downloads/tools/cmake-*/cmake-*/bin/cmake -S . -B build \
       -G Ninja \
       -DCMAKE_BUILD_TYPE=Release \
