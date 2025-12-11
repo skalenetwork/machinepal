@@ -26,8 +26,6 @@ RUN apt-get update && \
         libtool \
         automake \
         autoconf-archive \
-        libtoolize
-
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
