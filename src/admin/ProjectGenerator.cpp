@@ -9,11 +9,12 @@
 #include <filesystem>
 
 
-void ProjectGenerator::generateProjectInCurrentWorkingDir() {
+int ProjectGenerator::generateProjectInCurrentWorkingDir() {
     spdlog::info("Creating new project structure in the current directory…");
     auto cwd = std::filesystem::current_path();
     generateProject(cwd);
     spdlog::info("Project initialized successfully.");
+    return 0;
 }
 
 void ProjectGenerator::generateProject(const std::filesystem::path &baseDir) {

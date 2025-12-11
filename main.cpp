@@ -24,24 +24,22 @@
 using namespace proxygen;
 
 
-void setIfNotEmpty(std::map<std::string, std::string>& envOverloads, const std::string& key, const std::string& value);
+void setIfNotEmpty(std::map<std::string, std::string> &envOverloads, const std::string &key, const std::string &value);
 
-void setIfNotEmpty(std::map<std::string, std::string>& envOverloads, const std::string& key, const std::string& value)
-{
+void setIfNotEmpty(std::map<std::string, std::string> &envOverloads, const std::string &key, const std::string &value) {
     if (!value.empty()) {
         envOverloads[key] = value;
     }
 }
 
-void setBooleanSwitchIfNotEmpty(std::map<std::string, std::string>& envOverloads, const std::string& key, bool value)
-{
+void setBooleanSwitchIfNotEmpty(std::map<std::string, std::string> &envOverloads, const std::string &key, bool value) {
     if (value) {
         envOverloads[key] = "true";
     }
 }
 
 
-map<string, string>  parseConfigValueOverloadsFromCommandLineAndEnvironment(int argc, char **argv) {
+map<string, string> parseConfigValueOverloadsFromCommandLineAndEnvironment(int argc, char **argv) {
     try {
         // get environment overloads first. Then command line can override them.
         auto envOverloads = Init::getMachinePayEnvironmentOverloads();
@@ -53,29 +51,29 @@ map<string, string>  parseConfigValueOverloadsFromCommandLineAndEnvironment(int 
         std::string hostname;
         CLI::App app{"machinepay"};
         app.add_option("-c,--config", configFilePath,
-            "Path to the config file. Default is ./machinepay.yml.")
-            ->type_name("FILE");
+                       "Path to the config file. Default is ./machinepay.yml.")
+                ->type_name("FILE");
         app.add_option("-l,--log-level", logLevel,
-            "Log level: trace, debug, info, warn, error, fatal")
-            ->type_name("LOG_LEVEL")
-            ->check(CLI::IsMember({"trace", "debug", "info", "warn", "error", "fatal"}));
+                       "Log level: trace, debug, info, warn, error, fatal")
+                ->type_name("LOG_LEVEL")
+                ->check(CLI::IsMember({"trace", "debug", "info", "warn", "error", "fatal"}));
         app.add_option("-t,--log-type", logType,
-            "Log type: plain, json")
-            ->type_name("LOG_TYPE")
-            ->check(CLI::IsMember({"plain", "json"}));
+                       "Log type: plain, json")
+                ->type_name("LOG_TYPE")
+                ->check(CLI::IsMember({"plain", "json"}));
         app.add_option("--bind-ip", bindIp,
-            "Bind IP address for the server")
-            ->type_name("IP");
+                       "Bind IP address for the server")
+                ->type_name("IP");
         app.add_option("--hostname", hostname,
-            "Hostname for the server")
-            ->type_name("HOSTNAME");
-        bool initProject = false;
-        app.add_flag("--init-project", initProject,
-            "Initialize project in the current working directory");
+                       "Hostname for the server")
+                ->type_name("HOSTNAME");
 
         // Client submenu options
         ClientConfig clientConfig;
         ClientCli::addClientSubcommand(app, clientConfig);
+
+        app.add_subcommand("init",
+                           "Initialize a new machinepay project in the current working directory");
 
         try {
             app.parse(argc, argv);
@@ -87,15 +85,17 @@ map<string, string>  parseConfigValueOverloadsFromCommandLineAndEnvironment(int 
         if (app.get_subcommand("client")->parsed()) {
             auto returnCode = ClientCli::runClientCommand(clientConfig);
             exit(returnCode);
+        } else if (app.get_subcommand("init")->parsed()) {
+            auto returnCode = ProjectGenerator::generateProjectInCurrentWorkingDir();
+            exit(returnCode);
         }
+
 
         setIfNotEmpty(envOverloads, "CONFIG", configFilePath);
         setIfNotEmpty(envOverloads, "LOG_LEVEL", logLevel);
         setIfNotEmpty(envOverloads, "LOG_TYPE", logType);
         setIfNotEmpty(envOverloads, "BIND_IP", bindIp);
         setIfNotEmpty(envOverloads, "HOSTNAME", hostname);
-        setBooleanSwitchIfNotEmpty(envOverloads, "INIT_PROJECT", initProject);
-
 
 
         if (!envOverloads.contains("CONFIG")) {
@@ -104,35 +104,29 @@ map<string, string>  parseConfigValueOverloadsFromCommandLineAndEnvironment(int 
         }
 
         return envOverloads;
-
-    } catch (const std::exception &ex) {
+    } catch
+    (
+        const std::exception &ex
+    ) {
         spdlog::critical("Error parsing commmand line and environment", ex.what());
         printNestedException(ex);
         exit(1);
-    } catch (...) {
+    } catch
+    (
+        ...
+    ) {
         spdlog::critical("Unknown error loading config.");
         exit(1);
     }
 }
 
 
-
 int main(int argc, char *argv[]) {
     try {
         Init::initAllLibs(1, argv);
         auto configValueOverloads = parseConfigValueOverloadsFromCommandLineAndEnvironment(argc, argv);
-        if (configValueOverloads.contains("INIT_PROJECT")) {
-            try {
-                ProjectGenerator::generateProjectInCurrentWorkingDir();
-                return 0;
-            } catch (const std::exception &ex) {
-                spdlog::error("Failed to initialize project.");
-                spdlog::error(ex.what());
-                return 1;
-            }
-        }
 
-        auto configFilePath =  configValueOverloads.at("CONFIG");
+        auto configFilePath = configValueOverloads.at("CONFIG");
 
         if (configFilePath == "./machinepay.yml") {
             spdlog::info("Using default config path ./machinepay.yml");
@@ -142,9 +136,9 @@ int main(int argc, char *argv[]) {
 
         if (configValueOverloads.size() > 0) {
             spdlog::info("Values set in command line and environment override "
-                         "the corresponding configuration file values."
-                         " Command line takes precedence over environment.");
-            for (const auto& kv : configValueOverloads) {
+                "the corresponding configuration file values."
+                " Command line takes precedence over environment.");
+            for (const auto &kv: configValueOverloads) {
                 spdlog::info("{} = {}", kv.first, kv.second);
             }
         }

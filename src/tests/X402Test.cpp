@@ -209,4 +209,58 @@ BOOST_FIXTURE_TEST_SUITE(X402Suite, X402ServerFixture)
         BOOST_TEST(exitCode == 0);
     }
 
+    BOOST_AUTO_TEST_CASE(InitProjectGeneratesFilesInTmp) {
+        namespace fs = std::filesystem;
+        auto& ts = boost::unit_test::framework::master_test_suite();
+        fs::path testExePath(ts.argv[0]);
+        fs::path exeDir = testExePath.parent_path();
+        fs::path machinepayPath = exeDir / "../machinepay";
+        if (!fs::exists(machinepayPath)) {
+            machinepayPath = exeDir / "machinepay";
+        }
+        BOOST_REQUIRE_MESSAGE(fs::exists(machinepayPath), std::string("machinepay executable not found at ") +
+            machinepayPath.string());
+
+        // Prepare empty directory at /tmp/machinepay
+        fs::path baseDir("/tmp/machinepay");
+
+        std::error_code ec;
+
+        // Clean up to keep environment tidy (best-effort)
+        fs::remove_all(baseDir, ec);
+
+
+        if (fs::exists(baseDir, ec)) {
+            fs::remove_all(baseDir, ec);
+        }
+        fs::create_directories(baseDir, ec);
+        BOOST_REQUIRE_MESSAGE(!ec && fs::is_empty(baseDir), "Failed to prepare empty /tmp/machinepay directory");
+
+        std::string cmd = "cd /tmp/machinepay && \"" + machinepayPath.string() + "\" init";
+        int rc = std::system(cmd.c_str());
+        int exitCode = -1;
+        if (WIFEXITED(rc)) {
+            exitCode = WEXITSTATUS(rc);
+        } else {
+            exitCode = rc;
+        }
+        BOOST_REQUIRE_MESSAGE(exitCode == 0, std::string("machinepay --init-project failed with exit code ") + std::to_string(exitCode));
+
+        // Verify generated structure
+        fs::path cfg = baseDir / "machinepay.yml";
+        fs::path secrets = baseDir / "secrets";
+        fs::path certs = baseDir / "certs";
+        fs::path wallet = secrets / "machinepay_wallet.key";
+        fs::path cert = certs / "machinepay_tls_certificate.crt";
+        fs::path certKey = secrets / "machinepay_tls_certificate.key";
+
+        BOOST_TEST(fs::exists(cfg));
+        BOOST_TEST(fs::exists(secrets));
+        BOOST_TEST(fs::exists(certs));
+        BOOST_TEST(fs::exists(wallet));
+        BOOST_TEST(fs::exists(cert));
+        BOOST_TEST(fs::exists(certKey));
+
+    }
+
 BOOST_AUTO_TEST_SUITE_END()

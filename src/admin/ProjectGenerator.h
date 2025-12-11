@@ -24,7 +24,7 @@ public:
     static constexpr auto kConfigFile = "machinepay.yml";
 
 
-    static void generateProjectInCurrentWorkingDir();
+    static int generateProjectInCurrentWorkingDir();
 
     static void generateProject(const std::filesystem::path &baseDir);
 
