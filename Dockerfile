@@ -30,11 +30,21 @@ COPY src src
 COPY main.cpp .
 COPY external external
 
+RUN apt-get update && apt-get install -y ca-certificates gpg wget \
+    && wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | tee /usr/share/keyrings/kitware-archive-keyring.gpg >/dev/null \
+    && echo 'deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ jammy main' | tee /etc/apt/sources.list.d/kitware.list >/dev/null \
+    && apt-get update \
+    && apt-get install -y cmake ccache
+
+# Verify version
+RUN cmake --version
+
+
 # 3. Configure (CMake)
 # Now 'cmake' will be found in /usr/bin/cmake
 RUN cmake -S . -B build \
       -G Ninja \
-      -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_BUILD_TYPE=Debug \
       -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake \
       -DVCPKG_TARGET_TRIPLET=x64-linux
 
