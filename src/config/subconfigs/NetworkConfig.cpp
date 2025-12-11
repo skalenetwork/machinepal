@@ -29,12 +29,12 @@ std::shared_ptr< NetworkConfig > NetworkConfig::createFromJson(
 
         auto networkJson = j["network"];
 
-        CHECK_STATE_JSON( networkJson.contains( "wallet_address" ),
-            "Missing required 'wallet_address' in network config", networkJson );
-        CHECK_STATE_JSON( networkJson["wallet_address"].is_string(),
-            "'wallet_address' in network config must be a string", networkJson );
+        CHECK_STATE_JSON( networkJson.contains( "revenue_wallet_address" ),
+            "Missing required 'revenue_wallet_address' in network config", networkJson );
+        CHECK_STATE_JSON( networkJson["revenue_wallet_address"].is_string(),
+            "'revenue_wallet_address' in network config must be a string", networkJson );
 
-        auto walletAddressStr = networkJson["wallet_address"].get< std::string >();
+        auto walletAddressStr = networkJson["revenue_wallet_address"].get< std::string >();
 
         auto walletAddress = EthAddress::parseHexAddress( walletAddressStr );
 

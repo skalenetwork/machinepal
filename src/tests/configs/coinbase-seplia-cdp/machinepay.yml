@@ -14,7 +14,7 @@ server:
 
 network:
   name: base-sepolia
-  wallet_address: 0x209693Bc6afc0C5328bA36FaF03C514EF312287C
+  revenue_wallet_address: 0x209693Bc6afc0C5328bA36FaF03C514EF312287C
   facilitator:
     # Facilitator type. Override: FACILITATOR_TYPE
     # Facilitator types:

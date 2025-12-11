@@ -17,7 +17,7 @@ server:
 
 network:
   name: machinepay-easynet
-  wallet_address: {}
+  revenue_wallet_address: {}
 
 log:
   # Optional Log verbosity level — one of: trace, debug, info, warn, error, fatal
