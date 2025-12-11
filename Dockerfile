@@ -28,6 +28,7 @@ COPY CMakeLists.txt .
 # 2. Copy Source Code
 COPY src src
 COPY main.cpp .
+COPY external external
 
 # 3. Configure (CMake)
 # Now 'cmake' will be found in /usr/bin/cmake
