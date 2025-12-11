@@ -11,11 +11,20 @@ class FileManager;
 class NetworkConfig {
 private:
     std::string name_;
-    EthAddress walletAddress_;
+    EthAddress revenueWalletAddress_;
+    ptr<EthPrivateKey> fundingWalletKey_;
+
+public:
+    [[nodiscard]] ptr<EthPrivateKey> fundingWalletKey() const {
+        return fundingWalletKey_;
+    }
+
+private:
     ptr< FacilitatorConfig > facilitator_;
     ptr< EIP712Domain > eip712Domain_;
 
     NetworkConfig( const std::string& name, const EthAddress& walletAddress,
+        ptr<EthPrivateKey> fundingWalletKey,
         ptr<FacilitatorConfig>& facilitator, ptr< EIP712Domain >& domain ); // moved implementation to cpp
 
 
@@ -29,7 +38,7 @@ public:
         return facilitator_;
     }
 
-    [[nodiscard]] EthAddress walletAddress() const { return walletAddress_; }
+    [[nodiscard]] EthAddress walletAddress() const { return revenueWalletAddress_; }
 
     [[nodiscard]] const ptr< EIP712Domain >& eip712Domain() const {
         CHECK_STATE( eip712Domain_ );
