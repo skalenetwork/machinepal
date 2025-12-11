@@ -54,7 +54,7 @@ int ClientCli::runClientCommand(const ClientConfig &config) {
             payload = PaymentPayload::fromJson(json::parse(config.payload));
         }
 
-        client.doX402Request(config.method, config.url, payload, std::nullopt);
+        client.doX402Request(config.method, config.url, payload, nullptr);
     } catch (const std::exception &ex) {
         spdlog::error("Exception running client command: {}", ex.what());
         return 1;

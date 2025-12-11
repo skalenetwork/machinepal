@@ -58,8 +58,9 @@ HttpResponse X402Client::doPostRequest(
 }
 
 
-HttpResponse X402Client::doX402Request(proxygen::HTTPMethod method, const std::string &url, ptr<PaymentPayload> payload,
-                                       const std::optional<std::string> &requestBody = nullopt) {
+HttpResponse X402Client::doX402Request(proxygen::HTTPMethod method, const std::string &url,
+    const ptr<PaymentPayload> payload,
+                                       const ptr<std::string> &requestBody) {
     std::vector<pair<string, string> > header;
 
     if (method == proxygen::HTTPMethod::POST) {
@@ -71,7 +72,7 @@ HttpResponse X402Client::doX402Request(proxygen::HTTPMethod method, const std::s
     if (method == proxygen::HTTPMethod::GET) {
         return doGetRequest(url, header);
     } else {
-        CHECK_STATE(requestBody.has_value())
-        return doPostRequest(url, {header}, requestBody.value());
+        CHECK_STATE(requestBody)
+        return doPostRequest(url, {header}, *requestBody);
     }
 }

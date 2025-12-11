@@ -36,6 +36,6 @@ public:
 
 
 
-    HttpResponse doX402Request(proxygen::HTTPMethod method, const std::string &_location, ptr<PaymentPayload> payload,
-                                                          const std::optional<std::string> &requestBody);
+    HttpResponse doX402Request(proxygen::HTTPMethod method, const std::string &_location, const ptr<PaymentPayload> payload,
+                                                          const ptr<std::string> &requestBody);
 };
