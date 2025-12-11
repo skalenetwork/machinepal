@@ -14,7 +14,7 @@ server:
 
 network:
   name: machinepay-easynet
-  revenue_wallet_address: 0x209693Bc6afc0C5328bA36FaF03C514EF312287C
+  payment_address: 0x209693Bc6afc0C5328bA36FaF03C514EF312287C
 
 passthrough:
   target_url: https://hackernews.ycombinator.com

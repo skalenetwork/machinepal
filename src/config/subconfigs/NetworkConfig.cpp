@@ -32,21 +32,21 @@ std::shared_ptr<NetworkConfig> NetworkConfig::createFromJson(
 
         auto networkJson = j["network"];
 
-        CHECK_STATE_JSON(networkJson.contains( "revenue_wallet_address" ),
-                         "Missing required 'revenue_wallet_address' in network config", networkJson);
-        CHECK_STATE_JSON(networkJson["revenue_wallet_address"].is_string(),
-                         "'revenue_wallet_address' in network config must be a string", networkJson);
+        CHECK_STATE_JSON(networkJson.contains( "payment_address" ),
+                         "Missing required 'payment_address' in network config", networkJson);
+        CHECK_STATE_JSON(networkJson["payment_address"].is_string(),
+                         "'payment_address' in network config must be a string", networkJson);
 
-        auto revenueWalletAddressStr = networkJson["revenue_wallet_address"].get<std::string>();
+        auto revenueWalletAddressStr = networkJson["payment_address"].get<std::string>();
 
         auto revenueWalletAddress = EthAddress::parseHexAddress(revenueWalletAddressStr);
 
         ptr<EthPrivateKey> fundingWalletKey = nullptr;
 
-        if (networkJson.contains("funding_wallet_key_file")) {
-            CHECK_STATE_JSON(networkJson["funding_wallet_key_file"].is_string(),
-                             "'funding_wallet_key_file' must be a string path", networkJson);
-            auto fundingWalletKeyFileStr = networkJson["funding_wallet_key_file"].get<std::string>();
+        if (networkJson.contains("client_wallet_key_file")) {
+            CHECK_STATE_JSON(networkJson["client_wallet_key_file"].is_string(),
+                             "'client_wallet_key_file' must be a string path", networkJson);
+            auto fundingWalletKeyFileStr = networkJson["client_wallet_key_file"].get<std::string>();
             auto fundingWalletPath = fileManager->checkFileExistsAndReadableAndResolve(fundingWalletKeyFileStr);
 
             // Read file contents

@@ -21,9 +21,9 @@ public:
     static constexpr auto kSecretsDir = "secrets";
     static constexpr auto kCertsDir = "certs";
     static constexpr auto kResourcesDir = "resources";
-    static constexpr auto kWalletFile = "machinepay_wallet.key";
-    static constexpr auto kCertFile = "machinepay_tls_certificate.crt";
-    static constexpr auto kCertKeyFile = "machinepay_tls_certificate.key";
+    static constexpr auto kWalletFile = "client_wallet.key";
+    static constexpr auto kCertFile = "tls_certificate.crt";
+    static constexpr auto kCertKeyFile = "tls_certificate.key";
     static constexpr auto kConfigFile = "machinepay.yml";
 
 

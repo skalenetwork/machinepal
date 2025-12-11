@@ -14,8 +14,8 @@ server:
 
 network:
   name: machinepay-easynet
-  revenue_wallet_address: 0x209693Bc6afc0C5328bA36FaF03C514EF312287C
-  funding_wallet_key_file: secrets/insecure_test_funding_wallet.key
+  payment_address: 0x209693Bc6afc0C5328bA36FaF03C514EF312287C
+  client_wallet_key_file: secrets/insecure_test_client_wallet.key
 
 
 log:
