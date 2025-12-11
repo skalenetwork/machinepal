@@ -16,7 +16,6 @@ X402Client::~X402Client() {
 
 
 
-
 HttpResponse X402Client::doGetRequest(
     std::string url, const std::vector<pair<string, string> > &_requestHeaders) {
 
