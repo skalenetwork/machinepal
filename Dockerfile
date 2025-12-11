@@ -58,7 +58,8 @@ RUN chown machinepay:machinepay /machinepay
 COPY --from=builder /app/build/machinepay /usr/local/bin/machinepay
 
 # Copy Scripts
-COPY --chmod=755 docker/run_machinepay.sh /etc/service/machinepay/run
+COPY --chmod=755 docker/run /etc/service/machinepay/run
+COPY --chmod=755 docker/finish /etc/service/machinepay/finish
 COPY --chmod=755 docker/first_run.sh /usr/local/bin/first_run.sh
 COPY --chmod=755 docker/entrypoint.sh /entrypoint.sh
 

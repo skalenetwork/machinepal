@@ -1,0 +1,62 @@
+#!/bin/sh
+EXIT_CODE=$1
+STATUS=$2
+
+# Files to track state (stored in volatile /tmp)
+COUNT_FILE="/tmp/machinepay_fail_count"
+START_TIME_FILE="/tmp/machinepay_start_time"
+
+# Configuration
+RESET_TIME=60      # If app runs > 60s, we consider it "healthy" and reset counter
+MAX_BACKOFF=60     # Max sleep time (cap at 60 seconds)
+
+# 1. Calculate Uptime
+NOW=$(date +%s)
+if [ -f "$START_TIME_FILE" ]; then
+    START=$(cat "$START_TIME_FILE")
+else
+    START=$NOW
+fi
+UPTIME=$((NOW - START))
+
+# 2. Reset counter if the service was healthy
+if [ "$UPTIME" -gt "$RESET_TIME" ]; then
+    echo "Service ran for ${UPTIME}s (Healthy). Resetting backoff counter."
+    echo 0 > "$COUNT_FILE"
+fi
+
+# 3. Read current failure count
+if [ -f "$COUNT_FILE" ]; then
+    COUNT=$(cat "$COUNT_FILE")
+else
+    COUNT=0
+fi
+
+# 4. Handle Clean Exit (Code 0)
+if [ "$EXIT_CODE" -eq 0 ]; then
+    echo "Service exited normally (Code 0). Stopping service permanently."
+    sv down /etc/service/machinepay
+    exit 0
+fi
+
+# 5. Calculate Backoff (Exponential: 2^COUNT)
+# We use bit shifting (1 << COUNT) to calculate powers of 2 in sh
+if [ "$COUNT" -gt 10 ]; then
+    # Prevent integer overflow for huge counts
+    SLEEP_TIME=$MAX_BACKOFF
+else
+    SLEEP_TIME=$((1 << COUNT))
+fi
+
+# Cap the sleep time
+if [ "$SLEEP_TIME" -gt "$MAX_BACKOFF" ]; then
+    SLEEP_TIME=$MAX_BACKOFF
+fi
+
+# 6. Execute Backoff
+# runit will NOT restart the service until this script finishes.
+echo "CRASH DETECTED (Code: $EXIT_CODE). Retry #$((COUNT+1)) in ${SLEEP_TIME}s..."
+sleep "$SLEEP_TIME"
+
+# 7. Increment and Save
+echo $((COUNT + 1)) > "$COUNT_FILE"

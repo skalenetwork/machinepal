@@ -1,28 +1,24 @@
 #!/bin/sh
 set -e
 
-# 1. Check data dir (with sleep to prevent spin loop)
+# 1. Check data dir
 if [ ! -d /machinepay ]; then
     echo "Error: /machinepay directory missing." >&2
-    sleep 10 # Prevent runit tight loop
+    sleep 10
     exit 1
 fi
 
+# 2. Setup logic
 FLAG_FILE="/machinepay/first_run_complete"
-
 if [ ! -f "$FLAG_FILE" ]; then
     echo "First run detected..."
-
-    # 2. Correct path to setup script
-    # We execute this as machinepay so created files have correct permissions
     chpst -u machinepay /usr/local/bin/first_run.sh
-
     touch "$FLAG_FILE"
-    # Fix ownership of flag file so machinepay can see it later
     chown machinepay:machinepay "$FLAG_FILE"
 fi
 
-# 3. Run binary as machinepay
-# -u: user
-# -C: working directory
+# --- NEW: Save start time for backoff logic ---
+date +%s > /tmp/machinepay_start_time
+
+# 3. Run binary
 exec chpst -u machinepay -C /machinepay /usr/local/bin/machinepay
