@@ -282,13 +282,16 @@ BOOST_AUTO_TEST_SUITE(InitProjectSuite)
         }
         BOOST_REQUIRE(pid > 0);
 
-        std::string check_cmd = "kill -0 " + std::to_string(pid);
+
+        BOOST_TEST_MESSAGE("Started server with PID " + std::to_string(pid));
+
+        std::string check_cmd = std::string("/bin/bash -c \"kill -0 ") + std::to_string(pid) + "\"";
         int check_rc = std::system(check_cmd.c_str());
         BOOST_CHECK_EQUAL(WEXITSTATUS(check_rc), 0);
 
 
         // kill the server gracefully with SIGINT (Ctrl-C)
-        std::string kill_cmd = "kill -SIGINT " + std::to_string(pid);
+        std::string kill_cmd = std::string("/bin/bash -c \"kill -SIGINT ") + std::to_string(pid) + "\"";
         int kill_rc = std::system(kill_cmd.c_str());
         BOOST_TEST(WEXITSTATUS(kill_rc) == 0);
         sleep(2); // give it a moment to die
@@ -300,5 +303,4 @@ BOOST_AUTO_TEST_SUITE(InitProjectSuite)
 
 
 BOOST_AUTO_TEST_SUITE_END()
-
 
