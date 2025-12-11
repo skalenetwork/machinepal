@@ -53,11 +53,8 @@ int ClientCli::runClientCommand(const ClientConfig &config) {
         if (config.payload != "") {
             payload = PaymentPayload::fromJson(json::parse(config.payload));
         }
-        if (config.method == proxygen::HTTPMethod::GET) {
-            client.doX402GetRequest(config.url, payload);
-        } else {
-            client.doX402PostRequest(config.url, payload, "");
-        }
+
+        client.doX402Request(config.method, config.url, payload, std::nullopt);
     } catch (const std::exception &ex) {
         spdlog::error("Exception running client command: {}", ex.what());
         return 1;

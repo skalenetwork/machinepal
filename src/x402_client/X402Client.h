@@ -35,9 +35,7 @@ public:
     std::string baseUrl();
 
 
-    HttpResponse doX402GetRequest(
-        std::string _location, ptr<PaymentPayload> payload);
 
-    HttpResponse doX402PostRequest(const std::string &_location, ptr<PaymentPayload> payload,
-                                                          const std::string &requestBody);
+    HttpResponse doX402Request(proxygen::HTTPMethod method, const std::string &_location, ptr<PaymentPayload> payload,
+                                                          const std::optional<std::string> &requestBody);
 };

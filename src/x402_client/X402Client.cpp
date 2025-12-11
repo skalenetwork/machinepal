@@ -15,11 +15,8 @@ X402Client::~X402Client() {
 }
 
 
-
 HttpResponse X402Client::doGetRequest(
     std::string url, const std::vector<pair<string, string> > &_requestHeaders) {
-
-
     auto requestHeaders = proxygen::HTTPHeaders();
 
     for (const auto &header: _requestHeaders) {
@@ -41,13 +38,12 @@ HttpResponse X402Client::doGetRequest(
 
 
 HttpResponse X402Client::doPostRequest(
-    const std::string& url,
-    const std::vector<std::pair<std::string, std::string>>& _requestHeaders,
-    const std::string& requestBody) {
-
+    const std::string &url,
+    const std::vector<std::pair<std::string, std::string> > &_requestHeaders,
+    const std::string &requestBody) {
     auto requestHeaders = proxygen::HTTPHeaders();
 
-    for (const auto& header : _requestHeaders) {
+    for (const auto &header: _requestHeaders) {
         requestHeaders.add(header.first, header.second);
     }
 
@@ -62,23 +58,20 @@ HttpResponse X402Client::doPostRequest(
 }
 
 
-HttpResponse X402Client::doX402GetRequest(
-    std::string url, ptr<PaymentPayload> payload) {
+HttpResponse X402Client::doX402Request(proxygen::HTTPMethod method, const std::string &url, ptr<PaymentPayload> payload,
+                                       const std::optional<std::string> &requestBody = nullopt) {
     std::vector<pair<string, string> > header;
-    if ( payload) {
+
+    if (method == proxygen::HTTPMethod::POST) {
+        header.emplace_back("Content-Type", "application/json");
+    }
+    if (payload) {
         header.push_back(payload->createHttpHeaderValue());
     }
-    return doGetRequest(url, {header});
-}
-
-
-HttpResponse X402Client::doX402PostRequest(
-    const std::string& url,
-    ptr<PaymentPayload> payload,
-    const std::string& requestBody) {
-    std::vector<pair<string, string> > header;
-    if ( payload) {
-        header.push_back(payload->createHttpHeaderValue());
+    if (method == proxygen::HTTPMethod::GET) {
+        return doGetRequest(url, header);
+    } else {
+        CHECK_STATE(requestBody.has_value())
+        return doPostRequest(url, {header}, requestBody.value());
     }
-    return doPostRequest(url, {header}, requestBody);
 }

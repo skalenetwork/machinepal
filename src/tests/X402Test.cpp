@@ -114,7 +114,9 @@ struct X402ServerFixture {
 BOOST_FIXTURE_TEST_SUITE(X402Suite, X402ServerFixture)
 
     BOOST_AUTO_TEST_CASE(Returns402WhenNoPaymentHeader) {
-        auto resp = client_->doX402GetRequest(baseUrl_ + "/posts/1", nullptr);
+        auto resp = client_->doX402Request(proxygen::HTTPMethod::GET,
+            baseUrl_ + "/posts/1", nullptr,
+            nullopt);
 
 
         resp.headers.forEach([](const std::string &name, const std::string &value) {
@@ -157,8 +159,8 @@ BOOST_FIXTURE_TEST_SUITE(X402Suite, X402ServerFixture)
         sleep(1);
 
         auto resp =
-                client_->doX402GetRequest(baseUrl_
-                                          + "/posts/1", paymentPayload);
+                client_->doX402Request(proxygen::HTTPMethod::GET, baseUrl_
+                                          + "/posts/1", paymentPayload, nullopt);
 
 
         BOOST_TEST(resp.status == 200);
@@ -168,7 +170,7 @@ BOOST_FIXTURE_TEST_SUITE(X402Suite, X402ServerFixture)
 
         // this should cause exception
         auto resp2 =
-                client_->doX402GetRequest(baseUrl_ + "/posts/1", paymentPayload);
+                client_->doX402Request(proxygen::HTTPMethod::GET, baseUrl_ + "/posts/1", paymentPayload, nullopt);
 
         BOOST_TEST(resp2.status == 402);
         BOOST_TEST(resp2.headers.exists( "X-PAYMENT-RESPONSE" ));
