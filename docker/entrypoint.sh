@@ -15,6 +15,7 @@ case "$MODE" in
         exec /usr/local/bin/machinepay "$@"
         ;;
     *)
-        exec /usr/sbin/runsvdir /etc/service
+        # On Ubuntu/Debian, runsvdir is located in /usr/bin
+        exec /usr/bin/runsvdir /etc/service
         ;;
 esac

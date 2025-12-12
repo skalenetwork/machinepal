@@ -1,4 +1,4 @@
-name: Build and Push Docker Deps Image
+name: Build and Push Docker
 
 on:
   workflow_dispatch: # This enables manual triggering only
