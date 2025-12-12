@@ -21,4 +21,8 @@ fi
 date +%s > /tmp/machinepay_start_time
 
 # 3. Run binary
-exec chpst -u machinepay -C /machinepay /usr/local/bin/machinepay
+# FIX: Change directory here explicitly
+cd /machinepay
+
+# FIX: Removed invalid '-C' flag
+exec chpst -u machinepay /usr/local/bin/machinepay

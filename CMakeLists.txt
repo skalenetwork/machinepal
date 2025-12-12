@@ -23,11 +23,21 @@ add_compile_definitions(
 )
 
 
+
+# 1. Force SOCI to build ONLY static libraries (.a)
+# We use FORCE to override any default options SOCI might set internally.
+set(SOCI_SHARED OFF CACHE BOOL "Disable SOCI shared libraries" FORCE)
+set(SOCI_STATIC ON  CACHE BOOL "Enable SOCI static libraries" FORCE)
+
+# 2. Configure Backends
 set(WITH_SQLITE3 ON CACHE BOOL "Build SOCI SQLite3 backend" FORCE)
 option(ENABLE_POSTGRESQL "Enable PostgreSQL backend via SOCI" OFF)
+
 if(ENABLE_POSTGRESQL)
     set(WITH_POSTGRESQL ON CACHE BOOL "Build SOCI PostgreSQL backend" FORCE)
 endif()
+
+set(BUILD_SHARED_LIBS OFF)
 
 
 SET(SECP256K1_ENABLE_MODULE_RECOVERY ON)

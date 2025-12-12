@@ -96,4 +96,25 @@ fi
 if [ "$COUNT" -gt 10 ]; then
     # SAFETY: 2^11 is 2048. To prevent integer overflow in the shell or
     # excessively large numbers, we just clamp it immediately if count is high.
-    SLEEP_TIME=$MAX_BACK
+    SLEEP_TIME=$MAX_BACKOFF
+else
+    # 2^COUNT using bit shifting
+    SLEEP_TIME=$((1 << COUNT))
+
+    # Cap the sleep time at MAX_BACKOFF
+    if [ "$SLEEP_TIME" -gt "$MAX_BACKOFF" ]; then
+        SLEEP_TIME=$MAX_BACKOFF
+    fi
+fi
+
+# Increase failure count and persist it
+COUNT=$((COUNT + 1))
+echo "$COUNT" > "$COUNT_FILE"
+
+echo "Service exited with code $EXIT_CODE after ${UPTIME}s. Sleeping for ${SLEEP_TIME}s before restart (failure count: $COUNT)."
+
+# This sleep is what actually slows down runit's restart loop
+sleep "$SLEEP_TIME"
+
+# End of script
+exit 0
