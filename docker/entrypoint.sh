@@ -3,7 +3,17 @@ set -e
 
 # Helper function for consistent logging with timestamps
 log() {
-    echo "[$(date +'%Y-%m-%d %H:%M:%S')] [ENTRYPOINT] $*"
+    # stderr is typically unbuffered in container logging paths
+    printf '[%s] [ENTRYPOINT] %s\n' "$(date +'%Y-%m-%d %H:%M:%S')" "$*" >&2
+}
+
+# Run a command with line-buffered stdout/stderr when possible (coreutils: stdbuf)
+run() {
+    if command -v stdbuf >/dev/null 2>&1; then
+        exec stdbuf -oL -eL "$@"
+    else
+        exec "$@"
+    fi
 }
 
 MODE="$1"
@@ -24,8 +34,8 @@ case "$MODE" in
             exit 1
         fi
 
-        log "Executing: $BINARY_PATH $@"
-        exec "$BINARY_PATH" "$@"
+        log "Executing: $BINARY_PATH $*"
+        run "$BINARY_PATH" "$@"
         ;;
 
     init)
@@ -38,8 +48,8 @@ case "$MODE" in
             exit 1
         fi
 
-        log "Executing: $BINARY_PATH $@"
-        exec "$BINARY_PATH" "$@"
+        log "Executing: $BINARY_PATH $*"
+        run "$BINARY_PATH" "$@"
         ;;
 
     *)
@@ -56,6 +66,6 @@ case "$MODE" in
         fi
 
         log "Starting runit service supervisor..."
-        exec "$SVDIR_PATH" -P /etc/service
+        run "$SVDIR_PATH" -P /etc/service
         ;;
 esac

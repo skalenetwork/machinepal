@@ -40,6 +40,7 @@ RUN apt-get update && \
         ca-certificates \
         libstdc++6 \
         runit \
+        coreutils \
     && rm -rf /var/lib/apt/lists/*
 
 RUN useradd -m -s /bin/bash machinepal
@@ -70,6 +71,10 @@ RUN chmod 0755 /usr/local/bin/machinepal /usr/local/bin/first_run.sh /entrypoint
     && chown root:root /etc/service/machinepal/run /etc/service/machinepal/finish
 
 USER machinepal
+
+# Encourage unbuffered/line-buffered stdout/stderr for processes inside the container
+ENV PYTHONUNBUFFERED=1 \
+    STDOUT_LINE_BUFFERED=1
 
 ENTRYPOINT ["/entrypoint.sh"]
 CMD [""]
