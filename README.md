@@ -21,7 +21,7 @@ Instantly add **crypto payments** to any website or API using this AI Payment Ag
 
 ---
 
-## ✨ Why use MachinePal?
+## ✨ Why use MachinePal? 
 
 - ⚡ **Plug & play** — add x402 payments to existing websites & APIs in minutes
 - 🔒 **Fully x402 compliant** — built on the Coinbase standard
