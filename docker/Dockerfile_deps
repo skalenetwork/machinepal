@@ -69,6 +69,18 @@ RUN cmake --version
 RUN $VCPKG_ROOT/vcpkg install --triplet x64-linux
 
 
+# 3. Configure (CMake)`
+# Now 'cmake' will be found in /usr/bin/cmake
+RUN cd machinepal && cmake -S . -B build \
+      -G Ninja \
+      -DCMAKE_BUILD_TYPE=Debug \
+      -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake \
+      -DVCPKG_TARGET_TRIPLET=x64-linux
+
+# 4. Build
+RUN cd machinepal && cmake --build build
+
+
 
 
 

@@ -3,6 +3,14 @@
 </div>
 
 
+# RunMachinePal Now
+
+In emptry directory, run:
+
+```bash
+docker run ghcr.io/skalenetwork/machinepal-deps:latest --init
+``` 
+
 # 🚀 MachinePal: The  x402 Payment Agent for the Web
 
 Instantly add **crypto payments** to any website or API using this AI Payment Agent that implements [x402 protocol](https://docs.cdp.coinbase.com/x402/docs/welcome). Sell anything: APIs, resources and products.
