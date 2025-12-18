@@ -1,6 +1,18 @@
 #!/bin/bash
 set -e
 
+# Always print earliest possible diagnostics (stderr)
+printf '[ENTRYPOINT] argv: %s | pwd=%s | uid=%s gid=%s | whoami=%s\n' \
+  "$*" "$(pwd)" "$(id -u)" "$(id -g)" "$(whoami)" >&2
+
+# Enable debug tracing when requested
+if [ "${ENTRYPOINT_DEBUG:-0}" = "1" ]; then
+  set -x
+fi
+
+# Unmissable startup line (stderr)
+echo "[ENTRYPOINT] entrypoint.sh is running (pid=$$ user=$(id -u):$(id -g) whoami=$(whoami))" >&2
+
 # Helper function for consistent logging with timestamps
 log() {
     # stderr is typically unbuffered in container logging paths

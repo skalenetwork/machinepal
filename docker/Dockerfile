@@ -7,11 +7,18 @@ FROM ghcr.io/skalenetwork/machinepal-deps:latest AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-
+# Change this via:
+#   docker build --build-arg CACHEBUST=$(date +%s) -f Dockerfile .
 ARG CACHEBUST=1
+
 WORKDIR /app
-RUN cd machinepal && git pull  && echo "Cache bust: $CACHEBUST"
-RUN cd machinepal && git submodule update --init --recursive
+
+# Make CACHEBUST part of the command so changing it reliably breaks this layer cache
+RUN echo "Cache bust: ${CACHEBUST}" \
+ && cd machinepal \
+ && git pull
+
+RUN echo "Cache bust: ${CACHEBUST}" && cd machinepal && git submodule update --init --recursive
 
 ENV VCPKG_ROOT=/app/machinepal/external/vcpkg \
      VCPKG_DISABLE_METRICS=1
@@ -43,6 +50,7 @@ RUN apt-get update && \
         coreutils \
     && rm -rf /var/lib/apt/lists/*
 
+# Create non-root user
 RUN useradd -m -s /bin/bash machinepal
 
 WORKDIR /machinepal
@@ -64,6 +72,15 @@ COPY --from=builder --chmod=755 /app/machinepal/docker/finish /etc/service/machi
 COPY --from=builder --chmod=755 /app/machinepal/docker/first_run.sh /usr/local/bin/first_run.sh
 COPY --from=builder --chmod=755 /app/machinepal/docker/entrypoint.sh /entrypoint.sh
 
+# Ensure entrypoint is present and executable in the final image
+RUN test -f /entrypoint.sh && test -x /entrypoint.sh
+
+# Add a bash init hook that prints even before entrypoint.sh body runs (non-interactive bash only)
+RUN printf '%s\n' \
+  'echo "[BASH_ENV] bash invoked: pid=$$ uid=$(id -u) gid=$(id -g) argv0=$0" >&2' \
+  > /etc/bash.bash_env && chmod 0644 /etc/bash.bash_env
+ENV BASH_ENV=/etc/bash.bash_env
+
 # Ensure executable bits and world readability for runtime user (non-root)
 RUN chmod 0755 /usr/local/bin/machinepal /usr/local/bin/first_run.sh /entrypoint.sh \
     && chmod 0755 /etc/service/machinepal/run /etc/service/machinepal/finish \
@@ -76,5 +93,6 @@ USER machinepal
 ENV PYTHONUNBUFFERED=1 \
     STDOUT_LINE_BUFFERED=1
 
-ENTRYPOINT ["/entrypoint.sh"]
+# Use bash explicitly to avoid shebang/CRLF/exec-format edge cases
+ENTRYPOINT ["/bin/bash", "/entrypoint.sh"]
 CMD [""]
