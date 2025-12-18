@@ -29,7 +29,7 @@ RUN cd machinepal && cmake -S . -B build \
       -DVCPKG_TARGET_TRIPLET=x64-linux
 
 # 4. Build
-RUN cd machinepal && cmake --build build --target machinepal
+RUN cd machinepal && cmake --build build
 
 # ==========================================
 # STAGE 2: Runtime
@@ -49,7 +49,7 @@ RUN useradd -m -s /bin/bash machinepal
 WORKDIR /machinepal
 RUN chown machinepal:machinepal /machinepal
 
-COPY --from=builder /app/build/machinepal /usr/local/bin/machinepal
+COPY --from=builder /app/machinepal/build/machinepal /usr/local/bin/machinepal
 
 # Copy Scripts
 COPY --chmod=755 run /etc/service/machinepal/run
