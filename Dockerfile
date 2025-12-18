@@ -14,14 +14,7 @@ WORKDIR /app
 ENV VCPKG_ROOT=/app/vcpkg \
     VCPKG_DISABLE_METRICS=1
 
-# 1. Copy Manifests
-COPY vcpkg.json .
-COPY CMakeLists.txt .
 
-# 2. Copy Source Code
-COPY src src
-COPY main.cpp .
-COPY external external
 
 
 # 3. Configure (CMake)
