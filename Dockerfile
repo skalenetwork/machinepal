@@ -8,14 +8,7 @@ FROM ghcr.io/skalenetwork/machinepal-deps:latest AS builder
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /app
 
-# --- FIX: Install Build Tools (CMake & Ninja) ---
-# If your deps image doesn't include these, you must install them here.
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    build-essential \
-    cmake \
-    ninja-build \
-    && rm -rf /var/lib/apt/lists/*
+
 
 # Set vcpkg root
 ENV VCPKG_ROOT=/app/vcpkg \
@@ -29,15 +22,6 @@ COPY CMakeLists.txt .
 COPY src src
 COPY main.cpp .
 COPY external external
-
-RUN apt-get update && apt-get install -y ca-certificates gpg wget \
-    && wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | tee /usr/share/keyrings/kitware-archive-keyring.gpg >/dev/null \
-    && echo 'deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ jammy main' | tee /etc/apt/sources.list.d/kitware.list >/dev/null \
-    && apt-get update \
-    && apt-get install -y cmake ccache
-
-# Verify version
-RUN cmake --version
 
 
 # 3. Configure (CMake)
