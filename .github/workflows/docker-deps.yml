@@ -31,8 +31,8 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          context: docker
-          file: Dockerfile_deps
+          context: .
+          file: ./docker/Dockerfile_deps
           platforms: linux/amd64
           push: true
           tags: |
@@ -40,4 +40,3 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           squash: true
-
