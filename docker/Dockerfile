@@ -49,6 +49,15 @@ RUN useradd -m -s /bin/bash machinepal
 WORKDIR /machinepal
 RUN chown machinepal:machinepal /machinepal
 
+# Ensure runit service directory exists with predictable perms
+RUN mkdir -p /etc/service/machinepal \
+    && chown -R root:root /etc/service \
+    && chmod 0755 /etc/service /etc/service/machinepal
+
+# Create writable runtime state dir(s) for non-root execution
+RUN mkdir -p /var/lib/machinepal /var/log/machinepal \
+    && chown -R machinepal:machinepal /var/lib/machinepal /var/log/machinepal \
+    && chmod 0755 /var/lib/machinepal /var/log/machinepal
 
 COPY --from=builder /app/machinepal/build/machinepal /usr/local/bin/machinepal
 COPY --from=builder --chmod=755 /app/machinepal/docker/run /etc/service/machinepal/run
@@ -56,6 +65,13 @@ COPY --from=builder --chmod=755 /app/machinepal/docker/finish /etc/service/machi
 COPY --from=builder --chmod=755 /app/machinepal/docker/first_run.sh /usr/local/bin/first_run.sh
 COPY --from=builder --chmod=755 /app/machinepal/docker/entrypoint.sh /entrypoint.sh
 
+# Ensure executable bits and world readability for runtime user (non-root)
+RUN chmod 0755 /usr/local/bin/machinepal /usr/local/bin/first_run.sh /entrypoint.sh \
+    && chmod 0755 /etc/service/machinepal/run /etc/service/machinepal/finish \
+    && chown root:root /usr/local/bin/machinepal /usr/local/bin/first_run.sh /entrypoint.sh \
+    && chown root:root /etc/service/machinepal/run /etc/service/machinepal/finish
+
+USER machinepal
+
 ENTRYPOINT ["/entrypoint.sh"]
 CMD [""]
-
