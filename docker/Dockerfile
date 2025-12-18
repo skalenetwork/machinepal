@@ -14,7 +14,7 @@ RUN cd machinepal && git pull  && echo "Cache bust: $CACHEBUST"
 RUN cd machinepal && git submodule update --init --recursive
 
 # Set vcpkg root
-ENV VCPKG_ROOT=/app/vcpkg \
+ENV VCPKG_ROOT=/app/machinepal/vcpkg \
     VCPKG_DISABLE_METRICS=1
 
 
@@ -49,13 +49,12 @@ RUN useradd -m -s /bin/bash machinepal
 WORKDIR /machinepal
 RUN chown machinepal:machinepal /machinepal
 
-COPY --from=builder /app/machinepal/build/machinepal /usr/local/bin/machinepal
 
-# Copy Scripts
-COPY --chmod=755 run /etc/service/machinepal/run
-COPY --chmod=755 finish /etc/service/machinepal/finish
-COPY --chmod=755 first_run.sh /usr/local/bin/first_run.sh
-COPY --chmod=755 entrypoint.sh /entrypoint.sh
+COPY --from=builder /app/machinepal/build/machinepal /usr/local/bin/machinepal
+COPY --from=builder --chmod=755 /app/machinepal/docker/run /etc/service/machinepal/run
+COPY --from=builder --chmod=755 /app/machinepal/docker/finish /etc/service/machinepal/finish
+COPY --from=builder --chmod=755 /app/machinepal/docker/first_run.sh /usr/local/bin/first_run.sh
+COPY --from=builder --chmod=755 /app/machinepal/docker/entrypoint.sh /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]
 CMD [""]
