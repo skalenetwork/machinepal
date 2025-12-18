@@ -5,10 +5,7 @@ concurrency:
   cancel-in-progress: true
 
 on:
-  push:
-    branches:
-      - main
-      - develop
+  workflow_dispatch: # This enables manual triggering only
 
 permissions:
   contents: write
