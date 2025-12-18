@@ -36,12 +36,11 @@ WORKDIR /app
 
 RUN git clone https://github.com/skalenetwork/machinepal --recursive
 
-ENV VCPKG_ROOT=/app/machinepal/vcpkg \
+ENV VCPKG_ROOT=/app/machinepal/external/vcpkg \
     VCPKG_DISABLE_METRICS=1
 
 
-RUN git clone https://github.com/microsoft/vcpkg.git $VCPKG_ROOT && \
-    $VCPKG_ROOT/bootstrap-vcpkg.sh
+RUN $VCPKG_ROOT/bootstrap-vcpkg.sh
 
 # --- FIX: Install Build Tools (CMake & Ninja) ---
 # If your deps image doesn't include these, you must install them here.
@@ -61,16 +60,17 @@ RUN apt-get update && apt-get install -y ca-certificates gpg wget \
 # Verify version
 RUN cmake --version
 
-RUN $VCPKG_ROOT/vcpkg install --triplet x64-linux
+# vcpkg.json (manifest) is in /app/machinepal
+RUN cd /app/machinepal && $VCPKG_ROOT/vcpkg install --triplet x64-linux
 
 
 # 3. Configure (CMake)`
 # Now 'cmake' will be found in /usr/bin/cmake
-RUN cd machinepal && cmake -S . -B build \
+RUN cd /app/machinepal && cmake -S . -B build \
       -G Ninja \
       -DCMAKE_BUILD_TYPE=Debug \
       -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake \
       -DVCPKG_TARGET_TRIPLET=x64-linux
 
 # 4. Build
-RUN cd machinepal && cmake --build build
+RUN cd /app/machinepal && cmake --build build
