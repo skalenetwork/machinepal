@@ -3,12 +3,12 @@
 </div>
 
 
-# RunMachinePal Now
+# Run MachinePal Now
 
 In an empty directory, run:
 
 ```bash
-docker run --rm -v "$PWD:/machinepay" ghcr.io/skalenetwork/machinepal --init
+docker run --rm -v "$PWD:/machinepay" ghcr.io/skalenetwork/machinepal init
 ```
 
 This initializes MachinePal with the default configuration in the current folder.
@@ -20,6 +20,13 @@ docker run --network host -v "$PWD:/machinepay" ghcr.io/skalenetwork/machinepal
 ```
 
 > Note: `--network host` (with a space) is the correct Docker syntax. On Linux it attaches the container to the host network.
+
+
+Now run you first X402 Hello World transaction
+
+```bash
+docker run --rm -v "$PWD:/machinepay" ghcr.io/skalenetwork/machinepal client http:://localhost:8080/hello_world.txt"
+```
 
 
 
