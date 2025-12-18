@@ -6,10 +6,12 @@
 FROM ghcr.io/skalenetwork/machinepal-deps:latest AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive
-WORKDIR /app
 
-RUN git pull
-RUN git submodule update --init --recursive
+
+ARG CACHEBUST=1
+WORKDIR /app
+RUN cd machinepal && git pull  && echo "Cache bust: $CACHEBUST"
+RUN cd machinepal && git submodule update --init --recursive
 
 # Set vcpkg root
 ENV VCPKG_ROOT=/app/vcpkg \
@@ -18,16 +20,16 @@ ENV VCPKG_ROOT=/app/vcpkg \
 
 
 
-# 3. Configure (CMake)
+# 3. Configure (CMake)`
 # Now 'cmake' will be found in /usr/bin/cmake
-RUN cmake -S . -B build \
+RUN cd machinepal && cmake -S . -B build \
       -G Ninja \
       -DCMAKE_BUILD_TYPE=Debug \
       -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake \
       -DVCPKG_TARGET_TRIPLET=x64-linux
 
 # 4. Build
-RUN cmake --build build --target machinepal
+RUN cd machinepal && cmake --build build --target machinepal
 
 # ==========================================
 # STAGE 2: Runtime
