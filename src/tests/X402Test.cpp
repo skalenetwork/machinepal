@@ -257,7 +257,7 @@ BOOST_AUTO_TEST_SUITE(InitProjectSuite)
         fs::path cfg = baseDir / "machinepal.yml";
         fs::path secrets = baseDir / "secrets";
         fs::path certs = baseDir / "certs";
-        fs::path wallet = secrets / "machinepal_wallet.key";
+        fs::path wallet = secrets / "machinepal_client_wallet.key";
         fs::path cert = certs / "machinepal_tls_certificate.crt";
         fs::path certKey = secrets / "machinepal_tls_certificate.key";
 
