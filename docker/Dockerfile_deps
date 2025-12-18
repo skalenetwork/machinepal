@@ -43,9 +43,6 @@ ENV VCPKG_ROOT=/app/machinepal/vcpkg \
 RUN git clone https://github.com/microsoft/vcpkg.git $VCPKG_ROOT && \
     $VCPKG_ROOT/bootstrap-vcpkg.sh
 
-
-COPY external external
-
 # --- FIX: Install Build Tools (CMake & Ninja) ---
 # If your deps image doesn't include these, you must install them here.
 RUN apt-get update && \
