@@ -5,7 +5,7 @@
 #include "EIP712Domain.h"
 #include "EIP712Signature.h"
 #include "EthAddress.h"
-#include "MachinePayCommon.h"
+#include "MachinePalCommon.h"
 #include "crypto/Keccak.h"
 #include "facilitators/FacilitatorErrors.h"
 #include "x402_protocol/HttpError.h"

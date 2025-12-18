@@ -1,4 +1,4 @@
-#include "MachinePayCommon.h"
+#include "MachinePalCommon.h"
 #include "crypto/EthPrivateKey.h"
 #include "EthereumWalletGenerator.h"
 #include <fstream>

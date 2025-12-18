@@ -3,15 +3,15 @@
 #include <proxygen/httpserver/RequestHandler.h>
 #include <proxygen/httpserver/RequestHandlerFactory.h>
 
-#include "MachinePayApp.h"
+#include "MachinePalApp.h"
 #include "X402Handler.h"
 #include "config/ConfigManager.h"
 
-class MachinePayApp;
+class MachinePalApp;
 
 class X402HandlerFactory : public proxygen::RequestHandlerFactory {
 public:
-    explicit X402HandlerFactory( MachinePayApp& app ) : app_( app ) {}
+    explicit X402HandlerFactory( MachinePalApp& app ) : app_( app ) {}
 
     void onServerStart( folly::EventBase* /*_evb*/ ) noexcept override {}
 
@@ -25,5 +25,5 @@ public:
     }
 
 private:
-    MachinePayApp& app_;
+    MachinePalApp& app_;
 };

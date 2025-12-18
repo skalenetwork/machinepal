@@ -1,4 +1,4 @@
-#include "MachinePayCommon.h"
+#include "MachinePalCommon.h"
 
 #include "SettlementResponse.h"
 

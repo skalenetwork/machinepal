@@ -1,4 +1,4 @@
-#include "MachinePayCommon.h"
+#include "MachinePalCommon.h"
 #include "ResourceGenerator.h"
 #include <filesystem>
 #include <fstream>

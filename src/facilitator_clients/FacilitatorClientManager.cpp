@@ -1,16 +1,16 @@
 #include "FacilitatorClientManager.h"
-#include "MachinePayApp.h"
-#include "db/MachinePayDb.h"
+#include "MachinePalApp.h"
+#include "db/MachinePalDb.h"
 #include "spdlog/spdlog.h"
 
-FacilitatorClientManager::FacilitatorClientManager(MachinePayApp& app) : app_(app) {}
+FacilitatorClientManager::FacilitatorClientManager(MachinePalApp& app) : app_(app) {}
 
 variant< SettlementResponse, HttpError > FacilitatorClientManager::routeToFacilitatorAndSettle(
-    const MachinePayConfig& machinePayConfig, SettlementRequest& settlementRequest ) {
-    auto networkConfig = machinePayConfig.network();
+    const MachinePalConfig& machinePalConfig, SettlementRequest& settlementRequest ) {
+    auto networkConfig = machinePalConfig.network();
     CHECK_STATE( networkConfig );
 
-    auto facilitatorClient = machinePayConfig.facilitatorClient();
+    auto facilitatorClient = machinePalConfig.facilitatorClient();
     CHECK_STATE( facilitatorClient );
 
     auto result = facilitatorClient->settle( settlementRequest.toJson());

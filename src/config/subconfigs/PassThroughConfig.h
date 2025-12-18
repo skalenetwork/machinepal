@@ -1,5 +1,5 @@
 #pragma once
-#include "MachinePayCommon.h"
+#include "MachinePalCommon.h"
 #include <nlohmann/json.hpp>
 #include <string>
 

@@ -1,8 +1,8 @@
-#include "MachinePayCommon.h"
+#include "MachinePalCommon.h"
 
 
 #include "CertManager.h"
-#include "config/MachinePayConfig.h"
+#include "config/MachinePalConfig.h"
 #include "filesystem/FileManager.h"
 #include <openssl/evp.h>
 #include <openssl/pem.h>

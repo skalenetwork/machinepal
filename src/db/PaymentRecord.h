@@ -1,5 +1,5 @@
 #pragma once
-#include "MachinePayCommon.h"  // added for Hash and u256
+#include "MachinePalCommon.h"  // added for Hash and u256
 #include "crypto/EIP3009Nonce.h"
 #include "crypto/EIP3009Value.h"
 #include "crypto/Encoding.h"

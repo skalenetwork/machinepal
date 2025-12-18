@@ -2,10 +2,10 @@
     // Created by kladko on 9/29/25.
     //
 
-    #include "MachinePayCommon.h"
+    #include "MachinePalCommon.h"
 
     #include "ConfigLoader.h"
-    #include "MachinePayConfig.h"
+    #include "MachinePalConfig.h"
     #include "filesystem/FileManager.h"
     #include "subconfigs/FacilitatorConfig.h"
     #include "subconfigs/LogConfig.h"
@@ -21,7 +21,7 @@
     #include "x402_server/X402Handler.h"
 
 
-    ptr< MachinePayConfig > MachinePayConfig::createFromJson(
+    ptr< MachinePalConfig > MachinePalConfig::createFromJson(
         const nlohmann::json& j, ptr< FileManager > fileManager ) {
         try {
             CHECK_STATE( fileManager );
@@ -52,15 +52,15 @@
             auto organizations = OrganizationConfig::createVectorFromJsonArray( j, fileManager );
             organizations->push_back( defaultOrganization );
 
-            return ptr< MachinePayConfig >(
-                new MachinePayConfig( serverConfig, logConfig, organizations, networkConfig ) );
+            return ptr< MachinePalConfig >(
+                new MachinePalConfig( serverConfig, logConfig, organizations, networkConfig ) );
         } catch ( const std::exception& ex ) {
             RETHROW_NESTED;
         }
     }
 
 
-    MachinePayConfig::MachinePayConfig( const ptr< ServerConfig >& server, const ptr< LogConfig >& log,
+    MachinePalConfig::MachinePalConfig( const ptr< ServerConfig >& server, const ptr< LogConfig >& log,
         const ptr< std::vector< ptr< OrganizationConfig > > >& organizations,
         std::shared_ptr< NetworkConfig > network )
         : server_( server ), log_( log ), network_( network ) {
@@ -102,17 +102,17 @@
 
     }
 
-    const std::shared_ptr< NetworkConfig >& MachinePayConfig::network() const {
+    const std::shared_ptr< NetworkConfig >& MachinePalConfig::network() const {
         CHECK_STATE( network_ );
         return network_;
     }
 
-    const ptr< LogConfig >& MachinePayConfig::log() const {
+    const ptr< LogConfig >& MachinePalConfig::log() const {
         CHECK_STATE( log_ );
         return log_;
     }
 
-    const ptr< ServerConfig >& MachinePayConfig::server() const {
+    const ptr< ServerConfig >& MachinePalConfig::server() const {
         CHECK_STATE( server_ );
         return server_;
     }

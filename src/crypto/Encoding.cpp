@@ -1,5 +1,5 @@
 #include "Encoding.h"
-#include "MachinePayCommon.h"
+#include "MachinePalCommon.h"
 
 
 using boost::multiprecision::uint256_t;

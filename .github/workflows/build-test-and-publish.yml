@@ -1,4 +1,4 @@
-name: Build, test and publish machinepay
+name: Build, test and publish machinepal
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
@@ -82,9 +82,9 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: machinepay-executables
+          name: machinepal-executables
           path: |
-            build/machinepay
+            build/machinepal
             build/mptest
 
       - name: Set up Docker Buildx
@@ -104,7 +104,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository_owner }}/machinepay
+          images: ghcr.io/${{ github.repository_owner }}/machinepal
           tags: |
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/develop' }}
             type=raw,value=1.0
@@ -114,7 +114,7 @@ jobs:
             org.opencontainers.image.version=1.0
             org.opencontainers.image.revision=${{ github.sha }}
 
-      - name: Build and push Docker image (machinepay)
+      - name: Build and push Docker image (machinepal)
         if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
         uses: docker/build-push-action@v6
         with:
@@ -132,7 +132,7 @@ jobs:
       - name: Upload Debian package artifact
         uses: actions/upload-artifact@v4
         with:
-          name: machinepay-deb
+          name: machinepal-deb
           path: build/deb/*.deb
 
       - name: Create GitHub Release
@@ -141,7 +141,7 @@ jobs:
         with:
           files: build/deb/*.deb
           tag_name: v1.0
-          name: MachinePay v1.0 Debian Package
-          body: Release of MachinePay v1.0 as a Debian package.
+          name: MachinePal v1.0 Debian Package
+          body: Release of MachinePal v1.0 as a Debian package.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

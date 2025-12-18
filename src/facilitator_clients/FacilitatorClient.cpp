@@ -1,5 +1,5 @@
 #include "FacilitatorClient.h"
-#include "MachinePayCommon.h"
+#include "MachinePalCommon.h"
 
 
 #include "exceptions/BadGatewayException.h"
@@ -163,7 +163,7 @@ nlohmann::json FacilitatorClient::doRequestResponse(
     curl_easy_setopt( curl, CURLOPT_POST, 1L );
     curl_easy_setopt( curl, CURLOPT_POSTFIELDS, payload.c_str() );
     curl_easy_setopt( curl, CURLOPT_POSTFIELDSIZE, payload.size() );
-    curl_easy_setopt( curl, CURLOPT_USERAGENT, "MachinePay/1.0" );
+    curl_easy_setopt( curl, CURLOPT_USERAGENT, "MachinePal/1.0" );
     curl_easy_setopt( curl, CURLOPT_WRITEFUNCTION, &FacilitatorClient::writeCallback );
     curl_easy_setopt( curl, CURLOPT_WRITEDATA, &responseData );
     curl_easy_setopt( curl, CURLOPT_CONNECTTIMEOUT_MS, connectTimeoutMs_ );

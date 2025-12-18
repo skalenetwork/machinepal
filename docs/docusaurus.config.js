@@ -10,15 +10,15 @@ const darkCodeTheme = themes.dracula;
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-    title: 'MachinePay Docs',
+    title: 'MachinePal Docs',
     tagline: 'Privacy, fairness, and AI on the blockchain.',
     favicon: 'img/favicon.ico', // Assumes this path is correct: static/img/favicon.ico
 
     // GitHub Pages deployment config
     url: 'https://skalenetwork.github.io/', // Your GitHub Pages URL
-    baseUrl: '/machinepay/',                   // Base URL path for your site
+    baseUrl: '/machinepal/',                   // Base URL path for your site
     organizationName: 'skalenetwork',      // GitHub org/user name
-    projectName: 'machinepay',                 // Repo name
+    projectName: 'machinepal',                 // Repo name
     trailingSlash: false,
 
     // BEST PRACTICE: Use 'throw' in production to fail the build on broken links.
@@ -44,7 +44,7 @@ const config = {
                     path: '.',
                     routeBasePath: '/', // Serve docs at site root
                     sidebarPath: require.resolve('./sidebars.js'),
-                    editUrl: 'https://github.com/skalenetwork/machinepay/edit/main/',
+                    editUrl: 'https://github.com/skalenetwork/machinepal/edit/main/',
                     include: ['**/*.md', '**/*.mdx', 'README.md'],
                     exclude: ['**/node_modules/**'],
                     showLastUpdateAuthor: true,
@@ -68,15 +68,15 @@ const config = {
             respectPrefersColorScheme: true,
         },
         navbar: {
-            title: 'MachinePay Docs',
+            title: 'MachinePal Docs',
             logo: {
-                alt: 'MachinePay Logo',
+                alt: 'MachinePal Logo',
                 src: 'img/logo.svg', // Assumes this path is correct: static/img/logo.svg
             },
             items: [
                 { to: '/', label: 'Docs', position: 'left' },
                 {
-                    href: 'https://github.com/skalenetwork/machinepay',
+                    href: 'https://github.com/skalenetwork/machinepal',
                     label: 'GitHub',
                     position: 'right',
                 },
@@ -94,12 +94,12 @@ const config = {
                 {
                     title: 'Community',
                     items: [
-                        { label: 'GitHub', href: 'https://github.com/skalenetwork/machinepay' },
+                        { label: 'GitHub', href: 'https://github.com/skalenetwork/machinepal' },
                         { label: 'Twitter', href: 'https://twitter.com/skalenetwork'},
                     ],
                 },
             ],
-            copyright: `© ${new Date().getFullYear()} MachinePay. All rights reserved.`,
+            copyright: `© ${new Date().getFullYear()} MachinePal. All rights reserved.`,
         },
         prism: {
             theme: lightCodeTheme,

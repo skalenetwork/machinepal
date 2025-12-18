@@ -14,7 +14,7 @@ do {                                                                            
     }                                                                               \
 } while (0)
 
-class MachinePayConfig;
+class MachinePalConfig;
 
 
 class JsonUtils {

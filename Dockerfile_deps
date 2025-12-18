@@ -1,7 +1,7 @@
 # ==========================================
 # STAGE 1: Builder
 # ==========================================
-FROM ubuntu:22.04 AS  machinepay_deps
+FROM ubuntu:22.04 AS  machinepal_deps
 
 # Prevent interactive prompts during build
 ENV DEBIAN_FRONTEND=noninteractive

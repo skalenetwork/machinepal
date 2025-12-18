@@ -11,7 +11,7 @@ class ProjectGenerator {
     static void generateTLSCertificate(const std::filesystem::path& baseDir);
     static void generateResources(const std::filesystem::path& baseDir);
     static void generateConfiguration(const std::filesystem::path& baseDir,
-                               EthPrivateKey& machinePayKey);
+                               EthPrivateKey& machinePalKey);
     static void validateBaseDirEmpty(const std::filesystem::path& baseDir);
 
 public:
@@ -21,10 +21,10 @@ public:
     static constexpr auto kSecretsDir = "secrets";
     static constexpr auto kCertsDir = "certs";
     static constexpr auto kResourcesDir = "resources";
-    static constexpr auto kWalletFile = "client_wallet.key";
-    static constexpr auto kCertFile = "tls_certificate.crt";
-    static constexpr auto kCertKeyFile = "tls_certificate.key";
-    static constexpr auto kConfigFile = "machinepay.yml";
+    static constexpr auto kWalletFile = "machinepal_client_wallet.key";
+    static constexpr auto kCertFile = "machinepal_tls_certificate.crt";
+    static constexpr auto kCertKeyFile = "machinepal_tls_certificate.key";
+    static constexpr auto kConfigFile = "machinepal.yml";
 
 
     static int generateProjectInCurrentWorkingDir();

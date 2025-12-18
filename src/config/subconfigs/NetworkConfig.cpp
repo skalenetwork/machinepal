@@ -1,6 +1,6 @@
 #include "NetworkConfig.h"
 #include "FacilitatorConfig.h"
-#include "MachinePayCommon.h"
+#include "MachinePalCommon.h"
 
 // Constructor moved from header
 NetworkConfig::NetworkConfig(const std::string &name, const EthAddress &walletAddress,
@@ -70,9 +70,9 @@ std::shared_ptr<NetworkConfig> NetworkConfig::createFromJson(
             fundingWalletKey = std::make_shared<EthPrivateKey>(EthPrivateKey::parseHex(hexFundingWalletKey));
         }
 
-        std::string name = networkJson.value("name", "machinepay-easynet");
+        std::string name = networkJson.value("name", "machinepal-easynet");
         std::map<std::string, ptr<EIP712Domain> > supportedNetworks{
-            {"machinepay-easynet", EIP712Domain::machinePayEasyNet()},
+            {"machinepal-easynet", EIP712Domain::machinePalEasyNet()},
             {"base-sepolia", EIP712Domain::baseSepolia()}, {"base", EIP712Domain::baseMainnet()}
         };
         CHECK_STATE_JSON(
@@ -85,7 +85,7 @@ std::shared_ptr<NetworkConfig> NetworkConfig::createFromJson(
                     FacilitatorConfig::createFomJson(networkJson["facilitator"], fileManager);
         }
 
-        if (name != "machinepay-easynet") {
+        if (name != "machinepal-easynet") {
             CHECK_STATE_JSON(facilitator, "Facilitator config is required", networkJson);
         }
         return ptr<NetworkConfig>(

@@ -1,6 +1,6 @@
 // 1. Create the tooltip element immediately
 const tooltip = document.createElement('div');
-tooltip.id = 'machinepay-payment-tooltip';
+tooltip.id = 'machinepal-payment-tooltip';
 document.body.appendChild(tooltip);
 
 // 2. Variable to track cursor position

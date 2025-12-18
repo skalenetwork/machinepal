@@ -1,5 +1,5 @@
 #include "PaymentRecord.h"
-#include "MachinePayCommon.h"
+#include "MachinePalCommon.h"
 #include "crypto/EIP3009Nonce.h"
 #include "crypto/EIP3009Value.h"
 #include "crypto/Encoding.h"

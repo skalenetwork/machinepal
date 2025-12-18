@@ -1,8 +1,8 @@
 {
-  "name": "machinepay-docs",
+  "name": "machinepal-docs",
   "version": "1.0.0",
   "private": true,
-  "description": "Documentation for the MachinePay project — privacy, fairness, and AI on blockchain.",
+  "description": "Documentation for the MachinePal project — privacy, fairness, and AI on blockchain.",
   "scripts": {
     "start": "docusaurus start",
     "build": "docusaurus build",

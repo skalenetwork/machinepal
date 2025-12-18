@@ -8,7 +8,7 @@ class NetworkConfig;
 
 class OrganizationConfig;
 
-class  MachinePayConfig {
+class  MachinePalConfig {
     ptr< ServerConfig > server_;
 
 
@@ -19,7 +19,7 @@ private:
     ptr< std::map< string, ptr< OrganizationConfig > > > organizationsBySubdomain_;
     std::shared_ptr< NetworkConfig > network_;
     ptr<FacilitatorClient> facilitatorClient_;
-    MachinePayConfig( const ptr< ServerConfig >& server, const ptr< LogConfig >& log,
+    MachinePalConfig( const ptr< ServerConfig >& server, const ptr< LogConfig >& log,
         const ptr< std::vector< ptr< OrganizationConfig > > >& organizations,
         std::shared_ptr< NetworkConfig > network );
 
@@ -44,7 +44,7 @@ public:
     const std::shared_ptr< NetworkConfig >& network() const;
 
 
-    static ptr< MachinePayConfig > createFromJson(
+    static ptr< MachinePalConfig > createFromJson(
         const nlohmann::json& j, ptr< FileManager > fileManager );
 
     ptr< OrganizationConfig > getDefaultOrganization() const {

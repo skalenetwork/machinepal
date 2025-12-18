@@ -1,5 +1,5 @@
 #include "PaymentRequirements.h"
-#include "MachinePayCommon.h"
+#include "MachinePalCommon.h"
 #include "config/JsonUtils.h"
 #include "config/subconfigs/NetworkConfig.h"
 #include "config/subconfigs/OrganizationConfig.h"
@@ -72,7 +72,7 @@ ptr< PaymentRequirements > PaymentRequirements::makePaymentRequirements(
     auto asset = networkConfig.getTokenAddress( tokenName );
     auto extraVersion = networkConfig.getTokenVersion( tokenName );
     ;
-    // auto path = resource_->machinePayPath();
+    // auto path = resource_->machinePalPath();
     nlohmann::json extra;
     extra["name"] = tokenName;
     if ( !extraVersion.empty() ) {

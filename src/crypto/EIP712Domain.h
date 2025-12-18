@@ -48,7 +48,7 @@ public:
     static std::array< uint8_t, 32 > getDomainTypeHash();
 
 
-    static shared_ptr< EIP712Domain > machinePayEasyNet() {
+    static shared_ptr< EIP712Domain > machinePalEasyNet() {
         auto static result = make_shared< EIP712Domain >(
             "USDC", "2", 84542,
             EthAddress( "0x036CbD53842c5426634e7929541eC2318f3dCF7e" ) );

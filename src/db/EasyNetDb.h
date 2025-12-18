@@ -1,22 +1,22 @@
 #pragma once
 
-#include "MachinePayCommon.h"
-#include "MachinePayDb.h"
+#include "MachinePalCommon.h"
+#include "MachinePalDb.h"
 #include "crypto/EIP3009Value.h"
 #include "crypto/EthAddress.h"
 
-class EasyNetDb : public MachinePayDb {
+class EasyNetDb : public MachinePalDb {
 public:
     /**
      * @brief Constructs an EasyNetDb instance.
-     * @param app Reference to the MachinePayApp application context.
+     * @param app Reference to the MachinePalApp application context.
      * @param type Database type (e.g., SQLite, PostgreSQL).
      * @param connectionInfo Optional database connection string or configuration.
      *
      * Initializes the database connection and prepares internal state for payment operations.
      */
     EasyNetDb(
-        MachinePayApp& app, DbType type, const std::optional< std::string >&
+        MachinePalApp& app, DbType type, const std::optional< std::string >&
                                                 connectionInfo = std::nullopt);
 
 

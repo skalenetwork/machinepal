@@ -1,7 +1,7 @@
 #include "EasyNetFacilitatorClient.h"
 
-#include "MachinePayApp.h"
-#include "MachinePayCommon.h"
+#include "MachinePalApp.h"
+#include "MachinePalCommon.h"
 #include "crypto/EIP712Signature.h"  // added for computeSignatureHash
 #include "crypto/Encoding.h"
 #include "facilitators/EasyNetFacilitator.h"

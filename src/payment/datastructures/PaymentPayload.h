@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Payload.h"
-#include "config/MachinePayConfig.h"
+#include "config/MachinePalConfig.h"
 #include "config/subconfigs/ResourceConfig.h"
 #include "x402_protocol/HttpError.h"
 
@@ -23,7 +23,7 @@ public:
     static std::shared_ptr< PaymentPayload > fromJson( const json& j );
     [[nodiscard]] json toJson() const;
     std::optional< FacilitatorError > validateAndVerifySignature(
-        const MachinePayConfig& config, const EIP3009Value& price, EthAddress& destinationAddress,
+        const MachinePalConfig& config, const EIP3009Value& price, EthAddress& destinationAddress,
         const string& paymentScheme) const;
 
     std::optional< FacilitatorError > verifyEIP3009Signature(

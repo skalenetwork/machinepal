@@ -1,6 +1,6 @@
 #include "EIP3009Nonce.h"
 #include "Encoding.h"
-#include "MachinePayCommon.h"
+#include "MachinePalCommon.h"
 #undef random
 
 EIP3009Nonce::EIP3009Nonce( const std::array< uint8_t, 32 >& arr ) : bytes_( arr ) {}

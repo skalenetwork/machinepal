@@ -1,9 +1,9 @@
-#include "MachinePayCommon.h"
+#include "MachinePalCommon.h"
 #include "ProjectGenerator.h"
 #include "FolderGenerator.h"
 #include "EthereumWalletGenerator.h"
 #include "TLSCertGenerator.h"
-#include "MachinePayConfigGenerator.h"
+#include "MachinePalConfigGenerator.h"
 #include "ResourceGenerator.h"
 #include "crypto/EthPrivateKey.h"
 #include <stdexcept>
@@ -25,7 +25,7 @@ void ProjectGenerator::generateProject(const std::filesystem::path &baseDir) {
     generateDirectoryStructure(baseDir);
 
     // 1. Generate wallet (returns key for use in config)
-    auto machinePayKey = generateWallet(baseDir);
+    auto machinePalKey = generateWallet(baseDir);
 
     // 2. Generate TLS certificate
     generateTLSCertificate(baseDir);
@@ -34,7 +34,7 @@ void ProjectGenerator::generateProject(const std::filesystem::path &baseDir) {
     generateResources(baseDir);
 
     // 4. Generate configuration
-    generateConfiguration(baseDir, machinePayKey);
+    generateConfiguration(baseDir, machinePalKey);
 }
 
 
@@ -44,15 +44,15 @@ void ProjectGenerator::generateDirectoryStructure(const std::filesystem::path &b
 }
 
 EthPrivateKey ProjectGenerator::generateWallet(const std::filesystem::path &baseDir) {
-    auto machinePayKey = EthPrivateKey::generate();
+    auto machinePalKey = EthPrivateKey::generate();
 
     // Use constants for paths
     const auto walletPath = baseDir / kSecretsDir / kWalletFile;
 
     EthereumWalletGenerator walletGen;
-    walletGen.generateWalletFileFromKey(walletPath, machinePayKey);
+    walletGen.generateWalletFileFromKey(walletPath, machinePalKey);
 
-    return machinePayKey;
+    return machinePalKey;
 }
 
 
@@ -72,9 +72,9 @@ void ProjectGenerator::generateResources(const std::filesystem::path &baseDir) {
 
 
 void ProjectGenerator::generateConfiguration(const std::filesystem::path &baseDir,
-                                             EthPrivateKey &machinePayKey) {
-    MachinePayConfigGenerator cfgGen;
-    cfgGen.generateDefaultConfig(baseDir, machinePayKey);
+                                             EthPrivateKey &machinePalKey) {
+    MachinePalConfigGenerator cfgGen;
+    cfgGen.generateDefaultConfig(baseDir, machinePalKey);
 }
 
 

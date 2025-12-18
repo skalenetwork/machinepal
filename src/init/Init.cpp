@@ -1,7 +1,7 @@
 //
 // Created by kladko on 9/29/25.
 //
-#include "MachinePayCommon.h"
+#include "MachinePalCommon.h"
 
 #include <glog/logging.h>
 #include "Init.h"
@@ -39,11 +39,11 @@ void Init::initAllLibs(int _argc, char *_argv[]) {
 
             google::InstallFailureFunction(&ThrowOnFailure);
 
-            auto logger = spdlog::stderr_logger_mt("machinepay");
+            auto logger = spdlog::stderr_logger_mt("machinepal");
             spdlog::set_default_logger(logger);
             spdlog::set_level(spdlog::level::info); // Set global log level to INFO
         } catch (... ) {
-            RETHROW_NESTED2("FATAL: Failed to initialize machinepay libraries.");
+            RETHROW_NESTED2("FATAL: Failed to initialize machinepal libraries.");
         }
 
     }
@@ -54,7 +54,7 @@ bool Init::isInited() {
 }
 
 
-map<string, string> Init::getMachinePayEnvironmentOverloads() {
+map<string, string> Init::getMachinePalEnvironmentOverloads() {
     map<string, string> envOverloads;
     extern char **environ;
     const string prefix = "MACHINE_PAY_";
@@ -318,7 +318,7 @@ void Init::checkSystemTime() {
             std::to_string(std::abs(signedDiff)) +
             "s, exceeding the allowed threshold of " +
             std::to_string(TIME_SYNC_THRESHOLD_SECONDS) +
-            "s. Please synchronize your system clock and restart machinepay."
+            "s. Please synchronize your system clock and restart machinepal."
         );
 
     }

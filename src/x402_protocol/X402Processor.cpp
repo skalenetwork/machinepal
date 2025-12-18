@@ -3,8 +3,8 @@
 #include "BackendCurlError.h"
 #include "BackendHttpError.h"
 #include "IResponseSender.h"
-#include "MachinePayApp.h"
-#include "MachinePayCommon.h"
+#include "MachinePalApp.h"
+#include "MachinePalCommon.h"
 #include "config/subconfigs/OrganizationConfig.h"
 #include "config/subconfigs/PassThroughConfig.h"
 #include "config/subconfigs/ServerConfig.h"
@@ -14,7 +14,7 @@
 #include "url/URLUtils.h"
 
 
-X402Processor::X402Processor(MachinePayApp &app, weak_ptr<IResponseSender> &responseSender)
+X402Processor::X402Processor(MachinePalApp &app, weak_ptr<IResponseSender> &responseSender)
     : app_(app), responseSender_(responseSender) {
     config_ = app_.configManager()->latestConfig();
 }
@@ -197,7 +197,7 @@ bool X402Processor::validateAndExtractSubDomainName(
     if (URLUtils::isIpAddress(domainName)) {
         reply400BadRequest(
             "Unknown host: " + domainName +
-            ". You need to access MachinePay using a hostname, not an IP address. "
+            ". You need to access MachinePal using a hostname, not an IP address. "
             "Please use a valid hostname to access this service.");
         return false;
     }
@@ -212,8 +212,8 @@ bool X402Processor::validateAndExtractSubDomainName(
     if (URLUtils::isIpAddress(domainName)) {
         reply400BadRequest(
             "Unknown host: " + domainName +
-            ". You need to access MachinePay using a hostname, not an IP address. "
-            "Please use a valid hostname specified in machinepay config "
+            ". You need to access MachinePal using a hostname, not an IP address. "
+            "Please use a valid hostname specified in machinepal config "
             "(like localhost or xyz.com) to access this service.");
         return false;
     }
@@ -222,7 +222,7 @@ bool X402Processor::validateAndExtractSubDomainName(
         reply400BadRequest(
             "Invalid host name: " + domainName +
             "."
-            "Please use a valid hostname specified in machinepay config "
+            "Please use a valid hostname specified in machinepal config "
             "(like localhost or xyz.com) to access this service.");
         return false;
     }
@@ -237,7 +237,7 @@ bool X402Processor::validateAndExtractSubDomainName(
         reply400BadRequest(
             "Unknown host: " + domainName +
             " "
-            "Please use a valid hostname specified in machinepay config "
+            "Please use a valid hostname specified in machinepal config "
             "(like localhost or xyz.com) to access this service.");
         return false;
     }
@@ -261,7 +261,7 @@ bool X402Processor::matchOrganization() {
     if (!organization_) {
         reply400BadRequest(
             "Unknown subdomain  " + subDomainName_ + "." + config_->server()->hostName() +
-            " Please use a valid subdomain specified in machinepay config "
+            " Please use a valid subdomain specified in machinepal config "
             "(like localhost or xyz.com) to access this service.");
         return false;
     }
@@ -463,7 +463,7 @@ void X402Processor::onBodySizeIncrease(size_t newSize) {
         reply400BadRequest(
             "Request body too large. Maximum allowed is 1MByte. You can increase this "
             "limit in "
-            "machinepay config if needed.");
+            "machinepal config if needed.");
     }
 }
 

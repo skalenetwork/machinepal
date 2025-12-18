@@ -16,14 +16,14 @@ class ResponseHandler;
 class HTTPMessage;
 }  // namespace proxygen
 
-class MachinePayApp;  // Forward declaration
-class MachinePayConfig;
+class MachinePalApp;  // Forward declaration
+class MachinePalConfig;
 class OrganizationConfig;
 
 class FacilitatorProcessor : public IProcessor {
 public:
 
-    explicit FacilitatorProcessor( MachinePayApp& app, weak_ptr< IResponseSender >& responseSender );
+    explicit FacilitatorProcessor( MachinePalApp& app, weak_ptr< IResponseSender >& responseSender );
     void reply400BadRequest( const std::string& message );
 
     void onRequestStart( const std::unique_ptr< proxygen::HTTPMessage >& headers ) noexcept override;
@@ -51,7 +51,7 @@ private:
     void reply415UnsupportedMediaType( const std::string& message );
 
 
-    [[nodiscard]] ptr< MachinePayConfig > config() const {
+    [[nodiscard]] ptr< MachinePalConfig > config() const {
         CHECK_STATE( config_ );
         return config_;
     }
@@ -59,8 +59,8 @@ private:
 
     void reply500InternalError( const std::string& message );
 
-    MachinePayApp& app_;
-    ptr< MachinePayConfig > config_;
+    MachinePalApp& app_;
+    ptr< MachinePalConfig > config_;
     std::string decodedPath_;
     weak_ptr< IResponseSender > responseSender_;
     FacilitatorProcessorState state_ = FacilitatorProcessorState::START;

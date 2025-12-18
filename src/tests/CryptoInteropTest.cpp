@@ -1,6 +1,6 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#include "MachinePayCommon.h"
+#include "MachinePalCommon.h"
 #include "crypto/CryptoManager.h"
 #include "crypto/EthAddress.h"
 #include "crypto/EthPrivateKey.h"

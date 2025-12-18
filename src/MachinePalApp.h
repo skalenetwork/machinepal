@@ -9,10 +9,9 @@
 
 class EasyNetFacilitator;
 class FacilitatorClientManager;
-class MachinePayDb;
+class MachinePalDb;
 
-class MachinePayApp
-{
+class MachinePalApp {
 public:
     [[nodiscard]] ptr<ConfigManager> configManager() const
     {
@@ -38,10 +37,10 @@ public:
     [[nodiscard]] ptr< EasyNetFacilitator > easyNetFacilitator() const;
 
 
-    [[nodiscard]] ptr<MachinePayDb> machinePayDB() const
+    [[nodiscard]] ptr<MachinePalDb> machinePalDB() const
     {
-        CHECK_STATE(machinePayDB_);
-        return machinePayDB_;
+        CHECK_STATE(machinePalDB_);
+        return machinePalDB_;
     }
 
 
@@ -57,11 +56,11 @@ public:
     }
 
 
-    static std::weak_ptr<MachinePayApp> sLatestInstance;
+    static std::weak_ptr<MachinePalApp> sLatestInstance;
 
-    static ptr<MachinePayApp> makeInstance(std::map<std::string, std::string>& configValuesFromCliAndEnv)
+    static ptr<MachinePalApp> makeInstance(std::map<std::string, std::string>& configValuesFromCliAndEnv)
     {
-        auto shared = ptr<MachinePayApp>(new MachinePayApp(configValuesFromCliAndEnv));
+        auto shared = ptr<MachinePalApp>(new MachinePalApp(configValuesFromCliAndEnv));
         sLatestInstance = shared;
         CHECK_STATE(shared);
         return shared;
@@ -78,7 +77,7 @@ public:
             }
             else
             {
-                spdlog::warn("No MachinePayApp instance to stop server on terminate signal.");
+                spdlog::warn("No MachinePalApp instance to stop server on terminate signal.");
             }
         }
         catch (const std::exception& ex)
@@ -99,15 +98,15 @@ public:
 
     void stopServer();
 
-    MachinePayApp() = delete;
+    MachinePalApp() = delete;
 
-    MachinePayApp(const MachinePayApp&) = delete;
+    MachinePalApp(const MachinePalApp&) = delete;
 
-    MachinePayApp(MachinePayApp&&) = delete;
+    MachinePalApp(MachinePalApp&&) = delete;
 
-    MachinePayApp& operator=(const MachinePayApp&) = delete;
+    MachinePalApp& operator=(const MachinePalApp&) = delete;
 
-    MachinePayApp& operator=(MachinePayApp&&) = default;
+    MachinePalApp& operator=(MachinePalApp&&) = default;
 
 
     [[nodiscard]] bool isStarted() const
@@ -149,7 +148,7 @@ public:
     }
 
 private:
-    explicit MachinePayApp(const std::map<std::string, std::string>& configValuesFromCliAndEnv);
+    explicit MachinePalApp(const std::map<std::string, std::string>& configValuesFromCliAndEnv);
 
     ptr<ConfigManager> configManager_;
     ptr<ServerFactory> serverFactory_;
@@ -164,7 +163,7 @@ private:
     std::atomic<bool> serverStopCalled_{false};
 
 
-    ptr<MachinePayDb> machinePayDB_;
+    ptr<MachinePalDb> machinePalDB_;
 
 
     bool isExited_{false};

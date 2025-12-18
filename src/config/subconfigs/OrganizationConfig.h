@@ -1,5 +1,5 @@
 #pragma once
-#include "MachinePayCommon.h"
+#include "MachinePalCommon.h"
 #include "ResourceConfig.h"
 #include "ServerConfig.h"
 #include <proxygen/lib/http/HTTPMethod.h>
@@ -49,7 +49,7 @@ public:
             matchString = path;
         }
         for ( const auto& resource : *resources_ ) {
-            if ( resource->machinePayPath() == matchString ) {
+            if ( resource->machinePalPath() == matchString ) {
                 return resource;
             }
         }

@@ -2,8 +2,8 @@
 #include "FacilitatorProcessor.h"
 #include  "x402_server/X402Handler.h"
 #include "IResponseSender.h"
-#include "MachinePayApp.h"
-#include "MachinePayCommon.h"
+#include "MachinePalApp.h"
+#include "MachinePalCommon.h"
 #include "config/subconfigs/OrganizationConfig.h"
 #include "config/subconfigs/ServerConfig.h"
 #include "facilitators/EasyNetFacilitator.h"
@@ -13,7 +13,7 @@ auto SETTLE_PATH = EASYNET_FACILITATOR_PREFIX + string("/settle");
 auto VERIFY_PATH = EASYNET_FACILITATOR_PREFIX + string("/verify");
 
 
-FacilitatorProcessor::FacilitatorProcessor( MachinePayApp& app, weak_ptr< IResponseSender >& responseSender )
+FacilitatorProcessor::FacilitatorProcessor( MachinePalApp& app, weak_ptr< IResponseSender >& responseSender )
     : app_( app ), responseSender_( responseSender ) {
     config_ = app_.configManager()->latestConfig();
 }
@@ -183,6 +183,6 @@ void FacilitatorProcessor::onBodySizeIncrease( size_t newSize ) {
     if ( newSize > MAX_BODY_SIZE ) {
         reply413PayloadTooLarge(
             "Request body too large. Maximum allowed is 1MByte. You can increase this limit in "
-            "machinepay config if needed." );
+            "machinepal config if needed." );
     }
 }

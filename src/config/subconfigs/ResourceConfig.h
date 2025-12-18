@@ -2,7 +2,7 @@
 #include <boost/multiprecision/cpp_int.hpp>
 #include <memory>
 
-#include "MachinePayCommon.h"
+#include "MachinePalCommon.h"
 #include "filesystem/FileManager.h"
 
 class OrganizationConfig;
@@ -12,12 +12,12 @@ enum class ResourceType { LocalFile, ApiJsonRpc, ApiRest };
 
 class ResourceConfig {
 public:
-    [[nodiscard]] std::string machinePayPath() const { return machinePayPath_; }
+    [[nodiscard]] std::string machinePalPath() const { return machinePalPath_; }
 
 private:
     std::string name_;
     std::string location_;
-    std::string machinePayPath_;
+    std::string machinePalPath_;
     ResourceType type_;
     boost::multiprecision::uint256_t price_;
     std::string token_;

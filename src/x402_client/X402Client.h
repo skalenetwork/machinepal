@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MachinePayCommon.h"
+#include "MachinePalCommon.h"
 #include "x402_server/ServerFactory.h"
 #include <folly/SocketAddress.h>
 #include <folly/init/Init.h>

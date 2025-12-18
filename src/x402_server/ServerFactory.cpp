@@ -1,5 +1,5 @@
 #include "ServerFactory.h"
-#include "MachinePayCommon.h"
+#include "MachinePalCommon.h"
 #include "X402HandlerFactory.h"
 #include "crypto/CertManager.h"
 

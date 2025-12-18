@@ -1,4 +1,4 @@
-# Machinepay server configuration. May be overridden by environment variables.
+# Machinepal server configuration. May be overridden by environment variables.
 server:
   hostname: localhost
   http:

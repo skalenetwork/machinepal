@@ -14,8 +14,8 @@ class PaymentPayload;
 class EthAddress;
 class EIP3009Nonce;
 class PaymentRecord;
-// Forward-declare MachinePayApp to avoid circular include
-class MachinePayApp;
+// Forward-declare MachinePalApp to avoid circular include
+class MachinePalApp;
 
 /**
  * @brief Defines the supported database backend types.
@@ -26,7 +26,7 @@ enum class DbType { SQLite, PostgreSQL };
  * @brief Manages database operations for payments using SOCI.
  * This class is now thread-safe due to the use of soci::connection_pool.
  */
-class MachinePayDb {
+class MachinePalDb {
 public:
     /**
      * @brief Constructs the PaymentDB and initializes the connection pool.
@@ -34,7 +34,7 @@ public:
      * @param type The database backend to use (SQLite or PostgreSQL).
      * @param connectionInfo For PostgreSQL: the full connection string.
      */
-    MachinePayDb( MachinePayApp& app, DbType type,
+    MachinePalDb( MachinePalApp& app, DbType type,
         const std::optional< std::string >& connectionInfo = std::nullopt );
 
     void saveSettledPayment( const PaymentPayload& payload, const EIP712Domain& domain,
@@ -78,7 +78,7 @@ private:
     void ensureSchema();
 
     // Member variables
-    MachinePayApp& app_;
+    MachinePalApp& app_;
 
     [[nodiscard]] std::unique_ptr< soci::connection_pool >& pool();
 
@@ -100,5 +100,5 @@ protected:
      */
     std::unique_ptr< soci::connection_pool > pool_;
 public:
-    virtual ~MachinePayDb() = default; // added virtual destructor for polymorphic base
+    virtual ~MachinePalDb() = default; // added virtual destructor for polymorphic base
 };

@@ -1,11 +1,11 @@
-# Machinepay server configuration. May be overridden by environment variables.
+# Machinepal server configuration. May be overridden by environment variables.
 server:
   hostname: localhost
   http:
-    enable: true
+    enable: false
     port: 8080
   https:
-    enable: true
+    enable: false
     port: 8443
     cert_file: certs/insecure_test_localhost.crt
     key_file: secrets/insecure_test_localhost.key
@@ -13,11 +13,10 @@ server:
 
 
 network:
-  name: machinepay-easynet
+  name: machinepal-easynet
   payment_address: 0x209693Bc6afc0C5328bA36FaF03C514EF312287C
+  client_wallet_key_file: secrets/insecure_test_client_wallet.key
 
-passthrough:
-  target_url: https://hackernews.ycombinator.com
 
 log:
   # Optional Log verbosity level — one of: trace, debug, info, warn, error, fatal

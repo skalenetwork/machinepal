@@ -1,5 +1,5 @@
 #include "Keccak.h"
-#include "MachinePayCommon.h"
+#include "MachinePalCommon.h"
 #include <cryptopp/keccak.h>
 
 

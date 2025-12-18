@@ -1,9 +1,9 @@
-#include "MachinePayApp.h"
-#include "db/MachinePayDb.h"
+#include "MachinePalApp.h"
+#include "db/MachinePalDb.h"
 #include "facilitator_clients/FacilitatorClientManager.h"
 #include "facilitators/EasyNetFacilitator.h"
 
-MachinePayApp::MachinePayApp(const std::map<std::string, std::string>& configValuesFromCliAndEnv)
+MachinePalApp::MachinePalApp(const std::map<std::string, std::string>& configValuesFromCliAndEnv)
 {
     try
     {
@@ -13,19 +13,19 @@ MachinePayApp::MachinePayApp(const std::map<std::string, std::string>& configVal
         paymentManager_ = std::make_shared<PaymentManager>(*this);
         facilitatorClientManager_ = std::make_shared<FacilitatorClientManager>(*this);
         easyNetFacilitator_ = std::make_shared<EasyNetFacilitator>(*this);
-        //machinePayDB_ = std::make_shared<MachinePayDb>(*this, DbType::SQLite);
-        machinePayDB_ = std::make_shared<EasyNetDb>(*this, DbType::SQLite);
+        //machinePalDB_ = std::make_shared<MachinePalDb>(*this, DbType::SQLite);
+        machinePalDB_ = std::make_shared<EasyNetDb>(*this, DbType::SQLite);
     }
     catch (...)
     {
-        RETHROW_NESTED2("Failed to initialize MachinePayApp");
+        RETHROW_NESTED2("Failed to initialize MachinePalApp");
     }
 }
-ptr< FacilitatorClientManager > MachinePayApp::facilitatorClientManager() const {
+ptr< FacilitatorClientManager > MachinePalApp::facilitatorClientManager() const {
     CHECK_STATE( facilitatorClientManager_ );
     return facilitatorClientManager_;
 }
-ptr< EasyNetFacilitator > MachinePayApp::easyNetFacilitator() const {
+ptr< EasyNetFacilitator > MachinePalApp::easyNetFacilitator() const {
     CHECK_STATE( easyNetFacilitator_);
     return easyNetFacilitator_;
 }
@@ -34,20 +34,20 @@ ptr< EasyNetFacilitator > MachinePayApp::easyNetFacilitator() const {
 static std::atomic<int> sigReceived{0};
 
 
-static void machinepayTerminateSignalHandler(int sig)
+static void machinepalTerminateSignalHandler(int sig)
 {
     sigReceived = sig;
 }
 
-uint32_t MachinePayApp::runUntilExit()
+uint32_t MachinePalApp::runUntilExit()
 {
-    std::signal(SIGTERM, machinepayTerminateSignalHandler);
-    std::signal(SIGINT, machinepayTerminateSignalHandler);
+    std::signal(SIGTERM, machinepalTerminateSignalHandler);
+    std::signal(SIGINT, machinepalTerminateSignalHandler);
 
 
     try
     {
-        spdlog::info("Starting machinepay");
+        spdlog::info("Starting machinepal");
         serverFactory_ = std::make_shared<ServerFactory>(*this);
         auto serverConfig = configManager_->latestConfig()->server();
 
@@ -59,7 +59,7 @@ uint32_t MachinePayApp::runUntilExit()
 
         auto onSuccess = [this]()
         {
-            spdlog::info("Machinepay started successfully.");
+            spdlog::info("Machinepal started successfully.");
             this->isStarted_ = true;
         };
         auto onError = [this](std::exception_ptr eptr)
@@ -70,15 +70,15 @@ uint32_t MachinePayApp::runUntilExit()
             }
             catch (const std::exception& ex)
             {
-                spdlog::error("Machinepay failed to start: {}", ex.what());
+                spdlog::error("Machinepal failed to start: {}", ex.what());
                 this->setExited(1, ex.what());
                 return;
             }
             catch (...)
             {
             }
-            spdlog::error("Machinepay failed to start: unknown error");
-            this->setExited(1, "Machinepay failed to start: unknown error");
+            spdlog::error("Machinepal failed to start: unknown error");
+            this->setExited(1, "Machinepal failed to start: unknown error");
         };
 
         std::thread serverThread([this, ioExecutor, onSuccess, onError]()
@@ -90,8 +90,8 @@ uint32_t MachinePayApp::runUntilExit()
             }
             catch (...)
             {
-                spdlog::error("Machinepay failed to start: unknown error");
-                setExited(1, "Unknown error starting machinepay");
+                spdlog::error("Machinepal failed to start: unknown error");
+                setExited(1, "Unknown error starting machinepal");
             }
         });
 
@@ -134,21 +134,21 @@ uint32_t MachinePayApp::runUntilExit()
         serverThread.join();
         if (exitCode_ != 0)
         {
-            spdlog::error("Error running machinepay server: {}. Server exited.", exitErrorMessage_);
+            spdlog::error("Error running machinepal server: {}. Server exited.", exitErrorMessage_);
             return exitCode_;
         }
-        spdlog::info("Machinepay server exited normally.");
+        spdlog::info("Machinepal server exited normally.");
         return 0;
     }
     catch (const std::exception& ex)
     {
-        spdlog::critical("Fatal error running machinepay server: {}. Server exited", ex.what());
+        spdlog::critical("Fatal error running machinepal server: {}. Server exited", ex.what());
         printNestedException(ex);
         return 1;
     }
 }
 
-void MachinePayApp::stopServer()
+void MachinePalApp::stopServer()
 {
     if (serverStopCalled_.exchange(true))
         return;
@@ -156,4 +156,4 @@ void MachinePayApp::stopServer()
     proxygenServer_->stop();
 }
 
-std::weak_ptr<MachinePayApp> MachinePayApp::sLatestInstance;
+std::weak_ptr<MachinePalApp> MachinePalApp::sLatestInstance;

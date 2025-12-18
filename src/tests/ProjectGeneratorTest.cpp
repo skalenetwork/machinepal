@@ -1,4 +1,4 @@
-#include "MachinePayCommon.h"
+#include "MachinePalCommon.h"
 #include <boost/test/unit_test.hpp>
 #include "admin/ProjectGenerator.h"
 
@@ -39,19 +39,19 @@ BOOST_AUTO_TEST_CASE(test_generate_project_success) {
     BOOST_CHECK(fs::is_directory(projectDir / "certs"));
 
     // Verify file creation and that they are not empty
-    const auto walletPath = projectDir / "secrets" / "client_wallet.key";
+    const auto walletPath = projectDir / "secrets" / "machinepal_client_wallet.key";
     BOOST_CHECK(fs::exists(walletPath));
     BOOST_CHECK(fs::file_size(walletPath) > 0);
 
-    const auto certKeyPath = projectDir / "secrets" / "tls_certificate.key";
+    const auto certKeyPath = projectDir / "secrets" / "machinepal_tls_certificate.key";
     BOOST_CHECK(fs::exists(certKeyPath));
     BOOST_CHECK(fs::file_size(certKeyPath) > 0);
 
-    const auto certPath = projectDir / "certs" / "tls_certificate.crt";
+    const auto certPath = projectDir / "certs" / "machinepal_tls_certificate.crt";
     BOOST_CHECK(fs::exists(certPath));
     BOOST_CHECK(fs::file_size(certPath) > 0);
 
-    const auto configPath = projectDir / "machinepay.yml";
+    const auto configPath = projectDir / "machinepal.yml";
     BOOST_CHECK(fs::exists(configPath));
     BOOST_CHECK(fs::file_size(configPath) > 0);
 }

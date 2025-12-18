@@ -1,7 +1,7 @@
 #include "EthPublicKey.h"
 #include "EthAddress.h"
 #include "Keccak.h"
-#include "MachinePayCommon.h"
+#include "MachinePalCommon.h"
 
 #include <boost/algorithm/hex.hpp>
 

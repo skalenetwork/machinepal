@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Machinepay",
+  "name": "Machinepal",
   "version": "1.0",
-  "description": "Machinepay x402 wallet",
+  "description": "Machinepal x402 wallet",
   "permissions": ["storage"],
   "content_scripts": [
     {
@@ -15,6 +15,6 @@
     "service_worker": "background.js"
   },
   "action": {
-    "default_title": "Machinepay Wallet"
+    "default_title": "Machinepal Wallet"
   }
 }

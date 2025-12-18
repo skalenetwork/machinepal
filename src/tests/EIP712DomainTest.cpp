@@ -1,5 +1,5 @@
 #include "crypto/EIP712Domain.h"
-#include <MachinePayCommon.h>
+#include <MachinePalCommon.h>
 #include <crypto/Encoding.h>
 #include <boost/algorithm/hex.hpp>
 #include <boost/algorithm/string.hpp>

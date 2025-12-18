@@ -2,7 +2,7 @@
 #include <optional>
 #include <variant>
 
-#include "MachinePayCommon.h"
+#include "MachinePalCommon.h"
 #include "filesystem/CanonicalPath.h"
 #include "payment/datastructures/PaymentPayload.h"
 #include "x402_protocol/HttpError.h"

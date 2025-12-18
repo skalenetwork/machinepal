@@ -1,5 +1,5 @@
-#include "MachinePayDb.h"
-#include "MachinePayCommon.h"
+#include "MachinePalDb.h"
+#include "MachinePalCommon.h"
 #include <soci/postgresql/soci-postgresql.h>
 #include <soci/sqlite3/soci-sqlite3.h>
 #include <spdlog/sinks/stdout_sinks.h>
@@ -7,7 +7,7 @@
 #include <memory>     // For std::make_unique
 #include <stdexcept>  // For std::runtime_error
 
-#include "MachinePayApp.h"
+#include "MachinePalApp.h"
 #include "PaymentRecord.h"
 #include "config/subconfigs/ResourceConfig.h"
 #include "crypto/EIP712Domain.h"
@@ -16,7 +16,7 @@
 using namespace std;
 
 
-void MachinePayDb::checkSqliteFileOnDisk() {
+void MachinePalDb::checkSqliteFileOnDisk() {
     if ( std::filesystem::exists( connectionString_ ) ) {
         if ( std::filesystem::is_directory( connectionString_ ) ) {
             throw std::runtime_error(
@@ -35,7 +35,7 @@ void MachinePayDb::checkSqliteFileOnDisk() {
     }
 }
 
-void MachinePayDb::verifyDatabaseConnectivity() {
+void MachinePalDb::verifyDatabaseConnectivity() {
     try {
         if ( dbType_ == DbType::SQLite ) {
             checkSqliteFileOnDisk();
@@ -61,7 +61,7 @@ void MachinePayDb::verifyDatabaseConnectivity() {
     logger_->info( "Database connectivity verified successfully. Using {}.", backendName );
 }
 
-void MachinePayDb::configureDBParamsAndPool() {
+void MachinePalDb::configureDBParamsAndPool() {
     const int POOL_SIZE = 8;
     soci::backend_factory const& backend = getBackend( dbType_ );
     pool_ = std::make_unique< soci::connection_pool >( POOL_SIZE );
@@ -82,13 +82,13 @@ void MachinePayDb::configureDBParamsAndPool() {
 /**
  * @brief Constructs the PaymentDB.
  */
-MachinePayDb::MachinePayDb(
-    MachinePayApp& app, DbType type, const std::optional< std::string >& connectionInfo )
+MachinePalDb::MachinePalDb(
+    MachinePalApp& app, DbType type, const std::optional< std::string >& connectionInfo )
     : app_( app ), dbType_( type ) {
     try {
-        logger_ = spdlog::get( "machinepay.db" );
+        logger_ = spdlog::get( "machinepal.db" );
         if ( !logger_ ) {
-            logger_ = spdlog::stderr_logger_st( "machinepay.db" );
+            logger_ = spdlog::stderr_logger_st( "machinepal.db" );
         }
         CHECK_STATE( logger_ );
 
@@ -96,7 +96,7 @@ MachinePayDb::MachinePayDb(
             // Ensure config directory exists, then build DB file path
             auto dataDir = app_.configPath() / "data";
             std::filesystem::create_directories( dataDir );
-            connectionString_ = ( dataDir / "machinepay.db" ).string();
+            connectionString_ = ( dataDir / "machinepal.db" ).string();
         } else {
             CHECK_STATE( connectionInfo );
             connectionString_ = connectionInfo.value();
@@ -110,7 +110,7 @@ MachinePayDb::MachinePayDb(
     }
 }
 
-void MachinePayDb::saveSettledPayment( const PaymentPayload& payload, const EIP712Domain& domain,
+void MachinePalDb::saveSettledPayment( const PaymentPayload& payload, const EIP712Domain& domain,
     const ResourceConfig& resource, const OrganizationConfig& organization,
     const Hash& transactionHash, const string& ipAddress ) {
     auto paymentRecord = PaymentRecord::createPaymentRecord(
@@ -119,7 +119,7 @@ void MachinePayDb::saveSettledPayment( const PaymentPayload& payload, const EIP7
     writePayment( *paymentRecord );
 }
 
-bool MachinePayDb::settledPaymentExists(
+bool MachinePalDb::settledPaymentExists(
     const ptr< PaymentPayload >& paymentPayload, const ptr< EIP712Domain >& domain ) {
     // Extract fields needed to check for existing payment.
     auto from = paymentPayload->payload()->authorization()->from();
@@ -142,7 +142,7 @@ bool MachinePayDb::settledPaymentExists(
 /**
  * @brief Gets the appropriate SOCI backend factory based on the DbType.
  */
-soci::backend_factory const& MachinePayDb::getBackend( DbType type ) {
+soci::backend_factory const& MachinePalDb::getBackend( DbType type ) {
     switch ( type ) {
     case DbType::SQLite:
         return soci::sqlite3;
@@ -162,7 +162,7 @@ soci::backend_factory const& MachinePayDb::getBackend( DbType type ) {
 /**
  * @brief Ensures the database schema (tables and indices) exists.
  */
-void MachinePayDb::ensureSchema() {
+void MachinePalDb::ensureSchema() {
     try {
         // Create a single, temporary session just for schema initialization.
         soci::backend_factory const& backend = getBackend( dbType_ );
@@ -247,13 +247,13 @@ void MachinePayDb::ensureSchema() {
     }
 }
 
-[[nodiscard]] std::unique_ptr< soci::connection_pool >& MachinePayDb::pool() {
+[[nodiscard]] std::unique_ptr< soci::connection_pool >& MachinePalDb::pool() {
     CHECK_STATE( pool_ );
     return pool_;
 }
 
 
-void MachinePayDb::writePayment( const PaymentRecord& record ) {
+void MachinePalDb::writePayment( const PaymentRecord& record ) {
     try {
         soci::session sql( *pool_ );
 
@@ -308,7 +308,7 @@ void MachinePayDb::writePayment( const PaymentRecord& record ) {
     }
 }
 
-bool MachinePayDb::paymentExists( const EthAddress& fromAddress, const EthAddress& assetAddress,
+bool MachinePalDb::paymentExists( const EthAddress& fromAddress, const EthAddress& assetAddress,
     const EIP3009Nonce& nonce, u256 chainId ) {
     try {
         soci::session sql( *pool_ );

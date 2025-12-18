@@ -5,13 +5,13 @@
 #include <proxygen/httpserver/ResponseBuilder.h>
 #include <string>
 
-#include "MachinePayApp.h"
-#include "config/MachinePayConfig.h"
+#include "MachinePalApp.h"
+#include "config/MachinePalConfig.h"
 
-class MachinePayApp;
+class MachinePalApp;
 
 
-constexpr const char* EASYNET_FACILITATOR_PREFIX = "/machinepay-facilitator-easynet";
+constexpr const char* EASYNET_FACILITATOR_PREFIX = "/machinepal-facilitator-easynet";
 
 class X402Handler : public proxygen::RequestHandler {
 public:
@@ -28,11 +28,11 @@ public:
 
     void onUpgrade( proxygen::UpgradeProtocol /*_prot*/ ) noexcept override;
 
-    explicit X402Handler( MachinePayApp& app );
+    explicit X402Handler( MachinePalApp& app );
 
 private:
-    MachinePayApp& app_;
-    ptr< MachinePayConfig > config_;
+    MachinePalApp& app_;
+    ptr< MachinePalConfig > config_;
     std::unique_ptr< proxygen::HTTPMessage > reqHeaders_;
     std::string bodyBuffer_;
     ptr< IProcessor > processor_;

@@ -2,27 +2,27 @@
 set -e
 
 # 1. Check data dir
-if [ ! -d /machinepay ]; then
-    echo "Error: /machinepay directory missing." >&2
+if [ ! -d /machinepal ]; then
+    echo "Error: /machinepal directory missing." >&2
     sleep 10
     exit 1
 fi
 
 # 2. Setup logic
-FLAG_FILE="/machinepay/first_run_complete"
+FLAG_FILE="/machinepal/first_run_complete"
 if [ ! -f "$FLAG_FILE" ]; then
     echo "First run detected..."
-    chpst -u machinepay /usr/local/bin/first_run.sh
+    chpst -u machinepal /usr/local/bin/first_run.sh
     touch "$FLAG_FILE"
-    chown machinepay:machinepay "$FLAG_FILE"
+    chown machinepal:machinepal "$FLAG_FILE"
 fi
 
 # --- NEW: Save start time for backoff logic ---
-date +%s > /tmp/machinepay_start_time
+date +%s > /tmp/machinepal_start_time
 
 # 3. Run binary
 # FIX: Change directory here explicitly
-cd /machinepay
+cd /machinepal
 
 # FIX: Removed invalid '-C' flag
-exec chpst -u machinepay /usr/local/bin/machinepay
+exec chpst -u machinepal /usr/local/bin/machinepal

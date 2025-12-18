@@ -1,8 +1,8 @@
 #include "PaymentRequiredResponse.h"
-#include "MachinePayCommon.h"
+#include "MachinePalCommon.h"
 
 #include "config/JsonUtils.h"
-#include "config/MachinePayConfig.h"
+#include "config/MachinePalConfig.h"
 #include "config/subconfigs/NetworkConfig.h"
 #include "config/subconfigs/OrganizationConfig.h"
 #include "config/subconfigs/ResourceConfig.h"
@@ -64,7 +64,7 @@ json PaymentRequiredResponse::toJson() const {
 
 std::string PaymentRequiredResponse::getPaymentRequiredResponseAsString(
     ptr< OrganizationConfig > organization, ptr< ResourceConfig > resource,
-    ptr< MachinePayConfig > config, const std::optional< string >& errorMessage ) {
+    ptr< MachinePalConfig > config, const std::optional< string >& errorMessage ) {
     auto req = PaymentRequirements::makePaymentRequirements( *organization,
         *resource,
         *config->network() );

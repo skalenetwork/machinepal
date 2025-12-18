@@ -13,7 +13,7 @@ class Init {
 public:
     static void initAllLibs( int _argc, char* _argv[] );
     static bool isInited();
-    static std::map< std::string, std::string > getMachinePayEnvironmentOverloads();
+    static std::map< std::string, std::string > getMachinePalEnvironmentOverloads();
     static void checkOperatingSystemConfiguration();
 
     static void initLogLevelFromConfig( ptr< ConfigManager > manager );

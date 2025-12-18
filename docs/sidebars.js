@@ -30,7 +30,7 @@ const sidebars = {
           link: {
             type: 'generated-index',
             title: 'All Guides',
-            description: 'Learn about the most important MachinePay features!',
+            description: 'Learn about the most important MachinePal features!',
           },
           items: [
             // Assumes you have files like 'getting-started.md' or 'api-reference.md'

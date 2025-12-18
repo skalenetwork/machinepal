@@ -1,10 +1,10 @@
 #pragma once
 #include "../payment/datastructures/SettlementRequest.h"
 #include "../payment/datastructures/SettlementResponse.h"
-#include "MachinePayApp.h"
+#include "MachinePalApp.h"
 #include "config/subconfigs/FacilitatorConfig.h"
 #include "config/subconfigs/NetworkConfig.h"
-#include "db/MachinePayDb.h"
+#include "db/MachinePalDb.h"
 #include <memory>
 #include <variant>
 
@@ -13,13 +13,13 @@ using std::shared_ptr;
 
 class FacilitatorClientManager {
 public:
-    explicit FacilitatorClientManager(MachinePayApp& app);
+    explicit FacilitatorClientManager(MachinePalApp& app);
     variant< SettlementResponse, HttpError > routeToFacilitatorAndSettle(
-        const MachinePayConfig& networkConfig, SettlementRequest& settlementRequest );
+        const MachinePalConfig& networkConfig, SettlementRequest& settlementRequest );
 
 
 
 private:
-    MachinePayApp& app_;
+    MachinePalApp& app_;
 };
 

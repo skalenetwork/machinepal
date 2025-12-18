@@ -1,7 +1,7 @@
 #pragma once
 
-#include "MachinePayCommon.h"
-#include "MachinePayConfig.h"
+#include "MachinePalCommon.h"
+#include "MachinePalConfig.h"
 
 
 class ConfigManager {
@@ -12,7 +12,7 @@ public:
         const std::map< std::string, std::string >& configValuesFromCliAndEnv );
 
     void reloadConfig();
-    std::shared_ptr< MachinePayConfig > latestConfig();
+    std::shared_ptr< MachinePalConfig > latestConfig();
     std::chrono::system_clock::time_point latestConfigModificationTime();
     const std::string& latestConfigSha256();
 
@@ -35,7 +35,7 @@ private:
     void initConfigFilePathUsingConfigValuesFromCliAndEnv(
         const std::map< std::string, std::string >& values );
 
-    std::shared_ptr< MachinePayConfig > latestConfig_;
+    std::shared_ptr< MachinePalConfig > latestConfig_;
     std::shared_mutex latestConfigMutex_;
     std::chrono::system_clock::time_point latestConfigModificationTime_;
     std::string latestConfigHash_;

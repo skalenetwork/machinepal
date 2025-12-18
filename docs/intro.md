@@ -1,5 +1,5 @@
 
-🚀 MachinePay: The Internet's Missing Money Layer
+🚀 MachinePal: The Internet's Missing Money Layer
 
 
 Ever wished you could charge a few cents for an API call, a file download, r access to a premium article—without 
@@ -10,7 +10,7 @@ forcing users through clunky sign-up forms and credit card fields?
 Your wish is granted.
 
 
-MachinePay is a <strong>plug-and-play payment gatekeeper</strong> that lets you instantly add crypto-powered 
+MachinePal is a <strong>plug-and-play payment gatekeeper</strong> that lets you instantly add crypto-powered 
 micropayments to <em>any</em> website or API using the 
 <a href="https://docs.cdp.coinbase.com/x402/docs/welcome">x402 protocol</a>.
 
@@ -22,7 +22,7 @@ micropayments to <em>any</em> website or API using the
 
 ## ✨ Stop Giving It Away. Start Earning.
 
-MachinePay is built for creators, developers, and businesses who want to monetize their digital content frictionlessly.
+MachinePal is built for creators, developers, and businesses who want to monetize their digital content frictionlessly.
 
 - ⚡ **Go Live in 5 Minutes:** Add x402 payments to your existing infrastructure with almost no code.
 - 🌉 **Multi-Chain by Default:** Natively supports both **Base** and the gas-less **SKALE Network**.
@@ -35,13 +35,13 @@ MachinePay is built for creators, developers, and businesses who want to monetiz
 
 ## 🏗️ How It Works: The Digital Toll Booth
 
-Think of **MachinePay** as a **toll booth for your digital highway**. Instead of requests hitting your website or API directly, they first pass through the gatekeeper.
+Think of **MachinePal** as a **toll booth for your digital highway**. Instead of requests hitting your website or API directly, they first pass through the gatekeeper.
 
 1.  **🔗 A user requests a resource** → `GET /my-secret-api-endpoint`
-2.  **🚦 MachinePay intercepts** → Sees no payment is included.
-3.  **🛑 Access Denied (for now!)** → MachinePay sends back a `402 Payment Required` error, including a crypto invoice to pay.
+2.  **🚦 MachinePal intercepts** → Sees no payment is included.
+3.  **🛑 Access Denied (for now!)** → MachinePal sends back a `402 Payment Required` error, including a crypto invoice to pay.
 4.  **💳 User's browser/client pays the invoice** → The request is sent again, this time with proof of payment.
-5.  **✅ Payment Verified** → MachinePay confirms the on-chain payment.
+5.  **✅ Payment Verified** → MachinePal confirms the on-chain payment.
 6.  **📡 Request Forwarded** → The original request is now sent to your real website/API.
 7.  **📬 Content Delivered** → Your server's response is passed back to the user.
 

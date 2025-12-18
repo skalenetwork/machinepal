@@ -3,7 +3,7 @@
 #include "EthPrivateKey.h"
 #include "EthPublicKey.h"
 #include "Keccak.h"
-#include "MachinePayCommon.h"
+#include "MachinePalCommon.h"
 #include <openssl/bn.h>
 #include <openssl/core_names.h>
 #include <openssl/ec.h>

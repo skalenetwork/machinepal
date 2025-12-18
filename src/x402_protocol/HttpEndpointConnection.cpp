@@ -4,7 +4,7 @@
 #include "HttpEndpointConnection.h"
 
 #include <proxygen/lib/http/HTTPMessage.h>
-#include "MachinePayCommon.h"
+#include "MachinePalCommon.h"
 #include "X402Processor.h"
 #include "curl/curl.h"
 #include <spdlog/spdlog.h>

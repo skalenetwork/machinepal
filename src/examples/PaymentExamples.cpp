@@ -1,5 +1,5 @@
 #include "PaymentExamples.h"
-#include "MachinePayCommon.h"
+#include "MachinePalCommon.h"
 
 
 const string PaymentExamples::EXACT_UCDC_PAYMENT_REQ_CB_SEPOLIA = R"({
@@ -22,7 +22,7 @@ const string PaymentExamples::EXACT_UCDC_PAYMENT_REQ_CB_SEPOLIA = R"({
 
 const string PaymentExamples::EXACT_UCDC_PAYMENT_REQ_EASYNET = R"({
     "scheme": "exact",
-    "network": "machinepay-easynet",
+    "network": "machinepal-easynet",
     "maxAmountRequired": "12000000000000000000",
     "resource": "https://jsonplaceholder.typicode.com/posts/1",
     "description": "",

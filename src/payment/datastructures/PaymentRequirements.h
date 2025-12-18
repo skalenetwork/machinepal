@@ -18,7 +18,7 @@
 
 class OrganizationConfig;
 class ResourceConfig;
-class MachinePayConfig;
+class MachinePalConfig;
 
 using json = nlohmann::json;
 

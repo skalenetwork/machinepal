@@ -1,7 +1,7 @@
 // X402HandlerBoostTest.cpp
 #define BOOST_TEST_MODULE X402HandlerSelfTest
 
-#include "MachinePayCommon.h"
+#include "MachinePalCommon.h"
 #include "init/Init.h"
 #include "x402_server/ServerFactory.h"
 #include <boost/test/included/unit_test.hpp>  // or <boost/test/unit_test.hpp> if using dynamic link
@@ -12,7 +12,7 @@
 #include "../examples/PaymentExamples.h"
 #include "../payment/datastructures/PaymentRequiredResponse.h"
 #include "../payment/datastructures/PaymentRequirements.h"
-#include "MachinePayApp.h"
+#include "MachinePalApp.h"
 #include "config/ConfigLoader.h"
 #include "config/ConfigManager.h"
 #include "config/subconfigs/ServerConfig.h"
@@ -60,10 +60,10 @@ struct X402ServerFixture {
             std::map<std::string, std::string> configMap = {
                 {
                     "CONFIG",
-                    "src/tests/configs/basic/machinepay.yml"
+                    "src/tests/configs/basic/machinepal.yml"
                 }
             };
-            app_ = MachinePayApp::makeInstance(configMap);
+            app_ = MachinePalApp::makeInstance(configMap);
             auto config = app_->configManager()->latestConfig();
             auto url = "https://" + config->server()->hostName() + ":" +
                        std::to_string(config->server()->https()->port());
@@ -104,7 +104,7 @@ struct X402ServerFixture {
     }
 
 
-    std::shared_ptr<MachinePayApp> app_;
+    std::shared_ptr<MachinePalApp> app_;
     std::shared_ptr<X402Client> client_;
     std::string baseUrl_;
 
@@ -147,7 +147,7 @@ BOOST_FIXTURE_TEST_SUITE(X402Suite, X402ServerFixture)
 
         auto paymentPayload =
                 PaymentPayload().createDefaultPaymentPayload(privKey, to,
-                                                             value, nonce, "machinepay-easynet");
+                                                             value, nonce, "machinepal-easynet");
 
         sleep(1);
 
@@ -188,20 +188,20 @@ BOOST_FIXTURE_TEST_SUITE(X402Suite, X402ServerFixture)
 
 
  BOOST_AUTO_TEST_CASE(ClientCliRunsExecutable) {
-        // Determine path to machinepay executable relative to this test binary
+        // Determine path to machinepal executable relative to this test binary
         namespace fs = std::filesystem;
         auto& ts = boost::unit_test::framework::master_test_suite();
         fs::path testExePath(ts.argv[0]);
         fs::path exeDir = testExePath.parent_path();
-        fs::path machinepayPath = exeDir / "../machinepay";
+        fs::path machinepalPath = exeDir / "../machinepal";
         // In some setups executables are in the same directory
-        if (!fs::exists(machinepayPath)) {
-            machinepayPath = exeDir / "machinepay";
+        if (!fs::exists(machinepalPath)) {
+            machinepalPath = exeDir / "machinepal";
         }
-        BOOST_REQUIRE_MESSAGE(fs::exists(machinepayPath), std::string("machinepay executable not found at ") + machinepayPath.string());
+        BOOST_REQUIRE_MESSAGE(fs::exists(machinepalPath), std::string("machinepal executable not found at ") + machinepalPath.string());
 
         std::string url = baseUrl_ + "/posts/1";
-        std::string cmd = std::string("\"") + machinepayPath.string() + "\" client --method GET --url \"" + url + "\"";
+        std::string cmd = std::string("\"") + machinepalPath.string() + "\" client --method GET --url \"" + url + "\"";
         int rc = std::system(cmd.c_str());
         int exitCode = -1;
         if (WIFEXITED(rc)) {
@@ -221,15 +221,15 @@ BOOST_AUTO_TEST_SUITE(InitProjectSuite)
         auto& ts = boost::unit_test::framework::master_test_suite();
         fs::path testExePath(ts.argv[0]);
         fs::path exeDir = testExePath.parent_path();
-        fs::path machinepayPath = exeDir / "../machinepay";
-        if (!fs::exists(machinepayPath)) {
-            machinepayPath = exeDir / "machinepay";
+        fs::path machinepalPath = exeDir / "../machinepal";
+        if (!fs::exists(machinepalPath)) {
+            machinepalPath = exeDir / "machinepal";
         }
-        BOOST_REQUIRE_MESSAGE(fs::exists(machinepayPath), std::string("machinepay executable not found at ") +
-            machinepayPath.string());
+        BOOST_REQUIRE_MESSAGE(fs::exists(machinepalPath), std::string("machinepal executable not found at ") +
+            machinepalPath.string());
 
-        // Prepare empty directory at /tmp/machinepay
-        fs::path baseDir("/tmp/machinepay");
+        // Prepare empty directory at /tmp/machinepal
+        fs::path baseDir("/tmp/machinepal");
 
         std::error_code ec;
 
@@ -241,9 +241,9 @@ BOOST_AUTO_TEST_SUITE(InitProjectSuite)
             fs::remove_all(baseDir, ec);
         }
         fs::create_directories(baseDir, ec);
-        BOOST_REQUIRE_MESSAGE(!ec && fs::is_empty(baseDir), "Failed to prepare empty /tmp/machinepay directory");
+        BOOST_REQUIRE_MESSAGE(!ec && fs::is_empty(baseDir), "Failed to prepare empty /tmp/machinepal directory");
 
-        std::string cmd = "cd /tmp/machinepay && \"" + machinepayPath.string() + "\" init";
+        std::string cmd = "cd /tmp/machinepal && \"" + machinepalPath.string() + "\" init";
         int rc = std::system(cmd.c_str());
         int exitCode = -1;
         if (WIFEXITED(rc)) {
@@ -251,15 +251,15 @@ BOOST_AUTO_TEST_SUITE(InitProjectSuite)
         } else {
             exitCode = rc;
         }
-        BOOST_REQUIRE_MESSAGE(exitCode == 0, std::string("machinepay --init-project failed with exit code ") + std::to_string(exitCode));
+        BOOST_REQUIRE_MESSAGE(exitCode == 0, std::string("machinepal --init-project failed with exit code ") + std::to_string(exitCode));
 
         // Verify generated structure
-        fs::path cfg = baseDir / "machinepay.yml";
+        fs::path cfg = baseDir / "machinepal.yml";
         fs::path secrets = baseDir / "secrets";
         fs::path certs = baseDir / "certs";
-        fs::path wallet = secrets / "machinepay_wallet.key";
-        fs::path cert = certs / "machinepay_tls_certificate.crt";
-        fs::path certKey = secrets / "machinepay_tls_certificate.key";
+        fs::path wallet = secrets / "machinepal_wallet.key";
+        fs::path cert = certs / "machinepal_tls_certificate.crt";
+        fs::path certKey = secrets / "machinepal_tls_certificate.key";
 
         BOOST_TEST(fs::exists(cfg));
         BOOST_TEST(fs::exists(secrets));
@@ -268,9 +268,9 @@ BOOST_AUTO_TEST_SUITE(InitProjectSuite)
         BOOST_TEST(fs::exists(cert));
         BOOST_TEST(fs::exists(certKey));
 
-        // now run machinepay server in /tmp/machinepay to see if it starts correctly
-        fs::path pidFile = baseDir / "machinepay.pid";
-        cmd = "cd \"" + baseDir.string() + "\" && \"" + machinepayPath.string() + "\" & echo $! > " + pidFile.string();
+        // now run machinepal server in /tmp/machinepal to see if it starts correctly
+        fs::path pidFile = baseDir / "machinepal.pid";
+        cmd = "cd \"" + baseDir.string() + "\" && \"" + machinepalPath.string() + "\" & echo $! > " + pidFile.string();
         rc = std::system(cmd.c_str());
         BOOST_TEST(WEXITSTATUS(rc) == 0);
         sleep(3); // wait a bit for server to start

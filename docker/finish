@@ -21,8 +21,8 @@ STATUS=$2
 
 # We use /tmp because we want this state to persist while the container is running
 # but vanish if the container itself is restarted/recreated.
-COUNT_FILE="/tmp/machinepay_fail_count"
-START_TIME_FILE="/tmp/machinepay_start_time"
+COUNT_FILE="/tmp/machinepal_fail_count"
+START_TIME_FILE="/tmp/machinepal_start_time"
 
 # RESET_TIME: "The Healthy Threshold"
 # If the app runs for longer than this (60s), we assume the previous crash was
@@ -77,7 +77,7 @@ if [ "$EXIT_CODE" -eq 0 ]; then
 
     # 'sv down' tells runit to stop managing this service entirely.
     # Without this, runit would restart it immediately even after code 0.
-    sv down /etc/service/machinepay
+    sv down /etc/service/machinepal
 
     # Exit this script immediately; no need to sleep.
     exit 0

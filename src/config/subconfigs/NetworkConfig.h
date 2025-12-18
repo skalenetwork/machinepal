@@ -1,5 +1,5 @@
 #pragma once
-#include "MachinePayCommon.h"
+#include "MachinePalCommon.h"
 #include "crypto/EIP712Domain.h"
 #include "crypto/EthAddress.h"
 #include "facilitator_clients/EasyNetFacilitatorClient.h"

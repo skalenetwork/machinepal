@@ -3,7 +3,7 @@
 # ==========================================
 # STAGE 1: Builder
 # ==========================================
-FROM ghcr.io/skalenetwork/machinepay-deps:latest AS builder
+FROM ghcr.io/skalenetwork/machinepal-deps:latest AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /app
@@ -49,7 +49,7 @@ RUN cmake -S . -B build \
       -DVCPKG_TARGET_TRIPLET=x64-linux
 
 # 4. Build
-RUN cmake --build build --target machinepay
+RUN cmake --build build --target machinepal
 
 # ==========================================
 # STAGE 2: Runtime
@@ -64,16 +64,16 @@ RUN apt-get update && \
         runit \
     && rm -rf /var/lib/apt/lists/*
 
-RUN useradd -m -s /bin/bash machinepay
+RUN useradd -m -s /bin/bash machinepal
 
-WORKDIR /machinepay
-RUN chown machinepay:machinepay /machinepay
+WORKDIR /machinepal
+RUN chown machinepal:machinepal /machinepal
 
-COPY --from=builder /app/build/machinepay /usr/local/bin/machinepay
+COPY --from=builder /app/build/machinepal /usr/local/bin/machinepal
 
 # Copy Scripts
-COPY --chmod=755 docker/run /etc/service/machinepay/run
-COPY --chmod=755 docker/finish /etc/service/machinepay/finish
+COPY --chmod=755 docker/run /etc/service/machinepal/run
+COPY --chmod=755 docker/finish /etc/service/machinepal/finish
 COPY --chmod=755 docker/first_run.sh /usr/local/bin/first_run.sh
 COPY --chmod=755 docker/entrypoint.sh /entrypoint.sh
 

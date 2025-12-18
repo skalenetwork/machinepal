@@ -1,7 +1,7 @@
 #pragma once
 
 
-#include "config/MachinePayConfig.h"
+#include "config/MachinePalConfig.h"
 #include <proxygen/httpserver/HTTPServer.h>
 
 
@@ -9,13 +9,13 @@ namespace proxygen {
 class HTTPServer;
 }
 
-class MachinePayApp;
+class MachinePalApp;
 
 class ServerFactory {
-    MachinePayApp& app_;
+    MachinePalApp& app_;
 
 public:
-    explicit ServerFactory( MachinePayApp& app ) : app_( app ) {}
+    explicit ServerFactory( MachinePalApp& app ) : app_( app ) {}
 
     std::shared_ptr< proxygen::HTTPServer > createServerInstance(
         const ServerConfig& serverConfig );

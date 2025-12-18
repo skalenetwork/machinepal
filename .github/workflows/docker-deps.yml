@@ -9,7 +9,7 @@ permissions:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: skalenetwork/machinepay-deps
+  IMAGE_NAME: skalenetwork/machinepal-deps
 
 jobs:
   build-and-push:

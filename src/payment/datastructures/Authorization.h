@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MachinePayCommon.h"
+#include "MachinePalCommon.h"
 #include "config/JsonUtils.h"
 #include "crypto/EIP3009Authorization.h"
 #include "crypto/EIP3009ValidityTime.h"
@@ -11,7 +11,7 @@
 enum class FacilitatorError;
 class ResourceConfig;
 class HttpError;
-class MachinePayConfig;  // forward declaration added
+class MachinePalConfig;  // forward declaration added
 using json = nlohmann::json;
 
 class Authorization {

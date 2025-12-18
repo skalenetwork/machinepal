@@ -1,5 +1,5 @@
 #include "SettlementRequest.h"
-#include "MachinePayCommon.h"
+#include "MachinePalCommon.h"
 #include "PaymentPayload.h"
 #include "PaymentRequirements.h"
 

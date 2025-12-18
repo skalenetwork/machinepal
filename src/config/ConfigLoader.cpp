@@ -1,8 +1,8 @@
-#include "MachinePayCommon.h"
+#include "MachinePalCommon.h"
 #include "ConfigLoader.h"
 #include "JsonUtils.h"
-#include "MachinePayConfig.h"
-#include "config/MachinePayConfigSchema.h"
+#include "MachinePalConfig.h"
+#include "config/MachinePalConfigSchema.h"
 #include "init/Init.h"
 #include <yaml-cpp/yaml.h>
 #include <boost/test/tools/detail/fwd.hpp>
@@ -327,7 +327,7 @@ void ConfigLoader::validateJson( const json& j ) {
     CHECK_STATE2( !j.empty(), "Empty config file" );
 
     try {
-        schema = json::parse( MachinePayConfigSchemaJson );
+        schema = json::parse( MachinePalConfigSchemaJson );
     } catch ( const std::exception& ex ) {
         RETHROW_NESTED;
     }
@@ -341,7 +341,7 @@ void ConfigLoader::validateJson( const json& j ) {
         validator.validate( j, errHandler );  // throws on validation error
     } catch ( const std::exception& ex ) {
         std::string errorMsg = std::string(
-                                   "MachinePayConfigLoader::validateJson Invalid config file : "
+                                   "MachinePalConfigLoader::validateJson Invalid config file : "
                                    "failed to validate config against schema:\n" ) +
                                errHandler.errorMessage_;
         spdlog::warn( errorMsg );
@@ -351,7 +351,7 @@ void ConfigLoader::validateJson( const json& j ) {
 
 
 // ---------- Orchestrator ----------
-std::shared_ptr< MachinePayConfig > ConfigLoader::loadFromYamlFile(
+std::shared_ptr< MachinePalConfig > ConfigLoader::loadFromYamlFile(
     const filesystem::path& yamlPath, ptr< FileManager > fileManager ) {
     try {
         CHECK_STATE( fileManager );
@@ -360,12 +360,12 @@ std::shared_ptr< MachinePayConfig > ConfigLoader::loadFromYamlFile(
         applyEnvOverrides( j );
         resolveSecrets( j );
         validateJson( j );
-        auto result = MachinePayConfig::createFromJson( j, fileManager );
+        auto result = MachinePalConfig::createFromJson( j, fileManager );
         ;
         // sanity check manual validation corresponds to the schema
         validateJson( j );
         return result;
     } catch ( const std::exception& ex ) {
-        RETHROW_NESTED2("Could not load MachinePayConfig from: " + yamlPath.string());
+        RETHROW_NESTED2("Could not load MachinePalConfig from: " + yamlPath.string());
     }
 }

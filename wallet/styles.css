@@ -1,5 +1,5 @@
 /* The style for the floating tooltip */
-#machinepay-payment-tooltip {
+#machinepal-payment-tooltip {
     position: fixed;
     display: none; /* Hidden by default */
     background-color: #2775CA; /* USDC Blue-ish color */
@@ -18,6 +18,6 @@
 }
 
 /* Style for when the link is clicked */
-#machinepay-payment-tooltip.paid-status {
+#machinepal-payment-tooltip.paid-status {
     background-color: #2ecc71; /* Success Green */
 }

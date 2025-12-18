@@ -1,9 +1,9 @@
 #include "ConfigManager.h"
 
 #include "ConfigLoader.h"
-#include "MachinePayCommon.h"
-#include "MachinePayConfig.h"
-#include "config/MachinePayConfigSchema.h"
+#include "MachinePalCommon.h"
+#include "MachinePalConfig.h"
+#include "config/MachinePalConfigSchema.h"
 #include "init/Init.h"
 #include <openssl/evp.h>
 #include <yaml-cpp/yaml.h>
@@ -139,7 +139,7 @@ void ConfigManager::reloadConfig() {
 
         auto configPath = fileManager_->canonicalConfigPath();
 
-        spdlog::info( "Loading machinepay config from: {}", configPath.c_str() );
+        spdlog::info( "Loading machinepal config from: {}", configPath.c_str() );
         spdlog::info(
             "All relative paths in the config are resolved relative to the config base "
             "directory: {}",
@@ -171,7 +171,7 @@ void ConfigManager::reloadConfig() {
 }
 
 
-std::shared_ptr< MachinePayConfig > ConfigManager::latestConfig() {
+std::shared_ptr< MachinePalConfig > ConfigManager::latestConfig() {
     std::shared_lock< std::shared_mutex > lock( latestConfigMutex_ );
     CHECK_STATE( latestConfig_ );
     return latestConfig_;

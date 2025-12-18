@@ -13,22 +13,22 @@ namespace proxygen {
 class HTTPMessage;
 }
 
-class MachinePayApp;     // forward declaration
-class MachinePayConfig;  // forward declaration
+class MachinePalApp;     // forward declaration
+class MachinePalConfig;  // forward declaration
 class ResourceConfig;    // forward declaration
 
 class PaymentManager {
 public:
-    explicit PaymentManager( MachinePayApp& app );
+    explicit PaymentManager( MachinePalApp& app );
 
     variant< ptr< PaymentPayload >, HttpError > decodeAndParsePayment(
         const std::unique_ptr< proxygen::HTTPMessage >& req );
 
-    std::optional< HttpError > validatePaymentPayload( const MachinePayConfig& config,
+    std::optional< HttpError > validatePaymentPayload( const MachinePalConfig& config,
         const ResourceConfig& resource, shared_ptr< PaymentPayload > paymentPayload );
 
 
-    [[nodiscard]] MachinePayApp& app() const { return app_; }
+    [[nodiscard]] MachinePalApp& app() const { return app_; }
 
     void recordSuccessfulSettlement( const PaymentPayload& payload, const EIP712Domain& domain,
         const ResourceConfig& resource, const OrganizationConfig& organization,
@@ -45,23 +45,23 @@ public:
 
 
     variant< SettlementResponse, HttpError > checkPaymentIsNewAndSettleItUnsafe(
-        const MachinePayConfig& machinePayConfig, const ResourceConfig& resource,
+        const MachinePalConfig& machinePalConfig, const ResourceConfig& resource,
         const OrganizationConfig& organization, shared_ptr< PaymentPayload > paymentPayload,
         const string& ipAddress );
 
     variant< SettlementResponse, HttpError > checkPaymentIsNewAndSettleIt(
-        const MachinePayConfig& machinePayConfig, const ResourceConfig& resource,
+        const MachinePalConfig& machinePalConfig, const ResourceConfig& resource,
         const OrganizationConfig& organization, shared_ptr< PaymentPayload > paymentPayload,
         const string& ipAddress );
 
 
     variant< SettlementResponse, HttpError > decodePreValidateAndSettleWithFacilitator(
-        const std::unique_ptr< proxygen::HTTPMessage >& req, const MachinePayConfig& config,
+        const std::unique_ptr< proxygen::HTTPMessage >& req, const MachinePalConfig& config,
         const ResourceConfig& resource, const OrganizationConfig& organization,
         ptr< Authorization >& outAuthorization );
 
 private:
-    MachinePayApp& app_;
+    MachinePalApp& app_;
 
     std::set< std::string > currentlySettlingPayments_;
     std::mutex currentlySettlingPaymentsMutex_;

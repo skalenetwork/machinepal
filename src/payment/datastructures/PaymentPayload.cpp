@@ -1,4 +1,4 @@
-#include "MachinePayCommon.h"
+#include "MachinePalCommon.h"
 #include "PaymentPayload.h"
 
 #include "config/JsonUtils.h"
@@ -82,7 +82,7 @@ json PaymentPayload::toJson() const {
 }
 
 std::optional< FacilitatorError > PaymentPayload::validateAndVerifySignature(
-    const MachinePayConfig& config, const EIP3009Value& price, EthAddress& destinationAddress,
+    const MachinePalConfig& config, const EIP3009Value& price, EthAddress& destinationAddress,
    const string& paymentScheme ) const {
     try {
         if ( x402Version_ != 1 ) {
@@ -143,7 +143,7 @@ ptr< PaymentPayload > PaymentPayload::createDefaultPaymentPayload( EthPrivateKey
 
     // Sign authorization
     EIP712Signature signature = EIP3009Authorization::signAuthorization(
-        *EIP712Domain::machinePayEasyNet(), from, to, value, validAfter, validBefore, nonce, privKey );
+        *EIP712Domain::machinePalEasyNet(), from, to, value, validAfter, validBefore, nonce, privKey );
 
 
     auto payload = std::make_shared< Payload >( signature, auth );

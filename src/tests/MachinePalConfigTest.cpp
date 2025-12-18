@@ -3,19 +3,19 @@
 #include <map>
 #include <string>
 
-#include "MachinePayApp.h"
+#include "MachinePalApp.h"
 #include "config/ConfigManager.h"
 #include "config/subconfigs/FacilitatorConfig.h"
 #include "config/subconfigs/NetworkConfig.h"
 #include "config/subconfigs/ServerConfig.h"
 #include "nlohmann/json.hpp"
 
-ptr<MachinePayApp> startApp(std::map<std::string, std::string>& configMap );
+ptr<MachinePalApp> startApp(std::map<std::string, std::string>& configMap );
 
 BOOST_AUTO_TEST_CASE( deserialize_basic_proxy_config ) {
     // Path to the test config file
     std::map< std::string, std::string > configMap = { { "CONFIG",
-        "src/tests/configs/basic/machinepay.yml" } };
+        "src/tests/configs/basic/machinepal.yml" } };
 
     auto app = startApp( configMap );
 
@@ -48,9 +48,9 @@ BOOST_AUTO_TEST_CASE( deserialize_basic_proxy_config ) {
 
 }
 
-ptr< MachinePayApp > startApp( std::map< std::string, std::string >& configMap ) {
+ptr< MachinePalApp > startApp( std::map< std::string, std::string >& configMap ) {
     try {
-        return MachinePayApp::makeInstance( configMap );
+        return MachinePalApp::makeInstance( configMap );
     } catch ( const std::exception& ex ) {
         printNestedException( ex );
         BOOST_FAIL( "Exception:" );

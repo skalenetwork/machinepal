@@ -1,5 +1,5 @@
 #pragma once
-#include "MachinePayCommon.h"  // added for Hash typedef
+#include "MachinePalCommon.h"  // added for Hash typedef
 
 
 class EIP712Signature {

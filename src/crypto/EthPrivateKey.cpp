@@ -2,7 +2,7 @@
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
 #include "EthPrivateKey.h"
-#include "MachinePayCommon.h"
+#include "MachinePalCommon.h"
 
 #include "EIP712Signature.h"
 #include "Keccak.h"

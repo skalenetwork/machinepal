@@ -1,7 +1,7 @@
-#include <MachinePayCommon.h>
+#include <MachinePalCommon.h>
 #include "src/x402_server/X402Handler.h"
 #include "src/x402_server/ServerFactory.h"
-#include "src/MachinePayApp.h"
+#include "src/MachinePalApp.h"
 
 #include <proxygen/httpserver/HTTPServer.h>
 #include <proxygen/httpserver/RequestHandler.h>
@@ -42,16 +42,16 @@ void setBooleanSwitchIfNotEmpty(std::map<std::string, std::string> &envOverloads
 map<string, string> parseConfigValueOverloadsFromCommandLineAndEnvironment(int argc, char **argv) {
     try {
         // get environment overloads first. Then command line can override them.
-        auto envOverloads = Init::getMachinePayEnvironmentOverloads();
+        auto envOverloads = Init::getMachinePalEnvironmentOverloads();
         // Use CLI11 to parse command line
         std::string configFilePath;
         std::string logLevel;
         std::string logType;
         std::string bindIp;
         std::string hostname;
-        CLI::App app{"machinepay"};
+        CLI::App app{"machinepal"};
         app.add_option("-c,--config", configFilePath,
-                       "Path to the config file. Default is ./machinepay.yml.")
+                       "Path to the config file. Default is ./machinepal.yml.")
                 ->type_name("FILE");
         app.add_option("-l,--log-level", logLevel,
                        "Log level: trace, debug, info, warn, error, fatal")
@@ -73,7 +73,7 @@ map<string, string> parseConfigValueOverloadsFromCommandLineAndEnvironment(int a
         ClientCli::addClientSubcommand(app, clientConfig);
 
         app.add_subcommand("init",
-                           "Initialize a new machinepay project in the current working directory");
+                           "Initialize a new machinepal project in the current working directory");
 
         try {
             app.parse(argc, argv);
@@ -99,8 +99,8 @@ map<string, string> parseConfigValueOverloadsFromCommandLineAndEnvironment(int a
 
 
         if (!envOverloads.contains("CONFIG")) {
-            // If config file is not set, set to default ./machinepay.yml
-            envOverloads["CONFIG"] = "./machinepay.yml";
+            // If config file is not set, set to default ./machinepal.yml
+            envOverloads["CONFIG"] = "./machinepal.yml";
         }
 
         return envOverloads;
@@ -128,8 +128,8 @@ int main(int argc, char *argv[]) {
 
         auto configFilePath = configValueOverloads.at("CONFIG");
 
-        if (configFilePath == "./machinepay.yml") {
-            spdlog::info("Using default config path ./machinepay.yml");
+        if (configFilePath == "./machinepal.yml") {
+            spdlog::info("Using default config path ./machinepal.yml");
         } else {
             spdlog::info("Using config path: {}", configFilePath);
         }
@@ -146,8 +146,8 @@ int main(int argc, char *argv[]) {
         Init::checkOperatingSystemConfiguration();
 
 
-        auto machinePayApp = MachinePayApp::makeInstance(configValueOverloads);
-        machinePayApp->runUntilExit();
+        auto machinePalApp = MachinePalApp::makeInstance(configValueOverloads);
+        machinePalApp->runUntilExit();
         return 0;
     } catch (const std::exception &ex) {
         spdlog::critical("Fatal error in main. Exiting. ");

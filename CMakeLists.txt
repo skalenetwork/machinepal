@@ -13,7 +13,7 @@ set(ENV{CCACHE_IGNORE_HEADERS} "/usr/include/*")
 
 
 
-project(machinepay LANGUAGES CXX)
+project(machinepal LANGUAGES CXX)
 
 # Enable thread safety globally
 add_compile_definitions(
@@ -85,14 +85,14 @@ find_package(OpenSSL REQUIRED)
 find_package(cryptopp CONFIG REQUIRED)
 
 # ---- App target ----
-add_executable(machinepay
+add_executable(machinepal
         main.cpp
         ${APP_SRC_FILES}
 )
-target_include_directories(machinepay PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/external/soci/include)
+target_include_directories(machinepal PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/external/soci/include)
 
 
-set (MACHINEPAY_COMMON_LIBS
+set (MACHINEPAL_COMMON_LIBS
         CURL::libcurl
         proxygen::proxygenhttpserver
         wangle::wangle
@@ -118,21 +118,21 @@ set (MACHINEPAY_COMMON_LIBS
 )
 
 if(ENABLE_POSTGRESQL)
-    list(APPEND MACHINEPAY_COMMON_LIBS soci_postgresql)
-    target_compile_definitions(machinepay PRIVATE ENABLE_POSTGRESQL)
+    list(APPEND MACHINEPAL_COMMON_LIBS soci_postgresql)
+    target_compile_definitions(machinepal PRIVATE ENABLE_POSTGRESQL)
 endif()
 
-target_link_libraries(machinepay
+target_link_libraries(machinepal
         PRIVATE
-        ${MACHINEPAY_COMMON_LIBS}
+        ${MACHINEPAL_COMMON_LIBS}
 )
 
-target_compile_options(machinepay PRIVATE -Wno-deprecated-declarations -Werror)
+target_compile_options(machinepal PRIVATE -Wno-deprecated-declarations -Werror)
 
 option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
 if(ENABLE_ASAN)
-    target_compile_options(machinepay PRIVATE -fsanitize=address -fno-omit-frame-pointer)
-    target_link_options(machinepay PRIVATE -fsanitize=address)
+    target_compile_options(machinepal PRIVATE -fsanitize=address -fno-omit-frame-pointer)
+    target_link_options(machinepal PRIVATE -fsanitize=address)
 endif()
 
 # ---- Tests: Boost.Test + libcurl ----
@@ -152,7 +152,7 @@ if(BUILD_TESTING)
 
     target_link_libraries(mptest
             PRIVATE
-            ${MACHINEPAY_COMMON_LIBS}
+            ${MACHINEPAL_COMMON_LIBS}
             Boost::unit_test_framework
     )
 
@@ -178,23 +178,23 @@ function(enable_warnings target)
     )
 endfunction()
 
-enable_warnings(machinepay)
+enable_warnings(machinepal)
 enable_warnings(mptest)
 
 # make everything compile faster
-target_precompile_headers(machinepay PRIVATE "src/MachinePayCommon.h")
-target_precompile_headers(mptest PRIVATE "src/MachinePayCommon.h")
+target_precompile_headers(machinepal PRIVATE "src/MachinePalCommon.h")
+target_precompile_headers(mptest PRIVATE "src/MachinePalCommon.h")
 
 # ---- CPack/DEB packaging ----
 set(CPACK_GENERATOR "DEB")
 set(CPACK_PACKAGE_CONTACT "Stan Kladko <maintainers@skalenetwork.com>")
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Stan Kladko <maintainers@skalenetwork.com>")
-set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "MachinePay core and test binaries")
+set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "MachinePal core and test binaries")
 set(CPACK_DEBIAN_PACKAGE_VERSION "1.0")
 set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "amd64")
 set(CPACK_DEBIAN_PACKAGE_DEPENDS "libstdc++6 (>= 11.2)")
 set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
-install(TARGETS machinepay mptest DESTINATION usr/bin)
+install(TARGETS machinepal mptest DESTINATION usr/bin)
 include(CPack)
 
 

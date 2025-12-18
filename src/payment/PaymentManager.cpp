@@ -1,8 +1,8 @@
 #include "PaymentManager.h"
 
 #include "../facilitator_clients/FacilitatorClientManager.h"
-#include "MachinePayApp.h"
-#include "MachinePayCommon.h"
+#include "MachinePalApp.h"
+#include "MachinePalCommon.h"
 #include "config/subconfigs/FacilitatorConfig.h"
 #include "config/subconfigs/NetworkConfig.h"
 #include "config/subconfigs/ResourceConfig.h"
@@ -12,12 +12,12 @@
 #include "datastructures/SettlementRequest.h"
 #include "datastructures/SettlementResponse.h"
 #include "db/EasyNetDb.h"  // added include for EasyNetDb
-#include "db/MachinePayDb.h"
+#include "db/MachinePalDb.h"
 #include "db/PaymentRecord.h"
 #include "facilitators/FacilitatorErrors.h"
 #include "url/URLUtils.h"
 
-PaymentManager::PaymentManager(MachinePayApp &app) : app_(app) {
+PaymentManager::PaymentManager(MachinePalApp &app) : app_(app) {
 }
 
 variant<ptr<PaymentPayload>, HttpError> PaymentManager::decodeAndParsePayment(
@@ -60,14 +60,14 @@ void PaymentManager::recordSuccessfulSettlement(const PaymentPayload &payload,
                                                 const EIP712Domain &domain, const ResourceConfig &resource,
                                                 const OrganizationConfig &organization, const Hash &transactionHash,
                                                 const string &ipAddress) {
-    auto db = app_.machinePayDB();
+    auto db = app_.machinePalDB();
     db->saveSettledPayment(payload, domain, resource, organization, transactionHash, ipAddress);
 }
 
 
 std::optional<HttpError> PaymentManager::checkAgainstAlreadySettledPayments(
     const ptr<PaymentPayload> &paymentPayload, const ptr<EIP712Domain> &domain) {
-    auto db = app_.machinePayDB();
+    auto db = app_.machinePalDB();
 
     if (db->settledPaymentExists(paymentPayload, domain)) {
         const auto &from = paymentPayload->payload()->authorization()->from();
@@ -112,12 +112,12 @@ void PaymentManager::unlockPaymentAsBeingSettled(
 
 // this function assumes the payment has been locked for settlement already
 variant<SettlementResponse, HttpError> PaymentManager::checkPaymentIsNewAndSettleItUnsafe(
-    const MachinePayConfig &machinePayConfig, const ResourceConfig &resource,
+    const MachinePalConfig &machinePalConfig, const ResourceConfig &resource,
     const OrganizationConfig &organization, shared_ptr<PaymentPayload> paymentPayload,
     const string &ipAddress) {
     std::optional<HttpError> error = std::nullopt;
 
-    auto networkConfig = machinePayConfig.network();
+    auto networkConfig = machinePalConfig.network();
 
     error = checkAgainstAlreadySettledPayments(paymentPayload, networkConfig->eip712Domain());
     auto paymentRequirements =
@@ -132,7 +132,7 @@ variant<SettlementResponse, HttpError> PaymentManager::checkPaymentIsNewAndSettl
 
 
     auto result =
-            app_.facilitatorClientManager()->routeToFacilitatorAndSettle(machinePayConfig, settlementRequest);
+            app_.facilitatorClientManager()->routeToFacilitatorAndSettle(machinePalConfig, settlementRequest);
     if (holds_alternative<HttpError>(result)) {
         return result;
     }
@@ -147,12 +147,12 @@ variant<SettlementResponse, HttpError> PaymentManager::checkPaymentIsNewAndSettl
 }
 
 variant<SettlementResponse, HttpError> PaymentManager::checkPaymentIsNewAndSettleIt(
-    const MachinePayConfig &machinePayConfig, const ResourceConfig &resource,
+    const MachinePalConfig &machinePalConfig, const ResourceConfig &resource,
     const OrganizationConfig &organization, shared_ptr<PaymentPayload> paymentPayload,
     const string &ipAddress) {
     CHECK_STATE(paymentPayload);
     auto authorization = paymentPayload->payload()->authorization();
-    auto networkConfig = machinePayConfig.network();
+    auto networkConfig = machinePalConfig.network();
     auto domain = networkConfig->eip712Domain();
 
     // we need to make sure that the user can not submit the same payment multiple times in parallel
@@ -175,7 +175,7 @@ variant<SettlementResponse, HttpError> PaymentManager::checkPaymentIsNewAndSettl
     try {
         // Now that we hold the lock, proceed with the actual settlement.
         return checkPaymentIsNewAndSettleItUnsafe(
-            machinePayConfig, resource, organization, paymentPayload, ipAddress);
+            machinePalConfig, resource, organization, paymentPayload, ipAddress);
     } catch (const std::exception &e) {
         spdlog::error("Error during payment settlement request to"
                       " facilitator: {}", e.what());
@@ -186,7 +186,7 @@ variant<SettlementResponse, HttpError> PaymentManager::checkPaymentIsNewAndSettl
 
 
 variant<SettlementResponse, HttpError> PaymentManager::decodePreValidateAndSettleWithFacilitator(
-    const std::unique_ptr<proxygen::HTTPMessage> &req, const MachinePayConfig &config,
+    const std::unique_ptr<proxygen::HTTPMessage> &req, const MachinePalConfig &config,
     const ResourceConfig &resource, const OrganizationConfig &organization,
     ptr<Authorization> &authorization) {
     std::optional<HttpError> error = std::nullopt;

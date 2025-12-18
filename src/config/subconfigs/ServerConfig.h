@@ -2,7 +2,7 @@
 
 #include "HTTPConfig.h"
 #include "HTTPSConfig.h"
-#include "MachinePayCommon.h"
+#include "MachinePalCommon.h"
 
 class FileManager;
 

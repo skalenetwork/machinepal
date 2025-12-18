@@ -1,20 +1,20 @@
 #include "EasyNetFacilitator.h"
 
 #include "FacilitatorErrors.h"
-#include "MachinePayApp.h"
-#include "MachinePayCommon.h"
+#include "MachinePalApp.h"
+#include "MachinePalCommon.h"
 
 #include "payment/datastructures/PaymentRequirements.h"
 #include "payment/datastructures/VerifyResponse.h"
 
-EasyNetFacilitator::EasyNetFacilitator( MachinePayApp& app ) : app_( app ) {
-    chainId_ = EIP712Domain::machinePayEasyNet()->chainId();
+EasyNetFacilitator::EasyNetFacilitator( MachinePalApp& app ) : app_( app ) {
+    chainId_ = EIP712Domain::machinePalEasyNet()->chainId();
 };
 
 nlohmann::json EasyNetFacilitator::processSettleRequest(
     const nlohmann::json& settlementRequestJson ) {
     std::unique_lock< std::shared_mutex > lock( mutex_ );
-    auto db = dynamic_pointer_cast< EasyNetDb >( app_.machinePayDB() );
+    auto db = dynamic_pointer_cast< EasyNetDb >( app_.machinePalDB() );
     CHECK_STATE( db );
     try {
         optional< string > error;
@@ -125,7 +125,7 @@ EasyNetFacilitator::processVerifyRequestUnsafe( const nlohmann::json& verifyRequ
 
 nlohmann::json EasyNetFacilitator::processVerifyRequest(
     const nlohmann::json& verifyRequestJson ) {
-    auto db = dynamic_pointer_cast< EasyNetDb >( app_.machinePayDB() );
+    auto db = dynamic_pointer_cast< EasyNetDb >( app_.machinePalDB() );
     CHECK_STATE( db );
     std::shared_lock< std::shared_mutex > lock( mutex_ );
     try {

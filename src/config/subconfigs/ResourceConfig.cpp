@@ -76,10 +76,10 @@ ResourceConfig::ResourceConfig( const std::string& name, const std::string& loca
     : name_( name ), location_( location ), type_( type ), price_( price ), token_( token ) {
     paymentScheme_ = "exact";
     if ( type_ == ResourceType::LocalFile ) {
-        machinePayPath_ = location_;
+        machinePalPath_ = location_;
         mimeType_ = "application/octet-stream";
     } else {
-        machinePayPath_ = URLUtils::getLocationFromUrl( location_ );
+        machinePalPath_ = URLUtils::getLocationFromUrl( location_ );
         mimeType_ = "application/json";
     }
 }

@@ -21,14 +21,14 @@ class ResponseHandler;
 class HTTPMessage;
 }  // namespace proxygen
 
-class MachinePayApp;  // Forward declaration
-class MachinePayConfig;
+class MachinePalApp;  // Forward declaration
+class MachinePalConfig;
 class OrganizationConfig;
 
 class X402Processor : public IProcessor {
 public:
 
-    explicit X402Processor( MachinePayApp& app, weak_ptr< IResponseSender >& responseSender );
+    explicit X402Processor( MachinePalApp& app, weak_ptr< IResponseSender >& responseSender );
 
     bool isReplySent() const override;
 
@@ -86,7 +86,7 @@ private:
         const proxygen::HTTPHeaders&& responseHeaders,
         std::string& responseBody );
 
-    [[nodiscard]] ptr< MachinePayConfig > config() const {
+    [[nodiscard]] ptr< MachinePalConfig > config() const {
         CHECK_STATE( config_ );
         return config_;
     }
@@ -103,8 +103,8 @@ private:
     }
 
 
-    MachinePayApp& app_;
-    ptr< MachinePayConfig > config_;
+    MachinePalApp& app_;
+    ptr< MachinePalConfig > config_;
     std::string decodedPath_;
     std::string subDomainName_;
     ptr< OrganizationConfig > organization_;

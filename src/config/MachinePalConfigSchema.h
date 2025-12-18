@@ -1,6 +1,6 @@
 #pragma once
 
-constexpr const char* MachinePayConfigSchemaJson = R"(
+constexpr const char* MachinePalConfigSchemaJson = R"(
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",

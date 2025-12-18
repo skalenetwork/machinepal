@@ -1,9 +1,9 @@
-#include "MachinePayCommon.h"
-#include "MachinePayConfigGenerator.h"
+#include "MachinePalCommon.h"
+#include "MachinePalConfigGenerator.h"
 
 #include "crypto/EthPrivateKey.h"
 
-static const char* kYamlTemplate = R"(# Machinepay server configuration. May be overridden by environment variables.
+static const char* kYamlTemplate = R"(# Machinepal server configuration. May be overridden by environment variables.
 server:
   hostname: localhost
   http:
@@ -12,11 +12,11 @@ server:
   https:
     enable: true
     port: 8443
-    cert_file: certs/machinepay_tls_certificate.crt
-    key_file: secrets/machinepay_tls_certificate.key
+    cert_file: certs/machinepal_tls_certificate.crt
+    key_file: secrets/machinepal_tls_certificate.key
 
 network:
-  name: machinepay-easynet
+  name: machinepal-easynet
   payment_address: {}
 
 log:
@@ -38,7 +38,7 @@ resources:
     token: USDC
 )";
 
-void MachinePayConfigGenerator::generateDefaultConfig(const std::filesystem::path& dirPath, EthPrivateKey& machinePayKey) {
+void MachinePalConfigGenerator::generateDefaultConfig(const std::filesystem::path& dirPath, EthPrivateKey& machinePalKey) {
     try {
         if (!dirPath.empty()) {
             std::error_code ec;
@@ -46,10 +46,10 @@ void MachinePayConfigGenerator::generateDefaultConfig(const std::filesystem::pat
 
             if (ec) {
                 throw std::filesystem::filesystem_error(
-                    "Failed to create target directory for machinepay.yml", dirPath, ec);
+                    "Failed to create target directory for machinepal.yml", dirPath, ec);
             }
         }
-        auto filePath = dirPath / "machinepay.yml";
+        auto filePath = dirPath / "machinepal.yml";
         if (std::filesystem::exists(filePath)) {
             throw std::runtime_error("Config file already exists. Refusing to overwrite: " + filePath.string());
         }
@@ -62,7 +62,7 @@ void MachinePayConfigGenerator::generateDefaultConfig(const std::filesystem::pat
 
         std::string finalYaml = folly::sformat(
             kYamlTemplate,
-            machinePayKey.computePublicKey().getAddress().toHex(PREFIX_0x)
+            machinePalKey.computePublicKey().getAddress().toHex(PREFIX_0x)
         );
 
         out << finalYaml;
@@ -95,6 +95,6 @@ void MachinePayConfigGenerator::generateDefaultConfig(const std::filesystem::pat
                 "Successfully wrote config but failed to set secure permissions", filePath, permEc);
         }
     } catch (...) {
-        std::throw_with_nested(std::runtime_error("Failed to generate machinepay.yml in directory: " + dirPath.string()));
+        std::throw_with_nested(std::runtime_error("Failed to generate machinepal.yml in directory: " + dirPath.string()));
     }
 }

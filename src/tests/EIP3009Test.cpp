@@ -4,7 +4,7 @@
 #include "crypto/EthAddress.h"
 #include "crypto/EthPrivateKey.h"
 #include "crypto/EthPublicKey.h"
-#include <MachinePayCommon.h>
+#include <MachinePalCommon.h>
 #include <boost/multiprecision/cpp_int.hpp>
 #include <boost/test/unit_test.hpp>
 
@@ -32,13 +32,13 @@ BOOST_AUTO_TEST_CASE( EIP3009_SignAndVerify_ReferenceValues ) {
 
         // Sign authorization
         EIP712Signature signature =
-            EIP3009Authorization::signAuthorization( *EIP712Domain::machinePayEasyNet(), from,
+            EIP3009Authorization::signAuthorization( *EIP712Domain::machinePalEasyNet(), from,
                 to, value, validAfter, validBefore, nonce, privKey );
         BOOST_TEST( !signature.toHex().empty() );
 
         // Verify authorization
         auto error = EIP3009Authorization::verifyAuthorizationSignature(
-            *EIP712Domain::machinePayEasyNet(), from, to, value, validAfter, validBefore, nonce,
+            *EIP712Domain::machinePalEasyNet(), from, to, value, validAfter, validBefore, nonce,
             signature );
         BOOST_TEST( !error );
     } catch ( exception& ex ) {

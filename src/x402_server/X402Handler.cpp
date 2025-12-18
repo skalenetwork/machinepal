@@ -1,5 +1,5 @@
 #include "X402Handler.h"
-#include "MachinePayCommon.h"
+#include "MachinePalCommon.h"
 
 #include "ProxygenResponseSender.h"
 #include "examples/PaymentExamples.h"
@@ -9,7 +9,7 @@
 using namespace proxygen;
 
 
-X402Handler::X402Handler( MachinePayApp& app ) : app_( app ) {
+X402Handler::X402Handler( MachinePalApp& app ) : app_( app ) {
     // we take the latest condig at the start
     config_ = app_.configManager()->latestConfig();
     CHECK_STATE( config_ );

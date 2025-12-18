@@ -1,27 +1,27 @@
 <div align="center">
-  <img src="machinepay.png" alt="MachinePay" width="30%">
+  <img src="machinepal.png" alt="MachinePal" width="30%">
 </div>
 
 
-# 🚀 MachinePay: The  x402 Payment Agent for the Web
+# 🚀 MachinePal: The  x402 Payment Agent for the Web
 
 Instantly add **crypto payments** to any website or API using this AI Payment Agent that implements [x402 protocol](https://docs.cdp.coinbase.com/x402/docs/welcome). Sell anything: APIs, resources and products.
 
-[![Love this project? Give it a heart!](https://img.shields.io/badge/%E2%9D%A4%EF%B8%8F%20Love%20this%20project%3F%20Give%20it%20a%20heart!-ff69b4?style=flat-square)](https://github.com/skalenetwork/machinepay/stargazers)
-[![GitHub stars](https://img.shields.io/github/stars/skalenetwork/machinepay?style=social)](https://github.com/skalenetwork/machinepay/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/skalenetwork/machinepay?style=social)](https://github.com/skalenetwork/machinepay/network/members)
-[![Contribute](https://img.shields.io/badge/Become%20a%20Contributor-28a745?logo=github)](https://github.com/skalenetwork/machinepay/blob/main/CONTRIBUTING.md)
-[![Open an Issue](https://img.shields.io/badge/Open%20an%20Issue-ff9800?logo=github)](https://github.com/skalenetwork/machinepay/issues/new/choose)
-[![GitHub issues](https://img.shields.io/github/issues/skalenetwork/machinepay)](https://github.com/skalenetwork/machinepay/issues)
-[![GitHub license](https://img.shields.io/github/license/skalenetwork/machinepay)](https://github.com/skalenetwork/machinepay/blob/main/LICENSE)
-[![Build and test machinepay](https://github.com/skalenetwork/machinepay/actions/workflows/build-test-and-publish.yml/badge.svg)](https://github.com/skalenetwork/machinepay/actions/workflows/build_test_and_publish.yml)
+[![Love this project? Give it a heart!](https://img.shields.io/badge/%E2%9D%A4%EF%B8%8F%20Love%20this%20project%3F%20Give%20it%20a%20heart!-ff69b4?style=flat-square)](https://github.com/skalenetwork/machinepal/stargazers)
+[![GitHub stars](https://img.shields.io/github/stars/skalenetwork/machinepal?style=social)](https://github.com/skalenetwork/machinepal/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/skalenetwork/machinepal?style=social)](https://github.com/skalenetwork/machinepal/network/members)
+[![Contribute](https://img.shields.io/badge/Become%20a%20Contributor-28a745?logo=github)](https://github.com/skalenetwork/machinepal/blob/main/CONTRIBUTING.md)
+[![Open an Issue](https://img.shields.io/badge/Open%20an%20Issue-ff9800?logo=github)](https://github.com/skalenetwork/machinepal/issues/new/choose)
+[![GitHub issues](https://img.shields.io/github/issues/skalenetwork/machinepal)](https://github.com/skalenetwork/machinepal/issues)
+[![GitHub license](https://img.shields.io/github/license/skalenetwork/machinepal)](https://github.com/skalenetwork/machinepal/blob/main/LICENSE)
+[![Build and test machinepal](https://github.com/skalenetwork/machinepal/actions/workflows/build-test-and-publish.yml/badge.svg)](https://github.com/skalenetwork/machinepal/actions/workflows/build_test_and_publish.yml)
 [![Runs on Ubuntu 22.04+](https://img.shields.io/badge/Ubuntu-22.04%2B-orange?logo=ubuntu)](https://ubuntu.com/)
 [![Runs on macOS 11+](https://img.shields.io/badge/macOS-11%2B-blue?logo=apple)](https://www.apple.com/macos/)
 [![Runs on Windows 10+](https://img.shields.io/badge/Windows-10%2B-blue?logo=windows)](https://www.microsoft.com/windows/)
 
 ---
 
-## ✨ Why use MachinePay?
+## ✨ Why use MachinePal?
 
 - ⚡ **Plug & play** — add x402 payments to existing websites & APIs in minutes
 - 🔒 **Fully x402 compliant** — built on the Coinbase standard
@@ -36,22 +36,22 @@ Instantly add **crypto payments** to any website or API using this AI Payment Ag
 
 ## 🏗️ How it Works (The Toll Booth Analogy)
 
-Think of **MachinePay** as a **toll booth for the internet**.  
+Think of **MachinePal** as a **toll booth for the internet**.  
 Instead of reaching a website directly, requests first pass through the proxy:
 
 1. **🔗 You send a request** → try to access a resource
-2. **🚦 MachinePay proxy intercepts** → checks if payment is included
+2. **🚦 MachinePal proxy intercepts** → checks if payment is included
 3. **💳 Payment verified** → confirmed via the x402 protocol
-4. **📡 MachinePay proxy forwards request** → to the real website
+4. **📡 MachinePal proxy forwards request** → to the real website
 5. **🖥️ Website responds** → returns content
-6. **📬 MachinePay proxy delivers to you** → completing the paid access loop
+6. **📬 MachinePal proxy delivers to you** → completing the paid access loop
 
 ✅ Result: Websites instantly monetize access while staying secure and compliant.
 
 ---
 
 
-## MachinePay Architecture diagram
+## MachinePal Architecture diagram
 
 
 ```mermaid
@@ -64,7 +64,7 @@ end
     %% Corporate Network 1
     subgraph Corporate_Network["Corporate Network 1"]
         direction TB
-        MP["MachinePay x402 payment gateway"]
+        MP["MachinePal x402 payment gateway"]
         AI1["AI Services"]
         AI2["Products"]
         AI3["Data"]
@@ -75,7 +75,7 @@ end
     %% Corporate Network 2
     subgraph Corporate_Network_2["Corporate Network 2"]
         direction TB
-        MP2["MachinePay x402 payment gateway"]
+        MP2["MachinePal x402 payment gateway"]
         AI1B["AI Services"]
         AI2B["Products"]
         AI3B["Data"]
@@ -172,8 +172,8 @@ Install prerequisites:
 
 ```bash
 # Clone with dependencies
-git clone --recursive https://github.com/skalenetwork/machinepay.git
-cd machinepay
+git clone --recursive https://github.com/skalenetwork/machinepal.git
+cd machinepal
 
 # Bootstrap vcpkg
 ./external/vcpkg/bootstrap-vcpkg.sh

@@ -1,4 +1,4 @@
-#include "MachinePayCommon.h"
+#include "MachinePalCommon.h"
 #include "FacilitatorErrors.h"
 
 #define ERROR_STRING_MAP_ENTRY(e) {#e, FacilitatorError::e}

@@ -1,5 +1,5 @@
 #include "Authorization.h"
-#include "MachinePayCommon.h"
+#include "MachinePalCommon.h"
 #include "x402_protocol/HttpError.h"
 #include <boost/algorithm/hex.hpp>
 #include <cctype>

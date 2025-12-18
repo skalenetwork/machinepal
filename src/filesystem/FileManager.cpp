@@ -2,7 +2,7 @@
 // Created by stan on 08/10/25.
 //
 #include "FileManager.h"
-#include "MachinePayCommon.h"
+#include "MachinePalCommon.h"
 #include <openssl/err.h>
 #include <openssl/pem.h>
 #include <openssl/ssl.h>

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MachinePayCommon.h"
+#include "MachinePalCommon.h"
 
 class FileManager;
 

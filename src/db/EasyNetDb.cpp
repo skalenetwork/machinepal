@@ -1,12 +1,12 @@
 #include "EasyNetDb.h"
-#include "MachinePayCommon.h"
+#include "MachinePalCommon.h"
 #include "crypto/Encoding.h"  // added for u256 conversions
 #include <soci/soci.h>
 
 #include "facilitators/FacilitatorErrors.h"
 
-EasyNetDb::EasyNetDb( MachinePayApp& app, DbType type, const optional< string >& connectionInfo )
-    : MachinePayDb( app, type, connectionInfo ) {
+EasyNetDb::EasyNetDb( MachinePalApp& app, DbType type, const optional< string >& connectionInfo )
+    : MachinePalDb( app, type, connectionInfo ) {
     try {
         soci::backend_factory const& backend = getBackend( dbType_ );
         soci::session sql( backend, connectionString_ );

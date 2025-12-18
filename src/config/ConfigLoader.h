@@ -1,11 +1,11 @@
 #pragma once
 
 
-#include "MachinePayConfig.h"
+#include "MachinePalConfig.h"
 #include "nlohmann/json.hpp"
 #include <mutex>
 
-class MachinePayConfig;
+class MachinePalConfig;
 
 // Source-of-truth loader:
 // 1) Load YAML from file.
@@ -20,7 +20,7 @@ public:
         : overridesFromCliAndEnv_( overrides ) {}
 
 
-    std::shared_ptr< MachinePayConfig > loadFromYamlFile(
+    std::shared_ptr< MachinePalConfig > loadFromYamlFile(
         const filesystem::path& yamlPath, ptr< FileManager > fileManager );
 
 private:
