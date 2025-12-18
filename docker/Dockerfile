@@ -8,7 +8,8 @@ FROM ghcr.io/skalenetwork/machinepal-deps:latest AS builder
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /app
 
-
+RUN git pull
+RUN git submodule update --init --recursive
 
 # Set vcpkg root
 ENV VCPKG_ROOT=/app/vcpkg \
@@ -49,10 +50,11 @@ RUN chown machinepal:machinepal /machinepal
 COPY --from=builder /app/build/machinepal /usr/local/bin/machinepal
 
 # Copy Scripts
-COPY --chmod=755 docker/run /etc/service/machinepal/run
-COPY --chmod=755 docker/finish /etc/service/machinepal/finish
-COPY --chmod=755 docker/first_run.sh /usr/local/bin/first_run.sh
-COPY --chmod=755 docker/entrypoint.sh /entrypoint.sh
+COPY --chmod=755 run /etc/service/machinepal/run
+COPY --chmod=755 finish /etc/service/machinepal/finish
+COPY --chmod=755 first_run.sh /usr/local/bin/first_run.sh
+COPY --chmod=755 entrypoint.sh /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]
 CMD [""]
+
