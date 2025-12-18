@@ -5,11 +5,23 @@
 
 # RunMachinePal Now
 
-In emptry directory, run:
+In an empty directory, run:
 
 ```bash
-docker run ghcr.io/skalenetwork/machinepal-deps:latest --init
-``` 
+docker run --rm -v "$PWD:/machinepay" ghcr.io/skalenetwork/machinepal --init
+```
+
+This initializes MachinePal with the default configuration in the current folder.
+
+Then run:
+
+```bash
+docker run --network host -v "$PWD:/machinepay" ghcr.io/skalenetwork/machinepal
+```
+
+> Note: `--network host` (with a space) is the correct Docker syntax. On Linux it attaches the container to the host network.
+
+
 
 # 🚀 MachinePal: The  x402 Payment Agent for the Web
 
@@ -195,5 +207,3 @@ cmake -S . -B build \
 
 cmake --build build -j
 ```
-
-
