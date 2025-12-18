@@ -7,6 +7,13 @@ FROM ghcr.io/skalenetwork/machinepal-deps:latest AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Make vcpkg to rebuild as little as possible from deps containers
+# This speeds things up
+
+ENV VCPKG_FEATURE_FLAGS=-manifests
+ENV VCPKG_FORCE_SYSTEM_BINARIES=1
+ENV VCPKG_DISABLE_METRICS=1
+
 # Change this via:
 #   docker build --build-arg CACHEBUST=$(date +%s) -f Dockerfile .
 ARG CACHEBUST=1
