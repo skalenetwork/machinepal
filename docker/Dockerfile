@@ -4,48 +4,6 @@
 # STAGE 1: Builder
 # ==========================================
 FROM ghcr.io/skalenetwork/machinepal-deps:latest AS builder
-
-ENV DEBIAN_FRONTEND=noninteractive
-
-# Make vcpkg to rebuild as little as possible from deps containers
-# This speeds things up
-
-ENV VCPKG_FEATURE_FLAGS=-manifests
-ENV VCPKG_FORCE_SYSTEM_BINARIES=1
-ENV VCPKG_DISABLE_METRICS=1
-
-# Change this via:
-#   docker build --build-arg CACHEBUST=$(date +%s) -f Dockerfile .
-ARG CACHEBUST=1
-
-WORKDIR /app
-
-# Make CACHEBUST part of the command so changing it reliably breaks this layer cache
-RUN echo "Cache bust: ${CACHEBUST}" \
- && cd machinepal \
- && git pull
-
-RUN echo "Cache bust: ${CACHEBUST}" && cd machinepal && git submodule update --init --recursive
-
-ENV VCPKG_ROOT=/app/machinepal/external/vcpkg \
-     VCPKG_DISABLE_METRICS=1
-
-
-# 3. Configure (CMake)`
-# Now 'cmake' will be found in /usr/bin/cmake
-RUN cd /app/machinepal && cmake -S . -B build \
-      -G Ninja \
-      -DCMAKE_BUILD_TYPE=Debug \
-      -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake \
-      -DVCPKG_TARGET_TRIPLET=x64-linux
-
-# 4. Build
-RUN cd /app/machinepal && cmake --build build
-
-
-# ==========================================
-# STAGE 2: Runtime
-# ==========================================
 FROM ubuntu:22.04 AS runtime
 
 # Install Runtime Dependencies
