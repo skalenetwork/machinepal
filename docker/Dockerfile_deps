@@ -74,3 +74,9 @@ RUN cd /app/machinepal && cmake -S . -B build \
 
 # 4. Build
 RUN cd /app/machinepal && cmake --build build
+
+# 5. Clean up unnecessary files to reduce image size
+RUN find build -name "*.o" -type f -delete \
+    && rm -rf $VCPKG_ROOT/buildtrees \
+    && rm -rf $VCPKG_ROOT/downloads
+
