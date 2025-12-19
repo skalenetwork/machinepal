@@ -1,7 +1,7 @@
 name: Build and Push Docker Deps Image
 
 on:
-  workflow_dispatch: # This enables manual triggering only
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -36,12 +36,24 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build and push
+      - name: Build Docker Image (Load locally)
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./docker/Dockerfile_deps
           platforms: linux/amd64
-          push: true
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          load: true        # Load image into local Docker daemon instead of pushing
+          push: false       # Do not push the unsquashed image
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:temp
+
+      - name: Squash and Push
+        run: |
+          # Install docker-squash tool
+          pip install docker-squash
+
+          # Squash the temporary image to the final tag
+          # This merges all layers into one, significantly reducing size
+          docker-squash -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:temp
+
+          # Push the final squashed image
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
