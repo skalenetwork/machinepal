@@ -42,11 +42,8 @@ RUN cmake -S . -B build \
 
 
 # 7. Build (No 'cd' needed)
-RUN cmake --build build
-
-# 8. Clean up (No 'cd' needed - FIXED YOUR ERROR)
-# Since we are in /app/machinepal, 'find build' now correctly sees the build folder
-RUN find build -name "*.o" -type f -delete \
+RUN cmake --build build && find build -name "*.o" -type f -delete \
     && rm -rf $VCPKG_ROOT/buildtrees \
-    && rm -rf $VCPKG_ROOT/downloads
+    && rm -rf $VCPKG_ROOT/downloads \
+    && rm -rf build/*/
 
