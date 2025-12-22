@@ -39,7 +39,7 @@ jobs:
       - name: Build Docker Image (Load locally)
         uses: docker/build-push-action@v6
         with:
-          context: .
+          context: ./docker
           file: ./docker/Dockerfile_build
           platforms: linux/amd64
           load: true        # Load image into local Docker daemon instead of pushing
