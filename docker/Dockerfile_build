@@ -20,6 +20,8 @@ RUN apt-get update && \
         zip \
         tar \
         build-essential \
+        ninja-build \
+        cmake \
         python3 \
         linux-libc-dev \
         autoconf \
