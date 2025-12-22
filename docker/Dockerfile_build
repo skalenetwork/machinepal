@@ -23,7 +23,6 @@ RUN apt-get update && \
         python3 \
         linux-libc-dev \
         autoconf \
-
         libtool \
         automake \
         autoconf-archive \
