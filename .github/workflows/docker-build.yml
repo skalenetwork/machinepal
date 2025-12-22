@@ -1,4 +1,4 @@
-name: Build and Push Docker Deps Image
+name: Build and Push Docker Build Image
 
 on:
   workflow_dispatch:
@@ -9,7 +9,7 @@ permissions:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: skalenetwork/machinepal-deps
+  IMAGE_NAME: skalenetwork/machinepal-build
 
 jobs:
   build-and-push:

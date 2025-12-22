@@ -3,7 +3,7 @@
 # ==========================================
 # STAGE 1: Builder
 # ==========================================
-FROM ghcr.io/skalenetwork/machinepal-deps:latest AS builder
+FROM ghcr.io/skalenetwork/machinepal-build:latest AS builder
 FROM ubuntu:22.04 AS runtime
 
 # Install Runtime Dependencies
