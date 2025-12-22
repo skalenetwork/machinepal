@@ -22,10 +22,9 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install build dependencies
+      - name: Install build packages
         run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential cmake ninja-build ccache
+          RUN chmod +x docker/install_packages.sh && docker/install_packages.sh          
 
       - name: Bootstrap vcpkg
         run: |
