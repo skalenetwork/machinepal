@@ -51,14 +51,12 @@ jobs:
           vcpkg install
 
       - name: Configure (CMake)
-        env:
-          VCPKG_FEATURE_FLAGS: manifests
         run: |
           cmake -S . -B build \
             -G Ninja \
             -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-            -DCMAKE_TOOLCHAIN_FILE=external/vcpkg/scripts/buildsystems/vcpkg.cmake \
-            -DVCPKG_FEATURE_FLAGS=manifests
+            -DCMAKE_TOOLCHAIN_FILE=external/vcpkg/scripts/buildsystems/vcpkg.cmake \            
+            -DVCPKG_TARGET_TRIPLET=x64-linux          
 
       - name: Build
         run: cmake --build build -j 2
