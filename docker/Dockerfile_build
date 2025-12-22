@@ -3,6 +3,10 @@
 # ==========================================
 FROM ubuntu:22.04
 
+
+# Prevent interactive prompts during build
+ENV DEBIAN_FRONTEND=noninteractive
+
 # Copy both the package list and the script to /tmp
 COPY packages.txt install_packages.sh /tmp/
 
@@ -10,19 +14,16 @@ COPY packages.txt install_packages.sh /tmp/
 # We use bash explicitly to run it, ensuring compatibility
 RUN cd /tmp && ./install_packages.sh
 
-# Prevent interactive prompts during build
-ENV DEBIAN_FRONTEND=noninteractive
 
 WORKDIR /app
 
 RUN git clone https://github.com/skalenetwork/machinepal --recursive --depth 1 --shallow-submodules
-ADD https://www.google.com /tmp/bust-cache
-RUN cd machinepal && git pull && git submodule update --recursive
 
 
-# --- SIMPLIFICATION HERE ---
-# Setting WORKDIR here means all future commands happen inside this folder
 WORKDIR /app/machinepal
+
+ADD https://www.google.com /tmp/bust-cache
+RUN git pull && git submodule update --recursive
 
 # 4. Setup VCPKG
 ENV VCPKG_ROOT=/app/machinepal/external/vcpkg \
