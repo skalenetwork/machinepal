@@ -40,7 +40,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ./docker/Dockerfile_deps
+          file: ./docker/Dockerfile_build
           platforms: linux/amd64
           load: true        # Load image into local Docker daemon instead of pushing
           push: false       # Do not push the unsquashed image
