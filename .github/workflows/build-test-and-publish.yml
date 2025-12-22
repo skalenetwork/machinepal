@@ -46,9 +46,12 @@ jobs:
 
       - name: Install vcpkg packages
         env:
-          VCPKG_FEATURE_FLAGS: manifests
+          env:
+            VCPKG_ROOT: ${{ github.workspace }}/external/vcpkg
+            VCPKG_DISABLE_METRICS: 1
+            VCPKG_FORCE_SYSTEM_BINARIES: 1
         run: |
-          vcpkg install
+          cd docker && ./vcpkg_package_install.sh
 
       - name: Configure (CMake)
         run: |
