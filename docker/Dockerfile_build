@@ -30,19 +30,16 @@ ENV VCPKG_ROOT=/app/machinepal/external/vcpkg \
     VCPKG_FORCE_SYSTEM_BINARIES=1
     # ^ FORCE_SYSTEM_BINARIES prevents vcpkg from downloading its own cmake/ninja tools, saving time.
 
-RUN cd docker && ./vcpkg_packages_install.sh
-
-# 6. Configure
-# Your project is RelWithDebInfo, which links to the Release deps built above.
-RUN cmake -S . -B build \
+# Configure, Build, and Cleanup in a single layer
+RUN cd docker && ./vcpkg_packages_install.sh \
+    && cmake -S . -B build \
       -G Ninja \
       -DCMAKE_BUILD_TYPE=RelWithDebInfo \
       -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake \
-      -DVCPKG_TARGET_TRIPLET=x64-linux
-
-
-# 7. Build (No 'cd' needed)
-RUN cmake --build build && find build -name "*.o" -type f -delete \
+      -DVCPKG_TARGET_TRIPLET=x64-linux \
+    && cmake --build build \
+    # Cleanup immediately to prevent artifacts from being committed to the layer
+    && find build -name "*.o" -type f -delete \
     && rm -rf $VCPKG_ROOT/buildtrees \
     && rm -rf $VCPKG_ROOT/downloads \
     && rm -rf build/*/
