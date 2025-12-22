@@ -25,6 +25,7 @@ WORKDIR /app/machinepal
 ADD https://www.google.com /tmp/bust-cache
 RUN git pull && git submodule update --recursive
 
+
 # 4. Setup VCPKG
 ENV VCPKG_ROOT=/app/machinepal/external/vcpkg \
     VCPKG_DISABLE_METRICS=1 \
