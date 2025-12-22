@@ -23,7 +23,9 @@ WORKDIR /app/machinepal
 
 # 4. Setup VCPKG
 ENV VCPKG_ROOT=/app/machinepal/external/vcpkg \
-    VCPKG_DISABLE_METRICS=1
+    VCPKG_DISABLE_METRICS=1 \
+    VCPKG_FORCE_SYSTEM_BINARIES=1
+    # ^ FORCE_SYSTEM_BINARIES prevents vcpkg from downloading its own cmake/ninja tools, saving time.
 
 RUN $VCPKG_ROOT/bootstrap-vcpkg.sh
 
