@@ -1,7 +1,7 @@
 # ==========================================
 # STAGE 1: Builder
 # ==========================================
-FROM ubuntu:22.04 AS  machinepal_deps
+FROM ubuntu:22.04
 
 # Copy both the package list and the script to /tmp
 COPY packages.txt install_packages.sh /tmp/
