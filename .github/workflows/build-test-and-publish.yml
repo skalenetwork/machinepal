@@ -50,7 +50,7 @@ jobs:
             VCPKG_DISABLE_METRICS: 1
             VCPKG_FORCE_SYSTEM_BINARIES: 1
         run: |
-          cd docker && ./vcpkg_packages_install.sh
+          docker/vcpkg_packages_install.sh
 
       - name: Configure (CMake)
         run: |
