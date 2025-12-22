@@ -57,7 +57,7 @@ jobs:
         run: |
           cmake -S . -B build \
             -G Ninja \
-            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
             -DCMAKE_TOOLCHAIN_FILE=external/vcpkg/scripts/buildsystems/vcpkg.cmake \
             -DVCPKG_FEATURE_FLAGS=manifests
 
