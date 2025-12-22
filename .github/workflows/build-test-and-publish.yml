@@ -24,12 +24,11 @@ jobs:
 
       - name: Install build packages
         run: |
-          RUN chmod +x docker/install_packages.sh && docker/install_packages.sh          
+          chmod +x docker/install_packages.sh && docker/install_packages.sh          
 
       - name: Bootstrap vcpkg
         run: |
-          ./external/vcpkg/bootstrap-vcpkg.sh
-          echo "$PWD/external/vcpkg" >> "$GITHUB_PATH"
+          ./external/vcpkg/bootstrap-vcpkg.sh        
 
       # Restore vcpkg cache (keyed to manifests so it updates when deps change)
       - name: Restore vcpkg cache
