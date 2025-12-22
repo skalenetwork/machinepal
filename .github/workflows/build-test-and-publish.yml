@@ -61,7 +61,7 @@ jobs:
             -DVCPKG_FEATURE_FLAGS=manifests
 
       - name: Build
-        run: cmake --build build --config Debug -j 2
+        run: cmake --build build -j 2
 
       - name: Run tests
         run: build/mptest
