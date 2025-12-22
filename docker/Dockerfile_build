@@ -27,10 +27,7 @@ RUN git pull && git submodule update --recursive
 
 
 # 4. Setup VCPKG
-ENV VCPKG_ROOT=/app/machinepal/external/vcpkg \
-    VCPKG_DISABLE_METRICS=1 \
-    VCPKG_FORCE_SYSTEM_BINARIES=1
-    # ^ FORCE_SYSTEM_BINARIES prevents vcpkg from downloading its own cmake/ninja tools, saving time.
+ENV VCPKG_ROOT=/app/machinepal/external/vcpkg
 
 # Configure, Build, and Cleanup in a single layer
 RUN cd docker && ./vcpkg_packages_install.sh \

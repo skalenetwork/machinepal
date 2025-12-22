@@ -1,6 +1,9 @@
 #!/bin/sh
 set -e # Exit immediately if any command fails
 
+export VCPKG_DISABLE_METRICS=1
+export VCPKG_FORCE_SYSTEM_BINARIES=1
+
 # Ensure VCPKG_ROOT is set
 if [ -z "$VCPKG_ROOT" ]; then
     echo "Error: VCPKG_ROOT environment variable is not set."
