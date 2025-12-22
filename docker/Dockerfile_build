@@ -41,13 +41,6 @@ RUN cmake -S . -B build \
       -DVCPKG_TARGET_TRIPLET=x64-linux
 
 
-# 6. Configure (No 'cd' needed)
-RUN cmake -S . -B build \
-      -G Ninja \
-      -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-      -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake \
-      -DVCPKG_TARGET_TRIPLET=x64-linux
-
 # 7. Build (No 'cd' needed)
 RUN cmake --build build
 
