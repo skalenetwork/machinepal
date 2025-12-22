@@ -18,7 +18,7 @@ apt-get update
 
 # 4. Install the package list
 # We use xargs to parse the text file and pass it to apt-get install
-xargs -a /tmp/packages.txt apt-get install -y --no-install-recommends
+xargs -a ./packages.txt apt-get install -y --no-install-recommends
 
 # 5. Cleanup to keep layer size down
 rm -rf /var/lib/apt/lists/*

@@ -8,7 +8,7 @@ COPY packages.txt install_packages.sh /tmp/
 
 # Make the script executable and run it
 # We use bash explicitly to run it, ensuring compatibility
-RUN chmod +x /tmp/install_packages.sh && /tmp/install_packages.sh
+RUN cd /tmp && ./install_packages.sh
 
 # Prevent interactive prompts during build
 ENV DEBIAN_FRONTEND=noninteractive
