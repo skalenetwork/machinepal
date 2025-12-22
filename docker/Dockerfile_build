@@ -16,8 +16,8 @@ RUN cd /tmp && ./install_packages.sh
 
 
 WORKDIR /app
-
 RUN git clone https://github.com/skalenetwork/machinepal --recursive --depth 1 --shallow-submodules
+WORKDIR /app/machinepal
 
 # 4. Setup VCPKG
 ENV VCPKG_ROOT=/app/machinepal/external/vcpkg
