@@ -29,7 +29,7 @@ jobs:
 
       - name: Bootstrap vcpkg
         run: |
-          ./external/vcpkg/bootstrap-vcpkg.sh        
+          external/vcpkg/bootstrap-vcpkg.sh        
 
       # Restore vcpkg cache (keyed to manifests so it updates when deps change)
       - name: Restore vcpkg cache
@@ -47,7 +47,7 @@ jobs:
       - name: Install vcpkg packages
         env:
           env:
-            VCPKG_ROOT: ${{ github.workspace }}/external/vcpkg
+            VCPKG_ROOT: external/vcpkg
             VCPKG_DISABLE_METRICS: 1
             VCPKG_FORCE_SYSTEM_BINARIES: 1
         run: |
