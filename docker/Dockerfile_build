@@ -27,7 +27,7 @@ ENV VCPKG_ROOT=/app/machinepal/external/vcpkg \
     VCPKG_FORCE_SYSTEM_BINARIES=1
     # ^ FORCE_SYSTEM_BINARIES prevents vcpkg from downloading its own cmake/ninja tools, saving time.
 
-RUN cd docker && vcpkg_packages_install.sh
+RUN cd docker && ./vcpkg_packages_install.sh
 
 # 6. Configure
 # Your project is RelWithDebInfo, which links to the Release deps built above.
