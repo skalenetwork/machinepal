@@ -25,7 +25,7 @@ jobs:
 
       - name: Install build packages
         run: |
-          cp docker/packages.txt /tmp && sudo docker/install_packages.sh  
+          cd docker && sudo ./install_packages.sh
 
       - name: Bootstrap vcpkg
         run: |
