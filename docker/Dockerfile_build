@@ -13,6 +13,8 @@ RUN apt-get update && \
         bison \
         flex \
         ca-certificates \
+        gpg \
+        wget \
         curl \
         git \
         pkg-config \
@@ -21,7 +23,6 @@ RUN apt-get update && \
         tar \
         build-essential \
         ninja-build \
-        cmake \
         python3 \
         linux-libc-dev \
         autoconf \
@@ -32,6 +33,12 @@ RUN apt-get update && \
         libstdc++6 \
         runit \
     && rm -rf /var/lib/apt/lists/*
+
+
+RUN  wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | tee /usr/share/keyrings/kitware-archive-keyring.gpg >/dev/null \
+    && echo 'deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ jammy main' | tee /etc/apt/sources.list.d/kitware.list >/dev/null \
+    && apt-get update \
+    && apt-get install -y cmake ccache
 
 WORKDIR /app
 
