@@ -86,42 +86,6 @@ jobs:
             build/machinepal
             build/mptest
 
-      - name: Set up Docker Buildx
-        if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to GitHub Container Registry
-        if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract Docker metadata (tags, labels)
-        if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository_owner }}/machinepal
-          tags: |
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/develop' }}
-            type=raw,value=1.0
-            type=sha
-            type=ref,event=branch
-          labels: |
-            org.opencontainers.image.version=1.0
-            org.opencontainers.image.revision=${{ github.sha }}
-
-      - name: Build and push Docker image (machinepal)
-        if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-
       - name: Build Debian package
         run: |
           mkdir -p build/deb
