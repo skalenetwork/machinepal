@@ -23,6 +23,7 @@ RUN apt-get update && \
         python3 \
         linux-libc-dev \
         autoconf \
+
         libtool \
         automake \
         autoconf-archive \
@@ -33,49 +34,33 @@ RUN apt-get update && \
 
 WORKDIR /app
 
-
 RUN git clone https://github.com/skalenetwork/machinepal --recursive
 
+# --- SIMPLIFICATION HERE ---
+# Setting WORKDIR here means all future commands happen inside this folder
+WORKDIR /app/machinepal
+
+# 4. Setup VCPKG
 ENV VCPKG_ROOT=/app/machinepal/external/vcpkg \
     VCPKG_DISABLE_METRICS=1
 
-
 RUN $VCPKG_ROOT/bootstrap-vcpkg.sh
 
-# --- FIX: Install Build Tools (CMake & Ninja) ---
-# If your deps image doesn't include these, you must install them here.
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    build-essential \
-    ninja-build \
-    && rm -rf /var/lib/apt/lists/*
+# 5. Install Dependencies (No 'cd' needed)
+RUN $VCPKG_ROOT/vcpkg install --triplet x64-linux
 
-
-RUN apt-get update && apt-get install -y ca-certificates gpg wget \
-    && wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | tee /usr/share/keyrings/kitware-archive-keyring.gpg >/dev/null \
-    && echo 'deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ jammy main' | tee /etc/apt/sources.list.d/kitware.list >/dev/null \
-    && apt-get update \
-    && apt-get install -y cmake ccache
-
-# Verify version
-RUN cmake --version
-
-# vcpkg.json (manifest) is in /app/machinepal
-RUN cd /app/machinepal && $VCPKG_ROOT/vcpkg install --triplet x64-linux
-
-
-# 3. Configure (CMake)`
-# Now 'cmake' will be found in /usr/bin/cmake
-RUN cd /app/machinepal && cmake -S . -B build \
+# 6. Configure (No 'cd' needed)
+RUN cmake -S . -B build \
       -G Ninja \
       -DCMAKE_BUILD_TYPE=Debug \
       -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake \
       -DVCPKG_TARGET_TRIPLET=x64-linux
 
-# 4. Build
-RUN cd /app/machinepal && cmake --build build
+# 7. Build (No 'cd' needed)
+RUN cmake --build build
 
-# 5. Clean up unnecessary files to reduce image size
+# 8. Clean up (No 'cd' needed - FIXED YOUR ERROR)
+# Since we are in /app/machinepal, 'find build' now correctly sees the build folder
 RUN find build -name "*.o" -type f -delete \
     && rm -rf $VCPKG_ROOT/buildtrees \
     && rm -rf $VCPKG_ROOT/downloads
