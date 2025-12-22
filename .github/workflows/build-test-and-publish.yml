@@ -46,7 +46,6 @@ jobs:
 
       - name: Install vcpkg packages
         env:
-          env:
             VCPKG_ROOT: external/vcpkg
             VCPKG_DISABLE_METRICS: 1
             VCPKG_FORCE_SYSTEM_BINARIES: 1
