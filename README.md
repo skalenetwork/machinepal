@@ -43,7 +43,7 @@ docker run --rm \
 
 ```
 
-> **💰 The Money Hook:** Look at the `config.json` file created in this folder. This is where you will eventually paste **your wallet address** to receive real payments!
+> **💰 The Money Hook:** Look at the `machinepay.yml` file created in this folder. This is the config file where you will eventually paste **your wallet address** to receive real payments!
 
 ### Step 2: Start the Server (The Shop)
 
