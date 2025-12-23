@@ -103,5 +103,8 @@ fi
 
 log "Starting MachinePal application..."
 
-
-exec gosu machinepal $BINARY_PATH "$@"
+if [ $# -eq 0 ]; then
+    exec gosu machinepal $BINARY_PATH
+else
+    exec gosu machinepal $BINARY_PATH "$@"
+fi
