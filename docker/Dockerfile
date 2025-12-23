@@ -31,10 +31,6 @@ RUN mkdir -p /var/lib/machinepal /var/log/machinepal \
     && chown -R machinepal:machinepal /var/lib/machinepal /var/log/machinepal \
     && chmod 0755 /var/lib/machinepal /var/log/machinepal
 
-COPY --from=builder /app/machinepal/build/machinepal /usr/local/bin/machinepal
-COPY --from=builder --chmod=755 /app/machinepal/docker/run /etc/service/machinepal/run
-COPY --from=builder --chmod=755 /app/machinepal/docker/finish /etc/service/machinepal/finish
-COPY --from=builder --chmod=755 /app/machinepal/docker/first_run.sh /usr/local/bin/first_run.sh
 COPY --from=builder --chmod=755 /app/machinepal/docker/entrypoint.sh /entrypoint.sh
 
 # Ensure entrypoint is present and executable in the final image

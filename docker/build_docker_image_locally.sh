@@ -3,7 +3,7 @@
 set -e
 
 # Variable for easy name changes
-IMAGE_NAME="machinepal_build_image"
+IMAGE_NAME="machinepal_image"
 
 echo "Rebuilding $IMAGE_NAME..."
 
@@ -11,4 +11,4 @@ echo "Rebuilding $IMAGE_NAME..."
 docker rmi -f "$IMAGE_NAME" 2>/dev/null || true
 
 # Build the image
-docker build -t "$IMAGE_NAME" -f Dockerfile_build .
+docker build -t "$IMAGE_NAME" -f Dockerfile .``

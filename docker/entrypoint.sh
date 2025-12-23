@@ -1,83 +1,69 @@
 #!/bin/bash
 set -e
 
-# Always print earliest possible diagnostics (stderr)
+# CONSTANTS
+BINARY_PATH="/usr/local/bin/machinepal"
+DATA_DIR="/machinepal"
+
+# ----------------------------------------------------------------------
+# 0. DIAGNOSTICS & LOGGING
+# ----------------------------------------------------------------------
+
+# Helper function for consistent logging with timestamps
+log() {
+    printf '[%s] [ENTRYPOINT] %s\n' "$(date +'%Y-%m-%d %H:%M:%S')" "$*" >&2
+}
+
+# Always print earliest possible diagnostics to stderr for debugging boot issues
 printf '[ENTRYPOINT] argv: %s | pwd=%s | uid=%s gid=%s | whoami=%s\n' \
   "$*" "$(pwd)" "$(id -u)" "$(id -g)" "$(whoami)" >&2
 
-# Enable debug tracing when requested
+# Enable debug tracing if requested via env var
 if [ "${ENTRYPOINT_DEBUG:-0}" = "1" ]; then
   set -x
 fi
 
-# Unmissable startup line (stderr)
-echo "[ENTRYPOINT] entrypoint.sh is running (pid=$$ user=$(id -u):$(id -g) whoami=$(whoami))" >&2
+# ----------------------------------------------------------------------
+# 1. RESCUE MODE / SHELL OVERRIDE
+# ----------------------------------------------------------------------
+# If the user asks for a shell explicitly, bypass the app logic.
+if [ "$1" = "/bin/bash" ] || [ "$1" = "/bin/sh" ]; then
+    log "Shell requested, executing command directly..."
+    exec "$@"
+fi
 
-# Helper function for consistent logging with timestamps
-log() {
-    # stderr is typically unbuffered in container logging paths
-    printf '[%s] [ENTRYPOINT] %s\n' "$(date +'%Y-%m-%d %H:%M:%S')" "$*" >&2
-}
+# ----------------------------------------------------------------------
+# 2. SANITY CHECKS
+# ----------------------------------------------------------------------
 
-# Run a command with line-buffered stdout/stderr when possible (coreutils: stdbuf)
-run() {
-    if command -v stdbuf >/dev/null 2>&1; then
-        exec stdbuf -oL -eL "$@"
-    else
-        exec "$@"
-    fi
-}
+# Check if the binary exists
+if [ ! -f "$BINARY_PATH" ]; then
+    log "CRITICAL ERROR: Binary not found at $BINARY_PATH"
+    exit 1
+fi
 
-MODE="$1"
-BINARY_PATH="/usr/local/bin/machinepal"
+# Check if data directory exists (volume mount check)
+if [ ! -d "$DATA_DIR" ]; then
+    log "ERROR: $DATA_DIR directory missing."
+    log "Did you forget to mount the volume? (-v \"\$(pwd):/machinepal\")"
+    # We sleep briefly to prevent a restart-loop storm if managed by systemd/docker restart policy
+    sleep 5
+    exit 1
+fi
 
-# Print basic info
-log "Starting entrypoint script..."
+# ----------------------------------------------------------------------
+# 3. EXECUTION
+# ----------------------------------------------------------------------
+
+log "Starting MachinePal..."
 log "Running as user: $(whoami)"
+log "Command: $BINARY_PATH $*"
 
-case "$MODE" in
-    client)
-        shift
-        log "Mode selected: CLIENT"
-
-        # Validation: Ensure the binary exists before trying to run it
-        if [ ! -f "$BINARY_PATH" ]; then
-            log "ERROR: Binary not found at $BINARY_PATH"
-            exit 1
-        fi
-
-        log "Executing: $BINARY_PATH $*"
-        run "$BINARY_PATH" "$@"
-        ;;
-
-    init)
-        shift
-        log "Mode selected: INIT"
-
-        # Validation
-        if [ ! -f "$BINARY_PATH" ]; then
-            log "ERROR: Binary not found at $BINARY_PATH"
-            exit 1
-        fi
-
-        log "Executing: $BINARY_PATH $*"
-        run "$BINARY_PATH" "$@"
-        ;;
-
-    *)
-        log "Mode selected: SERVICE MANAGER (Default)"
-
-        # Check if runsvdir exists (Ubuntu path)
-        if [ -x /usr/bin/runsvdir ]; then
-             SVDIR_PATH="/usr/bin/runsvdir"
-        elif [ -x /usr/sbin/runsvdir ]; then
-             SVDIR_PATH="/usr/sbin/runsvdir"
-        else
-            log "ERROR: runsvdir not found! Is 'runit' installed?"
-            exit 1
-        fi
-
-        log "Starting runit service supervisor..."
-        run "$SVDIR_PATH" -P /etc/service
-        ;;
-esac
+# Use stdbuf if available to force line buffering (better docker logs)
+if command -v stdbuf >/dev/null 2>&1; then
+    # -oL = stdout line buffered, -eL = stderr line buffered
+    exec stdbuf -oL -eL "$BINARY_PATH" "$@"
+else
+    # Fallback if coreutils is missing
+    exec "$BINARY_PATH" "$@"
+fi
