@@ -15,4 +15,5 @@ docker build -t "$IMAGE_NAME" -f Dockerfile .``
 
 # test image
 
-docker run --rm -it machinepal_image /bin/bash -c "echo 'MachinePal Docker image built successfully!'"
+docker run --rm -it -v $(pwd):/machinepal machinepal_image /bin/bash -c "echo 'MachinePal Docker image built successfully!'"
+docker run --rm -it -v $(pwd):/machinepal  machinepal_image init

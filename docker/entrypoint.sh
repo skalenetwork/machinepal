@@ -5,6 +5,15 @@ set -e
 BINARY_PATH="/usr/local/bin/machinepal"
 DATA_DIR="/machinepal"
 
+
+DATA_DIR="/machinepal"
+
+mountpoint -q "$DATA_DIR" || {
+    echo "Error: $DATA_DIR directory of machinepal docker container  must be docker mapped to an external volume that contains machinepal config." >&2
+    echo "This can be done using e.g. -v \$(pwd):$DATA_DIR" >&2
+    exit 1
+}
+
 # ----------------------------------------------------------------------
 # 0. DIAGNOSTICS & LOGGING
 # ----------------------------------------------------------------------

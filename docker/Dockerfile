@@ -23,7 +23,7 @@ RUN chown machinepal:machinepal /machinepal
 
 COPY --from=builder /app/machinepal/build/machinepal /usr/local/bin/machinepal
 COPY --from=builder /app/machinepal/build/mptest /usr/local/bin/mptest
-COPY --from=builder --chmod=755 /app/machinepal/docker/entrypoint.sh /entrypoint.sh
+COPY --chmod=755  ./entrypoint.sh /entrypoint.sh
 
 
 # Ensure entrypoint is present and executable in the final image
