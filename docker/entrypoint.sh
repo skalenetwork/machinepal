@@ -1,111 +1,107 @@
 #!/bin/bash
 set -e
 
-# CONSTANTS
+# ----------------------------------------------------------------------
+# CONSTANTS & SETUP
+# ----------------------------------------------------------------------
 BINARY_PATH="/usr/local/bin/machinepal"
 DATA_DIR="/machinepal"
 
-DATA_DIR="/machinepal"
-
-
-if [ -z "${PUID}" ]; then
-    echo "Error: PUID environment variable is not set." >&2
-    echo "Please run with: -e PUID=\$(id -u)" >&2
-    exit 1
-fi
-
-# Check if PGID is missing or empty
-if [ -z "${PGID}" ]; then
-    echo "Error: PGID environment variable is not set." >&2
-    echo "Please run with: -e PGID=\$(id -g)" >&2
-    exit 1
-fi
-
-
-# Default to 1000 if no PUID is passed
-USER_ID=${PUID}
-GROUP_ID=${PGID}
-
-echo "Starting with UID : $USER_ID"
-
-# Create a group and user with the specific IDs
-# (usermod/groupmod logic can be added here if the user already exists)
-addgroup --gid "$GROUP_ID" machinepal
-adduser --disabled-password --gecos "" --force-badname --ingroup machinepal --uid "$USER_ID" machinepal
-
-# Change ownership of working directory to ensure the new user can write
-chown -R machinepal:machinepal /machinepal
-
-# Execute the command as the new user using gosu (better than su)
-exec gosu machinepal "$@"
-
-mountpoint -q "$DATA_DIR" || {
-    echo "Error: $DATA_DIR directory of machinepal docker container  must be docker mapped to an external volume that contains machinepal config." >&2
-    echo "This can be done using e.g. -v \$(pwd):$DATA_DIR" >&2
-    exit 1
-}
-
-# ----------------------------------------------------------------------
-# 0. DIAGNOSTICS & LOGGING
-# ----------------------------------------------------------------------
-
-# Helper function for consistent logging with timestamps
+# Helper function for consistent logging
 log() {
     printf '[%s] [ENTRYPOINT] %s\n' "$(date +'%Y-%m-%d %H:%M:%S')" "$*" >&2
 }
 
+log "Starting MachinePal container initialization..."
 
+# ----------------------------------------------------------------------
+# 1. ENVIRONMENT CHECKS (UID/GID)
+# ----------------------------------------------------------------------
 
-# Always print earliest possible diagnostics to stderr for debugging boot issues
+if [ -z "${PUID}" ]; then
+    log "Error: PUID environment variable is not set."
+    log "Please run with: -e PUID=\$(id -u)"
+    exit 1
+fi
+
+if [ -z "${PGID}" ]; then
+    log "Error: PGID environment variable is not set."
+    log "Please run with: -e PGID=\$(id -g)"
+    exit 1
+fi
+
+USER_ID=${PUID}
+GROUP_ID=${PGID}
+
+# ----------------------------------------------------------------------
+# 2. USER & GROUP CREATION (Robust)
+# ----------------------------------------------------------------------
+
+# Create group if it doesn't exist
+if ! getent group machinepal >/dev/null; then
+    # Check if the GID is already taken by another group
+    if getent group "$GROUP_ID" >/dev/null; then
+        log "Warning: GID $GROUP_ID is already in use. Using existing group."
+        GROUP_NAME=$(getent group "$GROUP_ID" | cut -d: -f1)
+    else
+        groupadd --gid "$GROUP_ID" machinepal
+        GROUP_NAME="machinepal"
+    fi
+else
+    GROUP_NAME="machinepal"
+fi
+
+# Create user if it doesn't exist
+if ! id -u machinepal >/dev/null 2>&1; then
+    # Check if UID is taken
+    if getent passwd "$USER_ID" >/dev/null; then
+        log "Error: UID $USER_ID is already taken by another user inside the container."
+        exit 1
+    fi
+    adduser --disabled-password --gecos "" --force-badname --gid "$GROUP_ID" --uid "$USER_ID" machinepal
+fi
+
+log "User setup complete. Running as UID:$USER_ID / GID:$GROUP_ID"
+
+# Fix permissions
+chown -R "$USER_ID":"$GROUP_ID" "$DATA_DIR"
+
+# ----------------------------------------------------------------------
+# 3. MOUNTPOINT CHECK
+# ----------------------------------------------------------------------
+
+log "Checking if $DATA_DIR is a mountpoint..."
+mountpoint -q "$DATA_DIR" || {
+    log "Error: $DATA_DIR is NOT a mountpoint."
+    log "You must map an external volume. Example: -v \$(pwd):$DATA_DIR"
+    exit 1
+}
+log "Mountpoint verified."
+
+# ----------------------------------------------------------------------
+# 4. RESCUE MODE / DEBUGGING
+# ----------------------------------------------------------------------
+
+# Print diagnostics
 printf '[ENTRYPOINT] argv: %s | pwd=%s | uid=%s gid=%s | whoami=%s\n' \
   "$*" "$(pwd)" "$(id -u)" "$(id -g)" "$(whoami)" >&2
 
-# Enable debug tracing if requested via env var
-if [ "${ENTRYPOINT_DEBUG:-0}" = "1" ]; then
-  set -x
-fi
-
-# ----------------------------------------------------------------------
-# 1. RESCUE MODE / SHELL OVERRIDE
-# ----------------------------------------------------------------------
-# If the user asks for a shell explicitly, bypass the app logic.
+# Shell override
 if [ "$1" = "/bin/bash" ] || [ "$1" = "/bin/sh" ]; then
     log "Shell requested, executing command directly..."
     exec "$@"
 fi
 
 # ----------------------------------------------------------------------
-# 2. SANITY CHECKS
+# 5. EXECUTION WITH STDBUF
 # ----------------------------------------------------------------------
 
-# Check if the binary exists
 if [ ! -f "$BINARY_PATH" ]; then
     log "CRITICAL ERROR: Binary not found at $BINARY_PATH"
     exit 1
 fi
 
-# Check if data directory exists (volume mount check)
-if [ ! -d "$DATA_DIR" ]; then
-    log "ERROR: $DATA_DIR directory missing."
-    log "Did you forget to mount the volume? (-v \"\$(pwd):/machinepal\")"
-    # We sleep briefly to prevent a restart-loop storm if managed by systemd/docker restart policy
-    sleep 5
-    exit 1
-fi
+log "Starting MachinePal application..."
 
-# ----------------------------------------------------------------------
-# 3. EXECUTION
-# ----------------------------------------------------------------------
 
-log "Starting MachinePal..."
-log "Running as user: $(whoami)"
-log "Command: $BINARY_PATH $*"
-
-# Use stdbuf if available to force line buffering (better docker logs)
-if command -v stdbuf >/dev/null 2>&1; then
-    # -oL = stdout line buffered, -eL = stderr line buffered
-    exec stdbuf -oL -eL "$BINARY_PATH" "$@"
-else
-    # Fallback if coreutils is missing
-    exec "$BINARY_PATH" "$@"
-fi
+exec gosu machinepal $BINARY_PATH "$@"

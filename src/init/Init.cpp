@@ -105,6 +105,7 @@ void Init::initLogLevelFromConfig(ptr<ConfigManager> manager) {
     }
 
     spdlog::set_level(spdlogLevel);
+    spdlog::flush_on(spdlog::level::info);
 }
 
 bool Init::fetchInternetTime(
