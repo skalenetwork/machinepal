@@ -49,3 +49,8 @@ jobs:
           # 2. Use the outputs from the meta step
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Test Docker image
+        run: |
+          mkdir machinepal && docker run -it --rm -v ./machinepal:/machinepal -e PUID=$(id -u) -e PGID=$(id -g) ghcr.io/skalenetwork/machinepal:latest init
+
