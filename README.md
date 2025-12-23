@@ -1,68 +1,53 @@
 <div align="center">
   <img src="machinepal.png" alt="MachinePal" width="30%">
+  
+  # 🚀 MachinePal
+  ### The Payment Agent for the AI Web
+  
+  **Instantly monetize APIs, Static Sites, and AI Agents.** *MachinePal is a drop-in proxy that adds crypto payments to any web resource.*
+
+[![Love this project?](https://img.shields.io/badge/%E2%9D%A4%EF%B8%8F%20Love%20this%20project%3F%20Give%20it%20a%20heart!-ff69b4?style=flat-square)](https://github.com/skalenetwork/machinepal/stargazers)
+[![License](https://img.shields.io/github/license/skalenetwork/machinepal)](https://github.com/skalenetwork/machinepal/blob/main/LICENSE)
+[![Build Status](https://github.com/skalenetwork/machinepal/actions/workflows/build-test-and-publish.yml/badge.svg)](https://github.com/skalenetwork/machinepal/actions/workflows/build_test_and_publish.yml)
 </div>
 
+---
 
+## ⚡ What is MachinePal?
 
+MachinePal is a **"Toll Booth" for the internet**. It sits in front of your API, website, or AI Agent and demands payment before allowing access.
 
-# 🚀 MachinePal: The  x402 Payment Agent for the Web
+It implements the [x402 protocol](https://docs.cdp.coinbase.com/x402/docs/welcome) (standardized by Coinbase) to handle negotiation, payment verification, and access granting automatically.
 
-Instantly add **crypto payments** to any website or API using this AI Payment Agent that implements [x402 protocol](https://docs.cdp.coinbase.com/x402/docs/welcome). Sell anything: APIs, resources and products.
-
-[![Love this project? Give it a heart!](https://img.shields.io/badge/%E2%9D%A4%EF%B8%8F%20Love%20this%20project%3F%20Give%20it%20a%20heart!-ff69b4?style=flat-square)](https://github.com/skalenetwork/machinepal/stargazers)
-[![GitHub stars](https://img.shields.io/github/stars/skalenetwork/machinepal?style=social)](https://github.com/skalenetwork/machinepal/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/skalenetwork/machinepal?style=social)](https://github.com/skalenetwork/machinepal/network/members)
-[![Contribute](https://img.shields.io/badge/Become%20a%20Contributor-28a745?logo=github)](https://github.com/skalenetwork/machinepal/blob/main/CONTRIBUTING.md)
-[![Open an Issue](https://img.shields.io/badge/Open%20an%20Issue-ff9800?logo=github)](https://github.com/skalenetwork/machinepal/issues/new/choose)
-[![GitHub issues](https://img.shields.io/github/issues/skalenetwork/machinepal)](https://github.com/skalenetwork/machinepal/issues)
-[![GitHub license](https://img.shields.io/github/license/skalenetwork/machinepal)](https://github.com/skalenetwork/machinepal/blob/main/LICENSE)
-[![Build and test machinepal](https://github.com/skalenetwork/machinepal/actions/workflows/build-test-and-publish.yml/badge.svg)](https://github.com/skalenetwork/machinepal/actions/workflows/build_test_and_publish.yml)
-[![Runs on Ubuntu 22.04+](https://img.shields.io/badge/Ubuntu-22.04%2B-orange?logo=ubuntu)](https://ubuntu.com/)
-[![Runs on macOS 11+](https://img.shields.io/badge/macOS-11%2B-blue?logo=apple)](https://www.apple.com/macos/)
-[![Runs on Windows 10+](https://img.shields.io/badge/Windows-10%2B-blue?logo=windows)](https://www.microsoft.com/windows/)
+* **For Developers:** Sell API access without setting up Stripe or user accounts.
+* **For AI Agents:** Allow your agents to buy and sell data autonomously.
+* **For Hosting:** Turn a static file server into a paid resource.
 
 ---
 
-## ✨ Why use MachinePal? 
+## 🏁 Quick Start: Run in 60 Seconds
 
-- ⚡ **Plug & play** — add x402 payments to existing websites & APIs in minutes
-- 🔒 **Fully x402 compliant** — built on the Coinbase standard
-- 🛠️ **Easy to deploy & configure** — no complex setup
-- 🚀 **Ultra-high performance asynchronous HTTP server** — scales to 1M+ concurrent connections
-- 🌉 **Multi-chain support** — works with both **Base** and **SKALE**
-- 💸 **Flexible payment models** — subscriptions, pay-per-request, metered access
-- 📊 **Deep logging & monitoring** — full visibility of payment traffic
-- 💯 **Open source & free** — community-driven
+Follow these steps to set up a **Server** (The Seller) and a **Client** (The Buyer) on your local machine.
 
----
-
-## 🏗️ How it Works (The Toll Booth Analogy)
-
-Think of **MachinePal** as a **toll booth for the internet**.  
-Instead of reaching a website directly, requests first pass through the proxy:
-
-1. **🔗 You send a request** → try to access a resource
-2. **🚦 MachinePal proxy intercepts** → checks if payment is included
-3. **💳 Payment verified** → confirmed via the x402 protocol
-4. **📡 MachinePal proxy forwards request** → to the real website
-5. **🖥️ Website responds** → returns content
-6. **📬 MachinePal proxy delivers to you** → completing the paid access loop
-
-✅ Result: Websites instantly monetize access while staying secure and compliant.
-
----
-
-## Run MachinePal in 60 seconds
-
-1. Create a project folder and initialize the Hello world configuration:
+### Step 1: Initialize Project Workspace
+Create a directory for your data and generate the default configuration.
 
 ```bash
-mkdir machinepal_project && docker run --rm -v "$(pwd):/machinepal_project:/machinepal" -e PUID=$(id -u) -e PGID=$(id -g) ghcr.io/skalenetwork/machinepal init
+mkdir machinepal_project && cd machinepal_project
+
+# Initialize config files
+docker run --rm \
+  -v "$(pwd):/machinepal" \
+  -e PUID=$(id -u) -e PGID=$(id -g) \
+  ghcr.io/skalenetwork/machinepal init
+
 ```
 
-This initializes the default project structure.
+> **💰 The Money Hook:** Look at the `config.json` file created in this folder. This is where you will eventually paste **your wallet address** to receive real payments!
 
-2. Start the MachinePal server:`
+### Step 2: Start the Server (The Shop)
+
+This starts the MachinePal proxy. It is now protecting the `hello_world.txt` resource.
 
 ```bash
 docker run -d \
@@ -72,105 +57,87 @@ docker run -d \
   -e PUID=$(id -u) -e PGID=$(id -g) \
   -v "$(pwd):/machinepal" \
   ghcr.io/skalenetwork/machinepal
+
 ```
 
-3. Run your first x402 Hello World transaction:
+*Note: We use `--network host` for best performance and ease of access on Linux. On macOS/Windows, ensure Docker Desktop allows host networking or map ports manually.*
+
+### Step 3: Run the Client (The Customer)
+
+Now, pretend to be a customer. This command runs a client that attempts to fetch the file, realizes it requires payment, pays it (using a test wallet), and displays the content.
 
 ```bash
-docker run --rm --network host -v "$(pwd):/machinepal" ghcr.io/skalenetwork/machinepal client http://localhost:8080/hello_world.txt
+docker run --rm --network host \
+  -v "$(pwd):/machinepal" \
+  ghcr.io/skalenetwork/machinepal client http://localhost:8080/hello_world.txt
+
 ```
 
+### 🎉 What just happened?
 
+1. **Request:** The Client asked for `hello_world.txt`.
+2. **Rejection:** MachinePal blocked it and replied: `402 Payment Required`.
+3. **Payment:** The Client automatically paid the required amount (on Testnet).
+4. **Success:** MachinePal verified the transaction on-chain and delivered the file.
 
-## MachinePal Architecture diagram
+---
 
+## 🏗️ Architecture & Features
+
+MachinePal is designed for high-concurrency and low-latency environments.
+
+| Feature | Description |
+| --- | --- |
+| **⚡ Plug & Play** | Wraps existing APIs/Sites. No code changes required on your backend. |
+| **🌉 Multi-Chain** | Native support for **Base** and **SKALE** networks. |
+| **🚀 High Performance** | Asynchronous HTTP server scaling to 1M+ concurrent connections. |
+| **💸 Flexible Models** | Support for subscriptions, pay-per-request, and metered access. |
+| **📊 Deep Logging** | Full visibility into payment traffic and revenue. |
+
+### System Flow Diagram
 
 ```mermaid
 flowchart LR
-subgraph External_World["External Users & AI Agents"]
-U1["Consumers"]
-A1["AI Agents"]
+subgraph External_World["External World"]
+    U1["User / AI Agent"]
 end
 
-    %% Corporate Network 1
-    subgraph Corporate_Network["Corporate Network 1"]
-        direction TB
-        MP["MachinePal x402 payment gateway"]
-        AI1["AI Services"]
-        AI2["Products"]
-        AI3["Data"]
-        HU1["Employees"]
-        HA1["AI Agents"]
-    end
+subgraph Your_Infrastructure["Your Infrastructure"]
+    MP["MachinePal Gateway\n(The Toll Booth)"]
+    API["Your API / Service"]
+    DB["Your Data / Files"]
+end
 
-    %% Corporate Network 2
-    subgraph Corporate_Network_2["Corporate Network 2"]
-        direction TB
-        MP2["MachinePal x402 payment gateway"]
-        AI1B["AI Services"]
-        AI2B["Products"]
-        AI3B["Data"]
-        HU2["Employees"]
-        HA2["AI Agents"]
-    end
+%% Flow
+U1 -- "1. Request Resource" --> MP
+MP -- "2. Demand Payment (402)" --> U1
+U1 -- "3. Submit Payment Proof" --> MP
+MP -- "4. Verify & Forward" --> API
+MP -- "4. Verify & Forward" --> DB
+API -- "5. Return Data" --> MP
+MP -- "6. Deliver to User" --> U1
 
-    %% External access to Network 1
-    U1 -->|Requests / Payments via x402| MP
-    A1 -->|Autonomous Access via x402| MP
+%% Styling
+classDef gateway fill:#ff9800,stroke:#e65100,color:#000000,font-weight:600;
+classDef users fill:#4caf50,stroke:#1b5e20,color:#ffffff,font-weight:600;
+classDef services fill:#1976d2,stroke:#0d47a1,color:#ffffff,font-weight:600;
 
-    %% Authorized access (Network 1)
-    MP -->|Authorized Access| AI1
-    MP -->|Authorized Access| AI2
-    MP -->|Authorized Access| AI3
+MP:::gateway
+U1:::users
+API:::services
+DB:::services
 
-    %% Internal users (Network 1)
-    HU1 -->|Internal Requests / Payments via x402| MP
-    HA1 -->|Internal Autonomous Access via x402| MP
-
-    %% Internal users (Network 2)
-    HU2 -->|Internal Requests / Payments via x402| MP2
-    HA2 -->|Internal Autonomous Access via x402| MP2
-
-    %% Authorized access (Network 2)
-    MP2 -->|Authorized Access| AI1B
-    MP2 -->|Authorized Access| AI2B
-    MP2 -->|Authorized Access| AI3B
-
-    %% Aggregated cross-network paid resource exchange (bidirectional)
-    MP <-->|Cross-Network Paid Resource Access| MP2
-
-    %% Styling
-    classDef users fill:#4caf50,stroke:#1b5e20,color:#ffffff,font-weight:600;
-    classDef agents fill:#1976d2,stroke:#0d47a1,color:#ffffff,font-weight:600;
-    classDef gateway fill:#ff9800,stroke:#e65100,color:#000000,font-weight:600;
-    classDef services fill:#9c27b0,stroke:#4a148c,color:#ffffff,font-weight:600;
-    classDef docs fill:#3f51b5,stroke:#1a237e,color:#ffffff,font-weight:600;
-    classDef streams fill:#009688,stroke:#004d40,color:#ffffff,font-weight:600;
-
-    U1:::users
-    A1:::agents
-    HU1:::users
-    HA1:::agents
-    HU2:::users
-    HA2:::agents
-    MP:::gateway
-    MP2:::gateway
-    AI1:::services
-    AI2:::docs
-    AI3:::streams
-    AI1B:::services
-    AI2B:::docs
-    AI3B:::streams
-
-    style Corporate_Network fill:#e3f2fd,stroke:#90caf9,color:#0d47a1;
-    style Corporate_Network_2 fill:#fce4ec,stroke:#f06292,color:#880e4f;
-    style External_World fill:#f1f8e9,stroke:#c5e1a5,color:#2e7d32;
-
-    %% Link styling (external + aggregated cross-network)
-    linkStyle 0 stroke:#4caf50,color:#4caf50,stroke-width:2px;
-    linkStyle 1 stroke:#1976d2,color:#1976d2,stroke-width:2px;
-    %% Cross-network edge index (after preceding edges) is 12
-    linkStyle 12 stroke:#ff9800,color:#ff9800,stroke-width:3px,stroke-dasharray:4 2;
 ```
 
+---
+
+## 🤝 Contributing
+
+We love community contributions!
+
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
