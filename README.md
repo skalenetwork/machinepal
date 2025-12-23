@@ -9,10 +9,9 @@ Create machinepal project folder in your home dir and initialize Hello World con
 
 
 ```bash
-mkdir machinepal 
-docker run -it -rm -v ./machinepal:/machinepal -e PUID=$(id -u) -e PGID=$(id -g) ghcr.io/skalenetwork/machinepal init
+mkdir machinepal && docker run -it -rm -v ./machinepal:/machinepal -e PUID=$(id -u) -e PGID=$(id -g) ghcr.io/skalenetwork/machinepal init
 ```
-
+    
 This initializes MachinePal with the default configuration in the current folder.
 
 Then staert the MachinePal server:

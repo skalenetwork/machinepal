@@ -1,7 +1,7 @@
 name: Build and Push Docker
 
 on:
-  workflow_dispatch: # This enables manual triggering only
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -26,6 +26,16 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # 1. Add this step to generate metadata (Date, Version, Git SHA)
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          # This ensures you keep your 'latest' tag
+          tags: |
+            type=raw,value=latest
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -36,5 +46,6 @@ jobs:
           file: ./docker/Dockerfile
           platforms: linux/amd64
           push: true
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          # 2. Use the outputs from the meta step
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
