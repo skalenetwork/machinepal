@@ -3,33 +3,6 @@
 </div>
 
 
-# Run MachinePal in 60 seconds
-
-1. Create a project folder and initialize the Hello world configuration:
-
-```bash
-mkdir machinepal_project && docker run --rm -v "$(pwd):/machinepal_project:/machinepal" -e PUID=$(id -u) -e PGID=$(id -g) ghcr.io/skalenetwork/machinepal init
-```
-
-This initializes the default project structure.
-
-2. Start the MachinePal server:`
-
-```bash
-docker run -d \
-  --name machinepal \
-  --restart unless-stopped \
-  --network host \
-  -e PUID=$(id -u) -e PGID=$(id -g) \
-  -v "$(pwd):/machinepal" \
-  ghcr.io/skalenetwork/machinepal
-```
-
-3. Run your first x402 Hello World transaction:
-
-```bash
-docker run --rm --network host -v "$(pwd):/machinepal" ghcr.io/skalenetwork/machinepal client http://localhost:8080/hello_world.txt
-```
 
 
 # 🚀 MachinePal: The  x402 Payment Agent for the Web
@@ -78,6 +51,35 @@ Instead of reaching a website directly, requests first pass through the proxy:
 ✅ Result: Websites instantly monetize access while staying secure and compliant.
 
 ---
+
+## Run MachinePal in 60 seconds
+
+1. Create a project folder and initialize the Hello world configuration:
+
+```bash
+mkdir machinepal_project && docker run --rm -v "$(pwd):/machinepal_project:/machinepal" -e PUID=$(id -u) -e PGID=$(id -g) ghcr.io/skalenetwork/machinepal init
+```
+
+This initializes the default project structure.
+
+2. Start the MachinePal server:`
+
+```bash
+docker run -d \
+  --name machinepal \
+  --restart unless-stopped \
+  --network host \
+  -e PUID=$(id -u) -e PGID=$(id -g) \
+  -v "$(pwd):/machinepal" \
+  ghcr.io/skalenetwork/machinepal
+```
+
+3. Run your first x402 Hello World transaction:
+
+```bash
+docker run --rm --network host -v "$(pwd):/machinepal" ghcr.io/skalenetwork/machinepal client http://localhost:8080/hello_world.txt
+```
+
 
 
 ## MachinePal Architecture diagram
@@ -172,47 +174,3 @@ end
 ```
 
 
-
-
-
-## ⚡ Build Instructions
-
-
-Install prerequisites:
-```bash
-    apt-get update && \
-    apt-get install -y --no-install-recommends \
-        ca-certificates \
-        curl \
-        git \
-        pkg-config \
-        unzip \
-        zip \
-        tar \
-        build-essential \
-        python3 \
-        linux-libc-dev \
-        autoconf \
-        libtool \
-        automake \
-        bison \
-        flex \
-```
-
-```bash
-# Clone with dependencies
-git clone --recursive https://github.com/skalenetwork/machinepal.git
-cd machinepal
-
-# Bootstrap vcpkg
-./external/vcpkg/bootstrap-vcpkg.sh
-./external/vcpkg/vcpkg install
-
-# Build
-cmake -S . -B build \
-  -DCMAKE_BUILD_TYPE=Release \
-  -DCMAKE_TOOLCHAIN_FILE=external/vcpkg/scripts/buildsystems/vcpkg.cmake \
-  -DVCPKG_FEATURE_FLAGS=manifests   -DVCPKG_TARGET_TRIPLET=x64-linux 
-
-cmake --build build -j
-```
