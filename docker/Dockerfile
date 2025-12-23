@@ -31,7 +31,11 @@ RUN mkdir -p /var/lib/machinepal /var/log/machinepal \
     && chown -R machinepal:machinepal /var/lib/machinepal /var/log/machinepal \
     && chmod 0755 /var/lib/machinepal /var/log/machinepal
 
+
+COPY --from=builder /app/machinepal/build/machinepal /usr/local/bin/machinepal
+COPY --from=builder /app/machinepal/build/mptest /usr/local/bin/mptest
 COPY --from=builder --chmod=755 /app/machinepal/docker/entrypoint.sh /entrypoint.sh
+
 
 # Ensure entrypoint is present and executable in the final image
 RUN test -f /entrypoint.sh && test -x /entrypoint.sh
@@ -43,10 +47,8 @@ RUN printf '%s\n' \
 ENV BASH_ENV=/etc/bash.bash_env
 
 # Ensure executable bits and world readability for runtime user (non-root)
-RUN chmod 0755 /usr/local/bin/machinepal /usr/local/bin/first_run.sh /entrypoint.sh \
-    && chmod 0755 /etc/service/machinepal/run /etc/service/machinepal/finish \
-    && chown root:root /usr/local/bin/machinepal /usr/local/bin/first_run.sh /entrypoint.sh \
-    && chown root:root /etc/service/machinepal/run /etc/service/machinepal/finish
+RUN chmod 0755 /usr/local/bin/machinepal /entrypoint.sh \
+    && chown root:root /usr/local/bin/machinepal /entrypoint.sh
 
 USER machinepal
 
