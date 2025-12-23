@@ -52,5 +52,20 @@ jobs:
 
       - name: Test Docker image
         run: |
-          mkdir machinepal_project && docker run -it --rm -v ./machinepal_project:/machinepal -e PUID=$(id -u) -e PGID=$(id -g) ghcr.io/skalenetwork/machinepal:latest init
+          mkdir machinepal_project
+          docker run --rm -v "$(pwd)/machinepal_project:/machinepal" -e PUID=$(id -u) -e PGID=$(id -g) ghcr.io/skalenetwork/machinepal:latest init
+          docker run -d \
+            --name machinepal \
+            --restart unless-stopped \
+            --network host \
+            -e PUID=$(id -u) -e PGID=$(id -g) \
+            -v "$(pwd)/machinepal_project:/machinepal" \
+            ghcr.io/skalenetwork/machinepal
+          sleep 10
+          docker run --rm --network host -v "$(pwd)/machinepal_project:/machinepal" ghcr.io/skalenetwork/machinepal client http://localhost:8080/hello_world.txt
+
+
+
+
+
 

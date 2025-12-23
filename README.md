@@ -5,27 +5,15 @@
 
 # Run MachinePal in 60 seconds
 
-1. Create a project folder and initialize the configuration:
+1. Create a project folder and initialize the Hello world configuration:
 
 ```bash
-mkdir machinepal_project
-cd machinepal_project
-docker run --rm -v "$(pwd):/machinepal" -e PUID=$(id -u) -e PGID=$(id -g) ghcr.io/skalenetwork/machinepal init
+mkdir machinepal_project && docker run --rm -v "$(pwd):/machinepal_project:/machinepal" -e PUID=$(id -u) -e PGID=$(id -g) ghcr.io/skalenetwork/machinepal init
 ```
 
-This initializes the default project structure. Check the created files:
+This initializes the default project structure.
 
-```bash
-ls
-```
-
-You should see:
-
-```text
-certs  data  machinepal.yml  resources  secrets
-```
-
-2. Start the MachinePal server:
+2. Start the MachinePal server:`
 
 ```bash
 docker run -d \
