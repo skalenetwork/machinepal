@@ -11,7 +11,6 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         ca-certificates \
         libstdc++6 \
-        runit \
         coreutils \
     && rm -rf /var/lib/apt/lists/*
 
@@ -20,16 +19,6 @@ RUN useradd -m -s /bin/bash machinepal
 
 WORKDIR /machinepal
 RUN chown machinepal:machinepal /machinepal
-
-# Ensure runit service directory exists with predictable perms
-RUN mkdir -p /etc/service/machinepal \
-    && chown -R root:root /etc/service \
-    && chmod 0755 /etc/service /etc/service/machinepal
-
-# Create writable runtime state dir(s) for non-root execution
-RUN mkdir -p /var/lib/machinepal /var/log/machinepal \
-    && chown -R machinepal:machinepal /var/lib/machinepal /var/log/machinepal \
-    && chmod 0755 /var/lib/machinepal /var/log/machinepal
 
 
 COPY --from=builder /app/machinepal/build/machinepal /usr/local/bin/machinepal

@@ -12,3 +12,7 @@ docker rmi -f "$IMAGE_NAME" 2>/dev/null || true
 
 # Build the image
 docker build -t "$IMAGE_NAME" -f Dockerfile .``
+
+# test image
+
+docker run --rm -it machinepal_image /bin/bash -c "echo 'MachinePal Docker image built successfully!'"
