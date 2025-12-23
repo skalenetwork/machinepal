@@ -17,8 +17,8 @@ echo "Docker image $IMAGE_NAME built successfully."
 
 # test image
 
-mkdir machinepal
-cd machinepal && docker run -it -v $(pwd):/machinepal -e PUID=$(id -u) -e PGID=$(id -g) machinepal_image init
-ls -l machinepal
-rm -rf machinepal
+rm -rf ~/machinepal
+mkdir ~/machinepal
+cd ~/machinepal && docker run -it -v .:/machinepal -e PUID=$(id -u) -e PGID=$(id -g) machinepal_image init
+ls -l /home/kladko/machinepal_test1
 echo "Docker image $IMAGE_NAME tested successfully."
