@@ -13,7 +13,9 @@ docker rmi -f "$IMAGE_NAME" 2>/dev/null || true
 # Build the image
 docker build -t "$IMAGE_NAME" -f Dockerfile .``
 
+echo "Docker image $IMAGE_NAME built successfully."
+
 # test image
 
-docker run --rm -it -v $(pwd):/machinepal machinepal_image /bin/bash -c "echo 'MachinePal Docker image built successfully!'"
-docker run --rm -it -v $(pwd):/machinepal  machinepal_image init
+docker run --rm -it -v $(pwd):/machinepal -e PUID=$(id -u) -e PGID=$(id -g) machinepal_image /bin/bash -c "echo 'MachinePal Docker image built successfully!'"
+docker run --rm -it -v $(pwd):/machinepal -e PUID=$(id -u) -e PGID=$(id -g) machinepal_image init

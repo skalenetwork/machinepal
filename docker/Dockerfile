@@ -12,13 +12,11 @@ RUN apt-get update && \
         ca-certificates \
         libstdc++6 \
         coreutils \
+        gosu \
     && rm -rf /var/lib/apt/lists/*
 
-# Create non-root user
-RUN useradd -m -s /bin/bash machinepal
 
 WORKDIR /machinepal
-RUN chown machinepal:machinepal /machinepal
 
 
 COPY --from=builder /app/machinepal/build/machinepal /usr/local/bin/machinepal
@@ -38,8 +36,6 @@ ENV BASH_ENV=/etc/bash.bash_env
 # Ensure executable bits and world readability for runtime user (non-root)
 RUN chmod 0755 /usr/local/bin/machinepal /entrypoint.sh \
     && chown root:root /usr/local/bin/machinepal /entrypoint.sh
-
-USER machinepal
 
 # Encourage unbuffered/line-buffered stdout/stderr for processes inside the container
 ENV PYTHONUNBUFFERED=1 \

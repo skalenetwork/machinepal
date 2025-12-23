@@ -5,8 +5,39 @@ set -e
 BINARY_PATH="/usr/local/bin/machinepal"
 DATA_DIR="/machinepal"
 
-
 DATA_DIR="/machinepal"
+
+
+if [ -z "${PUID}" ]; then
+    echo "Error: PUID environment variable is not set." >&2
+    echo "Please run with: -e PUID=\$(id -u)" >&2
+    exit 1
+fi
+
+# Check if PGID is missing or empty
+if [ -z "${PGID}" ]; then
+    echo "Error: PGID environment variable is not set." >&2
+    echo "Please run with: -e PGID=\$(id -g)" >&2
+    exit 1
+fi
+
+
+# Default to 1000 if no PUID is passed
+USER_ID=${PUID}
+GROUP_ID=${PGID}
+
+echo "Starting with UID : $USER_ID"
+
+# Create a group and user with the specific IDs
+# (usermod/groupmod logic can be added here if the user already exists)
+addgroup --gid "$GROUP_ID" machinepal
+adduser --disabled-password --gecos "" --force-badname --ingroup machinepal --uid "$USER_ID" machinepal
+
+# Change ownership of working directory to ensure the new user can write
+chown -R machinepal:machinepal /machinepal
+
+# Execute the command as the new user using gosu (better than su)
+exec gosu machinepal "$@"
 
 mountpoint -q "$DATA_DIR" || {
     echo "Error: $DATA_DIR directory of machinepal docker container  must be docker mapped to an external volume that contains machinepal config." >&2
@@ -22,6 +53,8 @@ mountpoint -q "$DATA_DIR" || {
 log() {
     printf '[%s] [ENTRYPOINT] %s\n' "$(date +'%Y-%m-%d %H:%M:%S')" "$*" >&2
 }
+
+
 
 # Always print earliest possible diagnostics to stderr for debugging boot issues
 printf '[ENTRYPOINT] argv: %s | pwd=%s | uid=%s gid=%s | whoami=%s\n' \
