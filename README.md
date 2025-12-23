@@ -5,34 +5,43 @@
 
 # Run MachinePal in 60 seconds
 
-Create machinepal project folder in your home dir and initialize Hello World configuration:
-
+1. Create a project folder and initialize the configuration:
 
 ```bash
-mkdir machinepal && docker run -it -rm -v ./machinepal:/machinepal -e PUID=$(id -u) -e PGID=$(id -g) ghcr.io/skalenetwork/machinepal init
+mkdir machinepal_project
+cd machinepal_project
+docker run --rm -v "$(pwd):/machinepal" -e PUID=$(id -u) -e PGID=$(id -g) ghcr.io/skalenetwork/machinepal init
 ```
-    
-This initializes MachinePal with the default configuration in the current folder.
 
-Then staert the MachinePal server:
+This initializes the default project structure. Check the created files:
+
+```bash
+ls
+```
+
+You should see:
+
+```text
+certs  data  machinepal.yml  resources  secrets
+```
+
+2. Start the MachinePal server:
 
 ```bash
 docker run -d \
   --name machinepal \
   --restart unless-stopped \
   --network host \
+  -e PUID=$(id -u) -e PGID=$(id -g) \
   -v "$(pwd):/machinepal" \
   ghcr.io/skalenetwork/machinepal
 ```
 
-
-
-Now run you first X402 Hello World transaction
+3. Run your first x402 Hello World transaction:
 
 ```bash
-docker run --rm -v "$PWD:/machinepal" ghcr.io/skalenetwork/machinepal client http:://localhost:8080/hello_world.txt"
+docker run --rm --network host -v "$(pwd):/machinepal" ghcr.io/skalenetwork/machinepal client http://localhost:8080/hello_world.txt
 ```
-
 
 
 # 🚀 MachinePal: The  x402 Payment Agent for the Web

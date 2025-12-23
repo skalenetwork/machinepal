@@ -52,5 +52,5 @@ jobs:
 
       - name: Test Docker image
         run: |
-          mkdir machinepal && docker run -it --rm -v ./machinepal:/machinepal -e PUID=$(id -u) -e PGID=$(id -g) ghcr.io/skalenetwork/machinepal:latest init
+          mkdir machinepal_project && docker run -it --rm -v ./machinepal_project:/machinepal -e PUID=$(id -u) -e PGID=$(id -g) ghcr.io/skalenetwork/machinepal:latest init
 
