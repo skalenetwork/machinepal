@@ -243,7 +243,8 @@ BOOST_AUTO_TEST_SUITE(InitProjectSuite)
         fs::create_directories(baseDir, ec);
         BOOST_REQUIRE_MESSAGE(!ec && fs::is_empty(baseDir), "Failed to prepare empty /tmp/machinepal directory");
 
-        std::string cmd = "cd /tmp/machinepal && \"" + machinepalPath.string() + "\" init";
+        std::string cmd = "cd /tmp/machinepal && " + machinepalPath.string() + " init";
+        BOOST_TEST_MESSAGE("Running:" + cmd);
         int rc = std::system(cmd.c_str());
         int exitCode = -1;
         if (WIFEXITED(rc)) {
@@ -251,7 +252,7 @@ BOOST_AUTO_TEST_SUITE(InitProjectSuite)
         } else {
             exitCode = rc;
         }
-        BOOST_REQUIRE_MESSAGE(exitCode == 0, std::string("machinepal --init-project failed with exit code ") + std::to_string(exitCode));
+        BOOST_REQUIRE_MESSAGE(exitCode == 0, std::string("machinepal init failed with exit code ") + std::to_string(exitCode));
 
         // Verify generated structure
         fs::path cfg = baseDir / "machinepal.yml";
