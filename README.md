@@ -4,7 +4,7 @@
   # 🚀 MachinePal
   ### The Payment Gateway for the AI Web
   
-  **Instantly monetize AI Agents.** *MachinePal is a drop-in cloud native gateway that adds MCP support x402 payments to any AI agent or web resource.*
+  **Instantly monetize AI Agents.** *MachinePal is a drop-in cloud native gateway that adds MCP/x402 payments support to any AI agent or web resource.*
 
 [![Love this project?](https://img.shields.io/badge/%E2%9D%A4%EF%B8%8F%20Love%20this%20project%3F%20Give%20it%20a%20heart!-ff69b4?style=flat-square)](https://github.com/skalenetwork/machinepal/stargazers)
 [![License](https://img.shields.io/github/license/skalenetwork/machinepal)](https://github.com/skalenetwork/machinepal/blob/main/LICENSE)
