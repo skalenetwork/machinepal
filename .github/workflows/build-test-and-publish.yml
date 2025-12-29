@@ -15,9 +15,10 @@ on:
       - 'docs/**'
       - 'wallet/**'
       - '.github/workflows/docker**'
-      - '.github/workflows/deploy-docs.yml"
+      - '.github/workflows/deploy-docs.yml'
   pull_request:
     paths-ignore: *ignored-paths
+
 
 jobs:
   build:
