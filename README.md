@@ -33,9 +33,7 @@ Follow these steps to set up a **Server** (The Seller) and a **Client** (The Buy
 Create a directory for your data and generate the default configuration.
 
 ```bash
-mkdir machinepal_project && cd machinepal_project
-
-# Initialize config files
+mkdir machinepal_project && cd machinepal_project &&
 docker run --rm \
   -v "$(pwd):/machinepal" \
   -e PUID=$(id -u) -e PGID=$(id -g) \
