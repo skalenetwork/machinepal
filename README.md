@@ -68,8 +68,9 @@ Now, pretend to be a customer. This command runs a client that attempts to fetch
 
 ```bash
 docker run --rm --network host \
+  -e PUID=$(id -u) -e PGID=$(id -g) \
   -v "$(pwd):/machinepal" \
-  ghcr.io/skalenetwork/machinepal client http://localhost:8080/hello_world.txt
+  ghcr.io/skalenetwork/machinepal client https://localhost:8443/hello_world.txt
 
 ```
 

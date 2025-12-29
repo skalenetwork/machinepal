@@ -29,6 +29,10 @@ docker run -d --name machinepal_image_test \
   --security-opt apparmor=unconfined \
   machinepal_image
 ls -l ~/machinepal/
-sleep 3
+sleep 10
+docker run --rm -v ~/machinepal:/machinepal -e PUID=$(id -u) -e PGID=$(id -g)  --network host \
+  machinepal_image client --url https://localhost:8443/hello_world.txt
+echo "Machinepal logs:"
+docker logs machinepal_image_test
 docker rm -f machinepal_image_test
 echo "Docker image $IMAGE_NAME tested successfully."
