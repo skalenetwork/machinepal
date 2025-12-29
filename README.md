@@ -2,9 +2,9 @@
   <img src="machinepal.png" alt="MachinePal" width="30%">
   
   # 🚀 MachinePal
-  ### The Payment Agent for the AI Web
+  ### The Payment Gateway for the AI Agents and Services
   
-  **Instantly monetize APIs, Static Sites, and AI Agents.** *MachinePal is a drop-in proxy that adds crypto payments to any web resource.*
+  **Instantly monetize AI Agents.** *MachinePal is a drop-in cloud native gateway that adds MCP/x402 payments support to any AI agent or service.*
 
 [![Love this project?](https://img.shields.io/badge/%E2%9D%A4%EF%B8%8F%20Love%20this%20project%3F%20Give%20it%20a%20heart!-ff69b4?style=flat-square)](https://github.com/skalenetwork/machinepal/stargazers)
 [![License](https://img.shields.io/github/license/skalenetwork/machinepal)](https://github.com/skalenetwork/machinepal/blob/main/LICENSE)
@@ -41,7 +41,6 @@ docker run --rm \
 
 ```
 
-> **💰 The Money Hook:** Look at the `machinepay.yml` file created in this folder. This is the config file where you will eventually paste **your wallet address** to receive real payments!
 
 ### Step 2: Start the Server (The Shop)
 
@@ -60,7 +59,6 @@ docker run -d \
 
 ```
 
-*Note: We use `--network host` for best performance and ease of access on Linux. On macOS/Windows, ensure Docker Desktop allows host networking or map ports manually.*
 
 ### Step 3: Run the Client (The Customer)
 
@@ -70,7 +68,7 @@ Now, pretend to be a customer. This command runs a client that attempts to fetch
 docker run --rm --network host \
   -e PUID=$(id -u) -e PGID=$(id -g) \
   -v "$(pwd):/machinepal" \
-  ghcr.io/skalenetwork/machinepal client https://localhost:8443/hello_world.txt
+  ghcr.io/skalenetwork/machinepal client --url https://localhost:8443/hello_world.txt
 
 ```
 
