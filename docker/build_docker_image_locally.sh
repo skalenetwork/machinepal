@@ -19,5 +19,13 @@ echo "Docker image $IMAGE_NAME built successfully."
 
 rm -rf ~/machinepal
 mkdir ~/machinepal  && docker run -it -v ~/machinepal:/machinepal -e PUID=$(id -u) -e PGID=$(id -g) machinepal_image init
-ls -l /home/kladko/machinepal_test1
+docker rm -f machinepal_image_test
+docker run --name machinepal_image_test \
+  --restart unless-stopped \
+  --network host \
+  -e PUID=$(id -u) -e PGID=$(id -g) \
+  --ulimit nofile=65535:65535 \
+  -v "$(pwd):/machinepal" \
+  machinepal_image
+ls -l ~/machinepal/
 echo "Docker image $IMAGE_NAME tested successfully."
