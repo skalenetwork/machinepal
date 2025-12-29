@@ -15,6 +15,7 @@
 #include "init/Init.h"
 
 #include <map>
+#include <set>
 #include <regex>
 
 #include "admin/ProjectGenerator.h"
@@ -92,7 +93,17 @@ map<string, string> parseConfigValueOverloadsFromCommandLineAndEnvironment(int a
 
 
         setIfNotEmpty(envOverloads, "CONFIG", configFilePath);
+
+
         setIfNotEmpty(envOverloads, "LOG_LEVEL", logLevel);
+        if (envOverloads.contains("LOG_LEVEL")) {
+            auto levelStr = envOverloads["LOG_LEVEL"];
+            static const std::set<std::string> validLevels = {"info", "debug", "trace", "warn", "error", "fatal"};
+            if (validLevels.find(levelStr) == validLevels.end()) {
+                spdlog::critical("Invalid log level specified: " + levelStr);
+                exit(1);
+            }
+        }
         setIfNotEmpty(envOverloads, "LOG_TYPE", logType);
         setIfNotEmpty(envOverloads, "BIND_IP", bindIp);
         setIfNotEmpty(envOverloads, "HOSTNAME", hostname);
