@@ -63,7 +63,7 @@ jobs:
             ghcr.io/skalenetwork/machinepal
           sleep 10 
           docker run --rm --network host -e PUID=$(id -u) -e PGID=$(id -g) \
-          -v "$(pwd)/machinepal_project:/machinepal" ghcr.io/skalenetwork/machinepal client http://localhost:8080/hello_world.txt
+          -v "$(pwd)/machinepal_project:/machinepal" ghcr.io/skalenetwork/machinepal client --url http://localhost:8080/hello_world.txt
 
 
 
