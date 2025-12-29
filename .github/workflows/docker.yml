@@ -53,7 +53,7 @@ jobs:
       - name: Test Docker image
         run: |
           mkdir machinepal_project
-          docker run --rm -v "$(pwd)/machinepal_project:/machinepal" -e PUID=$(id -u) -e PGID=$(id -g) ghcr.io/skalenetwork/machinepal:latest init
+          docker run --rm -v "$(pwd)/machinepal_project:/machinepal" -e PUID=$(id -u) -e PGID=$(id -g) --ulimit nofile=65535:65535 ghcr.io/skalenetwork/machinepal:latest init
           docker run -d \
             --name machinepal \
             --restart unless-stopped \

@@ -12,7 +12,7 @@ log() {
     printf '[%s] [ENTRYPOINT] %s\n' "$(date +'%Y-%m-%d %H:%M:%S')" "$*" >&2
 }
 
-log "Starting MachinePal container initialization..."
+log "Starting MachinePal container entrypoint..."``
 
 # ----------------------------------------------------------------------
 # 1. ENVIRONMENT CHECKS (UID/GID)
@@ -20,13 +20,13 @@ log "Starting MachinePal container initialization..."
 
 if [ -z "${PUID}" ]; then
     log "Error: PUID environment variable is not set."
-    log "Please run with: -e PUID=\$(id -u)"
+    log "Please run this container with: -e PUID=\$(id -u) -e PGID=\$(id -g) flags to set the user and group IDs to the current host user."
     exit 1
 fi
 
 if [ -z "${PGID}" ]; then
     log "Error: PGID environment variable is not set."
-    log "Please run with: -e PGID=\$(id -g)"
+    log "Please run this container with: -e PUID=\$(id -u) -e PGID=\$(id -g) flags to set the user and group IDs to the current host user."
     exit 1
 fi
 
@@ -59,24 +59,22 @@ if ! id -u machinepal >/dev/null 2>&1; then
         exit 1
     fi
     adduser --disabled-password --gecos "" --force-badname --gid "$GROUP_ID" --uid "$USER_ID" machinepal
+    log "User setup complete  as UID:$USER_ID / GID:$GROUP_ID"
 fi
 
-log "User setup complete. Running as UID:$USER_ID / GID:$GROUP_ID"
-
-# Fix permissions
-chown -R "$USER_ID":"$GROUP_ID" "$DATA_DIR"
+log "Running as user UID:$USER_ID / GID:$GROUP_ID"
 
 # ----------------------------------------------------------------------
 # 3. MOUNTPOINT CHECK
 # ----------------------------------------------------------------------
 
-log "Checking if $DATA_DIR is a mountpoint..."
 mountpoint -q "$DATA_DIR" || {
     log "Error: $DATA_DIR is NOT a mountpoint."
-    log "You must map an external volume. Example: -v \$(pwd):$DATA_DIR"
+    log "Machinepal requires an external volume for data and configuration."
+    log "Please map an external volume to $DATA_DIR. Example: -v \$(pwd):$DATA_DIR"
     exit 1
 }
-log "Mountpoint verified."
+
 
 # ----------------------------------------------------------------------
 # 4. RESCUE MODE / DEBUGGING

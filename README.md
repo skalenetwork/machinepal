@@ -55,6 +55,7 @@ docker run -d \
   --restart unless-stopped \
   --network host \
   -e PUID=$(id -u) -e PGID=$(id -g) \
+  --ulimit nofile=65535:65535 \
   -v "$(pwd):/machinepal" \
   ghcr.io/skalenetwork/machinepal
 
