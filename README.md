@@ -41,7 +41,6 @@ docker run --rm \
 
 ```
 
-> **💰 The Money Hook:** Look at the `machinepay.yml` file created in this folder. This is the config file where you will eventually paste **your wallet address** to receive real payments!
 
 ### Step 2: Start the Server (The Shop)
 
@@ -60,7 +59,6 @@ docker run -d \
 
 ```
 
-*Note: We use `--network host` for best performance and ease of access on Linux. On macOS/Windows, ensure Docker Desktop allows host networking or map ports manually.*
 
 ### Step 3: Run the Client (The Customer)
 
