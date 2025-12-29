@@ -219,7 +219,7 @@ BOOST_AUTO_TEST_SUITE(InitProjectSuite)
     BOOST_AUTO_TEST_CASE(InitProjectGeneratesFilesInTmp) {
         namespace fs = std::filesystem;
         auto& ts = boost::unit_test::framework::master_test_suite();
-        fs::path testExePath(ts.argv[0]);
+        fs::path testExePath(fs::absolute(ts.argv[0]));
         fs::path exeDir = testExePath.parent_path();
         fs::path machinepalPath = exeDir / "../machinepal";
         if (!fs::exists(machinepalPath)) {
