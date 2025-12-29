@@ -43,4 +43,3 @@ ENV PYTHONUNBUFFERED=1 \
 
 # Use bash explicitly to avoid shebang/CRLF/exec-format edge cases
 ENTRYPOINT ["/bin/bash", "/entrypoint.sh"]
-CMD [""]
