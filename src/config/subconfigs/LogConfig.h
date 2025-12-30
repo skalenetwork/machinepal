@@ -4,7 +4,7 @@
 
 enum class LogLevel { trace, debug, info, warn, error, fatal };
 
-enum class LogType { default_logging, force_json };
+enum class LogType { text, json };
 
 LogLevel parseLogLevel( const std::string& level );
 LogType parseLogType( const std::string& type );

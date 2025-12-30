@@ -355,7 +355,7 @@ void Init::configureLogging(ptr<ConfigManager> manager) {
 
     auto logType = logConfig->type();
 
-    bool forceJson = logType == LogType::force_json;
+    bool forceJson = logType == LogType::json;
 
     if (logLevel == LogLevel::trace)
         spdlogLevel = spdlog::level::trace;

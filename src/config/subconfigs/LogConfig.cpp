@@ -20,10 +20,10 @@ LogLevel parseLogLevel( const std::string& level ) {
 }
 
 LogType parseLogType( const std::string& type ) {
-    if ( type == "default" )
-        return LogType::default_logging;
+    if ( type == "text" )
+        return LogType::text;
     if ( type == "json" )
-        return LogType::force_json;
+        return LogType::json;
     throw std::invalid_argument( "Invalid log type: " + type );
 }
 
@@ -40,7 +40,7 @@ LogType LogConfig::type() const {
 }
 
 ptr< LogConfig > LogConfig::createDefault() {
-    return ptr< LogConfig >( new LogConfig( LogLevel::info, LogType::default_logging ) );
+    return ptr< LogConfig >( new LogConfig( LogLevel::info, LogType::text ) );
 }
 
 ptr< LogConfig > LogConfig::createFromJson(
@@ -50,7 +50,7 @@ ptr< LogConfig > LogConfig::createFromJson(
         CHECK_STATE( j.is_object() );
         return ptr< LogConfig >(
             new LogConfig( JsonUtils::getStringWithDefault( j, "level", "info" ),
-                JsonUtils::getStringWithDefault( j, "type", "default" ) ) );
+                JsonUtils::getStringWithDefault( j, "type", "text" ) ) );
     } catch ( const std::exception& ex ) {
         RETHROW_NESTED;
     }
