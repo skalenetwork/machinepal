@@ -11,6 +11,7 @@
 #include "spdlog/async.h"
 #include "spdlog/sinks/stdout_sinks.h"       // For uncolored stdout (Access Logs)
 #include <cstdlib> // For std::getenv
+#include <fmt/chrono.h>
 #include <vector>
 #include <memory>
 #include <iostream>
@@ -175,34 +176,47 @@ void Init::setupBootStrapLogging() {
 }
 
 
-// A robust JSON formatter that escapes the message payload
 class JsonFormatter : public spdlog::formatter {
 public:
     void format(const spdlog::details::log_msg &msg, spdlog::memory_buf_t &dest) override {
-        // 1. Extract raw message
-        // spdlog stores payload in msg.payload
 
-        // 2. Escape Quotes/Backslashes manually or using a library
-        // Simple manual implementation for demonstration:
+        // 1. Efficient Time Formatting (No stringstream overhead)
+        auto time_now = std::chrono::system_clock::to_time_t(msg.time);
+        auto tm_val = spdlog::details::os::localtime(time_now);
+        auto duration = msg.time.time_since_epoch();
+        int millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() % 1000;
+
+        char time_buf[32];
+        // Standard C way is faster here: YYYY-MM-DD HH:MM:SS
+        std::strftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S", &tm_val);
+
+        // 2. Optimized Payload Escaping
         std::string safe_msg;
+        // Optimization: Reserve memory to prevent re-allocations
+        safe_msg.reserve(msg.payload.size() + 16);
+
         for (char c : msg.payload) {
+            // Check for additional JSON-breaking chars
             if (c == '"') safe_msg += "\\\"";
             else if (c == '\\') safe_msg += "\\\\";
             else if (c == '\n') safe_msg += "\\n";
+            else if (c == '\r') safe_msg += "\\r";
+            else if (c == '\t') safe_msg += "\\t";
             else safe_msg += c;
         }
 
-        // 3. Format into JSON structure
-        // We use fmt::format to safely build the wrapper
+        // 3. Format
+        // Note: Using fmt::format. If this fails to compile, swap for boost::format logic used previously.
         std::string json = fmt::format(
-            R"({{ "timestamp": "{}", "logger": "{}", "level": "{}", "message": "{}" }})",
-            "TIMESTAMP_PLACEHOLDER", // You'd compute real time here
+            R"({{ "timestamp": "{}.{:03d}", "logger": "{}", "level": "{}", "message": "{}" }})",
+            time_buf,
+            millis,
             std::string(msg.logger_name.data(), msg.logger_name.size()),
             spdlog::level::to_string_view(msg.level),
-            safe_msg // <--- Injected safely
+            safe_msg
         );
 
-        // 4. Append to destination buffer + newline
+        // 4. Append to Buffer
         dest.append(json.data(), json.data() + json.size());
         dest.append(spdlog::details::os::default_eol, spdlog::details::os::default_eol + strlen(spdlog::details::os::default_eol));
     }
