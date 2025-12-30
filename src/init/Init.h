@@ -12,11 +12,16 @@ class ConfigManager;
 class Init {
 public:
     static void initAllLibs( int _argc, char* _argv[] );
+
+    static void setupLogging(bool forceJson, spdlog::level::level_enum level);
+
+    static void setupBootStrapLogging();
+
     static bool isInited();
     static std::map< std::string, std::string > getMachinePalEnvironmentOverloads();
     static void checkOperatingSystemConfiguration();
 
-    static void initLogLevelFromConfig( ptr< ConfigManager > manager );
+    static void configureLogging( ptr< ConfigManager > manager );
     static void checkSystemTime();
 
 private:

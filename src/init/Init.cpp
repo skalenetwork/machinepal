@@ -1,6 +1,3 @@
-//
-// Created by kladko on 9/29/25.
-//
 #include "MachinePalCommon.h"
 
 #include <glog/logging.h>
@@ -9,6 +6,14 @@
 #include "config/ConfigManager.h"
 #include "config/subconfigs/LogConfig.h"
 
+
+#include "spdlog/spdlog.h"
+#include "spdlog/async.h"
+#include "spdlog/sinks/stdout_sinks.h"       // For uncolored stdout (Access Logs)
+#include <cstdlib> // For std::getenv
+#include <vector>
+#include <memory>
+#include <iostream>
 
 // New: header callback to collect raw headers
 static size_t HeaderCallback(char *buffer, size_t size, size_t nitems, void *userdata) {
@@ -39,15 +44,245 @@ void Init::initAllLibs(int _argc, char *_argv[]) {
 
             google::InstallFailureFunction(&ThrowOnFailure);
 
-            auto logger = spdlog::stderr_logger_mt("machinepal");
-            spdlog::set_default_logger(logger);
-            spdlog::set_level(spdlog::level::info); // Set global log level to INFO
+            setupBootStrapLogging();
+
+            spdlog::info( "Libraries initialized" );
         } catch (... ) {
             RETHROW_NESTED2("FATAL: Failed to initialize machinepal libraries.");
         }
 
     }
 }
+
+
+
+
+
+/*
+ * =================================================================================================
+ * LOGGING STRATEGY SUMMARY: HYBRID STREAM + ADAPTIVE FORMATTING
+ * =================================================================================================
+ * This strategy decouples "Data" (Traffic) from "Diagnostics" (System Health) to maximize
+ * observability in Cloud/Container environments while maintaining developer ergonomics.
+ *
+ * 1. STREAM SEPARATION
+ * -------------------------------------------------------------------------------------------------
+ * | STREAM | CONTENT TYPE      | DESTINATION (Docker) | CONSUMER           |
+ * |--------|-------------------|----------------------|--------------------|
+ * | STDOUT | Access Logs       | Stream 1             | Machine (Datadog)  |
+ * | STDERR | System/Error Logs | Stream 2             | Hybrid (Human/Bot) |
+ * -------------------------------------------------------------------------------------------------
+ *
+ * 2. FORMATTING RULES
+ * -------------------------------------------------------------------------------------------------
+ * A. ACCESS LOGS (STDOUT) -> ALWAYS JSON
+ * - Rationale: High-volume structural data. Must be machine-parsable for metrics/graphing.
+ * - Format: { "method": "GET", "status": 200, "latency": 15, ... }
+ *
+ * B. SYSTEM LOGS (STDERR) -> ADAPTIVE (Controlled by ENV: LOG_FORMAT)
+ * * > MODE 1: LOCAL DEVELOPMENT (Default)
+ * - Env: LOG_FORMAT is unset or empty.
+ * - Format: Colored Plaintext.
+ * - Example: [Time] [upstream] [error] Connection refused
+ * - Rationale: Instant readability for humans in a terminal.
+ *
+ * > MODE 2: CLOUD PRODUCTION (Docker/K8s)
+ * - Env: LOG_FORMAT=json
+ * - Format: JSON Wrapped.
+ * - Example: { "logger": "upstream", "level": "error", "message": "Connection refused" }
+ * - Rationale: Allows aggregators to index 'level' and 'logger' fields and
+ * treat multi-line stack traces as single events.
+ *
+ * -------------------------------------------------------------------------------------------------
+ * 3. CATEGORY MAPPING
+ * -------------------------------------------------------------------------------------------------
+ * - ACCESS   -> STDOUT (JSON)
+ * - CORE     -> STDERR (Adaptive)
+ * - UPSTREAM -> STDERR (Adaptive)
+ * - DB       -> STDERR (Adaptive)
+ * - SECURITY -> STDERR (Adaptive)
+ * - ADMIN    -> STDERR (Adaptive)
+ * - HEALTH   -> STDERR (Adaptive)
+ * =================================================================================================
+ */
+
+
+/*
+ * =================================================================================================
+ * LOGGING STRATEGY & CATEGORY REGISTRY
+ * =================================================================================================
+ * This system partitions logs into distinct categories to facilitate filtering and routing.
+ *
+ * 1. ACCESS LOGS (STDOUT) -> JSON formatted, meant for machine ingestion (Datadog/Splunk/ELK).
+ * 2. SYSTEM LOGS (STDERR) -> Human-readable text, meant for debugging and SRE monitoring.
+ *
+ * -------------------------------------------------------------------------------------------------
+ * | CATEGORY  | STREAM | DEFAULT LEVEL | PURPOSE                                                  |
+ * |-----------|--------|---------------|----------------------------------------------------------|
+ * | ACCESS    | STDOUT | Info          | Traffic Analysis: JSON logs for Datadog/ELK              |
+ * | CORE      | STDERR | Info          | Lifecycle: Startup, Shutdown, unexpected crashes         |
+ * | UPSTREAM  | STDERR | Info/Error    | Network: HTTP Status 5xx, timeouts from backend          |
+ * | DB        | STDERR | Error         | Data: SQL connection failures, slow queries              |
+ * | SECURITY  | STDERR | Warn          | Threats: WAF blocks, Rate limits, Auth failures          |
+ * | ADMIN     | STDERR | Info          | Audit: Configuration changes (API/Control Plane)         |
+ * | HEALTH    | STDERR | Error         | Noise Control: Only logs when probes fail                |
+ * -------------------------------------------------------------------------------------------------
+ */
+
+
+/*
+ * =================================================================================================
+ * LOGGING FORMAT STRATEGY
+ * =================================================================================================
+ * The format of logs (JSON vs Plaintext) is determined by the primary consumer of the data.
+ *
+ * - JSON      :: Machine-optimized. Essential for aggregators (Datadog/ELK) to graph metrics.
+ * - PLAINTEXT :: Human-optimized. Essential for SREs/Devs tailing logs during incidents.
+ *
+ * -------------------------------------------------------------------------------------------------
+ * | CATEGORY  | FORMAT        | AUDIENCE | REASON / USAGE                                       |
+ * |-----------|---------------|----------|--------------------------------------------------------|
+ * | ACCESS    | JSON          | Machines | High volume, structured data required for metrics.     |
+ * | CORE      | Plaintext     | Humans   | Narrative of lifecycle. Needs to be instantly readable.|
+ * | UPSTREAM  | Plaintext     | Humans   | Network debugging. Often contains complex error stacks.|
+ * | DB        | Plaintext     | Humans   | Debugging SQL connectivity and connection pooling.     |
+ * | HEALTH    | Plaintext     | Humans   | Low-value noise unless failing; simple text suffices.  |
+ * | SECURITY  | JSON or Text  | Both     | Hybrid. Text for alerts, JSON for threat analysis.     |
+ * | ADMIN     | JSON or Text  | Both     | Hybrid. JSON preferred for strict Audit Trails.        |
+ * -------------------------------------------------------------------------------------------------
+ */
+
+
+#include <string>
+
+/**
+ * setupDockerLogging
+ * -----------------------------------------------------------------------------
+ * Configures the spdlog subsystem for a production-grade Proxy Server.
+ * * STRATEGY:
+ * 1. ACCESS LOGS -> STDOUT (Always JSON)
+ * 2. SYSTEM LOGS -> STDERR (Adaptive: Text for Local, JSON for Cloud)
+ * * ENVIRONMENT VARIABLES:
+ * - LOG_FORMAT=json     :: Forces System logs into JSON format (for Datadog/Splunk).
+ * - DISABLE_ANSI_COLORS :: Disables colors in Text mode (for file redirection).
+ */
+
+
+// This is core logging used at the start
+// we do not yet know logging config from config file
+void Init::setupBootStrapLogging() {
+    // enforce one-time initialization
+    static std::atomic<bool> isInitialized{false};
+    if (isInitialized.exchange(true)) {
+        return;
+    }
+
+    std::string systemTextPattern = "[%Y-%m-%d %H:%M:%S.%e] [%n] [%^%l%$] %v";
+    auto stderrSink = std::make_shared<spdlog::sinks::stderr_sink_mt>();
+    std::vector<spdlog::sink_ptr> systemSinks { stderrSink };
+
+    auto coreLogger = std::make_shared<spdlog::logger>(
+        "core",
+        systemSinks.begin(),
+        systemSinks.end()
+    );
+
+    coreLogger->set_pattern(systemTextPattern);
+    // Force flush on error during bootstrap
+    // If the app crashes during config loading, this ensures the error is visible.
+    coreLogger->flush_on(spdlog::level::err);
+    spdlog::register_logger(coreLogger);
+    spdlog::set_default_logger(coreLogger);
+    spdlog::set_level(spdlog::level::info);
+    spdlog::flush_every(std::chrono::seconds(1));
+}
+
+
+
+// we call this once we have config file loaded
+void Init::setupLogging(bool forceJson, spdlog::level::level_enum logLevel) {
+    // 1. Enforce one-time initialization
+    static std::atomic<bool> isInitialized{false};
+    if (isInitialized.exchange(true)) {
+        return;
+    }
+
+    // 2. Cleanup existing loggers
+    spdlog::drop_all();
+
+    // -------------------------------------------------------------------------
+    // Configuration Patterns
+    // -------------------------------------------------------------------------
+    std::string accessPattern = "%v";
+    std::string systemTextPattern = "[%Y-%m-%d %H:%M:%S.%e] [%n] [%^%l%$] %v";
+    std::string systemJsonPattern =
+        R"({ "timestamp": "%Y-%m-%d %H:%M:%S.%e", "logger": "%n", "level": "%l", "message": "%v" })";
+
+    std::string currentSystemPattern = forceJson ? systemJsonPattern : systemTextPattern;
+
+    // -------------------------------------------------------------------------
+    // Create Sinks
+    // -------------------------------------------------------------------------
+    auto stdoutSink = std::make_shared<spdlog::sinks::stdout_sink_mt>();
+    auto stderrSink = std::make_shared<spdlog::sinks::stderr_sink_mt>();
+
+    // Shared sink lists
+    std::vector<spdlog::sink_ptr> systemSinks { stderrSink };
+    std::vector<spdlog::sink_ptr> accessSinks { stdoutSink };
+
+    // -------------------------------------------------------------------------
+    // Register Loggers (Synchronous)
+    // -------------------------------------------------------------------------
+
+    // Helper lambda to create a synchronous logger with automatic flushing on errors
+    auto createLogger = [&](std::string name, std::vector<spdlog::sink_ptr>& sinks, std::string pattern) {
+        // Use spdlog::logger (Synchronous) instead of async_logger
+        auto logger = std::make_shared<spdlog::logger>(name, sinks.begin(), sinks.end());
+
+        logger->set_pattern(pattern);
+
+        // CRITICAL FOR CRASH SAFETY:
+        // Force flush immediately if an ERROR or CRITICAL log is written.
+        // This ensures the log hits the OS stream even if the app crashes ms later.
+        logger->flush_on(spdlog::level::err);
+
+        spdlog::register_logger(logger);
+        return logger;
+    };
+
+    // 1. ACCESS
+    createLogger("access", accessSinks, accessPattern);
+
+    // 2. CORE
+    auto coreLogger = createLogger("core", systemSinks, currentSystemPattern);
+
+    // 3. UPSTREAM
+    createLogger("upstream", systemSinks, currentSystemPattern);
+
+    // 4. DB
+    createLogger("database", systemSinks, currentSystemPattern);
+
+    // 5. SECURITY
+    createLogger("security", systemSinks, currentSystemPattern);
+
+    // 6. ADMIN
+    createLogger("admin", systemSinks, currentSystemPattern);
+
+    // 7. HEALTH
+    auto healthLogger = createLogger("health", systemSinks, currentSystemPattern);
+    healthLogger->set_level(spdlog::level::warn);
+
+
+    spdlog::set_default_logger(coreLogger);
+    spdlog::set_level(logLevel);
+
+    // Periodic flush for non-error logs (every 1 second)
+    // Even in sync mode, stdout/stderr are buffered by the OS. This forces them out.
+    spdlog::flush_every(std::chrono::seconds(1));
+
+    coreLogger->info("Logging configured (Synchronous Mode). JSON: {}", forceJson);
+}
+
 
 bool Init::isInited() {
     return inited_;
@@ -81,12 +316,15 @@ map<string, string> Init::getMachinePalEnvironmentOverloads() {
 }
 
 
-void Init::initLogLevelFromConfig(ptr<ConfigManager> manager) {
+void Init::configureLogging(ptr<ConfigManager> manager) {
     CHECK_STATE(manager);
     auto logConfig = manager->latestConfig()->log();
     auto logLevel = logConfig->level();
-
     spdlog::level::level_enum spdlogLevel = spdlog::level::info;
+
+    auto logType = logConfig->type();
+
+    bool forceJson = logType == LogType::force_json;
 
     if (logLevel == LogLevel::trace)
         spdlogLevel = spdlog::level::trace;
@@ -104,8 +342,7 @@ void Init::initLogLevelFromConfig(ptr<ConfigManager> manager) {
         CHECK_STATE(false); // should never happen
     }
 
-    spdlog::set_level(spdlogLevel);
-    spdlog::flush_on(spdlog::level::info);
+    setupLogging(forceJson, spdlogLevel);
 }
 
 bool Init::fetchInternetTime(

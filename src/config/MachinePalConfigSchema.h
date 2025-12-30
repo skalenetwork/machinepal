@@ -64,7 +64,7 @@ constexpr const char* MachinePalConfigSchemaJson = R"(
           "type": "string",
           "enum": ["trace", "debug", "info", "warn", "error", "fatal"]
         },
-        "type": { "type": "string", "enum": ["plain", "json"] }
+        "type": { "type": "string", "enum": ["default", "json"] }
       },
       "required": ["level"]
     },

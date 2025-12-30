@@ -9,7 +9,7 @@ MachinePalApp::MachinePalApp(const std::map<std::string, std::string>& configVal
     {
         configManager_ = ConfigManager::initManager(configValuesFromCliAndEnv);
         configPath_ = configManager_->fileManager()->canonicalConfigDirPath();
-        Init::initLogLevelFromConfig(configManager());
+        Init::configureLogging(configManager());
         paymentManager_ = std::make_shared<PaymentManager>(*this);
         facilitatorClientManager_ = std::make_shared<FacilitatorClientManager>(*this);
         easyNetFacilitator_ = std::make_shared<EasyNetFacilitator>(*this);

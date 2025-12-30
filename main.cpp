@@ -61,7 +61,7 @@ map<string, string> parseConfigValueOverloadsFromCommandLineAndEnvironment(int a
         app.add_option("-t,--log-type", logType,
                        "Log type: plain, json")
                 ->type_name("LOG_TYPE")
-                ->check(CLI::IsMember({"plain", "json"}));
+                ->check(CLI::IsMember({"default", "force_json"}));
         app.add_option("--bind-ip", bindIp,
                        "Bind IP address for the server")
                 ->type_name("IP");
