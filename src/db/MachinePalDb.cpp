@@ -30,8 +30,7 @@ void MachinePalDb::checkSqliteFileOnDisk() {
         }
         file.close();
     } else {
-        logger_->info(
-            "SQLite database file does not exist at {}, it will be created.", connectionString_ );
+        LOG_DB_INFO("SQLite database file does not exist at {}, it will be created.", connectionString_ );
     }
 }
 
@@ -58,7 +57,7 @@ void MachinePalDb::verifyDatabaseConnectivity() {
 
     std::string backendName =
         ( dbType_ == DbType::SQLite ) ? "SQLite (at " + connectionString_ + ")" : "PostgreSQL";
-    logger_->info( "Database connectivity verified successfully. Using {}.", backendName );
+    LOG_DB_INFO( "Database connectivity verified successfully. Using {}.", backendName );
 }
 
 void MachinePalDb::configureDBParamsAndPool() {
@@ -86,11 +85,7 @@ MachinePalDb::MachinePalDb(
     MachinePalApp& app, DbType type, const std::optional< std::string >& connectionInfo )
     : app_( app ), dbType_( type ) {
     try {
-        logger_ = spdlog::get( "machinepal.db" );
-        if ( !logger_ ) {
-            logger_ = spdlog::stderr_logger_st( "machinepal.db" );
-        }
-        CHECK_STATE( logger_ );
+
 
         if ( dbType_ == DbType::SQLite ) {
             // Ensure config directory exists, then build DB file path
@@ -240,7 +235,7 @@ void MachinePalDb::ensureSchema() {
 
         // --- Step 4: Log based on our check ---
         if ( !tableExisted ) {
-            logger_->info( "New 'payments' table created and schema initialized." );
+            LOG_DB_INFO("New 'payments' table created and schema initialized." );
         }
     } catch ( std::exception& e ) {
         RETHROW_NESTED2( "Failed to ensure schema " + string( e.what() ) );
@@ -274,7 +269,7 @@ void MachinePalDb::writePayment( const PaymentRecord& record ) {
         std::string jsonInfo = record.jsonInfo();
 
 
-        logger_->trace(
+        LOG_DB_TRACE(
             "Writing payment: organizationName={}, chainId={}, fromAddress={}, toAddress={}, "
             "assetAddress={}, value={}, "
             "nonce={}, resourceLocation ={}, settlementTime={}, authorizationSignatureHash={}, "

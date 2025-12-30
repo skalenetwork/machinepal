@@ -76,7 +76,7 @@ struct X402ServerFixture {
             });
 
             while (!app_->isStarted()) {
-                spdlog::info("Waiting for server to start...");
+                LOG_CORE_INFO("Waiting for server to start...");
                 usleep(1000 * 100); // 100ms
                 if (app_->isExited()) {
                     BOOST_FAIL("Server exited unexpectedly during startup.");
@@ -84,16 +84,16 @@ struct X402ServerFixture {
             }
 
 
-            spdlog::info("Test server started on port {}", config->server()->http()->port());
+            LOG_CORE_INFO("Test server started on port {}", config->server()->http()->port());
             spdlog::set_level(spdlog::level::trace);
         } catch (const std::exception &ex) {
             printNestedException(ex);
             BOOST_FAIL("Exception starting test server");
         } catch (...) {
-            spdlog::critical("Unknown error starting test server.");
+            LOG_CORE_CRITICAL("Unknown error starting test server.");
             BOOST_FAIL("Exception starting test server");
         }
-        spdlog::info("Starting test server done.");
+        LOG_CORE_INFO("Starting test server done.");
     }
 
     ~X402ServerFixture() {

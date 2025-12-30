@@ -142,7 +142,7 @@ uint32_t MachinePalApp::runUntilExit()
     }
     catch (const std::exception& ex)
     {
-        spdlog::critical("Fatal error running machinepal server: {}. Server exited", ex.what());
+        LOG_CORE_CRITICAL("Fatal error running machinepal server: {}. Server exited", ex.what());
         printNestedException(ex);
         return 1;
     }

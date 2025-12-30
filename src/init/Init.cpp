@@ -260,7 +260,7 @@ void Init::setupLogging(bool forceJson, spdlog::level::level_enum logLevel) {
     createLogger("network", systemSinks, currentSystemPattern);
 
     // 4. DB
-    createLogger("database", systemSinks, currentSystemPattern);
+    createLogger("db", systemSinks, currentSystemPattern);
 
     // 5. SECURITY
     createLogger("security", systemSinks, currentSystemPattern);
@@ -273,8 +273,6 @@ void Init::setupLogging(bool forceJson, spdlog::level::level_enum logLevel) {
     healthLogger->set_level(spdlog::level::warn);
 
     // 8. Client
-
-
     auto clientLogger = createLogger("client", systemSinks, currentSystemPattern);
 
 

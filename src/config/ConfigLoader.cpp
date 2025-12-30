@@ -344,7 +344,7 @@ void ConfigLoader::validateJson( const json& j ) {
                                    "MachinePalConfigLoader::validateJson Invalid config file : "
                                    "failed to validate config against schema:\n" ) +
                                errHandler.errorMessage_;
-        spdlog::warn( errorMsg );
+        LOG_CORE_WARN( errorMsg );
         printNestedException( ex );
     }
 }

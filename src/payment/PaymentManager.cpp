@@ -33,7 +33,7 @@ variant<ptr<PaymentPayload>, HttpError> PaymentManager::decodeAndParsePayment(
         try {
             decoded = Encoding::base64Decode(payment);
         } catch (const std::exception &e) {
-            spdlog::error("Exception during base64 decode of X-PAYMENT header: {}", e.what());
+            LOG_CORE_ERROR("Exception during base64 decode of X-PAYMENT header: {}", e.what());
             return HttpError(ERR_BAD_REQUEST, "X-PAYMENT header is not valid base64");
         }
 
@@ -41,7 +41,7 @@ variant<ptr<PaymentPayload>, HttpError> PaymentManager::decodeAndParsePayment(
         try {
             j = nlohmann::json::parse(decoded);
         } catch (const std::exception &e) {
-            spdlog::error(
+            LOG_CORE_ERROR(
                 "Failed to parse decoded X-PAYMENT header as JSON: {} {}", decoded, e.what());
             return HttpError(
                 ERR_BAD_REQUEST, "X-PAYMENT header is not valid JSON after base64 decoding");
@@ -75,7 +75,7 @@ std::optional<HttpError> PaymentManager::checkAgainstAlreadySettledPayments(
         const auto &asset = domain->assetAddress();
         const auto &chainId = domain->chainId();
 
-        spdlog::info(
+        LOG_CORE_INFO(
             "Payment has already been spent: from={}, nonce={}, token={}, tokenAddress={}, "
             "chainId={}",
             from.toHex(PREFIX_0x), nonce.toHex(PREFIX_0x), domain->name(),
@@ -177,7 +177,7 @@ variant<SettlementResponse, HttpError> PaymentManager::checkPaymentIsNewAndSettl
         return checkPaymentIsNewAndSettleItUnsafe(
             machinePalConfig, resource, organization, paymentPayload, ipAddress);
     } catch (const std::exception &e) {
-        spdlog::error("Error during payment settlement request to"
+        LOG_CORE_ERROR("Error during payment settlement request to"
                       " facilitator: {}", e.what());
         return HttpError(ERR_INTERNAL_SERVER_ERROR,
                          std::string("Error during payment settlement request to facilitator: "));
@@ -218,7 +218,7 @@ variant<SettlementResponse, HttpError> PaymentManager::decodePreValidateAndSettl
         return checkPaymentIsNewAndSettleIt(
             config, resource, organization, paymentPayload, ipAddress);
     } catch (std::exception &e) {
-        spdlog::error("decodeValidateAndSettlePayment had exception  {}", e.what());
+        LOG_CORE_ERROR("decodeValidateAndSettlePayment had exception  {}", e.what());
         return HttpError(ERR_INTERNAL_SERVER_ERROR,
                          std::string("decodeValidateAndSettlePayment had exception") + e.what());
     }

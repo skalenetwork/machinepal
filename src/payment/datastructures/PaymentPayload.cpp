@@ -86,20 +86,20 @@ std::optional< FacilitatorError > PaymentPayload::validateAndVerifySignature(
    const string& paymentScheme ) const {
     try {
         if ( x402Version_ != 1 ) {
-            spdlog::error( "Unsupported x402Version in payment payload: {}", x402Version_ );
+            LOG_CORE_ERROR( "Unsupported x402Version in payment payload: {}", x402Version_ );
             return FacilitatorError::invalid_x402_version;
         }
         if ( !config.isSchemeSupported( scheme_ ) ) {
-            spdlog::error( "Payment scheme is not supported: {}", scheme_ );
+            LOG_CORE_ERROR( "Payment scheme is not supported: {}", scheme_ );
             return FacilitatorError::invalid_scheme;
         }
         if ( scheme_ != paymentScheme ) {
-            spdlog::error(" Payment scheme does not match resource's required scheme: {} != {}",
+            LOG_CORE_ERROR(" Payment scheme does not match resource's required scheme: {} != {}",
                 scheme_, paymentScheme);
             return FacilitatorError::invalid_scheme;
         }
         if ( network_ != config.network()->name() ) {
-            spdlog::error(" Payment network does not match configured network: {} != {}",
+            LOG_CORE_ERROR(" Payment network does not match configured network: {} != {}",
                 network_, config.network()->name());
             return FacilitatorError::invalid_network;
         }
@@ -111,7 +111,7 @@ std::optional< FacilitatorError > PaymentPayload::validateAndVerifySignature(
         }
         return verifyEIP3009Signature( config.network()->eip712Domain() );
     } catch ( const std::exception& e ) {
-        spdlog::error( "Exception validating payment payload: {}", e.what() );
+        LOG_CORE_ERROR( "Exception validating payment payload: {}", e.what() );
         return FacilitatorError::unexpected_verify_error;
     }
 }
@@ -123,7 +123,7 @@ std::optional< FacilitatorError > PaymentPayload::verifyEIP3009Signature(
         CHECK_STATE( eipDomain );
         return payload()->verifyEIP3009Signature( eipDomain );
     } catch ( const std::exception& e ) {
-        spdlog::error( "Exception : {}", e.what() );
+        LOG_CORE_ERROR( "Exception : {}", e.what() );
         return FacilitatorError::unexpected_verify_error;
     }
 }

@@ -100,7 +100,7 @@ map<string, string> parseConfigValueOverloadsFromCommandLineAndEnvironment(int a
             auto levelStr = envOverloads["LOG_LEVEL"];
             static const std::set<std::string> validLevels = {"info", "debug", "trace", "warn", "error", "fatal"};
             if (validLevels.find(levelStr) == validLevels.end()) {
-                spdlog::critical("Invalid log level specified: " + levelStr);
+                LOG_CORE_CRITICAL("Invalid log level specified: " + levelStr);
                 exit(1);
             }
         }
@@ -119,14 +119,14 @@ map<string, string> parseConfigValueOverloadsFromCommandLineAndEnvironment(int a
     (
         const std::exception &ex
     ) {
-        spdlog::critical("Error parsing commmand line and environment", ex.what());
+        LOG_CORE_CRITICAL("Error parsing commmand line and environment", ex.what());
         printNestedException(ex);
         exit(1);
     } catch
     (
         ...
     ) {
-        spdlog::critical("Unknown error loading config.");
+        LOG_CORE_CRITICAL("Unknown error loading config.");
         exit(1);
     }
 }
@@ -140,17 +140,17 @@ int main(int argc, char *argv[]) {
         auto configFilePath = configValueOverloads.at("CONFIG");
 
         if (configFilePath == "./machinepal.yml") {
-            spdlog::info("Using default config path ./machinepal.yml");
+            LOG_CORE_INFO("Using default config path ./machinepal.yml");
         } else {
-            spdlog::info("Using config path: {}", configFilePath);
+            LOG_CORE_INFO("Using config path: {}", configFilePath);
         }
 
         if (configValueOverloads.size() > 0) {
-            spdlog::info("Values set in command line and environment override "
+            LOG_CORE_INFO("Values set in command line and environment override "
                 "the corresponding configuration file values."
                 " Command line takes precedence over environment.");
             for (const auto &kv: configValueOverloads) {
-                spdlog::info("{} = {}", kv.first, kv.second);
+                LOG_CORE_INFO("{} = {}", kv.first, kv.second);
             }
         }
 
@@ -161,11 +161,11 @@ int main(int argc, char *argv[]) {
         machinePalApp->runUntilExit();
         return 0;
     } catch (const std::exception &ex) {
-        spdlog::critical("Fatal error in main. Exiting. ");
+        LOG_CORE_CRITICAL("Fatal error in main. Exiting. ");
         printNestedException(ex);
         return 1;
     } catch (...) {
-        spdlog::critical("Unknown fatal error in main. Exiting.");
+        LOG_CORE_CRITICAL("Unknown fatal error in main. Exiting.");
         return 1;
     }
 }

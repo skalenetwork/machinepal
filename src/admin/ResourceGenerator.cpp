@@ -18,7 +18,7 @@ void ResourceGenerator::generateDefaultResources(const filesystem::path& path) {
         file << "hello world";
         file.close();
     } catch (const std::exception& e) {
-        spdlog::error(e.what());
+        LOG_CORE_ERROR(e.what());
         RETHROW_NESTED;
     }
 }

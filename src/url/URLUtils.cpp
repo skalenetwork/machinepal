@@ -8,7 +8,7 @@ std::string URLUtils::getLocationFromUrl(const std::string &urlStr) {
     auto result = boost::urls::parse_uri_reference(urlStr);
 
     if (!result) {
-        spdlog::error("Invalid URL provided: {}", urlStr);
+        LOG_CORE_ERROR("Invalid URL provided: {}", urlStr);
         throw std::invalid_argument("Invalid URL: " + urlStr);
     }
 

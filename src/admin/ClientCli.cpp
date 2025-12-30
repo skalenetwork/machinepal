@@ -62,7 +62,7 @@ int ClientCli::runClientCommand(const ClientConfig &config) {
         if (!config.payload.empty()) {
             std::ifstream payloadFile(config.payload);
             if (!payloadFile) {
-                spdlog::error("Failed to open payload file: {}", config.payload);
+                LOG_CLIENT_ERROR("Failed to open payload file: {}", config.payload);
                 return 1;
             }
             std::stringstream buffer;
@@ -73,7 +73,7 @@ int ClientCli::runClientCommand(const ClientConfig &config) {
 
         client.doX402Request(config.method, config.url, payload, nullptr);
     } catch (const std::exception &ex) {
-        spdlog::error("Exception running client command: {}", ex.what());
+        LOG_CLIENT_ERROR("Exception running client command: {}", ex.what());
         return 1;
     }
 

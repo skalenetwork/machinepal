@@ -92,8 +92,6 @@ protected:
 
     std::string connectionString_;
 
-    ptr< spdlog::logger > logger_;
-
 
     /**
      * @brief Thread-safe connection pool.

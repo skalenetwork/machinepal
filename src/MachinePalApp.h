@@ -77,16 +77,16 @@ public:
             }
             else
             {
-                spdlog::warn("No MachinePalApp instance to stop server on terminate signal.");
+                LOG_CORE_WARN("No MachinePalApp instance to stop server on terminate signal.");
             }
         }
         catch (const std::exception& ex)
         {
-            spdlog::error("Error stopping server by terminate signal: {}", ex.what());
+            LOG_CORE_ERROR("Error stopping server by terminate signal: {}", ex.what());
         }
         catch (...)
         {
-            spdlog::error("Unknown error stopping server by terminate signal.");
+            LOG_CORE_ERROR("Unknown error stopping server by terminate signal.");
         }
     }
 

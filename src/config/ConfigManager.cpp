@@ -137,8 +137,8 @@ void ConfigManager::reloadConfig() {
 
         auto configPath = fileManager_->canonicalConfigPath();
 
-        spdlog::info("Loading machinepal config from: {}", configPath.c_str());
-        spdlog::info(
+        LOG_CORE_INFO("Loading machinepal config from: {}", configPath.c_str());
+        LOG_CORE_INFO(
             "All relative paths in the config are resolved relative to the config base "
             "directory: {}",
             fileManager_->canonicalConfigDirPath().c_str());

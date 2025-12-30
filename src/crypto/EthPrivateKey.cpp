@@ -423,12 +423,12 @@ std::optional< FacilitatorError > EthPrivateKey::eip712VerifyRaw(
     try {
         EthAddress rec = recoverAddressFromSigRSV( msg32, sig65 );
         if ( std::memcmp( rec.bytes().data(), expectedAddress.bytes().data(), 20 ) != 0 ) {
-            spdlog::warn("Recovered address: {}, Expected address: {}",
+            LOG_CORE_WARN("Recovered address: {}, Expected address: {}",
                 rec.toHex( PREFIX_0x ), expectedAddress.toHex( PREFIX_0x ));
             return FacilitatorError::invalid_exact_evm_payload_signature;
         }
     } catch ( std::exception& e ) {
-        spdlog::error("Signature verification failed: {}", e.what() );
+        LOG_CORE_ERROR("Signature verification failed: {}", e.what() );
         return FacilitatorError::invalid_exact_evm_payload_signature;
     }
     return std::nullopt;

@@ -102,10 +102,10 @@ EasyNetDb::EasyNetDb( MachinePalApp& app, DbType type, const optional< string >&
         sql << "CREATE INDEX IF NOT EXISTS idx_transactions_authorizationSignatureHash ON transactions(authorizationSignatureHash)";
 
         if ( !stateTableExisted ) {
-            logger_->info( "New 'state' table created and schema initialized." );
+            LOG_DB_INFO( "New 'state' table created and schema initialized." );
         }
         if ( !transactionsTableExisted ) {
-            logger_->info( "New 'transactions' table created and schema initialized." );
+            LOG_DB_INFO( "New 'transactions' table created and schema initialized." );
         }
     } catch ( exception& e ) {
         RETHROW_NESTED2( "Failed to ensure schema " + string( e.what() ) );
@@ -119,7 +119,7 @@ void EasyNetDb::newWalletUnsafe( const EthAddress& walletAddress, const EthAddre
         string walletAddressDatabaseString = walletAddress.toDbString();
         string assetContractAddressDatabaseString = assetAddress.toDbString();
         string initialValueDecimalString = value.toDbString();
-        logger_->trace( "newWallet: inserting state row walletAddress={} assetAddress={} initialValue={}",
+        LOG_DB_TRACE( "newWallet: inserting state row walletAddress={} assetAddress={} initialValue={}",
             walletAddressDatabaseString, assetContractAddressDatabaseString, initialValueDecimalString );
         databaseSession << R"(INSERT INTO state (walletAddress, assetAddress, value)
                      VALUES (:walletAddress, :assetAddress, :value))",
@@ -219,7 +219,7 @@ std::optional<FacilitatorError> EasyNetDb::transferValueUnsafe( const EthAddress
         u256 senderCurrentBalanceValue = Encoding::u256FromHexOrDecimal( senderBalanceValueStringFromDatabase );
 
         if ( transferAmountValue > senderCurrentBalanceValue ) {
-            logger_->warn( "transferValue: insufficient funds walletAddress={} assetAddress={} have={} need={}",
+            LOG_DB_WARN( "transferValue: insufficient funds walletAddress={} assetAddress={} have={} need={}",
                 fromWalletAddressDatabaseString, assetContractAddressDatabaseString,
                 Encoding::u256ToDecimal( senderCurrentBalanceValue ), Encoding::u256ToDecimal( transferAmountValue ) );
             return FacilitatorError::insufficient_funds;
@@ -242,7 +242,7 @@ std::optional<FacilitatorError> EasyNetDb::transferValueUnsafe( const EthAddress
 
         const u256 maxUint256Value = ( numeric_limits< u256 >::max )();
         if ( transferAmountValue > maxUint256Value - receiverCurrentBalanceValue ) {
-            logger_->trace( "transferValue: overflow would occur receiverWalletAddress={} assetAddress={} receiverBalance={} amount={} max={} treating as insufficient funds",
+            LOG_DB_TRACE( "transferValue: overflow would occur receiverWalletAddress={} assetAddress={} receiverBalance={} amount={} max={} treating as insufficient funds",
                 toWalletAddressDatabaseString, assetContractAddressDatabaseString,
                 Encoding::u256ToDecimal( receiverCurrentBalanceValue ), Encoding::u256ToDecimal( transferAmountValue ),
                 Encoding::u256ToDecimal( maxUint256Value ) );
@@ -266,7 +266,7 @@ std::optional<FacilitatorError> EasyNetDb::transferValueUnsafe( const EthAddress
             insertIntoState( databaseSession, toWalletAddressDatabaseString, assetContractAddressDatabaseString, receiverUpdatedBalanceDecimalString );
         }
 
-        logger_->trace( "transferValue success: fromWalletAddress={} toWalletAddress={} assetContractAddress={} transferAmount={} senderUpdatedBalance={} receiverUpdatedBalance={}",
+        LOG_DB_TRACE( "transferValue success: fromWalletAddress={} toWalletAddress={} assetContractAddress={} transferAmount={} senderUpdatedBalance={} receiverUpdatedBalance={}",
             fromWalletAddressDatabaseString, toWalletAddressDatabaseString, assetContractAddressDatabaseString,
             Encoding::u256ToDecimal( transferAmountValue ), senderUpdatedBalanceDecimalString, receiverUpdatedBalanceDecimalString );
 
@@ -298,7 +298,7 @@ void EasyNetDb::fundUserWalletWithFundsIfNewWalletUnsafe( const EthAddress& wall
             soci::use( assetContractAddressDatabaseString, "assetAddress" );
 
         if ( !( existingValueIndicator == soci::i_null || existingValueStringFromDatabase.empty() ) ) {
-            logger_->trace( "fundUserWalletWithFundsIfNewWallet: wallet already funded walletAddress={} assetAddress={} existingValue={}",
+            LOG_DB_TRACE( "fundUserWalletWithFundsIfNewWallet: wallet already funded walletAddress={} assetAddress={} existingValue={}",
                 walletAddressDatabaseString, assetContractAddressDatabaseString, existingValueStringFromDatabase );
             return;
         }
@@ -313,7 +313,7 @@ void EasyNetDb::fundUserWalletWithFundsIfNewWalletUnsafe( const EthAddress& wall
             soci::use( assetContractAddressDatabaseString, "assetAddress" ),
             soci::use( initialFundingDecimalString, "value" );
 
-        logger_->trace( "fundUserWalletWithFundsIfNewWallet: funded new wallet walletAddress={} assetAddress={} initialValue={}",
+        LOG_DB_TRACE( "fundUserWalletWithFundsIfNewWallet: funded new wallet walletAddress={} assetAddress={} initialValue={}",
             walletAddressDatabaseString, assetContractAddressDatabaseString, initialFundingDecimalString );
     } catch ( exception& e ) {
         RETHROW_NESTED2( "Failed to fund user wallet: " + string( e.what() ) );

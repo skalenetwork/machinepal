@@ -97,12 +97,12 @@ std::optional< FacilitatorError > Authorization::checkValidityTime() {
         std::chrono::system_clock::to_time_t( std::chrono::system_clock::now() ) );
 
     if ( validAfter() > now ) {
-        spdlog::error("Authorization not yet valid: current time ({}) is less than validAfter ({})",
+        LOG_CORE_ERROR("Authorization not yet valid: current time ({}) is less than validAfter ({})",
             now.toDecimal(), validAfter().toDecimal());
         return FacilitatorError::invalid_exact_evm_payload_authorization_valid_after;
     }
     if ( validBefore() < now ) {
-        spdlog::error("Authorization expired: current time ({}) is after validBefore ({})",
+        LOG_CORE_ERROR("Authorization expired: current time ({}) is after validBefore ({})",
             now.toDecimal(), validBefore().toDecimal());
         return FacilitatorError::invalid_exact_evm_payload_authorization_valid_before;
 
@@ -115,7 +115,7 @@ std::optional< FacilitatorError> Authorization::validate(const EIP3009Value& pri
     // Check validBefore is greater than current time
     try {
         if ( this->to() != destinationAddress ) {
-            spdlog::error("Authorization payment destination address does not match configured "
+            LOG_CORE_ERROR("Authorization payment destination address does not match configured "
                           "destination address: authorization.to={}, configured.to={}",
                 to().toHex( PREFIX_0x ),
                 destinationAddress.toHex( PREFIX_0x ) );
@@ -124,7 +124,7 @@ std::optional< FacilitatorError> Authorization::validate(const EIP3009Value& pri
 
 
         if ( value() != price ) {
-            spdlog::error("Authorization payment value does not equal required price: "
+            LOG_CORE_ERROR("Authorization payment value does not equal required price: "
                           "authorization.value={}, resource.maxAmountRequired={}",
                 value().toDecimal(), price.toDecimal() );
             return FacilitatorError::invalid_exact_evm_payload_authorization_value;
@@ -132,7 +132,7 @@ std::optional< FacilitatorError> Authorization::validate(const EIP3009Value& pri
 
         return checkValidityTime();
     } catch ( const std::exception& e ) {
-        spdlog::error("Authorization validation failed: {}", e.what() );
+        LOG_CORE_ERROR("Authorization validation failed: {}", e.what() );
         return FacilitatorError::unexpected_verify_error;
     }
     return std::nullopt;  // no error

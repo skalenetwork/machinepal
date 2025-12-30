@@ -99,22 +99,7 @@ inline std::string stripSpaces(std::string _s)
     return _s;
 }
 
-inline void printNestedException(const std::exception& e, int level = 0)
-{
-    spdlog::error("{}Exception: {}", std::string(level, '*'), e.what());
-    try
-    {
-        std::rethrow_if_nested(e);
-    }
-    catch (const std::exception& nested)
-    {
-        printNestedException(nested, level + 2);
-    }
-    catch (...)
-    {
-        spdlog::error("{}Non-std::exception nested", std::string(level + 2, '*'));
-    }
-}
+
 
 
 #define RETHROW_NESTED \
@@ -202,19 +187,19 @@ using namespace std;
 // =============================================================================
 
 #define LOG_DB_TRACE(...) \
-    do { if(spdlog::get("database")->should_log(spdlog::level::trace)) spdlog::get("database")->trace(__VA_ARGS__); } while(0)
+    do { if(spdlog::get("db")->should_log(spdlog::level::trace)) spdlog::get("db")->trace(__VA_ARGS__); } while(0)
 
 #define LOG_DB_DEBUG(...) \
-    do { if(spdlog::get("database")->should_log(spdlog::level::debug)) spdlog::get("database")->debug(__VA_ARGS__); } while(0)
+    do { if(spdlog::get("db")->should_log(spdlog::level::debug)) spdlog::get("db")->debug(__VA_ARGS__); } while(0)
 
 #define LOG_DB_INFO(...) \
-    do { if(spdlog::get("database")->should_log(spdlog::level::info))  spdlog::get("database")->info(__VA_ARGS__); } while(0)
+    do { if(spdlog::get("db")->should_log(spdlog::level::info))  spdlog::get("db")->info(__VA_ARGS__); } while(0)
 
 #define LOG_DB_WARN(...) \
-    do { if(spdlog::get("database")->should_log(spdlog::level::warn))  spdlog::get("database")->warn(__VA_ARGS__); } while(0)
+    do { if(spdlog::get("db")->should_log(spdlog::level::warn))  spdlog::get("db")->warn(__VA_ARGS__); } while(0)
 
 #define LOG_DB_ERROR(...) \
-    do { if(spdlog::get("database")->should_log(spdlog::level::err))   spdlog::get("database")->error(__VA_ARGS__); } while(0)
+    do { if(spdlog::get("db")->should_log(spdlog::level::err))   spdlog::get("db")->error(__VA_ARGS__); } while(0)
 
 // =============================================================================
 // 5. SECURITY (WAF / Auth)
@@ -267,3 +252,20 @@ using namespace std;
 
 #define LOG_CLIENT_ERROR(...) \
     do { if(spdlog::get("client")->should_log(spdlog::level::err))   spdlog::get("client")->error(__VA_ARGS__); } while(0)
+
+inline void printNestedException(const std::exception& e, int level = 0)
+{
+    LOG_CORE_ERROR("{}Exception: {}", std::string(level, '*'), e.what());
+    try
+    {
+        std::rethrow_if_nested(e);
+    }
+    catch (const std::exception& nested)
+    {
+        printNestedException(nested, level + 2);
+    }
+    catch (...)
+    {
+        LOG_CORE_ERROR("{}Non-std::exception nested", std::string(level + 2, '*'));
+    }
+}
