@@ -357,3 +357,24 @@ size_t HttpEndpointConnection::headerCallback(char *buffer, size_t size, size_t 
 
     return totalSize;
 }
+
+
+int HttpEndpointConnection::debugCallback(CURL *, curl_infotype type, char *data, size_t size, void *) {
+    switch (type) {
+        case CURLINFO_HEADER_OUT:
+            LOG_NETWORK_INFO("CURL SEND HEADER:{}", std::string(data, size));
+            break;
+        case CURLINFO_DATA_OUT:
+            LOG_NETWORK_INFO("CURL SEND DATA:{}", std::string(data, size));
+            break;
+        case CURLINFO_HEADER_IN:
+            LOG_NETWORK_INFO("CURL RECV HEADER:{}", std::string(data, size));
+            break;
+        case CURLINFO_DATA_IN:
+            LOG_NETWORK_INFO("CURL RECV DATA:{}", std::string(data, size));
+            break;
+        default:
+            break;
+    }
+    return 0;
+}

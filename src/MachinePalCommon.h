@@ -146,3 +146,124 @@ enum Prefix
 };
 
 using namespace std;
+
+#define LOG_ACCESS_INFO(...) \
+    do { if(spdlog::get("access")->should_log(spdlog::level::info))  spdlog::get("access")->info(__VA_ARGS__); } while(0)
+
+#define LOG_ACCESS_WARN(...) \
+    do { if(spdlog::get("access")->should_log(spdlog::level::warn))  spdlog::get("access")->warn(__VA_ARGS__); } while(0)
+
+#define LOG_ACCESS_ERROR(...) \
+    do { if(spdlog::get("access")->should_log(spdlog::level::err))   spdlog::get("access")->error(__VA_ARGS__); } while(0)
+
+// =============================================================================
+// 2. CORE LOGS (STDERR - DEFAULT)
+// =============================================================================
+
+#define LOG_CORE_TRACE(...) \
+    do { if(spdlog::get("core")->should_log(spdlog::level::trace)) spdlog::get("core")->trace(__VA_ARGS__); } while(0)
+
+#define LOG_CORE_DEBUG(...) \
+    do { if(spdlog::get("core")->should_log(spdlog::level::debug)) spdlog::get("core")->debug(__VA_ARGS__); } while(0)
+
+#define LOG_CORE_INFO(...) \
+    do { if(spdlog::get("core")->should_log(spdlog::level::info))  spdlog::get("core")->info(__VA_ARGS__); } while(0)
+
+#define LOG_CORE_WARN(...) \
+    do { if(spdlog::get("core")->should_log(spdlog::level::warn))  spdlog::get("core")->warn(__VA_ARGS__); } while(0)
+
+#define LOG_CORE_ERROR(...) \
+    do { if(spdlog::get("core")->should_log(spdlog::level::err))   spdlog::get("core")->error(__VA_ARGS__); } while(0)
+
+#define LOG_CORE_CRITICAL(...) \
+    do { if(spdlog::get("core")->should_log(spdlog::level::critical)) spdlog::get("core")->critical(__VA_ARGS__); } while(0)
+
+// =============================================================================
+// 3. NETWORK (Network/Backend)
+// =============================================================================
+
+#define LOG_NETWORK_TRACE(...) \
+    do { if(spdlog::get("network")->should_log(spdlog::level::trace)) spdlog::get("network")->trace(__VA_ARGS__); } while(0)
+
+#define LOG_NETWORK_DEBUG(...) \
+    do { if(spdlog::get("network")->should_log(spdlog::level::debug)) spdlog::get("network")->debug(__VA_ARGS__); } while(0)
+
+#define LOG_NETWORK_INFO(...) \
+    do { if(spdlog::get("network")->should_log(spdlog::level::info))  spdlog::get("network")->info(__VA_ARGS__); } while(0)
+
+#define LOG_NETWORK_WARN(...) \
+    do { if(spdlog::get("network")->should_log(spdlog::level::warn))  spdlog::get("network")->warn(__VA_ARGS__); } while(0)
+
+#define LOG_NETWORK_ERROR(...) \
+    do { if(spdlog::get("network")->should_log(spdlog::level::err))   spdlog::get("network")->error(__VA_ARGS__); } while(0)
+
+// =============================================================================
+// 4. DATABASE
+// =============================================================================
+
+#define LOG_DB_TRACE(...) \
+    do { if(spdlog::get("database")->should_log(spdlog::level::trace)) spdlog::get("database")->trace(__VA_ARGS__); } while(0)
+
+#define LOG_DB_DEBUG(...) \
+    do { if(spdlog::get("database")->should_log(spdlog::level::debug)) spdlog::get("database")->debug(__VA_ARGS__); } while(0)
+
+#define LOG_DB_INFO(...) \
+    do { if(spdlog::get("database")->should_log(spdlog::level::info))  spdlog::get("database")->info(__VA_ARGS__); } while(0)
+
+#define LOG_DB_WARN(...) \
+    do { if(spdlog::get("database")->should_log(spdlog::level::warn))  spdlog::get("database")->warn(__VA_ARGS__); } while(0)
+
+#define LOG_DB_ERROR(...) \
+    do { if(spdlog::get("database")->should_log(spdlog::level::err))   spdlog::get("database")->error(__VA_ARGS__); } while(0)
+
+// =============================================================================
+// 5. SECURITY (WAF / Auth)
+// =============================================================================
+
+#define LOG_SECURITY_INFO(...) \
+    do { if(spdlog::get("security")->should_log(spdlog::level::info))  spdlog::get("security")->info(__VA_ARGS__); } while(0)
+
+#define LOG_SECURITY_WARN(...) \
+    do { if(spdlog::get("security")->should_log(spdlog::level::warn))  spdlog::get("security")->warn(__VA_ARGS__); } while(0)
+
+#define LOG_SECURITY_ERROR(...) \
+    do { if(spdlog::get("security")->should_log(spdlog::level::err))   spdlog::get("security")->error(__VA_ARGS__); } while(0)
+
+// =============================================================================
+// 6. ADMIN (Audit)
+// =============================================================================
+
+#define LOG_ADMIN_INFO(...) \
+    do { if(spdlog::get("admin")->should_log(spdlog::level::info))  spdlog::get("admin")->info(__VA_ARGS__); } while(0)
+
+#define LOG_ADMIN_WARN(...) \
+    do { if(spdlog::get("admin")->should_log(spdlog::level::warn))  spdlog::get("admin")->warn(__VA_ARGS__); } while(0)
+
+#define LOG_ADMIN_ERROR(...) \
+    do { if(spdlog::get("admin")->should_log(spdlog::level::err))   spdlog::get("admin")->error(__VA_ARGS__); } while(0)
+
+// =============================================================================
+// 7. HEALTH (Noise Control)
+// =============================================================================
+
+#define LOG_HEALTH_PING(...) \
+    do { if(spdlog::get("health")->should_log(spdlog::level::info)) spdlog::get("health")->info(__VA_ARGS__); } while(0)
+
+#define LOG_HEALTH_FAIL(...) \
+    do { if(spdlog::get("health")->should_log(spdlog::level::err))  spdlog::get("health")->error(__VA_ARGS__); } while(0)
+
+// =============================================================================
+// 8. CLIENT (Client specific errors)
+// =============================================================================
+
+#define LOG_CLIENT_DEBUG(...) \
+    do { if(spdlog::get("client")->should_log(spdlog::level::debug)) spdlog::get("client")->debug(__VA_ARGS__); } while(0)
+
+#define LOG_CLIENT_INFO(...) \
+    do { if(spdlog::get("client")->should_log(spdlog::level::info))  spdlog::get("client")->info(__VA_ARGS__); } while(0)
+
+#define LOG_CLIENT_WARN(...) \
+    do { if(spdlog::get("client")->should_log(spdlog::level::warn))  spdlog::get("client")->warn(__VA_ARGS__); } while(0)
+
+#define LOG_CLIENT_ERROR(...) \
+    do { if(spdlog::get("client")->should_log(spdlog::level::err))   spdlog::get("client")->error(__VA_ARGS__); } while(0)

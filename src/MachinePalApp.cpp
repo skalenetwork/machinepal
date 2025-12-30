@@ -47,7 +47,7 @@ uint32_t MachinePalApp::runUntilExit()
 
     try
     {
-        spdlog::info("Starting machinepal");
+        LOG_CORE_INFO("Starting machinepal");
         serverFactory_ = std::make_shared<ServerFactory>(*this);
         auto serverConfig = configManager_->latestConfig()->server();
 
@@ -59,7 +59,7 @@ uint32_t MachinePalApp::runUntilExit()
 
         auto onSuccess = [this]()
         {
-            spdlog::info("Machinepal started successfully.");
+            LOG_CORE_INFO("Machinepal started successfully.");
             this->isStarted_ = true;
         };
         auto onError = [this](std::exception_ptr eptr)
@@ -70,14 +70,14 @@ uint32_t MachinePalApp::runUntilExit()
             }
             catch (const std::exception& ex)
             {
-                spdlog::error("Machinepal failed to start: {}", ex.what());
+                LOG_CORE_ERROR("Machinepal failed to start: {}", ex.what());
                 this->setExited(1, ex.what());
                 return;
             }
             catch (...)
             {
             }
-            spdlog::error("Machinepal failed to start: unknown error");
+            LOG_CORE_ERROR("Machinepal failed to start: unknown error");
             this->setExited(1, "Machinepal failed to start: unknown error");
         };
 
@@ -90,7 +90,7 @@ uint32_t MachinePalApp::runUntilExit()
             }
             catch (...)
             {
-                spdlog::error("Machinepal failed to start: unknown error");
+                LOG_CORE_ERROR("Machinepal failed to start: unknown error");
                 setExited(1, "Unknown error starting machinepal");
             }
         });
@@ -105,9 +105,9 @@ uint32_t MachinePalApp::runUntilExit()
                 try {
                     this->configManager()->latestConfig()->facilitatorClient()->selfTest();
                 } catch (const std::exception& ex) {
-                    spdlog::error("Facilitator self test failed: {}", ex.what());
+                    LOG_CORE_ERROR("Facilitator self test failed: {}", ex.what());
                 } catch (...) {
-                    spdlog::error("Facilitator self test failed: unknown error");
+                    LOG_CORE_ERROR("Facilitator self test failed: unknown error");
                 }
             }
             usleep(100 * 1000);
@@ -115,9 +115,9 @@ uint32_t MachinePalApp::runUntilExit()
         if (sigReceived)
         {
             if (sigReceived == SIGINT)
-                spdlog::info("SIGINT (Ctrl-C) received, stopping server.");
+                LOG_CORE_INFO("SIGINT (Ctrl-C) received, stopping server.");
             else if (sigReceived == SIGTERM)
-                spdlog::info("SIGTERM received, stopping server.");
+                LOG_CORE_INFO("SIGTERM received, stopping server.");
             else
             {
                 CHECK_STATE2(false, std::string("Unexpected signal {}") + to_string(sigReceived.load()));
@@ -134,10 +134,10 @@ uint32_t MachinePalApp::runUntilExit()
         serverThread.join();
         if (exitCode_ != 0)
         {
-            spdlog::error("Error running machinepal server: {}. Server exited.", exitErrorMessage_);
+            LOG_CORE_ERROR("Error running machinepal server: {}. Server exited.", exitErrorMessage_);
             return exitCode_;
         }
-        spdlog::info("Machinepal server exited normally.");
+        LOG_CORE_INFO("Machinepal server exited normally.");
         return 0;
     }
     catch (const std::exception& ex)

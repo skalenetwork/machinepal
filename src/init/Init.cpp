@@ -26,7 +26,7 @@ static size_t HeaderCallback(char *buffer, size_t size, size_t nitems, void *use
 atomic<bool> Init::inited_{false};
 
 
-void ThrowOnFailure() {
+__attribute__((noreturn)) void ThrowOnFailure() {
     cerr << "Fatal log or CHECK failed in proxygen" << endl;
     throw runtime_error("Fatal log or CHECK failed");
 }
@@ -83,13 +83,13 @@ void Init::initAllLibs(int _argc, char *_argv[]) {
  * * > MODE 1: LOCAL DEVELOPMENT (Default)
  * - Env: LOG_FORMAT is unset or empty.
  * - Format: Colored Plaintext.
- * - Example: [Time] [upstream] [error] Connection refused
+ * - Example: [Time] [network] [error] Connection refused
  * - Rationale: Instant readability for humans in a terminal.
  *
  * > MODE 2: CLOUD PRODUCTION (Docker/K8s)
  * - Env: LOG_FORMAT=json
  * - Format: JSON Wrapped.
- * - Example: { "logger": "upstream", "level": "error", "message": "Connection refused" }
+ * - Example: { "logger": "network", "level": "error", "message": "Connection refused" }
  * - Rationale: Allows aggregators to index 'level' and 'logger' fields and
  * treat multi-line stack traces as single events.
  *
@@ -98,7 +98,7 @@ void Init::initAllLibs(int _argc, char *_argv[]) {
  * -------------------------------------------------------------------------------------------------
  * - ACCESS   -> STDOUT (JSON)
  * - CORE     -> STDERR (Adaptive)
- * - UPSTREAM -> STDERR (Adaptive)
+ * - NETWORK -> STDERR (Adaptive)
  * - DB       -> STDERR (Adaptive)
  * - SECURITY -> STDERR (Adaptive)
  * - ADMIN    -> STDERR (Adaptive)
@@ -121,7 +121,7 @@ void Init::initAllLibs(int _argc, char *_argv[]) {
  * |-----------|--------|---------------|----------------------------------------------------------|
  * | ACCESS    | STDOUT | Info          | Traffic Analysis: JSON logs for Datadog/ELK              |
  * | CORE      | STDERR | Info          | Lifecycle: Startup, Shutdown, unexpected crashes         |
- * | UPSTREAM  | STDERR | Info/Error    | Network: HTTP Status 5xx, timeouts from backend          |
+ * | NETWORK  | STDERR | Info/Error    | Network: HTTP Status 5xx, timeouts from backend          |
  * | DB        | STDERR | Error         | Data: SQL connection failures, slow queries              |
  * | SECURITY  | STDERR | Warn          | Threats: WAF blocks, Rate limits, Auth failures          |
  * | ADMIN     | STDERR | Info          | Audit: Configuration changes (API/Control Plane)         |
@@ -144,7 +144,7 @@ void Init::initAllLibs(int _argc, char *_argv[]) {
  * |-----------|---------------|----------|--------------------------------------------------------|
  * | ACCESS    | JSON          | Machines | High volume, structured data required for metrics.     |
  * | CORE      | Plaintext     | Humans   | Narrative of lifecycle. Needs to be instantly readable.|
- * | UPSTREAM  | Plaintext     | Humans   | Network debugging. Often contains complex error stacks.|
+ * | NETWORK  | Plaintext     | Humans   | Network debugging. Often contains complex error stacks.|
  * | DB        | Plaintext     | Humans   | Debugging SQL connectivity and connection pooling.     |
  * | HEALTH    | Plaintext     | Humans   | Low-value noise unless failing; simple text suffices.  |
  * | SECURITY  | JSON or Text  | Both     | Hybrid. Text for alerts, JSON for threat analysis.     |
@@ -256,8 +256,8 @@ void Init::setupLogging(bool forceJson, spdlog::level::level_enum logLevel) {
     // 2. CORE
     auto coreLogger = createLogger("core", systemSinks, currentSystemPattern);
 
-    // 3. UPSTREAM
-    createLogger("upstream", systemSinks, currentSystemPattern);
+    // 3. NETWORK
+    createLogger("network", systemSinks, currentSystemPattern);
 
     // 4. DB
     createLogger("database", systemSinks, currentSystemPattern);
@@ -272,6 +272,11 @@ void Init::setupLogging(bool forceJson, spdlog::level::level_enum logLevel) {
     auto healthLogger = createLogger("health", systemSinks, currentSystemPattern);
     healthLogger->set_level(spdlog::level::warn);
 
+    // 8. Client
+
+
+    auto clientLogger = createLogger("client", systemSinks, currentSystemPattern);
+
 
     spdlog::set_default_logger(coreLogger);
     spdlog::set_level(logLevel);
@@ -280,7 +285,7 @@ void Init::setupLogging(bool forceJson, spdlog::level::level_enum logLevel) {
     // Even in sync mode, stdout/stderr are buffered by the OS. This forces them out.
     spdlog::flush_every(std::chrono::seconds(1));
 
-    coreLogger->info("Logging configured (Synchronous Mode). JSON: {}", forceJson);
+    coreLogger->info("Logging configured. Log level {}", spdlog::level::to_string_view(logLevel) );
 }
 
 

@@ -83,23 +83,5 @@ public:
         std::string &responseBody,
         const std::function<void(CURL *)> &configureMethod);
 
-    static int debugCallback(CURL *, curl_infotype type, char *data, size_t size, void *) {
-        switch (type) {
-            case CURLINFO_HEADER_OUT:
-                spdlog::info("CURL SEND HEADER:\n{}", std::string(data, size));
-                break;
-            case CURLINFO_DATA_OUT:
-                spdlog::info("CURL SEND DATA:\n{}", std::string(data, size));
-                break;
-            case CURLINFO_HEADER_IN:
-                spdlog::info("CURL RECV HEADER:\n{}", std::string(data, size));
-                break;
-            case CURLINFO_DATA_IN:
-                spdlog::info("CURL RECV DATA:\n{}", std::string(data, size));
-                break;
-            default:
-                break;
-        }
-        return 0;
-    }
+    static int debugCallback(CURL *, curl_infotype type, char *data, size_t size, void *);
 };
