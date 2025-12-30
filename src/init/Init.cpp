@@ -186,7 +186,7 @@ public:
         auto duration = msg.time.time_since_epoch();
         int millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() % 1000;
 
-        char time_buf[32];
+        char time_buf[64];
         // Standard C way is faster here: YYYY-MM-DD HH:MM:SS
         std::strftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S", &tm_val);
 
