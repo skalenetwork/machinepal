@@ -44,7 +44,7 @@ bool X402Processor::reply402IfNoPaymentHeader(
 
         reply402PaymentRequired(std::nullopt);
     } catch (std::exception &e) {
-        spdlog::error("[hasPaymentHeader] Exception while checking X-PAYMENT header: {}",
+        LOG_NETWORK_ERROR("[hasPaymentHeader] Exception while checking X-PAYMENT header: {}",
                       e.what());
     }
 
@@ -160,25 +160,25 @@ void X402Processor::sendResponse(
     const proxygen::HTTPHeaders &headers,
     const std::string &body) {
     if (state_ == X402ProcessorState::ERROR_SENT) {
-        spdlog::info("Attempted to send response after error response already sent.");
+        LOG_NETWORK_INFO("Attempted to send response after error response already sent.");
         return;
     }
 
     if (state_ == X402ProcessorState::REPLY_SENT) {
-        spdlog::info("Attempted to send response after resource already sent.");
+        LOG_NETWORK_INFO("Attempted to send response after resource already sent.");
         return;
     }
 
 
     auto responseSender = responseSender_.lock();
     if (!responseSender) {
-        spdlog::error("Connection closed before response could be sent.");
+        LOG_NETWORK_ERROR("Connection closed before response could be sent.");
         return;
     }
     try {
         responseSender->sendResponse(statusAndMessage, headers, body);
     } catch (std::exception &e) {
-        spdlog::error("Exception while sending response: {}", e.what());
+        LOG_NETWORK_ERROR("Exception while sending response: {}", e.what());
         // nothing can be done so we consider response as sent
     }
 }
@@ -300,11 +300,11 @@ void X402Processor::onRequestStart(const std::unique_ptr<proxygen::HTTPMessage> 
         if (!validateAndDecodePath(request))
             return;
     } catch (std::exception &e) {
-        spdlog::critical("onRequestStart exception");
+        LOG_NETWORK_CRITICAL("onRequestStart exception");
         printNestedException(e);
         reply500InternalError("Could not process x402 request start.");
     } catch (...) {
-        spdlog::critical("onRequestStart unknown exception");
+        LOG_NETWORK_CRITICAL("onRequestStart unknown exception");
         reply500InternalError("Could not process x402 request start.");
     };
 }
@@ -365,11 +365,11 @@ void X402Processor::doPassThrough(const std::unique_ptr<proxygen::HTTPMessage> &
                      }, responseHeaders, responseBody);
         state_ = X402ProcessorState::REPLY_SENT;
     } catch (std::exception &e) {
-        spdlog::critical("doPassThrough exception");
+        LOG_NETWORK_CRITICAL("doPassThrough exception");
         printNestedException(e);
         reply500InternalError("Could not process pass-through request.");
     } catch (...) {
-        spdlog::critical("doPassThrough unknown exception");
+        LOG_NETWORK_CRITICAL("doPassThrough unknown exception");
         reply500InternalError("Could not process pass-through request.");
     }
 }
@@ -445,11 +445,11 @@ void X402Processor::onRequestFullyReceived(
         replyX402ResourceSuccess(httpStatusCode, settlementResponse.originalJsonToBase64(), std::move(responseHeaders),
                                  responseBody);
     } catch (std::exception &e) {
-        spdlog::critical("onRequestCompletion exception");
+        LOG_NETWORK_CRITICAL("onRequestCompletion exception");
         printNestedException(e);
         reply500InternalError("Could not process x402 request.");
     } catch (...) {
-        spdlog::critical("onRequestCompletion unknown exception");
+        LOG_NETWORK_CRITICAL("onRequestCompletion unknown exception");
         reply500InternalError("Could not process x402 request.");
     };
 }

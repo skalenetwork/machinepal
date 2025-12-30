@@ -35,10 +35,10 @@ void X402Handler::onRequest( std::unique_ptr< HTTPMessage > _headers ) noexcept 
 
         processor()->onRequestStart( reqHeaders_ );
     } catch ( const std::exception& e ) {
-        spdlog::critical( "Error in onRequest: {}", e.what() );
+        LOG_NETWORK_CRITICAL( "Error in onRequest: {}", e.what() );
         sendInternalError();
     } catch ( ... ) {
-        spdlog::critical( "Unknown error in onRequest" );
+        LOG_NETWORK_CRITICAL( "Unknown error in onRequest" );
         sendInternalError();
     }
 }
@@ -59,10 +59,10 @@ void X402Handler::onBody( std::unique_ptr< folly::IOBuf > _body ) noexcept {
         bodyBuffer_.append( reinterpret_cast< const char* >( _body->data() ), _body->length() );
         processor()->onBodySizeIncrease( bodyBuffer_.size() );
     } catch ( const std::exception& e ) {
-        spdlog::critical( "Error in onBody: {}", e.what() );
+        LOG_NETWORK_CRITICAL( "Error in onBody: {}", e.what() );
         sendInternalError();
     } catch ( ... ) {
-        spdlog::critical( "Unknown error in onBody" );
+        LOG_NETWORK_CRITICAL( "Unknown error in onBody" );
         sendInternalError();
     }
 }
@@ -71,7 +71,7 @@ void X402Handler::onBody( std::unique_ptr< folly::IOBuf > _body ) noexcept {
 void X402Handler::sendInternalError() {
     internalErrorSent_ = true;
     if ( !responseSender_ ) {
-        spdlog::critical( "Response sender not available in sendInternalError" );
+        LOG_NETWORK_CRITICAL( "Response sender not available in sendInternalError" );
         return;
     }
     proxygen::HTTPHeaders headers;
@@ -92,17 +92,17 @@ void X402Handler::onEOM() noexcept {
         }
         processor()->onRequestFullyReceived( reqHeaders_, bodyBuffer_ );
     } catch ( const std::exception& e ) {
-        spdlog::critical( "Error in onEOM: {}", e.what() );
+        LOG_NETWORK_CRITICAL( "Error in onEOM: {}", e.what() );
         sendInternalError();
     } catch ( ... ) {
-        spdlog::critical( "Unknown errror in onEOM" );
+        LOG_NETWORK_CRITICAL( "Unknown errror in onEOM" );
         sendInternalError();
     }
 }
 
 
 void X402Handler::onError( proxygen::ProxygenError _err ) noexcept  {
-    spdlog::error( "X402Handler::onError called: {}", proxygen::getErrorString( ( _err ) ) );
+    LOG_NETWORK_ERROR( "X402Handler::onError called: {}", proxygen::getErrorString( ( _err ) ) );
     responseSender().reset();
     // clean object if not used by different thread
     self_.reset();

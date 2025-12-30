@@ -79,7 +79,7 @@ std::shared_ptr<HTTPServer> ServerFactory::createServerInstance(
 
         for (const auto &config: ipConfigs) {
             auto protocol = config.sslConfigs.empty() ? "HTTP" : "HTTPS";
-            spdlog::info("Starting {} server on  {}:{}",
+            LOG_NETWORK_INFO("Starting {} server on  {}:{}",
                          protocol, config.address.getAddressStr(),
                          config.address.getPort());
         }

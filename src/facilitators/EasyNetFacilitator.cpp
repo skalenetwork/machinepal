@@ -89,7 +89,7 @@ EasyNetFacilitator::processVerifyRequestUnsafe( const nlohmann::json& verifyRequ
         price, payToAddress, paymentRequirements->scheme());
 
     if ( httpError ) {
-        spdlog::error("InvalidPayload: Payment payload validation or signature failed");
+        LOG_NETWORK_ERROR("InvalidPayload: Payment payload validation or signature failed");
         error = FacilitatorErrors::getErrorString(FacilitatorError::invalid_payload );
         return { paymentPayload, paymentRequirements };
     }
@@ -108,14 +108,14 @@ EasyNetFacilitator::processVerifyRequestUnsafe( const nlohmann::json& verifyRequ
         const u256 maxVal = ( std::numeric_limits< u256 >::max )();
         const u256 receiverBalance = receiverBalanceOpt.value();
         if ( transferValue.value() > maxVal - receiverBalance ) {
-            spdlog::error("Overflow: Receiver balance would overflow 256-bit limit");
+            LOG_NETWORK_ERROR("Overflow: Receiver balance would overflow 256-bit limit");
             error = FacilitatorErrors::getErrorString(FacilitatorError::insufficient_funds );
             return { paymentPayload, paymentRequirements };
         }
     }
 
     if ( transferValue.value() > currentBalance ) {
-        spdlog::error("InsufficientFunds: Balance lower than requested transfer amount");
+        LOG_NETWORK_ERROR("InsufficientFunds: Balance lower than requested transfer amount");
         error = FacilitatorErrors::getErrorString(FacilitatorError::insufficient_funds );
         return { paymentPayload, paymentRequirements };
     }
@@ -134,7 +134,7 @@ nlohmann::json EasyNetFacilitator::processVerifyRequest(
             processVerifyRequestUnsafe( verifyRequestJson, error, *db );
         auto fromWalletAddress = payload->payload()->authorization()->from();
         if ( error ) {
-            spdlog::error("Error processing verify request: {}", error.value());
+            LOG_NETWORK_ERROR("Error processing verify request: {}", error.value());
             VerifyResponse errorResponse(
                 false, error.value(), fromWalletAddress.toDbString(), std::nullopt );
 
@@ -145,7 +145,7 @@ nlohmann::json EasyNetFacilitator::processVerifyRequest(
             return verifyResponse.toJson();
         }
     } catch ( const std::exception& e ) {
-        spdlog::error("Exception processing verify request: {}", e.what());
+        LOG_NETWORK_ERROR("Exception processing verify request: {}", e.what());
         optional<string> standardErrorString =
             std::string(FacilitatorErrors::getErrorString(FacilitatorError::unexpected_verify_error));
         VerifyResponse errorResponse( false,

@@ -11,7 +11,7 @@ public:
         auto task = [weakSelf = weakSelf_, statusAndMessage, headers, body]() mutable {
             auto self = weakSelf.lock();
             if (!self) {
-                spdlog::error("Connection closed before sending reply");
+                LOG_NETWORK_ERROR("Connection closed before sending reply");
                 return;
             }
             proxygen::ResponseBuilder builder(self->downstream_);

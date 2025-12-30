@@ -65,24 +65,24 @@ std::string FacilitatorProcessor::getJsonErrorBody( const std::string& message )
 void FacilitatorProcessor::sendResponse( const std::pair< uint16_t, std::string >& statusAndMessage,
     const proxygen::HTTPHeaders& headers, const std::string& body ) {
     if ( state_ == FacilitatorProcessorState::ERROR_SENT) {
-        spdlog::error( "Attempted to send response after error response already sent." );
+        LOG_NETWORK_ERROR( "Attempted to send response after error response already sent." );
         return;
     }
 
     if ( state_ == FacilitatorProcessorState::REPLY_SENT ) {
-        spdlog::error( "Attempted to send response after resource already sent." );
+        LOG_NETWORK_ERROR( "Attempted to send response after resource already sent." );
         return;
     }
 
     auto responseSender = responseSender_.lock();
     if ( !responseSender ) {
-        spdlog::error( "Connection closed before sending reply" );
+        LOG_NETWORK_ERROR( "Connection closed before sending reply" );
         return;
     }
     try {
         responseSender->sendResponse( statusAndMessage, headers, body );
     } catch ( std::exception& e ) {
-        spdlog::error( "Exception while sending response: {}", e.what() );
+        LOG_NETWORK_ERROR( "Exception while sending response: {}", e.what() );
         // nothing can be done so we consider response as sent
     }
 }
@@ -118,11 +118,11 @@ void FacilitatorProcessor::onRequestStart(
 
 
     } catch ( std::exception& e ) {
-        spdlog::critical( "onRequestStart exception" );
+        LOG_NETWORK_CRITICAL( "onRequestStart exception" );
         printNestedException( e );
         reply500InternalError( "Could not process x402 request start." );
     } catch (...) {
-        spdlog::critical( "onRequestStart unknown exception" );
+        LOG_NETWORK_CRITICAL( "onRequestStart unknown exception" );
         reply500InternalError( "Could not process x402 request start." );
     };
 }
@@ -167,11 +167,11 @@ void FacilitatorProcessor::onRequestFullyReceived(
         state_ = FacilitatorProcessorState::REPLY_SENT;
 
     } catch ( std::exception& e ) {
-        spdlog::critical( "onRequestFullyReceived exception" );
+        LOG_NETWORK_CRITICAL( "onRequestFullyReceived exception" );
         printNestedException( e );
         reply500InternalError( "Could not process settlement request." );
     } catch (...) {
-        spdlog::critical( "onRequestFullyReceived unknown exception" );
+        LOG_NETWORK_CRITICAL( "onRequestFullyReceived unknown exception" );
         reply500InternalError( "Could not process settlement request." );
     }
 }

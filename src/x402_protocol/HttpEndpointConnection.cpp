@@ -120,7 +120,7 @@ ptr<IBackendError> HttpEndpointConnection::executeCurlRequest(
     if (!curlThreadLocal) {
         auto curlObject = curl_easy_init();
         if (!curlObject) {
-            spdlog::error("Could not initialize CURL object");
+            LOG_NETWORK_ERROR("Could not initialize CURL object");
             throw runtime_error("Could not initialize CURL object");
         }
         curlThreadLocal.reset(curlObject);
@@ -200,7 +200,7 @@ ptr<IBackendError> HttpEndpointConnection::executeCurlRequest(
             errorMessage += " (Connection Refused). \n"
                     "Target port is not listening or is blocked by a firewall.";
         }
-        spdlog::error("CURL error: {}", errorMessage);
+        LOG_NETWORK_ERROR("CURL error: {}", errorMessage);
         return make_shared<BackendCurlError>(result, errorMessage);
     }
 
@@ -208,7 +208,7 @@ ptr<IBackendError> HttpEndpointConnection::executeCurlRequest(
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &statusCode);
     httpStatusCode = statusCode;
     if (httpStatusCode >= 400) {
-        spdlog::error("Upstream service returned HTTP error: {}", httpStatusCode);
+        LOG_NETWORK_ERROR("Upstream service returned HTTP error: {}", httpStatusCode);
         return make_shared<BackendHttpError>(httpStatusCode);
     }
 

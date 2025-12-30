@@ -182,6 +182,9 @@ using namespace std;
 #define LOG_NETWORK_ERROR(...) \
     do { if(spdlog::get("network")->should_log(spdlog::level::err))   spdlog::get("network")->error(__VA_ARGS__); } while(0)
 
+#define LOG_NETWORK_CRITICAL(...) \
+do { if(spdlog::get("network")->should_log(spdlog::level::critical))   spdlog::get("network")->critical(__VA_ARGS__); } while(0)
+
 // =============================================================================
 // 4. DATABASE
 // =============================================================================
@@ -231,11 +234,17 @@ using namespace std;
 // 7. HEALTH (Noise Control)
 // =============================================================================
 
-#define LOG_HEALTH_PING(...) \
+#define LOG_HEALTH_INFO(...) \
     do { if(spdlog::get("health")->should_log(spdlog::level::info)) spdlog::get("health")->info(__VA_ARGS__); } while(0)
 
-#define LOG_HEALTH_FAIL(...) \
+#define LOG_HEALTH_ERROR(...) \
     do { if(spdlog::get("health")->should_log(spdlog::level::err))  spdlog::get("health")->error(__VA_ARGS__); } while(0)
+
+#define LOG_HEALTH_CRITICAL(...) \
+do { if(spdlog::get("health")->should_log(spdlog::level::critical)) spdlog::get("health")->critical(__VA_ARGS__); } while(0)
+
+#define LOG_HEALTH_ERROR(...) \
+do { if(spdlog::get("health")->should_log(spdlog::level::err))  spdlog::get("health")->error(__VA_ARGS__); } while(0)
 
 // =============================================================================
 // 8. CLIENT (Client specific errors)

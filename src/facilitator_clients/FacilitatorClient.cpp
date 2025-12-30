@@ -238,7 +238,7 @@ nlohmann::json FacilitatorClient::settle( const nlohmann::json& request ) const 
 
 void FacilitatorClient::selfTest() const {
     auto testUrl = baseUrl_ + "/settle";
-    spdlog::info("Testing connection to facilitator endpoint:"
+    LOG_HEALTH_INFO("Testing connection to facilitator endpoint:"
         + testUrl);
 
     // Create a buffer to hold detailed error messages
@@ -278,7 +278,7 @@ void FacilitatorClient::selfTest() const {
 
     // Check for CURL-level errors (DNS, TCP, SSL, timeout)
     if ( res != CURLE_OK ) {
-        spdlog::critical(
+        LOG_HEALTH_CRITICAL(
                 "Facilitator Connection Test FAILED"
                 "  URL: {}"
                 "  CURL Error [{}]: {}"
@@ -286,6 +286,6 @@ void FacilitatorClient::selfTest() const {
                 testUrl, static_cast<int>(res), curl_easy_strerror(res),
                 errbuf);
     } else {
-        spdlog::info("Facilitator Connection Test successful.");
+        LOG_HEALTH_INFO("Facilitator Connection Test successful.");
     }
 }
