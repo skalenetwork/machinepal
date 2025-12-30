@@ -171,43 +171,74 @@ void Init::initAllLibs(int _argc, char *_argv[]) {
 // This is core logging used at the start
 // we do not yet know logging config from config file
 void Init::setupBootStrapLogging() {
-    // enforce one-time initialization
-    static std::atomic<bool> isInitialized{false};
-    if (isInitialized.exchange(true)) {
-        return;
+    setupLogging(false, spdlog::level::info);
+}
+
+
+// A robust JSON formatter that escapes the message payload
+class JsonFormatter : public spdlog::formatter {
+public:
+    void format(const spdlog::details::log_msg &msg, spdlog::memory_buf_t &dest) override {
+        // 1. Extract raw message
+        // spdlog stores payload in msg.payload
+
+        // 2. Escape Quotes/Backslashes manually or using a library
+        // Simple manual implementation for demonstration:
+        std::string safe_msg;
+        for (char c : msg.payload) {
+            if (c == '"') safe_msg += "\\\"";
+            else if (c == '\\') safe_msg += "\\\\";
+            else if (c == '\n') safe_msg += "\\n";
+            else safe_msg += c;
+        }
+
+        // 3. Format into JSON structure
+        // We use fmt::format to safely build the wrapper
+        std::string json = fmt::format(
+            R"({{ "timestamp": "{}", "logger": "{}", "level": "{}", "message": "{}" }})",
+            "TIMESTAMP_PLACEHOLDER", // You'd compute real time here
+            std::string(msg.logger_name.data(), msg.logger_name.size()),
+            spdlog::level::to_string_view(msg.level),
+            safe_msg // <--- Injected safely
+        );
+
+        // 4. Append to destination buffer + newline
+        dest.append(json.data(), json.data() + json.size());
+        dest.append(spdlog::details::os::default_eol, spdlog::details::os::default_eol + strlen(spdlog::details::os::default_eol));
     }
 
-    std::string systemTextPattern = "[%Y-%m-%d %H:%M:%S.%e] [%n] [%^%l%$] %v";
-    auto stderrSink = std::make_shared<spdlog::sinks::stderr_sink_mt>();
-    std::vector<spdlog::sink_ptr> systemSinks { stderrSink };
+    std::unique_ptr<spdlog::formatter> clone() const override {
+        return std::make_unique<JsonFormatter>();
+    }
+};
 
-    auto coreLogger = std::make_shared<spdlog::logger>(
-        "core",
-        systemSinks.begin(),
-        systemSinks.end()
-    );
+std::shared_ptr<spdlog::logger> Init::createLogger(const std::string& name, const std::vector<spdlog::sink_ptr>& sinks,
+    const std::string& pattern, bool forceJson) {
+    // Use spdlog::logger (Synchronous) instead of async_logger
+    auto logger = std::make_shared<spdlog::logger>(name, sinks.begin(), sinks.end());
 
-    coreLogger->set_pattern(systemTextPattern);
-    // Force flush on error during bootstrap
-    // If the app crashes during config loading, this ensures the error is visible.
-    coreLogger->flush_on(spdlog::level::err);
-    spdlog::register_logger(coreLogger);
-    spdlog::set_default_logger(coreLogger);
-    spdlog::set_level(spdlog::level::info);
-    spdlog::flush_every(std::chrono::seconds(1));
+    logger->flush_on(spdlog::level::err);
+
+
+    if (forceJson) {
+        auto formatter = std::make_unique<JsonFormatter>();
+        // Set formatter for each sink, or for the logger
+        logger->set_formatter(std::move(formatter));
+    } else {
+        logger->set_pattern(pattern);
+    }
+
+    spdlog::register_logger(logger);
+    return logger;
 }
 
 
 
 // we call this once we have config file loaded
 void Init::setupLogging(bool forceJson, spdlog::level::level_enum logLevel) {
-    // 1. Enforce one-time initialization
-    static std::atomic<bool> isInitialized{false};
-    if (isInitialized.exchange(true)) {
-        return;
-    }
 
-    // 2. Cleanup existing loggers
+
+
     spdlog::drop_all();
 
     // -------------------------------------------------------------------------
@@ -234,46 +265,29 @@ void Init::setupLogging(bool forceJson, spdlog::level::level_enum logLevel) {
     // Register Loggers (Synchronous)
     // -------------------------------------------------------------------------
 
-    // Helper lambda to create a synchronous logger with automatic flushing on errors
-    auto createLogger = [&](std::string name, std::vector<spdlog::sink_ptr>& sinks, std::string pattern) {
-        // Use spdlog::logger (Synchronous) instead of async_logger
-        auto logger = std::make_shared<spdlog::logger>(name, sinks.begin(), sinks.end());
-
-        logger->set_pattern(pattern);
-
-        // CRITICAL FOR CRASH SAFETY:
-        // Force flush immediately if an ERROR or CRITICAL log is written.
-        // This ensures the log hits the OS stream even if the app crashes ms later.
-        logger->flush_on(spdlog::level::err);
-
-        spdlog::register_logger(logger);
-        return logger;
-    };
-
     // 1. ACCESS
-    createLogger("access", accessSinks, accessPattern);
+    createLogger("access", accessSinks, accessPattern, forceJson);
 
     // 2. CORE
-    auto coreLogger = createLogger("core", systemSinks, currentSystemPattern);
+    auto coreLogger = createLogger("core", systemSinks, currentSystemPattern, forceJson);
 
     // 3. NETWORK
-    createLogger("network", systemSinks, currentSystemPattern);
+    createLogger("network", systemSinks, currentSystemPattern, forceJson);
 
     // 4. DB
-    createLogger("db", systemSinks, currentSystemPattern);
+    createLogger("db", systemSinks, currentSystemPattern, forceJson);
 
     // 5. SECURITY
-    createLogger("security", systemSinks, currentSystemPattern);
+    createLogger("security", systemSinks, currentSystemPattern, forceJson);
 
     // 6. ADMIN
-    createLogger("admin", systemSinks, currentSystemPattern);
+    createLogger("admin", systemSinks, currentSystemPattern, forceJson);
 
     // 7. HEALTH
-    auto healthLogger = createLogger("health", systemSinks, currentSystemPattern);
-    healthLogger->set_level(spdlog::level::warn);
+    createLogger("health", systemSinks, currentSystemPattern, forceJson);
 
     // 8. Client
-    auto clientLogger = createLogger("client", systemSinks, currentSystemPattern);
+    createLogger("client", systemSinks, currentSystemPattern, forceJson);
 
 
     spdlog::set_default_logger(coreLogger);

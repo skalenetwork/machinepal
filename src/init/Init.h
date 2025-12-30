@@ -17,6 +17,7 @@ public:
 
     static void setupBootStrapLogging();
 
+
     static bool isInited();
     static std::map< std::string, std::string > getMachinePalEnvironmentOverloads();
     static void checkOperatingSystemConfiguration();
@@ -25,7 +26,12 @@ public:
     static void checkSystemTime();
 
 private:
+
     static std::atomic< bool > inited_;
+
+    static std::shared_ptr<spdlog::logger> createLogger(const std::string &name, const std::vector<spdlog::sink_ptr> &sinks,
+                                                 const std::string &pattern, bool forceJson);
+
 
     static bool fetchInternetTime( const char* url, std::string& utc_datetime,
         std::string& responseOut, std::string& errorOut );
