@@ -32,22 +32,23 @@ public:
     }
 
     static ptr<ProxygenResponseSender> makeShared(proxygen::ResponseHandler *downstream,
-                                           folly::EventBase *eventBase) {
-        auto sender = ptr<ProxygenResponseSender>(new ProxygenResponseSender(downstream, eventBase));
+                                                  folly::EventBase *eventBase, proxygen::HTTPMessage &requestHeaders) {
+        auto sender = ptr<ProxygenResponseSender>(new ProxygenResponseSender(downstream, eventBase, requestHeaders));
         sender->setWeakSelf(sender);
         return sender;
     }
 
 private:
-
     proxygen::ResponseHandler *downstream_;
     folly::EventBase *eventBase_;
     weak_ptr<ProxygenResponseSender> weakSelf_;
     std::chrono::steady_clock::time_point creationTime_;
+    proxygen::HTTPMessage requestHeaders_;
 
     explicit ProxygenResponseSender(proxygen::ResponseHandler *downstream,
-                                    folly::EventBase *eventBase)
-        : downstream_(downstream), eventBase_(eventBase), creationTime_(std::chrono::steady_clock::now()) {
+                                    folly::EventBase *eventBase, proxygen::HTTPMessage &requestHeaders)
+        : downstream_(downstream), eventBase_(eventBase), creationTime_(std::chrono::steady_clock::now()),
+          requestHeaders_(requestHeaders) {
         CHECK_STATE(eventBase_);
         CHECK_STATE(downstream);
     }
