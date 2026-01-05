@@ -14,6 +14,8 @@ public:
     static ptr<ProxygenResponseSender> makeShared(proxygen::ResponseHandler *downstream,
                                                   folly::EventBase *eventBase, proxygen::HTTPMessage &requestHeaders);
 
+    void setSanitizedUserAgent();
+
 private:
     proxygen::ResponseHandler *downstream_;
     folly::EventBase *eventBase_;
@@ -23,7 +25,7 @@ private:
     string requestId_;
     string method_;
     string userAgent_;
-
+    uint64_t bytesSent_ = 0;
 
     explicit ProxygenResponseSender(proxygen::ResponseHandler *downstream,
                                     folly::EventBase *eventBase, proxygen::HTTPMessage &requestHeaders);
@@ -31,7 +33,7 @@ private:
     void setWeakSelf(const weak_ptr<ProxygenResponseSender> &weakSelf);
 
     void logAccess(const std::string &service, const std::string &path, int status,
-                   uint64_t bytesSent, const std::string &clientIp, const std::string &userAgentL);
+                   uint64_t bytesSent, const std::string &clientIp);
 
     std::string generateRequestId();
 

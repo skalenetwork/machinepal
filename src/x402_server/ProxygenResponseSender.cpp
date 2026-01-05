@@ -20,6 +20,7 @@ void ProxygenResponseSender::sendResponse(const std::pair<uint16_t, std::string>
         });
         if (!body.empty()) builder.body(body);
         builder.sendWithEOM();
+        self->bytesSent_ += body.size();
     };
 
     if (folly::EventBaseManager::get()->getEventBase() == eventBase_) {
@@ -36,15 +37,31 @@ ptr<ProxygenResponseSender> ProxygenResponseSender::makeShared(proxygen::Respons
     return sender;
 }
 
+void ProxygenResponseSender::setSanitizedUserAgent() {
+    std::string rawUserAgent = requestHeaders_.getHeaders().getSingleOrEmpty("User-Agent");
+    if (!rawUserAgent.empty()) {
+        json j = rawUserAgent;
+        std::string dumped = j.dump();
+        // Remove surrounding quotes added by dump()
+        if (dumped.size() >= 2) {
+            userAgent_ = dumped.substr(1, dumped.size() - 2);
+        } else {
+            userAgent_ = "";
+        }
+    } else {
+        userAgent_ = "";
+    }
+}
+
 ProxygenResponseSender::ProxygenResponseSender(proxygen::ResponseHandler *downstream,
-                                folly::EventBase *eventBase, proxygen::HTTPMessage &requestHeaders)
+                                               folly::EventBase *eventBase, proxygen::HTTPMessage &requestHeaders)
     : downstream_(downstream), eventBase_(eventBase), creationTime_(std::chrono::steady_clock::now()),
       requestHeaders_(requestHeaders) {
     CHECK_STATE(eventBase_);
     CHECK_STATE(downstream);
     requestId_ = getOrCreateRequestId(requestHeaders_);
     method_ = requestHeaders_.getMethodString();
-    userAgent_ = requestHeaders_.getHeaders().getSingleOrEmpty("User-Agent");
+    setSanitizedUserAgent();;
 }
 
 void ProxygenResponseSender::setWeakSelf(const weak_ptr<ProxygenResponseSender> &weakSelf) {
@@ -56,8 +73,7 @@ void ProxygenResponseSender::logAccess(
     const std::string& path,
     int status,
     uint64_t bytesSent,
-    const std::string& clientIp,
-    const std::string& userAgent
+    const std::string& clientIp
 ) {
 
     auto now = std::chrono::steady_clock::now();
@@ -68,6 +84,8 @@ void ProxygenResponseSender::logAccess(
     gmtime_r(&systemNowTime, &tm);
     char timestamp[32];
     std::strftime(timestamp, sizeof(timestamp), "%Y-%m-%dT%H:%M:%SZ", &tm);
+
+
 
     LOG_ACCESS_INFO(
         "{{"
@@ -92,7 +110,7 @@ void ProxygenResponseSender::logAccess(
         bytesSent,
         durationMs,
         clientIp,
-        userAgent,
+        userAgent_,
         requestId_
     );
 }
