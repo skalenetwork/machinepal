@@ -20,13 +20,20 @@ private:
     weak_ptr<ProxygenResponseSender> weakSelf_;
     std::chrono::steady_clock::time_point creationTime_;
     proxygen::HTTPMessage requestHeaders_;
+    string requestId_;
+    string method_;
+    string userAgent_;
+
 
     explicit ProxygenResponseSender(proxygen::ResponseHandler *downstream,
                                     folly::EventBase *eventBase, proxygen::HTTPMessage &requestHeaders);
 
     void setWeakSelf(const weak_ptr<ProxygenResponseSender> &weakSelf);
 
-    void logAccess(const std::string &service, const std::string &method, const std::string &path, int status,
-                   uint64_t bytesSent, const std::string &clientIp, const std::string &userAgent,
-                   const std::string &requestId);
+    void logAccess(const std::string &service, const std::string &path, int status,
+                   uint64_t bytesSent, const std::string &clientIp, const std::string &userAgentL);
+
+    std::string generateRequestId();
+
+    std::string getOrCreateRequestId(proxygen::HTTPMessage &msg);
 };

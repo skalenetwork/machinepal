@@ -234,7 +234,7 @@ std::shared_ptr<spdlog::logger> Init::createLogger(const std::string& name, cons
     logger->flush_on(spdlog::level::err);
 
 
-    if (forceJson) {
+    if (forceJson && !(name == "access")) {
         auto formatter = std::make_unique<JsonFormatter>();
         // Set formatter for each sink, or for the logger
         logger->set_formatter(std::move(formatter));

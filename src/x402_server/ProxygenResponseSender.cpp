@@ -42,6 +42,9 @@ ProxygenResponseSender::ProxygenResponseSender(proxygen::ResponseHandler *downst
       requestHeaders_(requestHeaders) {
     CHECK_STATE(eventBase_);
     CHECK_STATE(downstream);
+    requestId_ = getOrCreateRequestId(requestHeaders_);
+    method_ = requestHeaders_.getMethodString();
+    userAgent_ = requestHeaders_.getHeaders().getSingleOrEmpty("User-Agent");
 }
 
 void ProxygenResponseSender::setWeakSelf(const weak_ptr<ProxygenResponseSender> &weakSelf) {
@@ -50,13 +53,11 @@ void ProxygenResponseSender::setWeakSelf(const weak_ptr<ProxygenResponseSender> 
 
 void ProxygenResponseSender::logAccess(
     const std::string& service,
-    const std::string& method,
     const std::string& path,
     int status,
     uint64_t bytesSent,
     const std::string& clientIp,
-    const std::string& userAgent,
-    const std::string& requestId
+    const std::string& userAgent
 ) {
 
     auto now = std::chrono::steady_clock::now();
@@ -85,13 +86,59 @@ void ProxygenResponseSender::logAccess(
         "}}",
         timestamp,
         service,
-        method,
+        method_,
         path,
         status,
         bytesSent,
         durationMs,
         clientIp,
         userAgent,
-        requestId
+        requestId_
     );
+}
+
+const std::string kRequestIdHeader = "X-Request-ID";
+
+std::string ProxygenResponseSender::generateRequestId() {
+    // Standard UUID v4 generation
+    static std::random_device rd;
+    static std::mt19937_64 gen(rd());
+    static std::uniform_int_distribution<uint64_t> dist;
+
+    uint64_t part1 = dist(gen);
+    uint64_t part2 = dist(gen);
+
+    // Set version to 4 (0100)
+    part1 = (part1 & 0xFFFFFFFFFFFF0FFFULL) | 0x0000000000004000ULL;
+    // Set variant to 1 (10xx)
+    part2 = (part2 & 0x3FFFFFFFFFFFFFFFULL) | 0x8000000000000000ULL;
+
+    std::stringstream ss;
+    ss << std::hex << std::setfill('0')
+       << std::setw(8) << (part1 >> 32) << "-"
+       << std::setw(4) << ((part1 >> 16) & 0xFFFF) << "-"
+       << std::setw(4) << (part1 & 0xFFFF) << "-"
+       << std::setw(4) << (part2 >> 48) << "-"
+       << std::setw(12) << (part2 & 0xFFFFFFFFFFFFULL);
+
+    return ss.str();
+}
+
+std::string ProxygenResponseSender::getOrCreateRequestId(proxygen::HTTPMessage& msg) {
+    auto& headers = msg.getHeaders();
+
+    // 1. Try to get the existing ID (Proxygen handles case-insensitivity)
+    const std::string& existingId = headers.getSingleOrEmpty(kRequestIdHeader);
+
+    if (!existingId.empty()) {
+        return existingId;
+    }
+
+    // 2. If missing, generate a new one
+    std::string newId = generateRequestId();
+
+    // 3. Inject it back into the headers for downstream services
+    headers.set(kRequestIdHeader, newId);
+
+    return newId;
 }
