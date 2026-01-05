@@ -2,6 +2,7 @@
 #include "../x402_protocol/IResponseSender.h"
 #include <folly/io/async/EventBaseManager.h>
 #include <proxygen/httpserver/ResponseBuilder.h>
+#include <chrono>
 
 class ProxygenResponseSender : public IResponseSender {
 public:
@@ -42,10 +43,11 @@ private:
     proxygen::ResponseHandler *downstream_;
     folly::EventBase *eventBase_;
     weak_ptr<ProxygenResponseSender> weakSelf_;
+    std::chrono::steady_clock::time_point creationTime_;
 
     explicit ProxygenResponseSender(proxygen::ResponseHandler *downstream,
                                     folly::EventBase *eventBase)
-        : downstream_(downstream), eventBase_(eventBase) {
+        : downstream_(downstream), eventBase_(eventBase), creationTime_(std::chrono::steady_clock::now()) {
         CHECK_STATE(eventBase_);
         CHECK_STATE(downstream);
     }
