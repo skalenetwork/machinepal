@@ -21,6 +21,7 @@ void ProxygenResponseSender::sendResponse(const std::pair<uint16_t, std::string>
         if (!body.empty()) builder.body(body);
         builder.sendWithEOM();
         self->bytesSent_ += body.size();
+        self->logAccess("gateway", statusAndMessage.first);
     };
 
     if (folly::EventBaseManager::get()->getEventBase() == eventBase_) {
@@ -63,6 +64,7 @@ ProxygenResponseSender::ProxygenResponseSender(proxygen::ResponseHandler *downst
     CHECK_STATE(downstream);
     requestId_ = getOrCreateRequestId(requestHeaders_);
     method_ = requestHeaders_.getMethodString();
+    path_ = requestHeaders_.getPath();
     setSanitizedUserAgent();;
 }
 
@@ -72,7 +74,6 @@ void ProxygenResponseSender::setWeakSelf(const weak_ptr<ProxygenResponseSender> 
 
 void ProxygenResponseSender::logAccess(
     const std::string& service,
-    const std::string& path,
     int status
 ) {
 
@@ -105,7 +106,7 @@ void ProxygenResponseSender::logAccess(
         timestamp,
         service,
         method_,
-        path,
+        path_,
         status,
         bytesSent_,
         durationMs,

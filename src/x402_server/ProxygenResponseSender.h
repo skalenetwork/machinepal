@@ -28,6 +28,7 @@ private:
         string userAgent_;
         uint64_t bytesSent_ = 0;
     string clientAddress_;
+    string path_;
 
     explicit ProxygenResponseSender(proxygen::ResponseHandler *downstream,
                                     folly::EventBase *eventBase, proxygen::HTTPMessage &requestHeaders,
@@ -35,7 +36,7 @@ private:
 
     void setWeakSelf(const weak_ptr<ProxygenResponseSender> &weakSelf);
 
-    void logAccess(const std::string &service, const std::string &path, int status);
+    void logAccess(const std::string &service, int status);
 
     std::string generateRequestId();
 
