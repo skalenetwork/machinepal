@@ -207,7 +207,7 @@ ptr<IBackendError> HttpEndpointConnection::executeCurlRequest(
     uint64_t statusCode = 0;
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &statusCode);
     httpStatusCode = statusCode;
-    if (httpStatusCode >= 400) {
+    if (httpStatusCode >= 400 && httpStatusCode != 402) {
         LOG_NETWORK_ERROR("Upstream service returned HTTP error: {}", httpStatusCode);
         return make_shared<BackendHttpError>(httpStatusCode);
     }
@@ -362,16 +362,16 @@ size_t HttpEndpointConnection::headerCallback(char *buffer, size_t size, size_t 
 int HttpEndpointConnection::debugCallback(CURL *, curl_infotype type, char *data, size_t size, void *) {
     switch (type) {
         case CURLINFO_HEADER_OUT:
-            LOG_NETWORK_INFO("CURL SEND HEADER:{}", std::string(data, size));
+            LOG_NETWORK_INFO("CURL_SEND_HEADER:{}", std::string(data, size));
             break;
         case CURLINFO_DATA_OUT:
-            LOG_NETWORK_INFO("CURL SEND DATA:{}", std::string(data, size));
+            LOG_NETWORK_INFO("CURL_SEND_DATA:{}", std::string(data, size));
             break;
         case CURLINFO_HEADER_IN:
-            LOG_NETWORK_INFO("CURL RECV HEADER:{}", std::string(data, size));
+            LOG_NETWORK_INFO("CURL_RECV_HEADER:{}", std::string(data, size));
             break;
         case CURLINFO_DATA_IN:
-            LOG_NETWORK_INFO("CURL RECV DATA:{}", std::string(data, size));
+            LOG_NETWORK_INFO("CURL_RECV_DATA:{}", std::string(data, size));
             break;
         default:
             break;

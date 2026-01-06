@@ -75,7 +75,7 @@ std::optional<HttpError> PaymentManager::checkAgainstAlreadySettledPayments(
         const auto &asset = domain->assetAddress();
         const auto &chainId = domain->chainId();
 
-        LOG_CORE_WARN(
+        LOG_CORE_INFO(
             "CHECK_PAYMENT Payment has already been spent: from={} nonce={} token={} tokenAddress={} "
             "chainId={}",
             from.toHex(PREFIX_0x), nonce.toHex(PREFIX_0x), domain->name(),

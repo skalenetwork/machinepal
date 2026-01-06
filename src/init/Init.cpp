@@ -235,8 +235,7 @@ void Init::setupLogging(bool useJson, spdlog::level::level_enum logLevel) {
 
     // Sinks setup (Keep as is)
     auto stdoutSink = std::make_shared<spdlog::sinks::stdout_sink_mt>();
-    auto stderrSink = std::make_shared<spdlog::sinks::stderr_sink_mt>();
-    std::vector<spdlog::sink_ptr> systemSinks { stderrSink };
+    std::vector<spdlog::sink_ptr> systemSinks { stdoutSink };
     std::vector<spdlog::sink_ptr> accessSinks { stdoutSink };
 
     std::string accessPattern = useJson? "%v" : "[%Y-%m-%d %H:%M:%S.%e] [%n] [%^%l%$] %v";
