@@ -73,9 +73,7 @@ void ProxygenResponseSender::setWeakSelf(const weak_ptr<ProxygenResponseSender> 
 void ProxygenResponseSender::logAccess(
     const std::string& service,
     const std::string& path,
-    int status,
-    uint64_t bytesSent,
-    const std::string& clientIp
+    int status
 ) {
 
     auto now = std::chrono::steady_clock::now();
@@ -109,9 +107,9 @@ void ProxygenResponseSender::logAccess(
         method_,
         path,
         status,
-        bytesSent,
+        bytesSent_,
         durationMs,
-        clientIp,
+        clientAddress_,
         userAgent_,
         requestId_
     );

@@ -35,8 +35,7 @@ private:
 
     void setWeakSelf(const weak_ptr<ProxygenResponseSender> &weakSelf);
 
-    void logAccess(const std::string &service, const std::string &path, int status,
-                   uint64_t bytesSent, const std::string &clientIp);
+    void logAccess(const std::string &service, const std::string &path, int status);
 
     std::string generateRequestId();
 
