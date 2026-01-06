@@ -31,8 +31,9 @@ void ProxygenResponseSender::sendResponse(const std::pair<uint16_t, std::string>
 }
 
 ptr<ProxygenResponseSender> ProxygenResponseSender::makeShared(proxygen::ResponseHandler *downstream,
-                                              folly::EventBase *eventBase, proxygen::HTTPMessage &requestHeaders) {
-    auto sender = ptr<ProxygenResponseSender>(new ProxygenResponseSender(downstream, eventBase, requestHeaders));
+                                              folly::EventBase *eventBase, proxygen::HTTPMessage &requestHeaders,
+                                             const string& clientAddress) {
+    auto sender = ptr<ProxygenResponseSender>(new ProxygenResponseSender(downstream, eventBase, requestHeaders, clientAddress));
     sender->setWeakSelf(sender);
     return sender;
 }
@@ -54,9 +55,10 @@ void ProxygenResponseSender::setSanitizedUserAgent() {
 }
 
 ProxygenResponseSender::ProxygenResponseSender(proxygen::ResponseHandler *downstream,
-                                               folly::EventBase *eventBase, proxygen::HTTPMessage &requestHeaders)
+                                               folly::EventBase *eventBase, proxygen::HTTPMessage &requestHeaders,
+                                               const string& clientAddress)
     : downstream_(downstream), eventBase_(eventBase), creationTime_(std::chrono::steady_clock::now()),
-      requestHeaders_(requestHeaders) {
+      requestHeaders_(requestHeaders), clientAddress_(clientAddress) {
     CHECK_STATE(eventBase_);
     CHECK_STATE(downstream);
     requestId_ = getOrCreateRequestId(requestHeaders_);

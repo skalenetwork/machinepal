@@ -12,7 +12,8 @@ public:
                       const std::string &body) override;
 
     static ptr<ProxygenResponseSender> makeShared(proxygen::ResponseHandler *downstream,
-                                                  folly::EventBase *eventBase, proxygen::HTTPMessage &requestHeaders);
+                                                  folly::EventBase *eventBase, proxygen::HTTPMessage &requestHeaders,
+                                                  const string &clientAddress);
 
     void setSanitizedUserAgent();
 
@@ -24,11 +25,13 @@ private:
     proxygen::HTTPMessage requestHeaders_;
     string requestId_;
     string method_;
-    string userAgent_;
-    uint64_t bytesSent_ = 0;
+        string userAgent_;
+        uint64_t bytesSent_ = 0;
+    string clientAddress_;
 
     explicit ProxygenResponseSender(proxygen::ResponseHandler *downstream,
-                                    folly::EventBase *eventBase, proxygen::HTTPMessage &requestHeaders);
+                                    folly::EventBase *eventBase, proxygen::HTTPMessage &requestHeaders,
+                                    const string& clientAddress);
 
     void setWeakSelf(const weak_ptr<ProxygenResponseSender> &weakSelf);
 

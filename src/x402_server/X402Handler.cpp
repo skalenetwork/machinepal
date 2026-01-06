@@ -24,8 +24,14 @@ void X402Handler::onRequest( std::unique_ptr< HTTPMessage > _headers ) noexcept 
         CHECK_STATE( self_ );
         CHECK_STATE( _headers);
 
+
+        const folly::SocketAddress& clientAddr =
+            downstream_->getTransaction()->getTransport().getPeerAddress();
+
+        std::string clientIp = clientAddr.getAddressStr();
+
         responseSender_ = ProxygenResponseSender::makeShared(downstream_ ,
-            folly::EventBaseManager::get()->getEventBase(), *_headers );
+            folly::EventBaseManager::get()->getEventBase(), *_headers , clientIp);
         reqHeaders_ = std::move( _headers );
         auto weakResponseSender = std::weak_ptr< IResponseSender >( responseSender_ );
         if ( reqHeaders_->getPath().starts_with( EASYNET_FACILITATOR_PREFIX ) ) {
@@ -43,7 +49,6 @@ void X402Handler::onRequest( std::unique_ptr< HTTPMessage > _headers ) noexcept 
         sendInternalError();
     }
 }
-
 void X402Handler::onBody( std::unique_ptr< folly::IOBuf > _body ) noexcept {
     if ( internalErrorSent_ )
         return;
