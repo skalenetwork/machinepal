@@ -75,16 +75,16 @@ std::optional<HttpError> PaymentManager::checkAgainstAlreadySettledPayments(
         const auto &asset = domain->assetAddress();
         const auto &chainId = domain->chainId();
 
-        LOG_CORE_INFO(
-            "Payment has already been spent: from={}, nonce={}, token={}, tokenAddress={}, "
+        LOG_CORE_WARN(
+            "CHECK_PAYMENT Payment has already been spent: from={} nonce={} token={} tokenAddress={} "
             "chainId={}",
             from.toHex(PREFIX_0x), nonce.toHex(PREFIX_0x), domain->name(),
             asset.toHex(PREFIX_0x), chainId.str());
         return HttpError(ERR_BAD_REQUEST,
                          std::string("This payment has already been spent: ") +
-                         "from=" + from.toHex(PREFIX_0x) + ", nonce=" + nonce.toHex(PREFIX_0x) +
-                         ", token:" + domain->name() + ", tokenAddress=" + asset.toHex(PREFIX_0x) +
-                         ", chainId=" + chainId.str());
+                         "from=" + from.toHex(PREFIX_0x) + " nonce=" + nonce.toHex(PREFIX_0x) +
+                         " token=" + domain->name() + " tokenAddress=" + asset.toHex(PREFIX_0x) +
+                         " chainId=" + chainId.str());
     }
 
     return std::nullopt;

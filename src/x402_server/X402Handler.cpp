@@ -24,7 +24,6 @@ void X402Handler::onRequest( std::unique_ptr< HTTPMessage > _headers ) noexcept 
         CHECK_STATE( self_ );
         CHECK_STATE( _headers);
 
-
         const folly::SocketAddress& clientAddr =
             downstream_->getTransaction()->getTransport().getPeerAddress();
 

@@ -34,9 +34,11 @@ void ProxygenResponseSender::sendResponse(const std::pair<uint16_t, std::string>
 }
 
 ptr<ProxygenResponseSender> ProxygenResponseSender::makeShared(proxygen::ResponseHandler *downstream,
-                                              folly::EventBase *eventBase, proxygen::HTTPMessage &requestHeaders,
-                                             const string& clientAddress) {
-    auto sender = ptr<ProxygenResponseSender>(new ProxygenResponseSender(downstream, eventBase, requestHeaders, clientAddress));
+                                                               folly::EventBase *eventBase,
+                                                               proxygen::HTTPMessage &requestHeaders,
+                                                               const string &clientAddress) {
+    auto sender = ptr<ProxygenResponseSender>(
+        new ProxygenResponseSender(downstream, eventBase, requestHeaders, clientAddress));
     sender->setWeakSelf(sender);
     return sender;
 }
@@ -59,7 +61,7 @@ void ProxygenResponseSender::setSanitizedUserAgent() {
 
 ProxygenResponseSender::ProxygenResponseSender(proxygen::ResponseHandler *downstream,
                                                folly::EventBase *eventBase, proxygen::HTTPMessage &requestHeaders,
-                                               const string& clientAddress)
+                                               const string &clientAddress)
     : downstream_(downstream), eventBase_(eventBase), creationTime_(std::chrono::steady_clock::now()),
       requestHeaders_(requestHeaders), clientAddress_(clientAddress) {
     CHECK_STATE(eventBase_);
@@ -68,13 +70,17 @@ ProxygenResponseSender::ProxygenResponseSender(proxygen::ResponseHandler *downst
     method_ = requestHeaders_.getMethodString();
     path_ = requestHeaders_.getPath();
     setSanitizedUserAgent();;
+
+
+    LOG_NETWORK_INFO(
+        "RECEIVED_REQUEST method={} path={} ip={} id={} ",method_, path_, clientAddress_,  requestId_);
 }
 
 void ProxygenResponseSender::setWeakSelf(const weak_ptr<ProxygenResponseSender> &weakSelf) {
     weakSelf_ = weakSelf;
 }
 
-void ProxygenResponseSender::logAccess(    const std::string& service, int status) {
+void ProxygenResponseSender::logAccess(const std::string &service, int status) {
     if (Init::getUseJsonLogging()) {
         logAccessAsJson(service, status);
     } else {
@@ -83,10 +89,9 @@ void ProxygenResponseSender::logAccess(    const std::string& service, int statu
 }
 
 void ProxygenResponseSender::logAccessAsJson(
-    const std::string& service,
+    const std::string &service,
     int status
 ) {
-
     auto now = std::chrono::steady_clock::now();
     auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(now - creationTime_).count();
     auto systemNow = std::chrono::system_clock::now();
@@ -95,7 +100,6 @@ void ProxygenResponseSender::logAccessAsJson(
     gmtime_r(&systemNowTime, &tm);
     char timestamp[32];
     std::strftime(timestamp, sizeof(timestamp), "%Y-%m-%dT%H:%M:%SZ", &tm);
-
 
 
     LOG_ACCESS_INFO(
@@ -127,8 +131,7 @@ void ProxygenResponseSender::logAccessAsJson(
 }
 
 
-void ProxygenResponseSender::logAccessAsCLF(const std::string& service, int status) {
-
+void ProxygenResponseSender::logAccessAsCLF(const std::string &service, int status) {
     // 1. Prepare Timestamp [dd/MMM/yyyy:HH:mm:ss +0000]
     auto systemNow = std::chrono::system_clock::now();
     std::time_t systemNowTime = std::chrono::system_clock::to_time_t(systemNow);
@@ -139,35 +142,34 @@ void ProxygenResponseSender::logAccessAsCLF(const std::string& service, int stat
     std::strftime(timestamp, sizeof(timestamp), "%d/%b/%Y:%H:%M:%S +0000", &tm);
 
     // 2. Extract Headers
-    const auto& headers = requestHeaders_.getHeaders();
+    const auto &headers = requestHeaders_.getHeaders();
 
-    // Referer: Default to "-" if missing
+    // Referer
     std::string referer = headers.getSingleOrEmpty(proxygen::HTTP_HEADER_REFERER);
     if (referer.empty()) referer = "-";
 
-    // User Agent: Default to "-" if missing (or use your member variable)
+    // User Agent
     std::string userAgent = userAgent_;
     if (userAgent.empty()) userAgent = "-";
 
-    // 3. Protocol: Default to HTTP/1.1 if unknown
+    // 3. Protocol
     std::string protocol = requestHeaders_.getVersionString();
     if (protocol.empty()) protocol = "HTTP/1.1";
 
-    // 4. Log: Standard Combined Format + Service Name appended
-    // Standard: %h %l %u %t "%r" %>s %b "%{Referer}i" "%{User-Agent}i"
-    // Extended: ... "Service"
+    // 4. Log: Combined Format + Service + RequestID
     LOG_ACCESS_INFO(
-        "{} - - [{}] \"{} {} {}\" {} {} \"{}\" \"{}\" \"{}\"",
-        clientAddress_,      // %h (IP)
-        timestamp,           // %t (Time)
-        method_,             // %r (Method)
-        path_,               // %r (Path)
-        protocol,            // %r (Proto)
-        status,              // %>s (Status)
-        bytesSent_,          // %b (Bytes)
-        referer,             // Referer
-        userAgent,           // User-Agent
-        service              // <--- Extension: Service Name at the end
+        "{} - - [{}] \"{} {} {}\" {} {} \"{}\" \"{}\" \"{}\" \"{}\"", // <--- Added extra \"{}\" at the end
+        clientAddress_, // %h
+        timestamp,      // %t
+        method_,        // %r
+        path_,          // %r
+        protocol,       // %r
+        status,         // %>s
+        bytesSent_,     // %b
+        referer,        // Referer
+        userAgent,      // User-Agent
+        service,        // Service Name
+        requestId_      // <--- Added Request ID
     );
 }
 
@@ -189,20 +191,20 @@ std::string ProxygenResponseSender::generateRequestId() {
 
     std::stringstream ss;
     ss << std::hex << std::setfill('0')
-       << std::setw(8) << (part1 >> 32) << "-"
-       << std::setw(4) << ((part1 >> 16) & 0xFFFF) << "-"
-       << std::setw(4) << (part1 & 0xFFFF) << "-"
-       << std::setw(4) << (part2 >> 48) << "-"
-       << std::setw(12) << (part2 & 0xFFFFFFFFFFFFULL);
+            << std::setw(8) << (part1 >> 32) << "-"
+            << std::setw(4) << ((part1 >> 16) & 0xFFFF) << "-"
+            << std::setw(4) << (part1 & 0xFFFF) << "-"
+            << std::setw(4) << (part2 >> 48) << "-"
+            << std::setw(12) << (part2 & 0xFFFFFFFFFFFFULL);
 
     return ss.str();
 }
 
-std::string ProxygenResponseSender::getOrCreateRequestId(proxygen::HTTPMessage& msg) {
-    auto& headers = msg.getHeaders();
+std::string ProxygenResponseSender::getOrCreateRequestId(proxygen::HTTPMessage &msg) {
+    auto &headers = msg.getHeaders();
 
     // 1. Try to get the existing ID (Proxygen handles case-insensitivity)
-    const std::string& existingId = headers.getSingleOrEmpty(kRequestIdHeader);
+    const std::string &existingId = headers.getSingleOrEmpty(kRequestIdHeader);
 
     if (!existingId.empty()) {
         return existingId;
