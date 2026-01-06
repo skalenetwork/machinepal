@@ -250,68 +250,43 @@ std::shared_ptr<spdlog::logger> Init::createLogger(const std::string& name, cons
 
 // we call this once we have config file loaded
 void Init::setupLogging(bool forceJson, spdlog::level::level_enum logLevel) {
-
-
-
     spdlog::drop_all();
 
-    // -------------------------------------------------------------------------
-    // Configuration Patterns
-    // -------------------------------------------------------------------------
-    std::string accessPattern = "%v";
-    std::string systemTextPattern = "[%Y-%m-%d %H:%M:%S.%e] [%n] [%^%l%$] %v";
-    std::string systemJsonPattern =
-        R"({ "timestamp": "%Y-%m-%d %H:%M:%S.%e", "logger": "%n", "level": "%l", "message": "%v" })";
-
-    std::string currentSystemPattern = forceJson ? systemJsonPattern : systemTextPattern;
-
-    // -------------------------------------------------------------------------
-    // Create Sinks
-    // -------------------------------------------------------------------------
+    // Sinks setup (Keep as is)
     auto stdoutSink = std::make_shared<spdlog::sinks::stdout_sink_mt>();
     auto stderrSink = std::make_shared<spdlog::sinks::stderr_sink_mt>();
-
-    // Shared sink lists
     std::vector<spdlog::sink_ptr> systemSinks { stderrSink };
     std::vector<spdlog::sink_ptr> accessSinks { stdoutSink };
 
-    // -------------------------------------------------------------------------
-    // Register Loggers (Synchronous)
-    // -------------------------------------------------------------------------
+    std::string accessPattern = "%v";
+    // Simplified system pattern logic
+    std::string systemPattern = forceJson ? "" : "[%Y-%m-%d %H:%M:%S.%e] [%n] [%^%l%$] %v";
 
-    // 1. ACCESS
+    // 1. Create Access Logger
     createLogger("access", accessSinks, accessPattern, forceJson);
 
-    // 2. CORE
-    auto coreLogger = createLogger("core", systemSinks, currentSystemPattern, forceJson);
+    // 2. Define System Loggers
+    std::vector<std::string> loggers = {
+        "core", "network", "db", "security",
+        "admin", "health", "client"
+    };
 
-    // 3. NETWORK
-    createLogger("network", systemSinks, currentSystemPattern, forceJson);
+    std::shared_ptr<spdlog::logger> defaultLogger;
 
-    // 4. DB
-    createLogger("db", systemSinks, currentSystemPattern, forceJson);
+    // 3. Create System Loggers in a loop
+    for (const auto& name : loggers) {
+        auto logger = createLogger(name, systemSinks, systemPattern, forceJson);
+        if (name == "core") defaultLogger = logger;
+    }
 
-    // 5. SECURITY
-    createLogger("security", systemSinks, currentSystemPattern, forceJson);
-
-    // 6. ADMIN
-    createLogger("admin", systemSinks, currentSystemPattern, forceJson);
-
-    // 7. HEALTH
-    createLogger("health", systemSinks, currentSystemPattern, forceJson);
-
-    // 8. Client
-    createLogger("client", systemSinks, currentSystemPattern, forceJson);
-
-
-    spdlog::set_default_logger(coreLogger);
+    // 4. Finalize
+    if (defaultLogger) spdlog::set_default_logger(defaultLogger);
     spdlog::set_level(logLevel);
-
-    // Periodic flush for non-error logs (every 1 second)
-    // Even in sync mode, stdout/stderr are buffered by the OS. This forces them out.
     spdlog::flush_every(std::chrono::seconds(1));
 
-    coreLogger->info("Logging configured. Log level {}", spdlog::level::to_string_view(logLevel) );
+    if(defaultLogger) {
+        defaultLogger->info("Logging configured. Level: {}", spdlog::level::to_string_view(logLevel));
+    }
 }
 
 
