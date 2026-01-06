@@ -131,27 +131,7 @@ void Init::initAllLibs(int _argc, char *_argv[]) {
  */
 
 
-/*
- * =================================================================================================
- * LOGGING FORMAT STRATEGY
- * =================================================================================================
- * The format of logs (JSON vs Plaintext) is determined by the primary consumer of the data.
- *
- * - JSON      :: Machine-optimized. Essential for aggregators (Datadog/ELK) to graph metrics.
- * - PLAINTEXT :: Human-optimized. Essential for SREs/Devs tailing logs during incidents.
- *
- * -------------------------------------------------------------------------------------------------
- * | CATEGORY  | FORMAT        | AUDIENCE | REASON / USAGE                                       |
- * |-----------|---------------|----------|--------------------------------------------------------|
- * | ACCESS    | JSON          | Machines | High volume, structured data required for metrics.     |
- * | CORE      | Plaintext     | Humans   | Narrative of lifecycle. Needs to be instantly readable.|
- * | NETWORK  | Plaintext     | Humans   | Network debugging. Often contains complex error stacks.|
- * | DB        | Plaintext     | Humans   | Debugging SQL connectivity and connection pooling.     |
- * | HEALTH    | Plaintext     | Humans   | Low-value noise unless failing; simple text suffices.  |
- * | SECURITY  | JSON or Text  | Both     | Hybrid. Text for alerts, JSON for threat analysis.     |
- * | ADMIN     | JSON or Text  | Both     | Hybrid. JSON preferred for strict Audit Trails.        |
- * -------------------------------------------------------------------------------------------------
- */
+
 
 
 #include <string>
@@ -249,7 +229,8 @@ std::shared_ptr<spdlog::logger> Init::createLogger(const std::string& name, cons
 
 
 // we call this once we have config file loaded
-void Init::setupLogging(bool forceJson, spdlog::level::level_enum logLevel) {
+void Init::setupLogging(bool useJson, spdlog::level::level_enum logLevel) {
+    useJsonLogging_ = useJson;
     spdlog::drop_all();
 
     // Sinks setup (Keep as is)
@@ -258,12 +239,12 @@ void Init::setupLogging(bool forceJson, spdlog::level::level_enum logLevel) {
     std::vector<spdlog::sink_ptr> systemSinks { stderrSink };
     std::vector<spdlog::sink_ptr> accessSinks { stdoutSink };
 
-    std::string accessPattern = "%v";
+    std::string accessPattern = useJson? "%v" : "[%Y-%m-%d %H:%M:%S.%e] [%n] [%^%l%$] %v";
     // Simplified system pattern logic
-    std::string systemPattern = forceJson ? "" : "[%Y-%m-%d %H:%M:%S.%e] [%n] [%^%l%$] %v";
+    std::string systemPattern = useJson ? "" : "[%Y-%m-%d %H:%M:%S.%e] [%n] [%^%l%$] %v";
 
     // 1. Create Access Logger
-    createLogger("access", accessSinks, accessPattern, forceJson);
+    createLogger("access", accessSinks, accessPattern, useJson);
 
     // 2. Define System Loggers
     std::vector<std::string> loggers = {
@@ -275,7 +256,7 @@ void Init::setupLogging(bool forceJson, spdlog::level::level_enum logLevel) {
 
     // 3. Create System Loggers in a loop
     for (const auto& name : loggers) {
-        auto logger = createLogger(name, systemSinks, systemPattern, forceJson);
+        auto logger = createLogger(name, systemSinks, systemPattern, useJson);
         if (name == "core") defaultLogger = logger;
     }
 
@@ -580,3 +561,6 @@ void Init::checkOperatingSystemConfiguration() {
 
     checkSystemTime();
 }
+
+
+std::atomic<bool > Init::useJsonLogging_;

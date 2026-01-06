@@ -13,7 +13,7 @@ class Init {
 public:
     static void initAllLibs( int _argc, char* _argv[] );
 
-    static void setupLogging(bool forceJson, spdlog::level::level_enum level);
+    static void setupLogging(bool useJson, spdlog::level::level_enum level);
 
     static void setupBootStrapLogging();
 
@@ -25,9 +25,17 @@ public:
     static void configureLogging( ptr< ConfigManager > manager );
     static void checkSystemTime();
 
+    static bool getUseJsonLogging() {
+        return useJsonLogging_;
+    }
+
+
 private:
 
     static std::atomic< bool > inited_;
+
+    static std::atomic<bool> useJsonLogging_;
+
 
     static std::shared_ptr<spdlog::logger> createLogger(const std::string &name, const std::vector<spdlog::sink_ptr> &sinks,
                                                  const std::string &pattern, bool forceJson);

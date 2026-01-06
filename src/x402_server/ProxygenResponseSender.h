@@ -36,7 +36,11 @@ private:
 
     void setWeakSelf(const weak_ptr<ProxygenResponseSender> &weakSelf);
 
-    void logAccess(const std::string &service, int status);
+    void logAccess(int status);
+
+    void logAccessAsJson(const std::string &service, int status);
+
+    void logAccessAsCLF(int status);
 
     std::string generateRequestId();
 
