@@ -23,7 +23,7 @@ void ProxygenResponseSender::sendResponse(const std::pair<uint16_t, std::string>
         if (!body.empty()) builder.body(body);
         builder.sendWithEOM();
         self->bytesSent_ += body.size();
-        self->logAccessAsJson("gateway", statusAndMessage.first);
+        self->logAccess("gateway", statusAndMessage.first);
     };
 
     if (folly::EventBaseManager::get()->getEventBase() == eventBase_) {
@@ -74,11 +74,11 @@ void ProxygenResponseSender::setWeakSelf(const weak_ptr<ProxygenResponseSender> 
     weakSelf_ = weakSelf;
 }
 
-void ProxygenResponseSender::logAccess(int status) {
+void ProxygenResponseSender::logAccess(    const std::string& service, int status) {
     if (Init::getUseJsonLogging()) {
-        logAccessAsJson("gateway", status);
+        logAccessAsJson(service, status);
     } else {
-        logAccessAsCLF(status);
+        logAccessAsCLF(service, status);
     }
 }
 
@@ -127,41 +127,47 @@ void ProxygenResponseSender::logAccessAsJson(
 }
 
 
-void ProxygenResponseSender::logAccessAsCLF(int status) {
-    // 1. Prepare Timestamp for CLF [dd/MMM/yyyy:HH:mm:ss +0000]
+void ProxygenResponseSender::logAccessAsCLF(const std::string& service, int status) {
+
+    // 1. Prepare Timestamp [dd/MMM/yyyy:HH:mm:ss +0000]
     auto systemNow = std::chrono::system_clock::now();
     std::time_t systemNowTime = std::chrono::system_clock::to_time_t(systemNow);
     std::tm tm{};
-    gmtime_r(&systemNowTime, &tm); // Using UTC (+0000) matches your previous gmtime usage
+    gmtime_r(&systemNowTime, &tm);
 
     char timestamp[64];
-    // Note: %b gives abbreviated month name (e.g., Jan, Feb) required by CLF
     std::strftime(timestamp, sizeof(timestamp), "%d/%b/%Y:%H:%M:%S +0000", &tm);
 
-    // 2. Extract Extra Headers required for "Combined" format
-    // (Referer is not usually stored in a member variable, so we fetch it fresh)
+    // 2. Extract Headers
     const auto& headers = requestHeaders_.getHeaders();
+
+    // Referer: Default to "-" if missing
     std::string referer = headers.getSingleOrEmpty(proxygen::HTTP_HEADER_REFERER);
     if (referer.empty()) referer = "-";
 
-    // 3. Get Protocol Version (e.g., HTTP/1.1)
-    // If getVersionString() isn't available, you can hardcode "HTTP/1.1" or derive it.
+    // User Agent: Default to "-" if missing (or use your member variable)
+    std::string userAgent = userAgent_;
+    if (userAgent.empty()) userAgent = "-";
+
+    // 3. Protocol: Default to HTTP/1.1 if unknown
     std::string protocol = requestHeaders_.getVersionString();
     if (protocol.empty()) protocol = "HTTP/1.1";
 
-    // 4. Log using the standard CLF pattern
-    // Pattern: %h %l %u %t "%r" %>s %b "%{Referer}i" "%{User-Agent}i"
+    // 4. Log: Standard Combined Format + Service Name appended
+    // Standard: %h %l %u %t "%r" %>s %b "%{Referer}i" "%{User-Agent}i"
+    // Extended: ... "Service"
     LOG_ACCESS_INFO(
-        "{} - - [{}] \"{} {} {}\" {} {} \"{}\" \"{}\"",
-        clientAddress_,      // %h (Remote Host/IP)
+        "{} - - [{}] \"{} {} {}\" {} {} \"{}\" \"{}\" \"{}\"",
+        clientAddress_,      // %h (IP)
         timestamp,           // %t (Time)
-        method_,             // %r part 1 (Method)
-        path_,               // %r part 2 (Path)
-        protocol,            // %r part 3 (Protocol)
-        status,              // %>s (Status Code)
-        bytesSent_,          // %b (Bytes Sent)
-        referer,             // "%{Referer}i"
-        userAgent_           // "%{User-Agent}i" (Using your sanitized member)
+        method_,             // %r (Method)
+        path_,               // %r (Path)
+        protocol,            // %r (Proto)
+        status,              // %>s (Status)
+        bytesSent_,          // %b (Bytes)
+        referer,             // Referer
+        userAgent,           // User-Agent
+        service              // <--- Extension: Service Name at the end
     );
 }
 
