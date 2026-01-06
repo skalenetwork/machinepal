@@ -35,7 +35,7 @@ log:
   # Optional Log verbosity level — one of: trace, debug, info, warn, error, fatal
   # Default: info
   level: trace
-  # Format for logs (default or force_json)  Default: default
+  # Format for logs (default or json)  Default: default
   type: default
 
 

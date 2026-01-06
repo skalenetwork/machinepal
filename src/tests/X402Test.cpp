@@ -271,7 +271,7 @@ BOOST_AUTO_TEST_SUITE(InitProjectSuite)
 
         // now run machinepal server in /tmp/machinepal to see if it starts correctly
         fs::path pidFile = baseDir / "machinepal.pid";
-        cmd = "cd \"" + baseDir.string() + "\" && \"" + machinepalPath.string() + "\" & echo $! > " + pidFile.string();
+        cmd = "cd \"" + baseDir.string() + "\" && \"" + machinepalPath.string() + "\" -t json & echo $! > " + pidFile.string();
         rc = std::system(cmd.c_str());
         BOOST_TEST(WEXITSTATUS(rc) == 0);
         sleep(3); // wait a bit for server to start

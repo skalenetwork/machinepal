@@ -59,9 +59,9 @@ map<string, string> parseConfigValueOverloadsFromCommandLineAndEnvironment(int a
                 ->type_name("LOG_LEVEL")
                 ->check(CLI::IsMember({"trace", "debug", "info", "warn", "error", "fatal"}));
         app.add_option("-t,--log-type", logType,
-                       "Log type: plain, json")
+                       "Log type: text, json")
                 ->type_name("LOG_TYPE")
-                ->check(CLI::IsMember({"default", "force_json"}));
+                ->check(CLI::IsMember({"text", "json"}));
         app.add_option("--bind-ip", bindIp,
                        "Bind IP address for the server")
                 ->type_name("IP");
@@ -150,7 +150,7 @@ int main(int argc, char *argv[]) {
                 "the corresponding configuration file values."
                 " Command line takes precedence over environment.");
             for (const auto &kv: configValueOverloads) {
-                LOG_CORE_INFO("{} = {}", kv.first, kv.second);
+                LOG_CORE_INFO("{}={}", kv.first, kv.second);
             }
         }
 

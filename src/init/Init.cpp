@@ -264,9 +264,6 @@ void Init::setupLogging(bool useJson, spdlog::level::level_enum logLevel) {
     spdlog::set_level(logLevel);
     spdlog::flush_every(std::chrono::seconds(1));
 
-    if(defaultLogger) {
-        defaultLogger->info("Logging configured. Level: {}", spdlog::level::to_string_view(logLevel));
-    }
 }
 
 
@@ -310,7 +307,7 @@ void Init::configureLogging(ptr<ConfigManager> manager) {
 
     auto logType = logConfig->type();
 
-    bool forceJson = logType == LogType::json;
+    bool useJson = logType == LogType::json;
 
     if (logLevel == LogLevel::trace)
         spdlogLevel = spdlog::level::trace;
@@ -328,7 +325,10 @@ void Init::configureLogging(ptr<ConfigManager> manager) {
         CHECK_STATE(false); // should never happen
     }
 
-    setupLogging(forceJson, spdlogLevel);
+    LOG_CORE_INFO("Logging configuration: level: {}, type: {}",
+        spdlog::level::to_string_view(spdlogLevel),
+        useJson ? "json" : "text");
+    setupLogging(useJson, spdlogLevel);
 }
 
 bool Init::fetchInternetTime(
