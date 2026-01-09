@@ -33,25 +33,42 @@ __attribute__((noreturn)) void ThrowOnFailure() {
 }
 
 void Init::initAllLibs(int _argc, char *_argv[]) {
-    if (!inited_.exchange(true)) {
+    static std::mutex mtx;
+    static bool is_initialized = false;
+
+    std::lock_guard<std::mutex> lock(mtx);
+
+    if (!is_initialized) {
         try {
             auto rc = curl_global_init(CURL_GLOBAL_DEFAULT);
             CHECK_STATE2(rc == CURLE_OK, "curl_global_init failed");
 
             FLAGS_logtostderr = 1;
             FLAGS_minloglevel = google::INFO;
-            static folly::Init init(&_argc, &_argv); // Static to preserve lifetime, pass by pointer
 
+            // folly::Init parses flags and may remove them from _argc/_argv
+            static folly::Init init(&_argc, &_argv);
 
             google::InstallFailureFunction(&ThrowOnFailure);
-
             setupBootStrapLogging();
 
-            spdlog::info( "Libraries initialized" );
-        } catch (... ) {
+            // --- Construct Command Line String ---
+            std::string cmd_line;
+            for (int i = 0; i < _argc; ++i) {
+                cmd_line += _argv[i];
+                if (i < _argc - 1) {
+                    cmd_line += " ";
+                }
+            }
+
+            spdlog::info("Starting... Command Line: {}", cmd_line);
+            // -------------------------------------
+
+            is_initialized = true;
+
+        } catch (...) {
             RETHROW_NESTED2("FATAL: Failed to initialize machinepal libraries.");
         }
-
     }
 }
 
