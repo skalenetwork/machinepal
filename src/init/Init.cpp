@@ -224,19 +224,41 @@ public:
 };
 
 std::shared_ptr<spdlog::logger> Init::createLogger(const std::string& name, const std::vector<spdlog::sink_ptr>& sinks,
-    const std::string& pattern, bool forceJson) {
+    const std::string& pattern, bool useJson) {
     // Use spdlog::logger (Synchronous) instead of async_logger
     auto logger = std::make_shared<spdlog::logger>(name, sinks.begin(), sinks.end());
 
     logger->flush_on(spdlog::level::err);
 
 
-    if (forceJson && !(name == "access")) {
+    if (useJson) {
         auto formatter = std::make_unique<JsonFormatter>();
         // Set formatter for each sink, or for the logger
         logger->set_formatter(std::move(formatter));
     } else {
         logger->set_pattern(pattern);
+    }
+
+    spdlog::register_logger(logger);
+    return logger;
+}
+
+std::shared_ptr<spdlog::logger> Init::createAccessLogger(const std::vector<spdlog::sink_ptr>& sinks, bool useJson) {
+
+    std::string accessPattern = useJson? "%v" : "[%Y-%m-%d %H:%M:%S.%e] [%n] [%^%l%$] %v";
+
+    // Use spdlog::logger (Synchronous) instead of async_logger
+    auto logger = std::make_shared<spdlog::logger>("access", sinks.begin(), sinks.end());
+
+    logger->flush_on(spdlog::level::err);
+
+
+    if (useJson) {
+        auto formatter = std::make_unique<JsonFormatter>();
+        // Set formatter for each sink, or for the logger
+        logger->set_formatter(std::move(formatter));
+    } else {
+        logger->set_pattern(accessPattern);
     }
 
     spdlog::register_logger(logger);
@@ -253,14 +275,13 @@ void Init::setupLogging(bool useJson, spdlog::level::level_enum logLevel) {
     // Sinks setup (Keep as is)
     auto stdoutSink = std::make_shared<spdlog::sinks::stdout_sink_mt>();
     std::vector<spdlog::sink_ptr> systemSinks { stdoutSink };
-    std::vector<spdlog::sink_ptr> accessSinks { stdoutSink };
 
-    std::string accessPattern = useJson? "%v" : "[%Y-%m-%d %H:%M:%S.%e] [%n] [%^%l%$] %v";
+
     // Simplified system pattern logic
     std::string systemPattern = useJson ? "" : "[%Y-%m-%d %H:%M:%S.%e] [%n] [%^%l%$] %v";
 
     // 1. Create Access Logger
-    createLogger("access", accessSinks, accessPattern, useJson);
+    createAccessLogger(systemSinks, useJson);
 
     // 2. Define System Loggers
     std::vector<std::string> loggers = {

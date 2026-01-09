@@ -38,11 +38,13 @@ private:
 
 
     static std::shared_ptr<spdlog::logger> createLogger(const std::string &name, const std::vector<spdlog::sink_ptr> &sinks,
-                                                 const std::string &pattern, bool forceJson);
+                                                 const std::string &pattern, bool useJson);
+
+    static std::shared_ptr<spdlog::logger> createAccessLogger(const std::vector<spdlog::sink_ptr> &sinks, bool useJson);
 
 
     static bool fetchInternetTime( const char* url, std::string& utc_datetime,
-        std::string& responseOut, std::string& errorOut );
+                                   std::string& responseOut, std::string& errorOut );
 };
 
 void ThrowOnFailure();
