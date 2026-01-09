@@ -65,15 +65,11 @@ void Init::initAllLibs(int _argc, char *_argv[]) {
             // -------------------------------------
 
             is_initialized = true;
-
         } catch (...) {
             RETHROW_NESTED2("FATAL: Failed to initialize machinepal libraries.");
         }
     }
 }
-
-
-
 
 
 /*
@@ -148,9 +144,6 @@ void Init::initAllLibs(int _argc, char *_argv[]) {
  */
 
 
-
-
-
 #include <string>
 
 /**
@@ -176,6 +169,13 @@ void Init::setupBootStrapLogging() {
 class JsonFormatter : public spdlog::formatter {
 public:
     void format(const spdlog::details::log_msg &msg, spdlog::memory_buf_t &dest) override {
+        if (msg.logger_name == "access") {
+            dest.append(msg.payload.data(), msg.payload.data() + msg.payload.size());
+            // Don't forget the newline
+            dest.append(spdlog::details::os::default_eol,
+                        spdlog::details::os::default_eol + strlen(spdlog::details::os::default_eol));
+            return;
+        }
 
         // 1. Efficient Time Formatting (No stringstream overhead)
         auto time_now = std::chrono::system_clock::to_time_t(msg.time);
@@ -192,7 +192,7 @@ public:
         // Optimization: Reserve memory to prevent re-allocations
         safe_msg.reserve(msg.payload.size() + 16);
 
-        for (char c : msg.payload) {
+        for (char c: msg.payload) {
             // Check for additional JSON-breaking chars
             if (c == '"') safe_msg += "\\\"";
             else if (c == '\\') safe_msg += "\\\\";
@@ -215,7 +215,8 @@ public:
 
         // 4. Append to Buffer
         dest.append(json.data(), json.data() + json.size());
-        dest.append(spdlog::details::os::default_eol, spdlog::details::os::default_eol + strlen(spdlog::details::os::default_eol));
+        dest.append(spdlog::details::os::default_eol,
+                    spdlog::details::os::default_eol + strlen(spdlog::details::os::default_eol));
     }
 
     std::unique_ptr<spdlog::formatter> clone() const override {
@@ -223,8 +224,8 @@ public:
     }
 };
 
-std::shared_ptr<spdlog::logger> Init::createLogger(const std::string& name, const std::vector<spdlog::sink_ptr>& sinks,
-    const std::string& pattern, bool useJson) {
+std::shared_ptr<spdlog::logger> Init::createLogger(const std::string &name, const std::vector<spdlog::sink_ptr> &sinks,
+                                                   const std::string &pattern, bool useJson) {
     // Use spdlog::logger (Synchronous) instead of async_logger
     auto logger = std::make_shared<spdlog::logger>(name, sinks.begin(), sinks.end());
 
@@ -243,9 +244,8 @@ std::shared_ptr<spdlog::logger> Init::createLogger(const std::string& name, cons
     return logger;
 }
 
-std::shared_ptr<spdlog::logger> Init::createAccessLogger(const std::vector<spdlog::sink_ptr>& sinks, bool useJson) {
-
-    std::string accessPattern = useJson? "%v" : "[%Y-%m-%d %H:%M:%S.%e] [%n] [%^%l%$] %v";
+std::shared_ptr<spdlog::logger> Init::createAccessLogger(const std::vector<spdlog::sink_ptr> &sinks, bool useJson) {
+    std::string accessPattern = useJson ? "%v" : "[%Y-%m-%d %H:%M:%S.%e] [%n] [%^%l%$] %v";
 
     // Use spdlog::logger (Synchronous) instead of async_logger
     auto logger = std::make_shared<spdlog::logger>("access", sinks.begin(), sinks.end());
@@ -258,7 +258,6 @@ std::shared_ptr<spdlog::logger> Init::createAccessLogger(const std::vector<spdlo
 }
 
 
-
 // we call this once we have config file loaded
 void Init::setupLogging(bool useJson, spdlog::level::level_enum logLevel) {
     useJsonLogging_ = useJson;
@@ -266,7 +265,7 @@ void Init::setupLogging(bool useJson, spdlog::level::level_enum logLevel) {
 
     // Sinks setup (Keep as is)
     auto stdoutSink = std::make_shared<spdlog::sinks::stdout_sink_mt>();
-    std::vector<spdlog::sink_ptr> systemSinks { stdoutSink };
+    std::vector<spdlog::sink_ptr> systemSinks{stdoutSink};
 
 
     // Simplified system pattern logic
@@ -284,7 +283,7 @@ void Init::setupLogging(bool useJson, spdlog::level::level_enum logLevel) {
     std::shared_ptr<spdlog::logger> defaultLogger;
 
     // 3. Create System Loggers in a loop
-    for (const auto& name : loggers) {
+    for (const auto &name: loggers) {
         auto logger = createLogger(name, systemSinks, systemPattern, useJson);
         if (name == "core") defaultLogger = logger;
     }
@@ -293,7 +292,6 @@ void Init::setupLogging(bool useJson, spdlog::level::level_enum logLevel) {
     if (defaultLogger) spdlog::set_default_logger(defaultLogger);
     spdlog::set_level(logLevel);
     spdlog::flush_every(std::chrono::seconds(1));
-
 }
 
 
@@ -356,8 +354,8 @@ void Init::configureLogging(ptr<ConfigManager> manager) {
     }
 
     LOG_CORE_INFO("Logging configuration: level: {}, type: {}",
-        spdlog::level::to_string_view(spdlogLevel),
-        useJson ? "json" : "text");
+                  spdlog::level::to_string_view(spdlogLevel),
+                  useJson ? "json" : "text");
     setupLogging(useJson, spdlogLevel);
 }
 
@@ -563,7 +561,7 @@ void Init::checkSystemTime() {
         if (signedDiff > 0) {
             direction = "ahead of"; // System time > Internet time
         } else {
-            direction = "behind";   // System time < Internet time (or equal, but the 'if' above handles equal)
+            direction = "behind"; // System time < Internet time (or equal, but the 'if' above handles equal)
         }
 
         throw runtime_error(
@@ -574,7 +572,6 @@ void Init::checkSystemTime() {
             std::to_string(TIME_SYNC_THRESHOLD_SECONDS) +
             "s. Please synchronize your system clock and restart machinepal."
         );
-
     }
 }
 
@@ -592,4 +589,4 @@ void Init::checkOperatingSystemConfiguration() {
 }
 
 
-std::atomic<bool > Init::useJsonLogging_;
+std::atomic<bool> Init::useJsonLogging_;

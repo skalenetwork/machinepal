@@ -94,30 +94,38 @@ void ProxygenResponseSender::logAccessAsJson(
 ) {
     auto now = std::chrono::steady_clock::now();
     auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(now - creationTime_).count();
+
+    // Build UTC timestamp with milliseconds
     auto systemNow = std::chrono::system_clock::now();
+    auto msPart = std::chrono::duration_cast<std::chrono::milliseconds>(systemNow.time_since_epoch()) % 1000;
     std::time_t systemNowTime = std::chrono::system_clock::to_time_t(systemNow);
+
     std::tm tm{};
     gmtime_r(&systemNowTime, &tm);
-    char timestamp[32];
-    std::strftime(timestamp, sizeof(timestamp), "%Y-%m-%dT%H:%M:%SZ", &tm);
 
+    char baseTs[32];
+    std::strftime(baseTs, sizeof(baseTs), "%Y-%m-%d %H:%M:%S", &tm);
+
+    char timestampMs[48];
+    std::snprintf(timestampMs, sizeof(timestampMs), "%s.%03lld",
+                  baseTs, static_cast<long long>(msPart.count()));
 
     LOG_ACCESS_INFO(
         "{{"
-        "\"timestamp\":\"{}\","
-        "\"level\":\"info\","
-        "\"type\":\"access\","
-        "\"service\":\"{}\","
-        "\"method\":\"{}\","
-        "\"path\":\"{}\","
-        "\"status\":{},"
-        "\"bytesSent\":{},"
-        "\"latencyMs\":{},"
-        "\"clientIp\":\"{}\","
-        "\"userAgent\":\"{}\","
-        "\"requestId\":\"{}\""
+        " \"timestamp\": \"{}\","
+        " \"logger\": \"access\","
+        " \"level\": \"info\","
+        " \"service\": \"{}\","
+        " \"method\": \"{}\","
+        " \"path\": \"{}\","
+        " \"status\": {},"
+        " \"bytesSent\": {},"
+        " \"latencyMs\": {},"
+        " \"clientIp\": \"{}\","
+        " \"userAgent\": \"{}\","
+        " \"requestId\": \"{}\""
         "}}",
-        timestamp,
+        timestampMs,
         service,
         method_,
         path_,
