@@ -238,7 +238,7 @@ void ConfigLoader::applyEnvOverrides( json& j ) {
         applyStringEnv( j, "/facilitator/base_url"_json_pointer, "FACILITATOR_BASE_URL" );
         applyStringEnv( j, "/facilitator/api_key_file"_json_pointer, "FACILITATOR_API_KEY_FILE" );
         applyStringEnv( j, "/log/level"_json_pointer, "LOG_LEVEL" );
-        applyStringEnv( j, "/log/json"_json_pointer, "LOG_JSON" );
+        applyStringEnv( j, "/log/type"_json_pointer, "LOG_TYPE" );
     } catch ( const std::exception& ex ) {
         RETHROW_NESTED;
     }
