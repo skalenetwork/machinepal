@@ -251,15 +251,7 @@ std::shared_ptr<spdlog::logger> Init::createAccessLogger(const std::vector<spdlo
     auto logger = std::make_shared<spdlog::logger>("access", sinks.begin(), sinks.end());
 
     logger->flush_on(spdlog::level::err);
-
-
-    if (useJson) {
-        auto formatter = std::make_unique<JsonFormatter>();
-        // Set formatter for each sink, or for the logger
-        logger->set_formatter(std::move(formatter));
-    } else {
-        logger->set_pattern(accessPattern);
-    }
+    logger->set_pattern(accessPattern);
 
     spdlog::register_logger(logger);
     return logger;

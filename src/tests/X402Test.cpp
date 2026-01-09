@@ -61,7 +61,9 @@ struct X402ServerFixture {
                 {
                     "CONFIG",
                     "src/tests/configs/basic/machinepal.yml"
-                }
+                },
+                { "LOG_TYPE",
+                    "json"}
             };
             app_ = MachinePalApp::makeInstance(configMap);
             auto config = app_->configManager()->latestConfig();
