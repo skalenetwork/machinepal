@@ -13,8 +13,7 @@
 // - The model only moves balances within this instance; it does not touch any on-chain state.
 class VibeSwap {
 public:
-    // Ethereum-style address string and token symbol/identifier used by this in-memory model.
-    using Address = std::string;
+    // Ethereum-style token symbol/identifier used by this in-memory model.
     using Token = std::string;
 
     // Result of addLiquidity, matching Uniswap V2 behavior (actual amounts deposited + LP minted).
@@ -34,6 +33,7 @@ public:
     struct PairSnapshot {
         Token token0;
         Token token1;
+        EthAddress contractAddress;
         u256 reserve0;
         u256 reserve1;
         u256 totalSupply;
@@ -43,11 +43,11 @@ public:
     VibeSwap();
 
     // Mint fungible tokens into a wallet (testing/funding helper; not a Uniswap V2 factory action).
-    void mintToken(const Address &to, const Token &token, const u256 &amount);
+    void mintToken(const EthAddress &to, const Token &token, const u256 &amount);
     // Return ERC20-like balance for a wallet and token.
-    u256 balanceOf(const Address &owner, const Token &token) const;
+    u256 balanceOf(const EthAddress &owner, const Token &token) const;
     // Return LP token balance for a wallet for the (tokenA, tokenB) pair.
-    u256 lpBalanceOf(const Address &owner, const Token &tokenA, const Token &tokenB) const;
+    u256 lpBalanceOf(const EthAddress &owner, const Token &tokenA, const Token &tokenB) const;
 
     // Read-only pair state, with tokens in sorted order.
     PairSnapshot getPairSnapshot(const Token &tokenA, const Token &tokenB) const;
@@ -56,7 +56,7 @@ public:
 
     // Add liquidity following Uniswap V2 math: initial mint uses sqrt(amountA*amountB) - MINIMUM_LIQUIDITY,
     // subsequent mints are proportional to reserves. Reverts if min constraints are not met.
-    AddLiquidityResult addLiquidity(const Address &provider,
+    AddLiquidityResult addLiquidity(const EthAddress &provider,
                                    const Token &tokenA,
                                    const Token &tokenB,
                                    const u256 &amountADesired,
@@ -65,7 +65,7 @@ public:
                                    const u256 &amountBMin);
 
     // Remove liquidity, burning LP tokens and returning underlying tokens subject to min constraints.
-    RemoveLiquidityResult removeLiquidity(const Address &provider,
+    RemoveLiquidityResult removeLiquidity(const EthAddress &provider,
                                           const Token &tokenA,
                                           const Token &tokenB,
                                           const u256 &liquidity,
@@ -73,18 +73,18 @@ public:
                                           const u256 &amountBMin);
 
     // Swap an exact input amount across the path; returns all hop amounts and credits `to`.
-    std::vector<u256> swapExactTokensForTokens(const Address &trader,
+    std::vector<u256> swapExactTokensForTokens(const EthAddress &trader,
                                                const u256 &amountIn,
                                                const u256 &amountOutMin,
                                                const std::vector<Token> &path,
-                                               const Address &to);
+                                               const EthAddress &to);
 
     // Swap to receive an exact output amount across the path; debits `trader` up to amountInMax.
-    std::vector<u256> swapTokensForExactTokens(const Address &trader,
+    std::vector<u256> swapTokensForExactTokens(const EthAddress &trader,
                                                const u256 &amountOut,
                                                const u256 &amountInMax,
                                                const std::vector<Token> &path,
-                                               const Address &to);
+                                               const EthAddress &to);
 
     // Uniswap V2 quote() helper: amountB = amountA * reserveB / reserveA.
     static u256 quote(const u256 &amountA, const u256 &reserveA, const u256 &reserveB);
@@ -112,10 +112,11 @@ private:
     struct Pair {
         Token token0;
         Token token1;
+        EthAddress contractAddress;
         u256 reserve0{0};
         u256 reserve1{0};
         u256 totalSupply{0};
-        std::map<Address, u256> lpBalances;
+        std::map<EthAddress, u256> lpBalances;
     };
 
     // Uniswap V2 fee parameters (0.3%) and minimum locked liquidity.
@@ -130,6 +131,8 @@ private:
     // Integer square-root used for initial liquidity minting.
     static u256 integerSqrt(const u256 &value);
 
+    static EthAddress makePairAddress(const Token &token0, const Token &token1);
+
     // Deterministic key for pair map (token0, token1).
     std::string pairKey(const Token &token0, const Token &token1) const;
     // Get or create a pair in sorted order.
@@ -139,19 +142,19 @@ private:
     const Pair &getPairChecked(const Token &tokenA, const Token &tokenB) const;
 
     // Validate wallet balance before debiting.
-    void ensureBalance(const Address &owner, const Token &token, const u256 &amount) const;
+    void ensureBalance(const EthAddress &owner, const Token &token, const u256 &amount) const;
     // Move tokens from wallet to pool.
-    void debit(const Address &owner, const Token &token, const u256 &amount);
+    void debit(const EthAddress &owner, const Token &token, const u256 &amount);
     // Move tokens from pool to wallet.
-    void credit(const Address &owner, const Token &token, const u256 &amount);
+    void credit(const EthAddress &owner, const Token &token, const u256 &amount);
 
     // Execute swap given precomputed hop amounts (path size N yields amounts size N).
-    std::vector<u256> swapWithKnownAmounts(const Address &trader,
+    std::vector<u256> swapWithKnownAmounts(const EthAddress &trader,
                                            const std::vector<u256> &amounts,
                                            const std::vector<Token> &path,
-                                           const Address &to);
+                                           const EthAddress &to);
 
     // Map of pairKey -> Pair state, and wallet balances per token.
     std::map<std::string, Pair> pairs_;
-    std::map<Address, std::map<Token, u256>> balances_;
+    std::map<EthAddress, std::map<Token, u256>> balances_;
 };
