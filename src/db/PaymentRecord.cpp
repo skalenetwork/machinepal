@@ -1,7 +1,7 @@
 #include "PaymentRecord.h"
 #include "MachinePalCommon.h"
 #include "crypto/EIP3009Nonce.h"
-#include "crypto/EIP3009Value.h"
+#include "crypto/TokenAmount.h"
 #include "crypto/Encoding.h"
 #include "crypto/EthAddress.h"
 #include "crypto/Keccak.h"  // for computing resource hash
@@ -40,7 +40,7 @@ EthAddress PaymentRecord::assetAddress() const {
     return assetAddress_;
 }
 
-EIP3009Value PaymentRecord::value() const {
+TokenAmount PaymentRecord::value() const {
     return value_;
 }
 
@@ -75,7 +75,7 @@ std::string PaymentRecord::jsonInfo() const {
 
 PaymentRecord::PaymentRecord( const std::string& organizationName, const u256 chainId,
     const EthAddress& fromAddress, const EthAddress& toAddress, const EthAddress& assetAddress,
-    const EIP3009Value& value, const EIP3009Nonce& nonce, const string& resourceIdentifier,
+    const TokenAmount& value, const EIP3009Nonce& nonce, const string& resourceIdentifier,
     uint64_t settlementTime, const Hash& authorizationSignatureHash, const Hash& transactionHash,
     const std::string& fromIpAddress, const std::string& jsonInfo )
     : organizationName_( organizationName ),
@@ -103,7 +103,7 @@ ptr< PaymentRecord > PaymentRecord::createPaymentRecord( const PaymentPayload& p
 
     const EthAddress from = auth->from();
     const EthAddress to = auth->to();
-    const EIP3009Value value = auth->value();
+    const TokenAmount value = auth->value();
     const EIP3009Nonce nonce = auth->nonce();
 
     auto organizationName = organization.organizationName();

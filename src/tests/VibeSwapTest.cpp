@@ -1,13 +1,15 @@
-#define BOOST_TEST_MODULE VibeSwapTest
-
 #include "MachinePalCommon.h"
 #include "vibemarket/VibeSwap.h"
 
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
+
+
+#define BOOST_TEST_MODULE VibeSwapTest
+
 
 BOOST_AUTO_TEST_CASE(add_liquidity_and_swap) {
     VibeSwap swap;
-    using Amount = VibeSwap::Amount;
+    using Amount = TokenAmount;
     VibeSwap::Token tokenA = "TOKENA";
     VibeSwap::Token tokenB = "TOKENB";
     EthAddress provider("0x0000000000000000000000000000000000000001");

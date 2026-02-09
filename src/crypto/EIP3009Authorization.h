@@ -9,21 +9,21 @@
 enum class FacilitatorError;
 class HttpError;
 class EIP3009ValidityTime;
-class EIP3009Value;
+class TokenAmount;
 
 
 class EIP3009Authorization {
 public:
     // Signs an EIP-3009 authorization message
     [[nodiscard]] static EIP712Signature signAuthorization( const EIP712Domain& domain,
-        const EthAddress& from, const EthAddress& to, const EIP3009Value& value,
+        const EthAddress& from, const EthAddress& to, const TokenAmount& value,
         const EIP3009ValidityTime& validAfter, const EIP3009ValidityTime& validBefore,
         const EIP3009Nonce& nonce, const EthPrivateKey& privateKey );
 
     // Verifies an EIP-3009 authorization signature
     [[nodiscard]] static std::optional< FacilitatorError > verifyAuthorizationSignature(
         const EIP712Domain& domain, const EthAddress& from, const EthAddress& to,
-        const EIP3009Value& value, const EIP3009ValidityTime& validAfter,
+        const TokenAmount& value, const EIP3009ValidityTime& validAfter,
         const EIP3009ValidityTime& validBefore, const EIP3009Nonce& nonce,
         const EIP712Signature& signature );
 

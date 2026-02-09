@@ -1,7 +1,7 @@
 #pragma once
 
 #include "FacilitatorClient.h"
-#include "crypto/EIP3009Value.h"
+#include "crypto/TokenAmount.h"
 #include "crypto/EthAddress.h"
 #include "db/EasyNetDb.h"
 

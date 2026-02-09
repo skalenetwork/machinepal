@@ -113,7 +113,7 @@ EasyNetDb::EasyNetDb( MachinePalApp& app, DbType type, const optional< string >&
 }
 
 void EasyNetDb::newWalletUnsafe( const EthAddress& walletAddress, const EthAddress& assetAddress,
-    const EIP3009Value& value ) {
+    const TokenAmount& value ) {
     try {
         soci::session databaseSession( *pool_ );
         string walletAddressDatabaseString = walletAddress.toDbString();
@@ -132,7 +132,7 @@ void EasyNetDb::newWalletUnsafe( const EthAddress& walletAddress, const EthAddre
 }
 
 std::optional<FacilitatorError> EasyNetDb::processTransferRequest( const EthAddress& fromAddress,
-    const EthAddress& toAddress, const EthAddress& assetAddress, const EIP3009Value& value,
+    const EthAddress& toAddress, const EthAddress& assetAddress, const TokenAmount& value,
     EIP3009Nonce nonce, const string& resourceLocation, const string& fromIpAddress,
     const string& jsonInfo, const string& transactionHash,
     const u256& chainId, const string& authorizationSignatureHash ) {
@@ -187,7 +187,7 @@ void EasyNetDb::updateState( soci::session& databaseSession, string& walletAddre
 }
 
 std::optional<FacilitatorError> EasyNetDb::transferValueUnsafe( const EthAddress& fromAddress,
-    const EthAddress& toAddress, const EthAddress& assetAddress, const EIP3009Value& value,
+    const EthAddress& toAddress, const EthAddress& assetAddress, const TokenAmount& value,
     EIP3009Nonce& nonce, const string& resourceLocation, const string& fromIpAddress,
     const string& jsonInfo, const string& transactionHash,
     const u256& chainId, const string& authorizationSignatureHash ) {
@@ -304,7 +304,7 @@ void EasyNetDb::fundUserWalletWithFundsIfNewWalletUnsafe( const EthAddress& wall
         }
 
         u256 initialFundingAmountValue = Encoding::u256FromHexOrDecimal( "1000000000000000000000000000" );  // 1e27
-        EIP3009Value initialFundingEip3009Value( initialFundingAmountValue );
+        TokenAmount initialFundingEip3009Value( initialFundingAmountValue );
         string initialFundingDecimalString = initialFundingEip3009Value.toDbString();
 
         databaseSession << "INSERT INTO state (walletAddress, assetAddress, value) VALUES "

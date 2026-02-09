@@ -16,7 +16,7 @@
 Authorization::Authorization( const std::string& fromStr, const std::string& toStr,
                               const std::string& value, const std::string& validAfter, const std::string& validBefore,
                               const std::string& nonce ) {
-    value_ = EIP3009Value::fromHexOrDecimal( value );
+    value_ = TokenAmount::fromHexOrDecimal( value );
     validAfter_ = EIP3009ValidityTime::fromHexOrDecimal( validAfter );
     validBefore_ = EIP3009ValidityTime::fromHexOrDecimal( validBefore );
     from_ = EthAddress::parseHexAddress( fromStr );
@@ -24,7 +24,7 @@ Authorization::Authorization( const std::string& fromStr, const std::string& toS
     nonce_ = EIP3009Nonce::fromHex( nonce );
 }
 
-const EIP3009Value& Authorization::value() const {
+const TokenAmount& Authorization::value() const {
     return value_;
 }
 const EIP3009ValidityTime& Authorization::validAfter() const {
@@ -110,7 +110,7 @@ std::optional< FacilitatorError > Authorization::checkValidityTime() {
     return std::nullopt;
 }
 
-std::optional< FacilitatorError> Authorization::validate(const EIP3009Value& price, EthAddress& destinationAddress ) {
+std::optional< FacilitatorError> Authorization::validate(const TokenAmount& price, EthAddress& destinationAddress ) {
     // Check validAfter is less than or equal to current time
     // Check validBefore is greater than current time
     try {

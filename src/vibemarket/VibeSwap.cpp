@@ -9,41 +9,41 @@ std::string toString(const VibeSwap::Token &token) {
     return token;
 }
 
-u256 toU256(const VibeSwap::Amount &value) {
+u256 toU256(const TokenAmount &value) {
     return value.value();
 }
 
-VibeSwap::Amount fromU256(const u256 &value) {
-    return VibeSwap::Amount(value);
+TokenAmount fromU256(const u256 &value) {
+    return TokenAmount(value);
 }
 }
 
 VibeSwap::VibeSwap() = default;
 
-void VibeSwap::mintToken(const EthAddress &to, const Token &token, const Amount &amount) {
+void VibeSwap::mintToken(const EthAddress &to, const Token &token, const TokenAmount &amount) {
     if (token.empty()) {
         throw std::invalid_argument("Token cannot be empty");
     }
     balances_[to][token] = fromU256(toU256(balances_[to][token]) + toU256(amount));
 }
 
-VibeSwap::Amount VibeSwap::balanceOf(const EthAddress &owner, const Token &token) const {
+TokenAmount VibeSwap::balanceOf(const EthAddress &owner, const Token &token) const {
     auto ownerIt = balances_.find(owner);
     if (ownerIt == balances_.end()) {
-        return Amount();
+        return TokenAmount();
     }
     auto tokenIt = ownerIt->second.find(token);
     if (tokenIt == ownerIt->second.end()) {
-        return Amount();
+        return TokenAmount();
     }
     return tokenIt->second;
 }
 
-VibeSwap::Amount VibeSwap::lpBalanceOf(const EthAddress &owner, const Token &tokenA, const Token &tokenB) const {
+TokenAmount VibeSwap::lpBalanceOf(const EthAddress &owner, const Token &tokenA, const Token &tokenB) const {
     const auto &pair = getPairChecked(tokenA, tokenB);
     auto lpIt = pair.lpBalances.find(owner);
     if (lpIt == pair.lpBalances.end()) {
-        return Amount();
+        return TokenAmount();
     }
     return lpIt->second;
 }
@@ -53,7 +53,7 @@ VibeSwap::PairSnapshot VibeSwap::getPairSnapshot(const Token &tokenA, const Toke
     return {pair.token0, pair.token1, pair.contractAddress, pair.reserve0, pair.reserve1, pair.totalSupply};
 }
 
-std::pair<VibeSwap::Amount, VibeSwap::Amount> VibeSwap::getReserves(const Token &tokenA, const Token &tokenB) const {
+std::pair<TokenAmount, TokenAmount> VibeSwap::getReserves(const Token &tokenA, const Token &tokenB) const {
     const auto &pair = getPairChecked(tokenA, tokenB);
     return {pair.reserve0, pair.reserve1};
 }
@@ -61,10 +61,10 @@ std::pair<VibeSwap::Amount, VibeSwap::Amount> VibeSwap::getReserves(const Token 
 VibeSwap::AddLiquidityResult VibeSwap::addLiquidity(const EthAddress &provider,
                                                     const Token &tokenA,
                                                     const Token &tokenB,
-                                                    const Amount &amountADesired,
-                                                    const Amount &amountBDesired,
-                                                    const Amount &amountAMin,
-                                                    const Amount &amountBMin) {
+                                                    const TokenAmount &amountADesired,
+                                                    const TokenAmount &amountBDesired,
+                                                    const TokenAmount &amountAMin,
+                                                    const TokenAmount &amountBMin) {
     if (toU256(amountADesired) == 0 || toU256(amountBDesired) == 0) {
         throw std::invalid_argument("Desired amounts must be positive");
     }
@@ -146,9 +146,9 @@ VibeSwap::AddLiquidityResult VibeSwap::addLiquidity(const EthAddress &provider,
 VibeSwap::RemoveLiquidityResult VibeSwap::removeLiquidity(const EthAddress &provider,
                                                           const Token &tokenA,
                                                           const Token &tokenB,
-                                                          const Amount &liquidity,
-                                                          const Amount &amountAMin,
-                                                          const Amount &amountBMin) {
+                                                          const TokenAmount &liquidity,
+                                                          const TokenAmount &amountAMin,
+                                                          const TokenAmount &amountBMin) {
     if (toU256(liquidity) == 0) {
         throw std::invalid_argument("Liquidity must be positive");
     }
@@ -188,9 +188,9 @@ VibeSwap::RemoveLiquidityResult VibeSwap::removeLiquidity(const EthAddress &prov
     return {fromU256(amountA), fromU256(amountB)};
 }
 
-std::vector<VibeSwap::Amount> VibeSwap::swapExactTokensForTokens(const EthAddress &trader,
-                                                                 const Amount &amountIn,
-                                                                 const Amount &amountOutMin,
+std::vector<TokenAmount> VibeSwap::swapExactTokensForTokens(const EthAddress &trader,
+                                                                 const TokenAmount &amountIn,
+                                                                 const TokenAmount &amountOutMin,
                                                                  const std::vector<Token> &path,
                                                                  const EthAddress &to) {
     auto amounts = getAmountsOut(amountIn, path);
@@ -200,9 +200,9 @@ std::vector<VibeSwap::Amount> VibeSwap::swapExactTokensForTokens(const EthAddres
     return swapWithKnownAmounts(trader, amounts, path, to);
 }
 
-std::vector<VibeSwap::Amount> VibeSwap::swapTokensForExactTokens(const EthAddress &trader,
-                                                                 const Amount &amountOut,
-                                                                 const Amount &amountInMax,
+std::vector<TokenAmount> VibeSwap::swapTokensForExactTokens(const EthAddress &trader,
+                                                                 const TokenAmount &amountOut,
+                                                                 const TokenAmount &amountInMax,
                                                                  const std::vector<Token> &path,
                                                                  const EthAddress &to) {
     auto amounts = getAmountsIn(amountOut, path);
@@ -212,7 +212,7 @@ std::vector<VibeSwap::Amount> VibeSwap::swapTokensForExactTokens(const EthAddres
     return swapWithKnownAmounts(trader, amounts, path, to);
 }
 
-VibeSwap::Amount VibeSwap::quote(const Amount &amountA, const Amount &reserveA, const Amount &reserveB) {
+TokenAmount VibeSwap::quote(const TokenAmount &amountA, const TokenAmount &reserveA, const TokenAmount &reserveB) {
     if (toU256(amountA) == 0) {
         throw std::invalid_argument("Amount must be positive");
     }
@@ -222,7 +222,7 @@ VibeSwap::Amount VibeSwap::quote(const Amount &amountA, const Amount &reserveA, 
     return fromU256((toU256(amountA) * toU256(reserveB)) / toU256(reserveA));
 }
 
-VibeSwap::Amount VibeSwap::getAmountOut(const Amount &amountIn, const Amount &reserveIn, const Amount &reserveOut) const {
+TokenAmount VibeSwap::getAmountOut(const TokenAmount &amountIn, const TokenAmount &reserveIn, const TokenAmount &reserveOut) const {
     if (toU256(amountIn) == 0) {
         throw std::invalid_argument("Amount in must be positive");
     }
@@ -236,7 +236,7 @@ VibeSwap::Amount VibeSwap::getAmountOut(const Amount &amountIn, const Amount &re
     return fromU256(numerator / denominator);
 }
 
-VibeSwap::Amount VibeSwap::getAmountIn(const Amount &amountOut, const Amount &reserveIn, const Amount &reserveOut) const {
+TokenAmount VibeSwap::getAmountIn(const TokenAmount &amountOut, const TokenAmount &reserveIn, const TokenAmount &reserveOut) const {
     if (toU256(amountOut) == 0) {
         throw std::invalid_argument("Amount out must be positive");
     }
@@ -252,37 +252,37 @@ VibeSwap::Amount VibeSwap::getAmountIn(const Amount &amountOut, const Amount &re
     return fromU256(numerator / denominator + 1);
 }
 
-std::vector<VibeSwap::Amount> VibeSwap::getAmountsOut(const Amount &amountIn, const std::vector<Token> &path) const {
+std::vector<TokenAmount> VibeSwap::getAmountsOut(const TokenAmount &amountIn, const std::vector<Token> &path) const {
     if (path.size() < 2) {
         throw std::invalid_argument("Path must have at least two tokens");
     }
 
-    std::vector<Amount> amounts(path.size());
+    std::vector<TokenAmount> amounts(path.size());
     amounts[0] = amountIn;
     for (size_t i = 0; i + 1 < path.size(); ++i) {
         const auto &pair = getPairChecked(path[i], path[i + 1]);
         auto [token0, token1] = sortTokens(path[i], path[i + 1]);
         bool inputIsToken0 = (path[i] == token0);
-        Amount reserveIn = inputIsToken0 ? pair.reserve0 : pair.reserve1;
-        Amount reserveOut = inputIsToken0 ? pair.reserve1 : pair.reserve0;
+        TokenAmount reserveIn = inputIsToken0 ? pair.reserve0 : pair.reserve1;
+        TokenAmount reserveOut = inputIsToken0 ? pair.reserve1 : pair.reserve0;
         amounts[i + 1] = getAmountOut(amounts[i], reserveIn, reserveOut);
     }
     return amounts;
 }
 
-std::vector<VibeSwap::Amount> VibeSwap::getAmountsIn(const Amount &amountOut, const std::vector<Token> &path) const {
+std::vector<TokenAmount> VibeSwap::getAmountsIn(const TokenAmount &amountOut, const std::vector<Token> &path) const {
     if (path.size() < 2) {
         throw std::invalid_argument("Path must have at least two tokens");
     }
 
-    std::vector<Amount> amounts(path.size());
+    std::vector<TokenAmount> amounts(path.size());
     amounts.back() = amountOut;
     for (size_t i = path.size() - 1; i > 0; --i) {
         const auto &pair = getPairChecked(path[i - 1], path[i]);
         auto [token0, token1] = sortTokens(path[i - 1], path[i]);
         bool inputIsToken0 = (path[i - 1] == token0);
-        Amount reserveIn = inputIsToken0 ? pair.reserve0 : pair.reserve1;
-        Amount reserveOut = inputIsToken0 ? pair.reserve1 : pair.reserve0;
+        TokenAmount reserveIn = inputIsToken0 ? pair.reserve0 : pair.reserve1;
+        TokenAmount reserveOut = inputIsToken0 ? pair.reserve1 : pair.reserve0;
         amounts[i - 1] = getAmountIn(amounts[i], reserveIn, reserveOut);
     }
     return amounts;
@@ -298,10 +298,10 @@ std::pair<VibeSwap::Token, VibeSwap::Token> VibeSwap::sortTokens(const Token &to
     return (tokenA < tokenB) ? std::make_pair(tokenA, tokenB) : std::make_pair(tokenB, tokenA);
 }
 
-VibeSwap::Amount VibeSwap::integerSqrt(const Amount &value) {
+TokenAmount VibeSwap::integerSqrt(const TokenAmount &value) {
     u256 rawValue = toU256(value);
     if (rawValue == 0) {
-        return Amount();
+        return TokenAmount();
     }
 
     u256 low = 0;
@@ -355,7 +355,7 @@ EthAddress VibeSwap::burnAddress() {
 VibeSwap::Pair &VibeSwap::getOrCreatePair(const Token &tokenA, const Token &tokenB) {
     auto [token0, token1] = sortTokens(tokenA, tokenB);
     auto key = pairKey(token0, token1);
-    Pair pair{token0, token1, makePairAddress(token0, token1), Amount(), Amount(), Amount(), {}};
+    Pair pair{token0, token1, makePairAddress(token0, token1), TokenAmount(), TokenAmount(), TokenAmount(), {}};
     auto [it, inserted] = pairs_.emplace(key, std::move(pair));
     return it->second;
 }
@@ -380,13 +380,13 @@ const VibeSwap::Pair &VibeSwap::getPairChecked(const Token &tokenA, const Token 
     return it->second;
 }
 
-void VibeSwap::ensureBalance(const EthAddress &owner, const Token &token, const Amount &amount) const {
+void VibeSwap::ensureBalance(const EthAddress &owner, const Token &token, const TokenAmount &amount) const {
     if (toU256(balanceOf(owner, token)) < toU256(amount)) {
         throw std::runtime_error("Insufficient balance for token " + token);
     }
 }
 
-void VibeSwap::debit(const EthAddress &owner, const Token &token, const Amount &amount) {
+void VibeSwap::debit(const EthAddress &owner, const Token &token, const TokenAmount &amount) {
     auto &balance = balances_[owner][token];
     if (toU256(balance) < toU256(amount)) {
         throw std::runtime_error("Insufficient balance for token " + token);
@@ -394,12 +394,12 @@ void VibeSwap::debit(const EthAddress &owner, const Token &token, const Amount &
     balance = fromU256(toU256(balance) - toU256(amount));
 }
 
-void VibeSwap::credit(const EthAddress &owner, const Token &token, const Amount &amount) {
+void VibeSwap::credit(const EthAddress &owner, const Token &token, const TokenAmount &amount) {
     balances_[owner][token] = fromU256(toU256(balances_[owner][token]) + toU256(amount));
 }
 
-std::vector<VibeSwap::Amount> VibeSwap::swapWithKnownAmounts(const EthAddress &trader,
-                                                             const std::vector<Amount> &amounts,
+std::vector<TokenAmount> VibeSwap::swapWithKnownAmounts(const EthAddress &trader,
+                                                             const std::vector<TokenAmount> &amounts,
                                                              const std::vector<Token> &path,
                                                              const EthAddress &to) {
     if (path.size() < 2) {

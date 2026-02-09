@@ -99,7 +99,7 @@ HttpResponse X402Client::buyAndRetrieveX402Resource(proxygen::HTTPMethod method,
 
 
     EthAddress to = EthAddress::parseFlexible(req.payTo());
-    auto  value = EIP3009Value::fromHexOrDecimal(req.maxAmountRequired());
+    auto  value = TokenAmount::fromHexOrDecimal(req.maxAmountRequired());
     EIP3009Nonce nonce = EIP3009Nonce::generateRandomNonce();
 
     auto paymentPayload =

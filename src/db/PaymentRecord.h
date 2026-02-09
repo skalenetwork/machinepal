@@ -1,7 +1,7 @@
 #pragma once
 #include "MachinePalCommon.h"  // added for Hash and u256
 #include "crypto/EIP3009Nonce.h"
-#include "crypto/EIP3009Value.h"
+#include "crypto/TokenAmount.h"
 #include "crypto/Encoding.h"
 #include "crypto/EthAddress.h"
 #include <soci/row.h>
@@ -11,7 +11,7 @@ class EIP712Domain;
 class ResourceConfig;
 class PaymentPayload;
 class EIP3009Nonce;
-class EIP3009Value;
+class TokenAmount;
 class EthAddress;
 /**
  * @brief Represents a payment record.
@@ -22,7 +22,7 @@ class PaymentRecord {
     EthAddress fromAddress_;
     EthAddress toAddress_;
     EthAddress assetAddress_;
-    EIP3009Value value_;
+    TokenAmount value_;
     EIP3009Nonce nonce_;
     string resourceLocation_;
     uint64_t settlementTime_;
@@ -42,7 +42,7 @@ public:
 
     [[nodiscard]] EthAddress assetAddress() const;
 
-    [[nodiscard]] EIP3009Value value() const;
+    [[nodiscard]] TokenAmount value() const;
 
     [[nodiscard]] EIP3009Nonce nonce() const;
 
@@ -66,7 +66,7 @@ public:
 
     PaymentRecord( const std::string& organizationName, const u256 chainId,
         const EthAddress& fromAddress, const EthAddress& toAddress, const EthAddress& assetAddress,
-        const EIP3009Value& value, const EIP3009Nonce& nonce, const string& resourceIdentifier,
+        const TokenAmount& value, const EIP3009Nonce& nonce, const string& resourceIdentifier,
         uint64_t settlementTime, const Hash& authorizationSignatureHash,
         const Hash& transactionHash, const std::string& fromIpAddress,
         const std::string& jsonInfo );

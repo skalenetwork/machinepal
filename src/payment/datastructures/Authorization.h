@@ -4,7 +4,7 @@
 #include "config/JsonUtils.h"
 #include "crypto/EIP3009Authorization.h"
 #include "crypto/EIP3009ValidityTime.h"
-#include "crypto/EIP3009Value.h"
+#include "crypto/TokenAmount.h"
 #include "crypto/EthAddress.h"
 
 
@@ -16,7 +16,7 @@ using json = nlohmann::json;
 
 class Authorization {
 public:
-    Authorization( const EthAddress& from, const EthAddress& to, const EIP3009Value& value,
+    Authorization( const EthAddress& from, const EthAddress& to, const TokenAmount& value,
         const EIP3009ValidityTime& valid_after, const EIP3009ValidityTime& valid_before,
         const EIP3009Nonce& nonce )
         : from_( from ),
@@ -30,7 +30,7 @@ public:
         const std::string& validAfter, const std::string& validBefore, const std::string& nonce );
 
 
-    [[nodiscard]] const EIP3009Value& value() const;
+    [[nodiscard]] const TokenAmount& value() const;
     [[nodiscard]] const EIP3009ValidityTime& validAfter() const;
     [[nodiscard]] const EIP3009ValidityTime& validBefore() const;
     [[nodiscard]] const EIP3009Nonce& nonce() const;
@@ -49,12 +49,12 @@ public:
     std::optional< FacilitatorError > checkValidityTime();
 
 
-    std::optional< FacilitatorError > validate(const EIP3009Value& price, EthAddress& destinationAddress );
+    std::optional< FacilitatorError > validate(const TokenAmount& price, EthAddress& destinationAddress );
 
 private:
     EthAddress from_{};
     EthAddress to_{};
-    EIP3009Value value_;
+    TokenAmount value_;
     EIP3009ValidityTime validAfter_;
     EIP3009ValidityTime validBefore_;
     EIP3009Nonce nonce_;

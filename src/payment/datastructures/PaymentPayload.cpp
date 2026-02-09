@@ -82,7 +82,7 @@ json PaymentPayload::toJson() const {
 }
 
 std::optional< FacilitatorError > PaymentPayload::validateAndVerifySignature(
-    const MachinePalConfig& config, const EIP3009Value& price, EthAddress& destinationAddress,
+    const MachinePalConfig& config, const TokenAmount& price, EthAddress& destinationAddress,
    const string& paymentScheme ) const {
     try {
         if ( x402Version_ != 1 ) {
@@ -129,7 +129,7 @@ std::optional< FacilitatorError > PaymentPayload::verifyEIP3009Signature(
 }
 
 ptr< PaymentPayload > PaymentPayload::createDefaultPaymentPayload( EthPrivateKey& privKey,
-    EthAddress& to, EIP3009Value& value, EIP3009Nonce& nonce, std::string networkName ) {
+    EthAddress& to, TokenAmount& value, EIP3009Nonce& nonce, std::string networkName ) {
     EthPublicKey pubKey = privKey.computePublicKey();
     EthAddress from = pubKey.getAddress();
 

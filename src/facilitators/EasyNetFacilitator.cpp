@@ -33,7 +33,7 @@ nlohmann::json EasyNetFacilitator::processSettleRequest(
 
         EthAddress toWalletAddress = paymentPayload->payload()->authorization()->to();
         EthAddress assetWalletAddress = EthAddress::parseFlexible( paymentReqs->asset() );
-        EIP3009Value transferValue = paymentPayload->payload()->authorization()->value();
+        TokenAmount transferValue = paymentPayload->payload()->authorization()->value();
         EIP3009Nonce nonce = paymentPayload->payload()->authorization()->nonce();
         const string& resource = paymentReqs->resource();
 
@@ -83,7 +83,7 @@ EasyNetFacilitator::processVerifyRequestUnsafe( const nlohmann::json& verifyRequ
 
     auto payToAddress = EthAddress::parseFlexible(paymentRequirements->payTo());
 
-    auto price = EIP3009Value::fromHexOrDecimal(paymentRequirements->maxAmountRequired());
+    auto price = TokenAmount::fromHexOrDecimal(paymentRequirements->maxAmountRequired());
 
     auto httpError = paymentPayload->validateAndVerifySignature( *app_.configManager()->latestConfig(),
         price, payToAddress, paymentRequirements->scheme());

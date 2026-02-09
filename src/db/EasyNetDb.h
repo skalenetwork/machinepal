@@ -2,7 +2,7 @@
 
 #include "MachinePalCommon.h"
 #include "MachinePalDb.h"
-#include "crypto/EIP3009Value.h"
+#include "crypto/TokenAmount.h"
 #include "crypto/EthAddress.h"
 
 class EasyNetDb : public MachinePalDb {
@@ -34,7 +34,7 @@ public:
      * overdrafts.
      */
     std::optional<FacilitatorError> processTransferRequest( const EthAddress& fromAddress,
-        const EthAddress& toAddress, const EthAddress& assetAddress, const EIP3009Value& value,
+        const EthAddress& toAddress, const EthAddress& assetAddress, const TokenAmount& value,
         EIP3009Nonce nonce, const std::string& resourceLocation, const std::string& fromIpAddress,
         const std::string& jsonInfo, const std::string& transactionHash,
         const u256& chainId,
@@ -70,11 +70,11 @@ public:
 
 private:
     void newWalletUnsafe( const EthAddress& walletAddress, const EthAddress& assetAddress,
-        const EIP3009Value& value );
+        const TokenAmount& value );
 
 
     std::optional<FacilitatorError> transferValueUnsafe( const EthAddress& fromAddress, const EthAddress& toAddress,
-        const EthAddress& assetAddress, const EIP3009Value& value, EIP3009Nonce& nonce,
+        const EthAddress& assetAddress, const TokenAmount& value, EIP3009Nonce& nonce,
         const std::string& resourceLocation, const std::string& fromIpAddress,
         const std::string& jsonInfo, const std::string& transactionHash,
         const u256& chainId,

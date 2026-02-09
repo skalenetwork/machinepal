@@ -9,7 +9,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "crypto/EIP3009ValidityTime.h"
-#include "crypto/EIP3009Value.h"
+#include "crypto/TokenAmount.h"
 #include "x402_protocol/HttpError.h"
 
 using u256 = boost::multiprecision::uint256_t;
@@ -18,7 +18,7 @@ BOOST_AUTO_TEST_CASE( EIP3009_SignAndVerify_ReferenceValues ) {
     try {
         // Reference values (example test vectors)
         EthAddress to( "0xffcf8fdee72ac11b5c542428b35eef5769c409f0" );
-        EIP3009Value value( 1000000000000000000ULL );
+        TokenAmount value( 1000000000000000000ULL );
         EIP3009ValidityTime validAfter( 1633046400 );
         EIP3009ValidityTime validBefore( 1733046400 );
         EIP3009Nonce nonce = EIP3009Nonce::fromHex(

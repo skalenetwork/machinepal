@@ -201,7 +201,7 @@ variant<SettlementResponse, HttpError> PaymentManager::decodePreValidateAndSettl
 
         authorization = paymentPayload->payload()->authorization();
 
-        EIP3009Value price(resource.price());
+        TokenAmount price(resource.price());
 
         auto walletAddress = config.network()->walletAddress();
 

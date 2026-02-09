@@ -1,7 +1,7 @@
 #include "EIP3009Authorization.h"
 #include "EIP3009Nonce.h"
 #include "EIP3009ValidityTime.h"
-#include "EIP3009Value.h"
+#include "TokenAmount.h"
 #include "EIP712Domain.h"
 #include "EIP712Signature.h"
 #include "EthAddress.h"
@@ -40,7 +40,7 @@ static inline void packUint256( std::vector< uint8_t >& out, const u256& value )
 
 // Helper to encode and hash the authorization message struct
 static std::array< uint8_t, 32 > hashTransferWithAuthorizationStruct( const EthAddress& from,
-    const EthAddress& to, const EIP3009Value& value, const EIP3009ValidityTime& validAfter,
+    const EthAddress& to, const TokenAmount& value, const EIP3009ValidityTime& validAfter,
     const EIP3009ValidityTime& validBefore, const EIP3009Nonce& nonce ) {
     std::vector< uint8_t > message;
     message.reserve( 7 * 32 );  // 7 fields * 32 bytes each
@@ -76,7 +76,7 @@ static std::array< uint8_t, 32 > hashTransferWithAuthorizationStruct( const EthA
 
 
 EIP712Signature EIP3009Authorization::signAuthorization( const EIP712Domain& domain,
-    const EthAddress& from, const EthAddress& to, const EIP3009Value& value,
+    const EthAddress& from, const EthAddress& to, const TokenAmount& value,
     const EIP3009ValidityTime& validAfter, const EIP3009ValidityTime& validBefore,
     const EIP3009Nonce& nonce, const EthPrivateKey& privateKey ) {
     auto structHash =
@@ -86,7 +86,7 @@ EIP712Signature EIP3009Authorization::signAuthorization( const EIP712Domain& dom
 
 std::optional< FacilitatorError > EIP3009Authorization::verifyAuthorizationSignature(
     const EIP712Domain& domain, const EthAddress& from, const EthAddress& to,
-    const EIP3009Value& value, const EIP3009ValidityTime& validAfter,
+    const TokenAmount& value, const EIP3009ValidityTime& validAfter,
     const EIP3009ValidityTime& validBefore, const EIP3009Nonce& nonce,
     const EIP712Signature& signature ) {
     try {

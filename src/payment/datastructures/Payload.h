@@ -25,7 +25,7 @@ public:
     static std::shared_ptr< Payload > fromJson( const json& j );
     [[nodiscard]] json toJson() const;
 
-    std::optional< FacilitatorError > validate( const EIP3009Value&  price, EthAddress& destinationAddress );
+    std::optional< FacilitatorError > validate( const TokenAmount&  price, EthAddress& destinationAddress );
     std::optional< FacilitatorError > verifyEIP3009Signature(
         std::shared_ptr< EIP712Domain > domain ) const;
 

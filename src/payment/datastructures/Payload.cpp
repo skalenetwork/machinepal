@@ -63,7 +63,7 @@ std::shared_ptr< Payload > Payload::fromJson( const json& j ) {
 }
 
 std::optional< FacilitatorError > Payload::validate(
-    const EIP3009Value& price, EthAddress& destinationAddress ) {
+    const TokenAmount& price, EthAddress& destinationAddress ) {
     return authorization()->validate( price, destinationAddress );
 }
 

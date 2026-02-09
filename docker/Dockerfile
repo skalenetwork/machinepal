@@ -43,3 +43,6 @@ ENV PYTHONUNBUFFERED=1 \
 
 # Use bash explicitly to avoid shebang/CRLF/exec-format edge cases
 ENTRYPOINT ["/bin/bash", "/entrypoint.sh"]
+
+# Fail fast if the builder stage didn't produce expected binaries (often due to missing deps like folly)
+RUN test -x /usr/local/bin/machinepal || (echo "ERROR: /usr/local/bin/machinepal missing. Builder likely failed (e.g., folly not found). Ensure folly is installed/provided via vcpkg and available to CMake." >&2; exit 1)

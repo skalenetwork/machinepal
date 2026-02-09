@@ -143,7 +143,7 @@ BOOST_FIXTURE_TEST_SUITE(X402Suite, X402ServerFixture)
 
 
         EthAddress to = EthAddress::parseFlexible(expected->payTo());
-        auto  value = EIP3009Value::fromHexOrDecimal(expected->maxAmountRequired());
+        auto  value = TokenAmount::fromHexOrDecimal(expected->maxAmountRequired());
         EIP3009Nonce nonce = EIP3009Nonce::generateRandomNonce();
         EthPrivateKey privKey = *app_->configManager()->latestConfig()->network()->fundingWalletKey();
 
