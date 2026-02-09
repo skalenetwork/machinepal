@@ -133,7 +133,7 @@ json EasyNetFacilitator::processVerifyRequest(
         optional< string > error;
         auto [payload, paymentReqs] =
             processVerifyRequestUnsafe( verifyRequestJson, error, *db );
-        auto fromWalletAddress = payload->payload()->authorization()->from();
+            auto fromWalletAddress = payload->payload()->authorization()->from();
         if ( error ) {
             LOG_NETWORK_ERROR("Error processing verify request: {}", error.value());
             VerifyResponse errorResponse(
