@@ -6,7 +6,7 @@
 
 #include "payment/datastructures/PaymentRequirements.h"
 #include "payment/datastructures/VerifyResponse.h"
-#include "vibemarket/datastructures/VibeExchangeRequest.h"
+#include "vibemarket/datastructures/VibeBuyRequest.h"
 
 EasyNetFacilitator::EasyNetFacilitator( MachinePalApp& app ) : app_( app ) {
     chainId_ = EIP712Domain::machinePalEasyNet()->chainId();
@@ -155,8 +155,8 @@ json EasyNetFacilitator::processVerifyRequest(
     }
 }
 
-json EasyNetFacilitator::processVibeExchangeRequest(const json &vibeExchangeRequestJson) {
-    auto vibeExchangeRequest = VibeExchangeRequest::fromJson(vibeExchangeRequestJson);
+json EasyNetFacilitator::processVibeBuyRequest(const json &vibeBuyRequestJson) {
+    auto vibeBuyRequest = VibeBuyRequest::fromJson(vibeBuyRequestJson);
     auto db = dynamic_pointer_cast< EasyNetDb >( app_.machinePalDB() );
     CHECK_STATE( db );
     std::shared_lock< std::shared_mutex > lock( mutex_ );
