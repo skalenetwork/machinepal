@@ -13,7 +13,7 @@ public:
 
     nlohmann::json processVerifyRequest( const nlohmann::json& verifyRequestJson);
 
-    nlohmann::json processVibeBuyRequest( const nlohmann::json& vibeExchangeRequestJson);
+    nlohmann::json processVibeBuyRequest( const nlohmann::json& vibeBuyRequestJson);
 
 
 private:
