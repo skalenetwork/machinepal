@@ -105,3 +105,46 @@ McpResponse McpResponse::fromJson(const nlohmann::json& j)
 
     return out;
 }
+
+nlohmann::json McpResponse::toJson() const
+{
+    nlohmann::json result = nlohmann::json::object();
+    result["isError"] = isError_;
+
+    nlohmann::json content = nlohmann::json::array();
+
+    if (!textContent_.empty())
+    {
+        // Represent the accumulated text as a single MCP text item.
+        content.push_back(nlohmann::json{
+            {"type", "text"},
+            {"text", textContent_}
+        });
+    }
+
+    if (jsonContent_.is_array())
+    {
+        for (const auto& obj : jsonContent_)
+        {
+            CHECK_STATE_JSON(obj.is_object(), "McpResponse::toJson: jsonContent_ elements must be objects", obj);
+            content.push_back(nlohmann::json{
+                {"type", "json"},
+                {"json", obj}
+            });
+        }
+    }
+    else if (!jsonContent_.is_null())
+    {
+        // Defensive: if someone set it to a single object, still serialize coherently.
+        CHECK_STATE_JSON(jsonContent_.is_object(), "McpResponse::toJson: jsonContent_ must be array (or object)", jsonContent_);
+        content.push_back(nlohmann::json{
+            {"type", "json"},
+            {"json", jsonContent_}
+        });
+    }
+
+    result["content"] = std::move(content);
+
+    // Mirror the shape consumed by fromJson(): { "result": { ... } }
+    return nlohmann::json{{"result", std::move(result)}};
+}

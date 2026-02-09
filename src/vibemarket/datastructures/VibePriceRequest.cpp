@@ -22,3 +22,10 @@ VibePriceRequest VibePriceRequest::fromJson(const nlohmann::json& j)
     out.token_ = itToken->get<std::string>();
     return out;
 }
+
+nlohmann::json VibePriceRequest::toJson() const
+{
+    nlohmann::json j = nlohmann::json::object();
+    j["token"] = token_;
+    return j;
+}

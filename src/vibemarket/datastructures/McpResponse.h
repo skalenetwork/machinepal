@@ -21,4 +21,6 @@ public:
     const nlohmann::json& jsonContent() const { return jsonContent_; }
 
     static McpResponse fromJson(const nlohmann::json& j);
+
+    nlohmann::json toJson() const;
 };

@@ -7,6 +7,6 @@ class VibePriceRequest : public McpRequest {
     std::string token_;
 public:
     static VibePriceRequest fromJson(const nlohmann::json& j);
-    const std::string& token() const { return token_;
-    }
+    [[nodiscard]] nlohmann::json toJson() const;
+    [[nodiscard]] const std::string& token() const { return token_; }
 };

@@ -24,3 +24,15 @@ VibeBuyRequest VibeBuyRequest::fromJson(const nlohmann::json& j)
     req.amount      = TokenAmount::fromHexOrDecimal(requireString("amount"));
     return req;
 }
+
+nlohmann::json VibeBuyRequest::toJson() const
+{
+    nlohmann::json j = nlohmann::json::object();
+    j["token"] = token;
+
+    // Prefer the canonical string used by fromJson (hex-or-decimal).
+    // Adjust this line to match your TokenAmount string/JSON API (e.g., toString(), toDecimalString(), toHexString()).
+    j["amount"] = amount.toDecimal();
+
+    return j;
+}
