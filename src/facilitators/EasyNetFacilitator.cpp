@@ -6,12 +6,13 @@
 
 #include "payment/datastructures/PaymentRequirements.h"
 #include "payment/datastructures/VerifyResponse.h"
+#include "vibemarket/datastructures/VibeExchangeRequest.h"
 
 EasyNetFacilitator::EasyNetFacilitator( MachinePalApp& app ) : app_( app ) {
     chainId_ = EIP712Domain::machinePalEasyNet()->chainId();
 };
 
-nlohmann::json EasyNetFacilitator::processSettleRequest(
+json EasyNetFacilitator::processSettleRequest(
     const nlohmann::json& settlementRequestJson ) {
     std::unique_lock< std::shared_mutex > lock( mutex_ );
     auto db = dynamic_pointer_cast< EasyNetDb >( app_.machinePalDB() );
@@ -123,8 +124,8 @@ EasyNetFacilitator::processVerifyRequestUnsafe( const nlohmann::json& verifyRequ
     return { paymentPayload, paymentRequirements };
 }
 
-nlohmann::json EasyNetFacilitator::processVerifyRequest(
-    const nlohmann::json& verifyRequestJson ) {
+json EasyNetFacilitator::processVerifyRequest(
+    const json& verifyRequestJson ) {
     auto db = dynamic_pointer_cast< EasyNetDb >( app_.machinePalDB() );
     CHECK_STATE( db );
     std::shared_lock< std::shared_mutex > lock( mutex_ );
@@ -152,4 +153,12 @@ nlohmann::json EasyNetFacilitator::processVerifyRequest(
             standardErrorString, "", std::nullopt );
         return errorResponse.toJson();
     }
+}
+
+json EasyNetFacilitator::processVibeExchangeRequest(const json &vibeExchangeRequestJson) {
+    auto vibeExchangeRequest = VibeExchangeRequest::fromJson(vibeExchangeRequestJson);
+    auto db = dynamic_pointer_cast< EasyNetDb >( app_.machinePalDB() );
+    CHECK_STATE( db );
+    std::shared_lock< std::shared_mutex > lock( mutex_ );
+    return nullptr;
 }

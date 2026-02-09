@@ -3,7 +3,6 @@
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/_deps/nlohmann_json-src" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external/json-schema-validator" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external/secp256k1" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external/soci" vcs="Git" />

@@ -56,7 +56,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # Gather all source files except test sources
 set(APP_SRC_DIRS . admin config config/subconfigs crypto datastructures db exceptions examples facilitators facilitator_clients
-        filesystem init  payment payment/datastructures url vibemarket x402_client x402_protocol x402_server)
+        filesystem init  payment payment/datastructures url vibemarket vibemarket/datastructures x402_client x402_protocol x402_server)
 
 set(APP_SRC_FILES)
 foreach(dir ${APP_SRC_DIRS})
