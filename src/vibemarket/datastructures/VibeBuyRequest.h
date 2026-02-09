@@ -7,7 +7,7 @@
 #include <nlohmann/json.hpp>
 
 
-class VibeBuyRequest : McpRequest{
+class VibeBuyRequest : public McpRequest{
     std::string token;
     TokenAmount amount;
 
